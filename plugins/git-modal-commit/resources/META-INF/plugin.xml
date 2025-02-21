@@ -23,6 +23,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting id="git.non.modal.commit" default="false" groupKey="advanced.settings.git"/>
-    <backgroundPostStartupActivity implementation="com.intellij.vcs.git.commit.modal.GitModalCommitSettingsListener$InitOnStartup"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.vcs.git.commit.modal.GitModalCommitSettingsListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+  </applicationListeners>
 </idea-plugin>
