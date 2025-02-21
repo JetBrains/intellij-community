@@ -407,11 +407,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
             }
 
-            @TestMetadata("extensionWrongTypeParam3.test")
-            public void testExtensionWrongTypeParam3() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
-            }
-
             @TestMetadata("ignoreErrorsOutsideCall.test")
             public void testIgnoreErrorsOutsideCall() throws Exception {
                 runTest("testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
