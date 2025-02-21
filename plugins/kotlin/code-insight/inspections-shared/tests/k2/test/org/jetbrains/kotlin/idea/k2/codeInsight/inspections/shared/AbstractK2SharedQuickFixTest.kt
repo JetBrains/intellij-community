@@ -13,7 +13,7 @@ import java.io.File
 
 abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
 
-    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
         K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
     }
 

@@ -118,7 +118,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                         doKotlinQuickFixTest(beforeFileName)
                         runInEdtAndWait {
-                            checkUnexpectedErrors(beforeFile, myFixture.file as KtFile, beforeFileText)
+                            checkForErrorsAfter(beforeFile, myFixture.file as KtFile, beforeFileText)
                         }
                     } finally {
                         myFixture.disableInspections(*inspections)
@@ -440,7 +440,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         )
     }
 
-    protected open fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
         DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
