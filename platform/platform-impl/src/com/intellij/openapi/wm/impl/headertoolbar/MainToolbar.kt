@@ -467,6 +467,8 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun updateUI() {
+    @Suppress("UNNECESSARY_SAFE_CALL") // you know, the old "this thing is called from a superclass constructor" pitfall
+    iconUpdater?.clearCache()
     super.updateUI()
     updateFont()
   }
@@ -546,6 +548,11 @@ private class HeaderIconUpdater {
     iconCache[sourceIcon] = WeakReference(replaceIcon)
     alreadyUpdated.add(replaceIcon)
     return replaceIcon
+  }
+
+  fun clearCache() {
+    iconCache.clear()
+    alreadyUpdated.clear()
   }
 }
 
