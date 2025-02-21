@@ -5,8 +5,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
-import com.intellij.util.io.write
-import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -20,7 +18,7 @@ internal class PluginDependenciesTest {
   private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun `depends - plugin loads when dependency is resolved`() {
+  fun `plugin is loaded when dependency is resolved - depends`() {
     PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
@@ -30,14 +28,14 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `depends - plugin does not load when dependency is not resolved`() {
+  fun `plugin is not loaded when dependency is not resolved - depends`() {
     PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
 
   @Test
-  fun `depends optional - plugin loads when dependency is resolved`() {
+  fun `plugin is loaded when dependency is resolved - depends optional`() {
     PluginBuilder.empty().id("foo")
       .depends("bar", PluginBuilder.empty().actions(""), "optional-part.xml")
       .build(pluginDirPath.resolve("foo"))
@@ -49,7 +47,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `depends optional - plugin loads when dependency is not resolved`() {
+  fun `plugin is loaded when dependency is not resolved - depends optional`() {
     PluginBuilder.empty().id("foo")
       .depends("bar", PluginBuilder.empty().actions(""), "foo.opt.xml")
       .build(pluginDirPath.resolve("foo"))
@@ -62,7 +60,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `depends - v1 plugin gets v2 content module in classloader parents even without direct dependency`() {
+  fun `v1 plugin gets v2 content module in classloader parents even without direct dependency - depends`() {
     PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
@@ -74,7 +72,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin dependency - v2 plugin dependency brings only the implicit main module`() {
+  fun `v2 plugin dependency brings only the implicit main module - plugin dependency`() {
     PluginBuilder.empty().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
