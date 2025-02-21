@@ -337,6 +337,7 @@ internal class ToolbarFrameHeader(
     super.installListeners()
     mainMenuWithButton.mainMenuButton.rootPane = frame.rootPane
     ideMenuBar.addComponentListener(contentResizeListener)
+    this.addComponentListener(resizeListener)
     ideMenuHelper.installListeners()
   }
 
