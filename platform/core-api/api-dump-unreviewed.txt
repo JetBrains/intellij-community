@@ -2666,7 +2666,7 @@ a:com.intellij.openapi.vfs.VirtualFile
 - a:getParent():com.intellij.openapi.vfs.VirtualFile
 - a:getPath():java.lang.String
 - getPresentableName():java.lang.String
-- f:getPresentableUrl():java.lang.String
+- F:getPresentableUrl():java.lang.String
 - a:getTimeStamp():J
 - getUrl():java.lang.String
 - is(com.intellij.openapi.vfs.VFileProperty):Z
