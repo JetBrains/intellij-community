@@ -660,7 +660,7 @@ public final class ContainerUtil {
 
   public enum MergeResult { COPIED_FROM_LIST1, MERGED_EQUAL_FROM_BOTH, COPIED_FROM_LIST2 }
   /**
-   * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in the merged list result.
+   * Process elements from the both sorted lists in order defined by {@code comparator} and call {@code processor} for each element in the merged list result.
    * When equal elements occurred, then if {@code mergeEqualItems} then output only the element from the {@code list1} and ignore the second,
    * else output them both in unspecified order.
    * {@code processor} is invoked for each output element, with the following arguments:
