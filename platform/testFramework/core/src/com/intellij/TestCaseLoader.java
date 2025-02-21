@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
@@ -279,6 +279,9 @@ public class TestCaseLoader {
     if (!myTestClassesFilter.matches(className, moduleName)) return false;
     if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
     if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
+    // Ignore those classes even if they're not set as myFirstTestClass and myLastTestClass
+    if (className.equals("_FirstInSuiteTest")) return false;
+    if (className.equals("_LastInSuiteTest")) return false;
     return true;
   }
 
