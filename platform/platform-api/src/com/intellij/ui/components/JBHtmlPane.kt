@@ -212,11 +212,11 @@ open class JBHtmlPane : JEditorPane, Disposable {
     caret.isVisible = false // Caret, if blinking, has to be deactivated.
   }
 
-  override fun getSelectedText(): String =
+  override fun getSelectedText(): String? =
     // We need to replace zero-width space char used to represent <wbr>
     // in JBHtmlEditorKit.JBHtmlDocument.JBHtmlReader.addSpecialElement().
     // Swing HTML control does not accept elements with no text.
-    super.getSelectedText().replace("\u200B", "")
+    super.getSelectedText()?.replace("\u200B", "")
 
   override fun getText(): @Nls String {
     return myText
