@@ -87,7 +87,7 @@ class MainMenuWithButton(
       else if (availableWidth > widthLimit) {
         while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
           val item = toolbarMainMenu.pollNextInvisibleItem(expandableMenu) ?: break // Remove the last item (LIFO order)
-          val itemWidth = item.preferredSize.width
+          val itemWidth = if(item.size.width > 0) item.size.width else item.preferredSize.width
           if (availableWidth - itemWidth < widthLimit) {
             toolbarMainMenu.addInvisibleItem(item)
             break
