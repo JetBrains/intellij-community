@@ -39,6 +39,7 @@ object FleetFromSourcesPaths {
     Path.of("") // former path has been emptied here, Fleet should never know about build tooling paths
   }
 
+  @Deprecated(message = "Delete on Dock API breaking", level = DeprecationLevel.ERROR)
   val nemmetPath: Path by lazy {
     projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
   }
