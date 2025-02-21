@@ -112,8 +112,12 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
-        if ((ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null) && !(language instanceof TemplateLanguage) ||
-            XmlTypedHandlersAdditionalSupport.supportsTypedHandlers(psiFile, language)) {
+        if (
+          (ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null)
+          && !(language instanceof TemplateLanguage)
+          && !(language instanceof ExternallyTagSynchronizedLanguage)
+          || XmlTypedHandlersAdditionalSupport.supportsTypedHandlers(psiFile, language)
+        ) {
           return language;
         }
       }
