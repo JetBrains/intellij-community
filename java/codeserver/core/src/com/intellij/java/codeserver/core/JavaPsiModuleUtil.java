@@ -322,6 +322,29 @@ public final class JavaPsiModuleUtil {
   }
 
   /**
+   * @param source source module
+   * @param packageName package name in source module
+   * @param target target module
+   * @return true if a source module exports a specified package to the target module, or to everybody (if the target module is null)
+   */
+  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
+    Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
+      CachedValueProvider.Result.create(exportsMap(source), source.getContainingFile()));
+    Set<String> targets = exports.get(packageName);
+    return targets != null && (targets.isEmpty() || target != null && targets.contains(target.getName()));
+  }
+
+  private static @NotNull Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
+    Map<String, Set<String>> map = new HashMap<>();
+    for (PsiPackageAccessibilityStatement statement : source.getExports()) {
+      String pkg = statement.getPackageName();
+      List<String> targets = statement.getModuleNames();
+      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new HashSet<>(targets));
+    }
+    return map;
+  }
+
+  /**
    * Represents a dependency conflict when a single package is imported from two modules
    * @param packageName package name
    * @param module1 first module from which this package is being read

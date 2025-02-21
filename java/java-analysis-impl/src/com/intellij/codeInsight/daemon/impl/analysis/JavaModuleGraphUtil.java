@@ -21,8 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
@@ -32,7 +30,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.roots.DependencyScope.PROVIDED;
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
@@ -64,13 +65,6 @@ public final class JavaModuleGraphUtil {
   public static @Nullable PsiJavaModule findNonAutomaticDescriptorByModule(@Nullable Module module, boolean inTests) {
     PsiJavaModule javaModule = findDescriptorByModule(module, inTests);
     return javaModule instanceof LightJavaModule ? null : javaModule;
-  }
-
-  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
-    Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
-      Result.create(exportsMap(source), source.getContainingFile()));
-    Set<String> targets = exports.get(packageName);
-    return targets != null && (targets.isEmpty() || target != null && targets.contains(target.getName()));
   }
 
   /**
@@ -191,16 +185,6 @@ public final class JavaModuleGraphUtil {
   private static boolean isStaticModule(@NotNull String moduleName, @Nullable DependencyScope scope) {
     if (STATIC_REQUIRES_MODULE_NAMES.contains(moduleName)) return true;
     return scope == PROVIDED;
-  }
-
-  private static @NotNull Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
-    Map<String, Set<String>> map = new HashMap<>();
-    for (PsiPackageAccessibilityStatement statement : source.getExports()) {
-      String pkg = statement.getPackageName();
-      List<String> targets = statement.getModuleNames();
-      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new HashSet<>(targets));
-    }
-    return map;
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {
