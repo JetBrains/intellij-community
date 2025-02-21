@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
@@ -178,6 +179,43 @@ final class JavaErrorFixProvider {
     };
     fix(MODULE_REFERENCE_PACKAGE_NOT_FOUND, createClassInPackage);
     fix(MODULE_REFERENCE_PACKAGE_EMPTY, createClassInPackage);
+
+    JavaFixProvider<PsiElement, JpmsModuleAccessInfo> fixExports = error -> {
+      if (error.context().getTarget().getPackageName().isEmpty()) return null;
+      Module jpsModule = error.context().getCurrent().getJpsModule();
+      PsiJavaModule targetModule = error.context().getTarget().getModule();
+      if (targetModule instanceof PsiCompiledElement && jpsModule != null) {
+        return new AddExportsOptionFix(jpsModule, targetModule.getName(), error.context().getTarget().getPackageName(),
+                                       error.context().getCurrent().getName());
+      }
+      if (!(targetModule instanceof PsiCompiledElement) && error.context().getCurrent().getModule() != null) {
+        return new AddExportsDirectiveFix(requireNonNull(targetModule), error.context().getTarget().getPackageName(),
+                                          error.context().getCurrent().getName());
+      }
+      return null;
+    };
+    fix(MODULE_ACCESS_FROM_UNNAMED, fixExports);
+    fix(MODULE_ACCESS_FROM_NAMED, fixExports);
+    JavaFixProvider<PsiElement, JpmsModuleAccessInfo> fixModuleOptions =
+      error -> new AddModulesOptionFix(requireNonNull(error.context().getCurrent().getJpsModule()), 
+                                       requireNonNull(error.context().getTarget().getModule()).getName());
+    fix(MODULE_ACCESS_PACKAGE_NOT_IN_GRAPH, fixModuleOptions);
+    fix(MODULE_ACCESS_NOT_IN_GRAPH, fixModuleOptions);
+    JavaFixProvider<PsiElement, JpmsModuleAccessInfo> fixRequires =
+      error -> new AddRequiresDirectiveFix(requireNonNull(error.context().getCurrent().getModule()),
+                                           requireNonNull(error.context().getTarget().getModule()).getName());
+    fix(MODULE_ACCESS_PACKAGE_DOES_NOT_READ, fixRequires);
+    fix(MODULE_ACCESS_DOES_NOT_READ, fixRequires);
+    fixes(MODULE_ACCESS_JPS_DEPENDENCY_PROBLEM, (error, sink) -> {
+      if (error.psi() instanceof PsiJavaModuleReferenceElement ref) {
+        PsiJavaModuleReference reference = ref.getReference();
+        if (reference != null) {
+          List<CommonIntentionAction> list = new ArrayList<>();
+          myFactory.registerOrderEntryFixes(reference, list);
+          list.forEach(sink);
+        }
+      }
+    });
   }
 
   private void createStatementFixes() {

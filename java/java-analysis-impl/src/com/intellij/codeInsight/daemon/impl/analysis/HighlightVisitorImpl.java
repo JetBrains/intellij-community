@@ -229,12 +229,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override
-  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
-    super.visitImportModuleStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkModuleReferenceAccess(statement));
-  }
-
   static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     try {
       if (ref instanceof PsiReferenceExpressionImpl) {

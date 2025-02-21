@@ -106,26 +106,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkModuleReferenceAccess(@NotNull PsiImportModuleStatement statement) {
-    PsiJavaModuleReferenceElement refElement = statement.getModuleReference();
-    if (refElement == null) return null;
-    PsiJavaModuleReference ref = refElement.getReference();
-    assert ref != null : refElement.getParent();
-    PsiJavaModule target = ref.resolve();
-    if (target == null) return null;
-    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
-      if (!(moduleSystem instanceof JavaModuleSystemEx javaModuleSystemEx)) continue;
-      ErrorWithFixes fixes = javaModuleSystemEx.checkAccess(target, statement);
-      if (fixes == null) continue;
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(statement)
-        .descriptionAndTooltip(fixes.message);
-      fixes.fixes.forEach(fix -> info.registerFix(fix, null, null, null, null));
-      return info;
-    }
-    return null;
-  }
-
   private static boolean isAccessible(@NotNull JavaModuleSystem system, @NotNull PsiElement target, @NotNull PsiElement place) {
     if (target instanceof PsiClass psiClass) return system.isAccessible(psiClass, place);
     if (target instanceof PsiPackage psiPackage) return system.isAccessible(psiPackage.getQualifiedName(), null, place);

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
@@ -1541,6 +1542,38 @@ public final class JavaErrorKinds {
       .withAnchor(st -> st.getPackageReference())
       .withRawDescription(st -> message("module.reference.package.empty", st.getPackageName()));
 
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_NAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.named")
+      .withRawDescription((psi, info) -> message(
+        "module.access.from.named", info.getTarget().getPackageName(), info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.unnamed")
+      .withRawDescription((psi, info) -> message("module.access.from.unnamed", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_TO_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.to.unnamed")
+      .withRawDescription((psi, info) -> message("module.access.to.unnamed", info.getTarget().getPackageName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.bad.name")
+      .withRawDescription((psi, info) -> message("module.access.package.bad.name", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.bad.name")
+      .withRawDescription((psi, info) -> message("module.access.bad.name", info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.not.in.graph")
+      .withRawDescription((psi, info) -> message("module.access.package.not.in.graph", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.not.in.graph")
+      .withRawDescription((psi, info) -> message("module.access.not.in.graph", info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.does.not.read")
+      .withRawDescription((psi, info) -> message("module.access.package.does.not.read", info.getTarget().getPackageName(), info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.does.not.read")
+      .withRawDescription((psi, info) -> message("module.access.does.not.read", info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_JPS_DEPENDENCY_PROBLEM =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.jps.dependency.problem")
+      .withRawDescription((psi, info) -> message("module.access.jps.dependency.problem", info.getTarget().getModule().getName()));
+  
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Simple<>(key);

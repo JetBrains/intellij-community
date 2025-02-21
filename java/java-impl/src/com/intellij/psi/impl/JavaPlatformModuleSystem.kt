@@ -42,15 +42,6 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return TargetModuleInfo(targetModule, "").accessAt(useFile).checkModuleAccess(place) == null
   }
 
-  override fun checkAccess(targetModule: PsiJavaModule, place: PsiElement): ErrorWithFixes? {
-    val useFile = place.containingFile?.originalFile ?: return null
-    val moduleAccess = TargetModuleInfo(targetModule, "").accessAt(useFile)
-
-    val access = moduleAccess.checkModuleAccess(place)
-    return if (access == null) null
-    else moduleAccess.toErrorWithFixes(access, place)
-  }
-
   private fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean,
                          isAccessible: (JpmsModuleAccessInfo) -> Boolean): ErrorWithFixes? {
     val originalTargetFile = targetFile?.originalFile
@@ -83,7 +74,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val error = checkAccess(TargetModuleInfo(dirs[0], target.qualifiedName), useFile, quick, isAccessible) ?: return null
     return when {
       dirs.size == 1 -> error
-      dirs.asSequence().drop(1).any { checkAccess(TargetModuleInfo(it, target.qualifiedName), useFile, true, isAccessible) == null } -> null
+      dirs.asSequence().drop(1).any { TargetModuleInfo(it, target.qualifiedName)
+        .accessAt(useFile).checkAccess(useFile, isAccessible) == null } -> null
       else -> error
     }
   }
