@@ -30,11 +30,11 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
-    return getProblem(targetPackageName, targetFile, place, true) { it.isExported() } == null
+    return getProblem(targetPackageName, targetFile, place, true, JpmsModuleAccessInfo.JpmsModuleAccessMode.EXPORT) == null
   }
 
   override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
-    return getProblem(targetPackageName, targetFile, place, false) { it.isAccessible() }
+    return getProblem(targetPackageName, targetFile, place, false, JpmsModuleAccessInfo.JpmsModuleAccessMode.READ)
   }
 
   override fun isAccessible(targetModule: PsiJavaModule, place: PsiElement): Boolean {
@@ -43,7 +43,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean,
-                         isAccessible: (JpmsModuleAccessInfo) -> Boolean): ErrorWithFixes? {
+                         accessMode: JpmsModuleAccessInfo.JpmsModuleAccessMode): ErrorWithFixes? {
     val originalTargetFile = targetFile?.originalFile
     val useFile = place.containingFile?.originalFile ?: return null
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, useFile)) return null
@@ -53,7 +53,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     if (useVFile != null && index.isInLibrarySource(useVFile)) return null
     if (originalTargetFile != null && originalTargetFile.isPhysical) {
       val target = TargetModuleInfo(originalTargetFile, targetPackageName)
-      return checkAccess(target, useFile, quick, isAccessible)
+      return checkAccess(target, useFile, quick, accessMode)
     }
     if (useVFile == null) return null
 
@@ -71,11 +71,11 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
     }
 
-    val error = checkAccess(TargetModuleInfo(dirs[0], target.qualifiedName), useFile, quick, isAccessible) ?: return null
+    val error = checkAccess(TargetModuleInfo(dirs[0], target.qualifiedName), useFile, quick, accessMode) ?: return null
     return when {
       dirs.size == 1 -> error
       dirs.asSequence().drop(1).any { TargetModuleInfo(it, target.qualifiedName)
-        .accessAt(useFile).checkAccess(useFile, isAccessible) == null } -> null
+        .accessAt(useFile).checkAccess(useFile, accessMode) == null } -> null
       else -> error
     }
   }
@@ -83,10 +83,10 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private val ERR = ErrorWithFixes("-")
 
   private fun checkAccess(target: TargetModuleInfo, place: PsiFileSystemItem, quick: Boolean,
-                          isAccessible: (JpmsModuleAccessInfo) -> Boolean): ErrorWithFixes? {
+                          accessMode: JpmsModuleAccessInfo.JpmsModuleAccessMode): ErrorWithFixes? {
     val moduleAccess = target.accessAt(place)
 
-    val access = moduleAccess.checkAccess(place, isAccessible)
+    val access = moduleAccess.checkAccess(place, accessMode)
     return when {
       access == null -> null
       quick -> ERR

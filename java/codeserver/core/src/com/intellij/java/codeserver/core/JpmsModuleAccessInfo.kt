@@ -34,9 +34,24 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     JPS_DEPENDENCY_PROBLEM
   }
 
+  /**
+   * Access mode to determine whether the target is accessible
+   */
+  enum class JpmsModuleAccessMode {
+    /**
+     * Consider the target as accessible if the source actually reads the target
+     */
+    READ,
+
+    /**
+     * Consider the target as accessible if it's exported to the source (even if the source doesn't read it)
+     */
+    EXPORT
+  }
+
   fun checkAccess(
     place: PsiFileSystemItem,
-    isAccessible: (JpmsModuleAccessInfo) -> Boolean,
+    accessMode: JpmsModuleAccessMode,
   ): JpmsModuleAccessProblem? {
     val targetModule = target.module
     if (targetModule != null) {
@@ -53,7 +68,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
           return null  // a target is not on the mandatory module path
         }
 
-        if (!accessibleFromJdkModules(place, isAccessible) &&
+        if (!accessibleFromJdkModules(place, accessMode) &&
             !inAddedModules(currentJpsModule, targetModule.name) &&
             !hasUpgrade(currentJpsModule, targetModule.name, target.packageName, place)) {
           return JpmsModuleAccessProblem.PACKAGE_NOT_IN_GRAPH
@@ -69,7 +84,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
       if (current.module != null &&
           targetModule.name != PsiJavaModule.JAVA_BASE &&
-          !isAccessible(this) &&
+          !this.isAccessible(accessMode) &&
           !inAddedReads(current.module, targetModule)) {
         return when {
           PsiNameHelper.isValidModuleName(targetModule.name, current.module) -> JpmsModuleAccessProblem.PACKAGE_DOES_NOT_READ
@@ -82,7 +97,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (autoModule.module == null) {
         return JpmsModuleAccessProblem.TO_UNNAMED
       }
-      else if (!isAccessible(JpmsModuleAccessInfo(current, autoModule)) &&
+      else if (!JpmsModuleAccessInfo(current, autoModule).isAccessible(accessMode) &&
                !inAddedReads(current.module, null) &&
                !inSameMultiReleaseModule(current, target)) {
         return JpmsModuleAccessProblem.TO_UNNAMED
@@ -90,6 +105,13 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     }
 
     return null
+  }
+
+  private fun isAccessible(accessMode: JpmsModuleAccessMode): Boolean {
+    return when (accessMode) {
+      JpmsModuleAccessMode.READ -> isAccessible()
+      JpmsModuleAccessMode.EXPORT -> isExported()
+    }
   }
 
   /**
@@ -115,7 +137,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
           return JpmsModuleAccessProblem.JPS_DEPENDENCY_PROBLEM
         }
 
-        if (!accessibleFromJdkModules(place, { it.isAccessible() }) &&
+        if (!accessibleFromJdkModules(place, JpmsModuleAccessMode.READ) &&
             !inAddedModules(currentJpsModule, targetModule.name)) {
           return JpmsModuleAccessProblem.NOT_IN_GRAPH
         }
@@ -157,7 +179,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
   private fun accessibleFromJdkModules(
     place: PsiElement,
-    isAccessible: (JpmsModuleAccessInfo) -> Boolean,
+    accessMode: JpmsModuleAccessMode,
   ): Boolean {
     val jpsModule = current.jpsModule ?: return false
     val targetModule = target.module ?: return false
@@ -176,7 +198,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (javaSE != null) {
         { module ->
           (!module.name.startsWith("java.") && module.exports.any { e -> e.moduleNames.isEmpty() }) ||
-          isAccessible(JpmsModuleAccessInfo(JpmsModuleInfo.CurrentModuleInfo(javaSE, current.name) { jpsModule }, target))
+          JpmsModuleAccessInfo(JpmsModuleInfo.CurrentModuleInfo(javaSE, current.name) { jpsModule }, target).isAccessible(accessMode)
         }
       }
       else {
