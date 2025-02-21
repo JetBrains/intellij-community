@@ -384,10 +384,6 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
     }
   }
 
-  override fun updateActionsOnAdd() {
-    // do nothing - called explicitly
-  }
-
   fun updateActions() {
     updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
   }
