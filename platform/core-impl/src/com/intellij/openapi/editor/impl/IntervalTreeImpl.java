@@ -286,8 +286,15 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return myTree;
     }
 
-    public @NotNull ReadWriteLock getTreeLock() {
-      return myTree.l;
+    @ApiStatus.Internal
+    protected void runUnderWriteLock(@NotNull Runnable runnable) {
+      myTree.l.writeLock().lock();
+      try {
+        runnable.run();
+      }
+      finally {
+        myTree.l.writeLock().unlock();
+      }
     }
 
     /**
