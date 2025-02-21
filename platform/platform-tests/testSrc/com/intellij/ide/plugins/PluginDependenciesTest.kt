@@ -21,14 +21,24 @@ internal class PluginDependenciesTest {
   private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun `simple depends tag`() {
+  fun `depends - plugin loads when dependency is resolved`() {
     PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
-    assertFooHasPluginDependencyOnBar()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    assertThat(foo).hasClassloaderParents(bar)
   }
 
   @Test
-  fun `simple depends tag with optional attribute`() {
+  fun `depends - plugin does not load when dependency is not resolved`() {
+    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasNoEnabledPlugins()
+  }
+
+  @Test
+  fun `depends optional - plugin loads when dependency is resolved`() {
     writeDescriptor("foo", """
     <idea-plugin>
       <id>foo</id>
@@ -51,56 +61,49 @@ internal class PluginDependenciesTest {
     </idea-plugin>
     """)
 
-    assertFooHasPluginDependencyOnBar()
-  }
-
-  private fun assertFooHasPluginDependencyOnBar() {
-    val list = buildPluginSet()
-      .enabledPlugins
-    assertThat(list).hasSize(2)
-
-    val bar = list[0]
-    assertThat(bar.pluginId.idString).isEqualTo("bar")
-
-    val foo = list[1]
-
-    assertThat(foo.pluginDependencies.map { it.pluginId }).containsExactly(bar.pluginId)
-
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-    checkParentClassLoaders(foo, bar)
-  }
-
-  private fun checkParentClassLoaders(descriptor: IdeaPluginDescriptorImpl, vararg expectedParents: IdeaPluginDescriptorImpl) {
-    val classLoader = descriptor.pluginClassLoader as PluginClassLoader
-    assertThat(classLoader._getParents()).containsExactlyInAnyOrder(*expectedParents)
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    assertThat(foo).hasClassloaderParents(bar)
   }
 
   @Test
-  fun `dependency on plugin with content modules with depends tag`() {
+  fun `depends optional - plugin loads when dependency is not resolved`() {
+    PluginBuilder.empty().id("foo")
+      .depends("bar", PluginBuilder.empty().actions(""), "foo.opt.xml")
+      .build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("baz").build(pluginDirPath.resolve("baz"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+    val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
+    assertThat(foo).doesNotHaveClassloaderParents(baz)
+    assertThat(baz).doesNotHaveClassloaderParents(foo)
+  }
+
+  @Test
+  fun `depends - v1 plugin gets v2 content module in classloader parents even without direct dependency`() {
     PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
       .build(pluginDirPath.resolve("bar"))
-
     val pluginSet = buildPluginSet()
-    val enabledPlugins = pluginSet.enabledPlugins.sortedBy { it.pluginId.idString }
-    assertThat(enabledPlugins).hasSize(2)
-    val (bar, foo) = enabledPlugins
-    checkParentClassLoaders(foo, bar, pluginSet.findEnabledModule("bar.module")!!)
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    assertThat(foo).hasClassloaderParents(bar, pluginSet.getEnabledModule("bar.module"))
   }
-  
+
   @Test
-  fun `dependency on plugin with content modules with dependencies tag`() {
+  fun `dependency plugin - v2 plugin dependency brings only the implicit main module`() {
     PluginBuilder.empty().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
       .build(pluginDirPath.resolve("bar"))
-
     val pluginSet = buildPluginSet()
-    val enabledPlugins = pluginSet.enabledPlugins.sortedBy { it.pluginId.idString }
-    assertThat(enabledPlugins).hasSize(2)
-    val (bar, foo) = enabledPlugins
-    checkParentClassLoaders(foo, bar)
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    assertThat(foo)
+      .hasClassloaderParents(bar)
+      .doesNotHaveClassloaderParents(pluginSet.getEnabledModule("bar.module"))
   }
 
   @Test
@@ -185,8 +188,8 @@ internal class PluginDependenciesTest {
     val requiredModuleDescriptor = pluginSet.findEnabledModule("required.module")!!
     val requiredModule2Descriptor = pluginSet.findEnabledModule("required2.module")!!
     val embeddedModuleDescriptor = pluginSet.findEnabledModule("embedded.module")!!
-    checkParentClassLoaders(requiredModule2Descriptor, requiredModuleDescriptor)
-    checkParentClassLoaders(requiredModuleDescriptor, embeddedModuleDescriptor)
+    assertThat(requiredModule2Descriptor).hasClassloaderParents(requiredModuleDescriptor)
+    assertThat(requiredModuleDescriptor).hasClassloaderParents(embeddedModuleDescriptor)
   }
 
   @Test

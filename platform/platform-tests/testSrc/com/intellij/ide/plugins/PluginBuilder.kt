@@ -108,8 +108,8 @@ class PluginBuilder private constructor() {
     return this
   }
 
-  fun depends(pluginId: String, subDescriptor: PluginBuilder): PluginBuilder {
-    val fileName = "dep_${pluginIdCounter.incrementAndGet()}.xml"
+  fun depends(pluginId: String, subDescriptor: PluginBuilder, filename: String? = null): PluginBuilder {
+    val fileName = filename ?: "dep_${pluginIdCounter.incrementAndGet()}.xml"
     subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor, separateJar = false))
     depends(pluginId, fileName)
     return this
