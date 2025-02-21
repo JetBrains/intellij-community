@@ -39,6 +39,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -193,7 +194,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     super.setupModule(module);
     assert rootProjectPath != null;
 
-    VirtualFile buildScriptFile = createAndConfigureBuildScriptFile();
+    if (isCreatingBuildScriptFile) {
+      applyAdditionalConfigurationToBuildScriptFile();
+    }
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -226,20 +229,22 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     }
 
-    // execute when the current dialog is closed
-    ApplicationManager.getApplication().invokeLater(() -> {
-      finishModuleSetup(buildScriptFile, project);
-    }, ModalityState.nonModal(), project.getDisposed());
+    // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+    // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+    StartupManager.getInstance(project).runAfterOpened(
+      () -> ApplicationManager.getApplication().invokeLater(
+        () -> finishModuleSetup(project), ModalityState.nonModal(), project.getDisposed()
+      )
+    );
   }
 
-  private void finishModuleSetup(@Nullable VirtualFile buildScriptFile, @NotNull Project project) {
-    if (!project.isOpen()) {
-      ApplicationManager.getApplication().invokeLater(() -> finishModuleSetup(buildScriptFile, project),
-                                                      ModalityState.nonModal(),
-                                                      project.getDisposed());
-      return;
-    }
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    finishModuleSetup(project);
+  }
 
+  private void finishModuleSetup(@NotNull Project project) {
     if (isCreatingBuildScriptFile) {
       openBuildScriptFile(project, buildScriptFile);
     }
@@ -311,22 +316,17 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     vcs.finish();
   }
 
-  private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
-    if (!isCreatingBuildScriptFile) {
-      return null;
-    }
+  private void applyAdditionalConfigurationToBuildScriptFile() {
     try {
       if (buildScriptFile != null && buildScriptBuilder != null) {
         buildScriptBuilder.addPrefix(StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile)));
         String content = StringUtil.convertLineSeparators(buildScriptBuilder.generate(), lineSeparator(buildScriptFile));
         VfsUtil.saveText(buildScriptFile, content);
-        return buildScriptFile;
       }
     }
     catch (IOException e) {
       LOG.warn("Unexpected exception on applying frameworks templates", e);
     }
-    return null;
   }
 
   private static void openBuildScriptFile(@NotNull Project project, VirtualFile buildScriptFile) {
