@@ -524,7 +524,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  private static @NotNull List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
+  public static @NotNull List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome)) {
