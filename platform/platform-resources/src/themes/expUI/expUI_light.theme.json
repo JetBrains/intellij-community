@@ -1221,7 +1221,12 @@
     "ManagedIdeMenuItemHover": "Gray12",
 
     "InlineBanner.hoverBackground": "#0000000F",
-    "InlineBanner.pressedBackground": "#00000019"
+    "InlineBanner.pressedBackground": "#00000019",
+
+    "Settings.Spotlight": {
+      "borderColor": "#E08855FF",
+      "backgroundColor": "#F0F1F280"
+    }
   },
 
   "icons": {

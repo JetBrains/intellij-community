@@ -1190,7 +1190,12 @@
     "ManagedIdeMenuItemHover": "Gray4",
 
     "InlineBanner.hoverBackground": "#FFFFFF14",
-    "InlineBanner.pressedBackground": "#FFFFFF1E"
+    "InlineBanner.pressedBackground": "#FFFFFF1E",
+
+    "Settings.Spotlight": {
+      "borderColor": "#A36B4EFF",
+      "backgroundColor": "#2B2D3080"
+    }
   },
 
   "icons": {
