@@ -22,8 +22,8 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `simple depends tag`() {
-    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder().noDepends().id("bar").build(pluginDirPath.resolve("bar"))
+    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
     assertFooHasPluginDependencyOnBar()
   }
 
@@ -77,9 +77,9 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `dependency on plugin with content modules with depends tag`() {
-    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder().noDepends().id("bar")
-      .module("bar.module", PluginBuilder().packagePrefix("bar.module"))
+    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
       .build(pluginDirPath.resolve("bar"))
 
     val pluginSet = buildPluginSet()
@@ -91,9 +91,9 @@ internal class PluginDependenciesTest {
   
   @Test
   fun `dependency on plugin with content modules with dependencies tag`() {
-    PluginBuilder().noDepends().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder().noDepends().id("bar")
-      .module("bar.module", PluginBuilder().packagePrefix("bar.module"))
+    PluginBuilder.empty().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
       .build(pluginDirPath.resolve("bar"))
 
     val pluginSet = buildPluginSet()
@@ -107,10 +107,9 @@ internal class PluginDependenciesTest {
   fun `disable plugin if dependency of required content module is not available`() {
     PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("required.module", PluginBuilder().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("required.module", PluginBuilder.withModulesLang().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath.resolve("sample-plugin"))
     val result = buildPluginSet()
     assertThat(result.enabledPlugins).isEmpty()
@@ -122,12 +121,11 @@ internal class PluginDependenciesTest {
   @Test
   fun `embedded content module uses same classloader as the main module`() {
     val samplePluginDir = pluginDirPath.resolve("sample-plugin")
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("embedded.module", PluginBuilder().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED, separateJar = true)
-      .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED, separateJar = true)
-      .module("optional.module", PluginBuilder().packagePrefix("optional"))
+      .module("embedded.module", PluginBuilder.withModulesLang().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED, separateJar = true)
+      .module("required.module", PluginBuilder.withModulesLang().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED, separateJar = true)
+      .module("optional.module", PluginBuilder.withModulesLang().packagePrefix("optional"))
       .build(samplePluginDir)
     val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
@@ -147,10 +145,9 @@ internal class PluginDependenciesTest {
   @Test
   fun `embedded content module without package prefix`() {
     val samplePluginDir = pluginDirPath.resolve("sample-plugin")
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("embedded.module", PluginBuilder(), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("embedded.module", PluginBuilder.withModulesLang(), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(samplePluginDir)
     val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
@@ -161,14 +158,12 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `dependencies of embedded content module are added to the main class loader`() {
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("dep")
       .build(pluginDirPath.resolve("dep"))
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("embedded.module", PluginBuilder().packagePrefix("embedded").pluginDependency("dep"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("embedded.module", PluginBuilder.withModulesLang().packagePrefix("embedded").pluginDependency("dep"), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath.resolve("sample-plugin"))
     val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(2)
@@ -179,12 +174,11 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `dependencies between plugin modules`() {
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("embedded.module", PluginBuilder().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
-      .module("required.module", PluginBuilder().packagePrefix("required").dependency("embedded.module"), loadingRule = ModuleLoadingRule.REQUIRED)
-      .module("required2.module", PluginBuilder().packagePrefix("required2").dependency("required.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("embedded.module", PluginBuilder.withModulesLang().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.withModulesLang().packagePrefix("required").dependency("embedded.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("required2.module", PluginBuilder.withModulesLang().packagePrefix("required2").dependency("required.module"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath.resolve("sample-plugin"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet.getEnabledModules()).hasSize(4)
@@ -198,10 +192,9 @@ internal class PluginDependenciesTest {
   @Test
   fun `content module in separate JAR`() {
     val pluginDir = pluginDirPath.resolve("sample-plugin")
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("sample.plugin")
-      .module("dep", PluginBuilder(), separateJar = true)
+      .module("dep", PluginBuilder.withModulesLang(), separateJar = true)
       .build(pluginDir)
     val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
@@ -212,13 +205,11 @@ internal class PluginDependenciesTest {
 
   @Test
   fun testExpiredPluginNotLoaded() {
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("foo")
       .build(pluginDirPath.resolve("foo"))
 
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("bar")
       .build(pluginDirPath.resolve("bar"))
 
@@ -233,8 +224,8 @@ internal class PluginDependenciesTest {
 
   @Test
   fun testLoadPluginWithDisabledDependency() {
-    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder().noDepends().id("bar").build(pluginDirPath.resolve("bar"))
+    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
 
     val pluginSet = PluginSetTestBuilder(pluginDirPath)
       .withDisabledPlugins("bar")
@@ -244,20 +235,17 @@ internal class PluginDependenciesTest {
 
   @Test
   fun testLoadPluginWithDisabledTransitiveDependency() {
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("org.jetbrains.plugins.gradle.maven")
       .implementationDetail()
       .depends("org.jetbrains.plugins.gradle")
       .build(pluginDirPath.resolve("intellij.gradle.java.maven"))
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("org.jetbrains.plugins.gradle")
       .depends("com.intellij.gradle")
       .implementationDetail()
       .build(pluginDirPath.resolve("intellij.gradle.java"))
-    PluginBuilder()
-      .noDepends()
+    PluginBuilder.empty()
       .id("com.intellij.gradle")
       .build(pluginDirPath.resolve("intellij.gradle"))
 

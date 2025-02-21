@@ -46,7 +46,7 @@ fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") des
   outDir.resolve("$ownerId/$moduleId.xml").write(descriptor.trimIndent())
 }
 
-class PluginBuilder {
+class PluginBuilder private constructor() {
   private data class ExtensionBlock(val ns: String, val text: String)
   private data class DependsTag(val pluginId: String, val configFile: String?)
 
@@ -73,8 +73,9 @@ class PluginBuilder {
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder, val separateJar: Boolean)
   private val subDescriptors = ArrayList<SubDescriptor>()
 
-  init {
+  fun dependsIntellijModulesLang(): PluginBuilder {
     depends("com.intellij.modules.lang")
+    return this
   }
 
   fun id(id: String): PluginBuilder {
@@ -293,6 +294,11 @@ class PluginBuilder {
     }
 
     return this
+  }
+
+  companion object {
+    fun withModulesLang(): PluginBuilder = PluginBuilder().dependsIntellijModulesLang()
+    fun empty(): PluginBuilder = PluginBuilder()
   }
 }
 
