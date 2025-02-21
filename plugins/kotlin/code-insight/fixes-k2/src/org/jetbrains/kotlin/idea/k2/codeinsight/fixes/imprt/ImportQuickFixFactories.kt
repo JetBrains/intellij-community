@@ -24,6 +24,27 @@ object ImportQuickFixFactories {
 
     val delegateSpecialFunctionNoneApplicableFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable> =
         ImportQuickFixProvider.upcast()
+
+    val tooManyArgumentsFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.TooManyArguments> =
+        ImportQuickFixProvider.upcast()
+
+    val noValueForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoValueForParameter> =
+        ImportQuickFixProvider.upcast()
+
+    val argumentTypeMismatchFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ArgumentTypeMismatch> =
+        ImportQuickFixProvider.upcast()
+
+    val namedParameterNotFoundFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NamedParameterNotFound> =
+        ImportQuickFixProvider.upcast()
+
+    val noneApplicableFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoneApplicable> =
+        ImportQuickFixProvider.upcast()
+
+    val wrongNumberOfTypeArgumentsFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.WrongNumberOfTypeArguments> =
+        ImportQuickFixProvider.upcast()
+
+    val newInferenceNoInformationForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NewInferenceNoInformationForParameter> =
+        ImportQuickFixProvider.upcast()
 }
 
 /**

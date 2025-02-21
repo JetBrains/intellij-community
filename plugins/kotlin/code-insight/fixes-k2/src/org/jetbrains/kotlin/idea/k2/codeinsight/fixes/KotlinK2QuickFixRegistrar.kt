@@ -278,6 +278,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
         registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
+
+        registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
+        registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
+        registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)
+        registerFactory(ImportQuickFixFactories.namedParameterNotFoundFactory)
+        registerFactory(ImportQuickFixFactories.noneApplicableFactory)
+        registerFactory(ImportQuickFixFactories.wrongNumberOfTypeArgumentsFactory)
+        registerFactory(ImportQuickFixFactories.newInferenceNoInformationForParameterFactory)
         
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)

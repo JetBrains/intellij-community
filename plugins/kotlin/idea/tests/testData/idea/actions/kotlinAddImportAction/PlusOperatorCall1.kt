@@ -1,4 +1,3 @@
-// IGNORE_K2
 // EXPECT_VARIANT_IN_ORDER "public operator fun java.time.Instant.plus(period: pack.TradingPeriod): java.time.Instant defined in pack in file PlusOperatorCall1.dependency.kt"
 // RUNTIME_WITH_FULL_JDK
 package other
