@@ -15,6 +15,7 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardActivityKey
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.runAfterOpened
 import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -24,7 +25,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
@@ -123,7 +123,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         }
       }
 
-      StartupManager.getInstance(project).runAfterOpened { // IDEA-244863
+      runAfterOpened(project) { project ->
         project.trackActivityBlocking(NewProjectWizardActivityKey) {
           project.coroutineScope.launchTracked {
             reformatCode(project, filesToReformat)
