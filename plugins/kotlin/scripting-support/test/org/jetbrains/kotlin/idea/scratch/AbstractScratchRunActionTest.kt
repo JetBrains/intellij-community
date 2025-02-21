@@ -23,11 +23,13 @@ import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
-import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
-import org.jetbrains.kotlin.idea.scratch.output.InlayScratchFileRenderer
-import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.InlayScratchFileRenderer
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
@@ -216,7 +218,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
 
     private fun getPreviewTextWithFoldings(): String {
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch panel")
+                                ?: error("Couldn't find scratch panel")
 
         val previewEditor = scratchFileEditor.previewEditor as TextEditor
         return getFoldingData(previewEditor.editor, withCollapseStatus = false)
@@ -245,7 +247,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
         IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
 
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch file")
+                                ?: error("Couldn't find scratch file")
 
         configureOptions(scratchFileEditor, text, myFixture.module)
 
@@ -260,7 +262,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
         IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch panel")
+                                ?: error("Couldn't find scratch panel")
 
         // We want to check that correct module is selected automatically,
         // that's why we set `module` to null so it wouldn't be changed
@@ -304,7 +306,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
     protected fun stopReplProcess() {
         if (myFixture.file != null) {
             val scratchFile = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)?.scratchFile
-                ?: error("Couldn't find scratch panel")
+                    as? org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile ?: error("Couldn't find scratch panel")
             scratchFile.replScratchExecutor?.stopAndWait()
         }
 

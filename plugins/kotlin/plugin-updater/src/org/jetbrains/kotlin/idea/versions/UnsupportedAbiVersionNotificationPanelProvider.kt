@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.CompilerManager
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -41,6 +42,7 @@ import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
 
+@InternalIgnoreDependencyViolation
 class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvider {
     private fun doCreate(fileEditor: FileEditor, project: Project, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
         val answer = ErrorNotificationPanel(fileEditor)

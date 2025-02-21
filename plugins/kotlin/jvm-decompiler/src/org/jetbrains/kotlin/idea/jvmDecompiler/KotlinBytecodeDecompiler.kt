@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.internal.DecompileFailedException
+import org.jetbrains.kotlin.idea.jvm.k1.bytecode.KotlinBytecodeToolWindow
+import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.jar.Manifest
