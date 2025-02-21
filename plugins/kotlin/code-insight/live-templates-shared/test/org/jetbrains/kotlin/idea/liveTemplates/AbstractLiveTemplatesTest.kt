@@ -252,6 +252,16 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
         doTestIfnInn()
     }
 
+    @TestMetadata("ifnInName.kt")
+    fun testIfnInName() {
+        start()
+
+        assertStringItems()
+        typeAndNextTab("b")
+
+        checkAfter()
+    }
+
     @TestMetadata("inn.kt")
     fun testInn() {
         doTestIfnInn()
@@ -308,7 +318,7 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
             CommandProcessor.getInstance().executeCommand(
                 project,
                 {
-                    templateState!!.nextTab()
+                    templateState?.nextTab()
                 },
                 "nextTab",
                 null
@@ -352,7 +362,7 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
 
     private val itemStrings: Array<String>
         get() {
-            val lookup = LookupManager.getActiveLookup(myFixture.editor)!!
+            val lookup = LookupManager.getActiveLookup(myFixture.editor) ?: return emptyArray()
             val result = ArrayList<String>()
             for (element in lookup.items) {
                 result.add(element.lookupString)
