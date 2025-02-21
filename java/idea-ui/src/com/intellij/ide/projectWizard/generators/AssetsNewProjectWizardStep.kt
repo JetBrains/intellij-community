@@ -22,7 +22,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.findPsiFile
@@ -157,34 +156,26 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private suspend fun generateSources(outputDirectory: Path): List<Path> {
     return withContext(Dispatchers.IO) {
-      blockingContext {
-        val assetsProcessor = AssetsProcessor.getInstance()
-        assetsProcessor.generateSources(outputDirectory, assets, templateProperties)
-      }
+      val assetsProcessor = AssetsProcessor.getInstance()
+      assetsProcessor.generateSources(outputDirectory, assets, templateProperties)
     }
   }
 
   private suspend fun reformatCode(project: Project, files: List<Path>) {
     val virtualFiles = withContext(Dispatchers.IO) {
-      blockingContext {
-        files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
-          .filter { it.isFile }
-      }
+      files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
+        .filter { it.isFile }
     }
     val psiFiles = readAction {
       virtualFiles.mapNotNull { it.findPsiFile(project) }
     }
-    blockingContext {
-      ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
-    }
+    ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
   }
 
   private suspend fun openFilesInEditor(project: Project, files: List<Path>) {
     val virtualFiles = withContext(Dispatchers.IO) {
-      blockingContext {
-        files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
-          .filter { it.isFile }
-      }
+      files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
+        .filter { it.isFile }
     }
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
@@ -195,11 +186,9 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       }
     }
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        val projectView = ProjectView.getInstance(project)
-        for (file in virtualFiles) {
-          projectView.select(null, file, false)
-        }
+      val projectView = ProjectView.getInstance(project)
+      for (file in virtualFiles) {
+        projectView.select(null, file, false)
       }
     }
   }
