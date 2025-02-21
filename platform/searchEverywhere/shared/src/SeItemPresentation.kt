@@ -7,10 +7,11 @@ import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -25,18 +26,18 @@ sealed interface SeItemPresentation {
 
 @ApiStatus.Internal
 @Serializable
-class SeTextItemPresentation(override val text: String): SeItemPresentation
+class SeTextItemPresentation(override val text: @Nls String) : SeItemPresentation
 
 @ApiStatus.Internal
-sealed interface SeActionItemPresentation: SeItemPresentation {
+sealed interface SeActionItemPresentation : SeItemPresentation {
   val commonData: Common
 
   @ApiStatus.Internal
   @Serializable
   data class Common(
-    val text: String,
+    val text: @Nls String,
     val switcherState: Boolean? = null,
-    val location: @Nls String? = null
+    val location: @Nls String? = null,
   )
 }
 
@@ -51,13 +52,15 @@ data class SeRunnableActionItemPresentation(
   val promo: Promo? = null,
   val iconId: IconId? = null,
   val selectedIconId: IconId? = null,
-): SeActionItemPresentation {
+) : SeActionItemPresentation {
   override val text: String get() = commonData.text
 
   @ApiStatus.Internal
   @Serializable
-  data class Promo(val productIconId: IconId?,
-                   val callToActionText: @Nls String)
+  data class Promo(
+    val productIconId: IconId?,
+    val callToActionText: @Nls String,
+  )
 }
 
 @ApiStatus.Internal
@@ -66,7 +69,7 @@ data class SeOptionActionItemPresentation(
   override val commonData: SeActionItemPresentation.Common,
   val value: @NlsSafe String? = null,
   val isBooleanOption: Boolean = false,
-): SeActionItemPresentation {
+) : SeActionItemPresentation {
   override val text: String get() = commonData.text
 }
 
@@ -75,26 +78,18 @@ data class SeOptionActionItemPresentation(
 class SeTargetItemPresentation(
   private val backgroundColorId: ColorId?,
   private val iconId: IconId?,
-  private val presentableText: String,
-  private val containerText: String?,
-  private val locationText: String?,
+  val presentableText: @Nls String,
+  val presentableTextMatchedRanges: List<SerializableRange>?,
+  val containerText: @Nls String?,
+  val containerTextMatchedRanges: List<SerializableRange>?,
+  val locationText: @Nls String?,
   private val locationIconId: IconId?,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
 
-  fun targetPresentation(): TargetPresentation {
-    val p = this
-    return object : TargetPresentation {
-      override val backgroundColor: Color? get() = backgroundColorId?.color()
-      override val icon: Icon? get() = iconId?.icon()
-      override val presentableText: String = p.presentableText
-      override val presentableTextAttributes: TextAttributes? = null
-      override val containerText: String? = p.containerText
-      override val containerTextAttributes: TextAttributes? = null
-      override val locationText: String? = p.locationText
-      override val locationIcon: Icon? get() = locationIconId?.icon()
-    }
-  }
+  val backgroundColor: Color? get() = backgroundColorId?.color()
+  val icon: Icon? get() = iconId?.icon()
+  val locationIcon: Icon? get() = locationIconId?.icon()
 
   @Serializable
   data class SerializableRange(val start: Int, val end: Int) {
@@ -104,12 +99,19 @@ class SeTargetItemPresentation(
   }
 
   companion object {
-    fun create(tp: TargetPresentation) =
+    fun create(tp: TargetPresentation, matchers: ItemMatchers?): SeTargetItemPresentation =
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
+                               presentableTextMatchedRanges = matchers?.calcMatchedRanges(tp.presentableText),
                                containerText = tp.containerText,
+                               containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
                                locationIconId = tp.locationIcon?.rpcId())
+
+    private fun ItemMatchers.calcMatchedRanges(text: String?): List<SerializableRange>? {
+      text ?: return null
+      return (nameMatcher as? MinusculeMatcher)?.matchingFragments(text)?.map { SerializableRange(it) }
+    }
   }
 }

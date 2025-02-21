@@ -51,7 +51,7 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
     layout = GridLayout()
 
     val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
-    val fileListCellRenderer = SeTargetItemPresentationRenderer().get { textField.text ?: "" }
+    val fileListCellRenderer = SeTargetItemPresentationRenderer().get()
     val defaultRenderer = listCellRenderer<SeResultListRow> {
       when (val value = value) {
         is SeResultListItemRow -> {

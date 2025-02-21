@@ -22,11 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeTabHelper private constructor(val project: Project,
                                       private val sessionRef: DurableRef<SeSessionEntity>,
                                       private val providers: Map<SeProviderId, SeItemDataProvider>) {
-  private val searchDispatcher: SeDispatcher
-
-  init {
-    searchDispatcher = SeDispatcher(providers.values, providers.values.associate { it.id to Int.MAX_VALUE })
-  }
+  private val searchDispatcher: SeDispatcher = SeDispatcher(providers.values, providers.values.associate { it.id to Int.MAX_VALUE })
 
   fun getItems(params: SeParams): Flow<SeItemData> =
     searchDispatcher.getItems(sessionRef, params, emptyList())

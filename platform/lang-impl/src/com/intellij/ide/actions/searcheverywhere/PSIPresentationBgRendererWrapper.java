@@ -107,6 +107,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return new WrapperRenderer((list, o) -> renderer.getItemMatchers(list, o));
   }
 
+  @ApiStatus.Internal
+  public PsiElementListCellRenderer.ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, PsiElementListCellRenderer.ItemMatchers> matcherProvider, @NotNull Object value) {
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
+    return renderer.getNonComponentItemMatchers(matcherProvider, value);
+  }
+
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
                                                            Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
                                                            @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {

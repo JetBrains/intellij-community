@@ -14,22 +14,37 @@ import javax.swing.ListCellRenderer
 
 @Internal
 class SeTargetItemPresentationRenderer {
-  fun get(patternProvider: () -> String): ListCellRenderer<SeResultListRow> = listCellRenderer {
-    val presentation = ((value as SeResultListItemRow).item.presentation as SeTargetItemPresentation).targetPresentation()
-    val pattern = patternProvider()
+  fun get(): ListCellRenderer<SeResultListRow> = listCellRenderer {
+    val presentation = (value as SeResultListItemRow).item.presentation as SeTargetItemPresentation
     val selected = selected
     selectionColor = UIUtil.getListBackground(selected, selected)
 
     presentation.icon?.let { icon(it) }
-    text(presentation.presentableText)
-    presentation.containerText?.let {
-      text(it) {
+
+    text(presentation.presentableText) {
+      if (selected) {
+        speedSearch {
+          ranges = presentation.presentableTextMatchedRanges?.map { it.textRange }
+        }
+      }
+    }
+
+    presentation.containerText?.let { containerText ->
+      @Suppress("HardCodedStringLiteral")
+      text(containerText) {
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
+
+        if (selected) {
+          speedSearch {
+            ranges = presentation.containerTextMatchedRanges?.map { it.textRange }
+          }
+        }
       }
     }
 
     // location
     presentation.locationText?.let { locationText ->
+      @Suppress("HardCodedStringLiteral")
       text(locationText) {
         align = LcrInitParams.Align.RIGHT
         foreground =
