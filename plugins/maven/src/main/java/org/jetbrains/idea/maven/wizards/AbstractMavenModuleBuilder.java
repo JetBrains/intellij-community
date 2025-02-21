@@ -120,15 +120,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @ApiStatus.Internal
   public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
+      waitForSdkDownload();
       configureProject(project, projectDir);
     });
   }
 
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile projectDir) {
-    if (myEnvironmentForm != null) {
-      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-    }
-
+  private void waitForSdkDownload() {
     var future = sdkDownloadedFuture;
     if (future != null) {
       try {
@@ -137,6 +134,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       catch (Exception e) {
         MavenLog.LOG.error(e);
       }
+    }
+  }
+
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    if (myEnvironmentForm != null) {
+      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
     }
 
     new MavenModuleBuilderHelper(
