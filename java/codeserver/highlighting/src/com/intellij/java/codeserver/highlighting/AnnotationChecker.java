@@ -630,8 +630,8 @@ final class AnnotationChecker {
       if (attribute == pair) break;
       String name = pair.getName();
       if (Objects.equals(attribute.getName(), name)) {
-        myVisitor.report(
-          JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        break;
       }
     }
   }
