@@ -19,7 +19,7 @@ class UniqueNameBuilder<T>(private val myRoot: String, val separator: String) {
     var nestedChildrenCount: Int = 0
 
     fun findOrAddChild(word: String): Node {
-      return children.computeIfAbsent(word) { Node(word, this) }
+      return children.computeIfAbsentShim(word) { Node(word, this) }
     }
   }
 

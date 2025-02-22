@@ -6,7 +6,7 @@ fun <K, V> MutableMap<K, V>.computeIfAbsentShim(key: K, f: (K) -> V): V {
 }
 
 fun <K, V> MutableMap<K, V>.putIfAbsentShim(key: K, value: V): V {
-  return computeIfAbsent(key) { value }
+  return computeIfAbsentShim(key) { value }
 }
 
 fun <K, V> MutableMap<K, V>.computeShim(key: K, f: (K, V?) -> V?): V? {

@@ -5,6 +5,8 @@
 package fleet.tracing.runtime
 
 import io.opentelemetry.api.common.AttributeKey
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 val THREAD_ID_KEY: AttributeKey<Long> = AttributeKey.longKey("threadId")
