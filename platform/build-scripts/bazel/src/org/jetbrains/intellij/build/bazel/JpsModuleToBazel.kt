@@ -25,10 +25,6 @@ internal class JpsModuleToBazel {
       val jarRepositories = loadJarRepositories(projectDir)
 
       val urlCache = UrlCache(cacheFile = projectDir.resolve("build/lib-lock.json"))
-      Runtime.getRuntime().addShutdownHook(thread(start = false, name = "Save URL cache") {
-        println("Saving url cache to ${urlCache.cacheFile}")
-        urlCache.save()
-      })
 
       val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
       val moduleList = generator.computeModuleList()
@@ -70,12 +66,10 @@ internal class JpsModuleToBazel {
       Files.writeString(projectDir.resolve("build/bazel-community-targets.txt"), communityTargets)
       Files.writeString(projectDir.resolve("build/bazel-targets.txt"), communityTargets + "\n" + ultimateTargets)
 
-      try {
-        generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
-      }
-      finally {
-        urlCache.save()
-      }
+      generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
+
+      // save cache only on success. do not surround with try/finally
+      urlCache.save()
     }
   }
 }
