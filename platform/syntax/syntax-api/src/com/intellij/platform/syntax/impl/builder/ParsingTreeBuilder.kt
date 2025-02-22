@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.CancellationProvider
-import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.Logger.Attachment
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
@@ -13,6 +10,13 @@ import com.intellij.platform.syntax.lexer.TokenSequence
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
+import com.intellij.platform.syntax.runtime.CompletionState
+import com.intellij.platform.syntax.runtime.CompletionVariantProvider
+import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntimeBase
+import com.intellij.platform.syntax.util.CancellationProvider
+import com.intellij.platform.syntax.util.Logger
+import com.intellij.platform.syntax.util.Logger.Attachment
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
@@ -32,7 +36,8 @@ internal class ParsingTreeBuilder(
   val cancellationProvider: CancellationProvider?,
   private val whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy,
   private val opaquePolicy: OpaqueElementPolicy,
-) : SyntaxTreeBuilder, DiagnosticAwareBuilder {
+  private val completionDelegate: CompletionVariantProvider?,
+) : SyntaxTreeBuilder, CompletionVariantProvider, SyntaxGeneratedParserRuntimeBase.LanguageInfoProvider, DiagnosticAwareBuilder {
   internal val myLexStarts: IntArray
   private val myLexTypes: Array<SyntaxElementType>
   val lexemeCount: Int
@@ -488,6 +493,22 @@ internal class ParsingTreeBuilder(
       """.trimIndent()
   }
 
+  override fun getCompletionState(): CompletionState? {
+    return completionDelegate?.getCompletionState()
+  }
+
+  override fun getLexer(): Lexer {
+    return lexer
+  }
+
+  override fun isLanguageCaseSensitive(): Boolean {
+    return true //TODO
+  }
+
+  override fun getBraces(): Array<SyntaxGeneratedParserRuntimeBase.BracePair>? {
+    TODO("Not yet implemented")
+  }
+
   private inner class RelativeTokenTypesView : AbstractList<SyntaxElementType>() {
     private var myStart = 0
     override var size = 0
@@ -517,6 +538,10 @@ internal class ParsingTreeBuilder(
 
 private const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most probably caused by unbalanced markers. " +
                                                        "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem"
+
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
+var DIAGNOSTICS: PsiBuilderDiagnostics? = null
 
 private fun performLexing(
   cachedLexemes: TokenList?,

@@ -3,7 +3,6 @@ package com.intellij.platform.syntax.psi
 
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.util.SyntaxGeneratedParserRuntimeBase
 import com.intellij.psi.TokenType
 
 internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
@@ -13,6 +12,6 @@ internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
     SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
     SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
     SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
-    SyntaxGeneratedParserRuntimeBase.DUMMY_BLOCK to GeneratedParserUtilBase.DUMMY_BLOCK
+    com.intellij.platform.syntax.runtime.DUMMY_BLOCK to GeneratedParserUtilBase.DUMMY_BLOCK
   )
 }

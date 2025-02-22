@@ -7,6 +7,10 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
+import com.intellij.platform.syntax.runtime.CompletionVariantProvider
+import com.intellij.platform.syntax.util.CancellationProvider
+import com.intellij.platform.syntax.util.Logger
+import com.intellij.platform.syntax.util.NoopLogger
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -70,6 +74,11 @@ object SyntaxTreeBuilderFactory {
     fun withLogger(logger: Logger?): Builder
 
     /**
+     * Adds a [CompletionVariantProvider] that is used to store keywords during parsing
+     */
+    fun withCompletionProvider(provider: CompletionVariantProvider): Builder
+
+    /**
      * Builds a [SyntaxTreeBuilder] with all installed properties
      */
     fun build(): SyntaxTreeBuilder
@@ -91,6 +100,8 @@ private class BuilderImpl(
   private var logger: Logger? = null
   private var whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy? = null
   private var opaquePolicy: OpaqueElementPolicy? = null
+  private var completionProvider: CompletionVariantProvider? = null
+
 
   override fun withStartOffset(startOffset: Int): Builder {
     this.startOffset = startOffset
@@ -137,6 +148,11 @@ private class BuilderImpl(
     return this
   }
 
+  override fun withCompletionProvider(provider: CompletionVariantProvider): Builder {
+    this.completionProvider = provider
+    return this
+  }
+
   override fun build(): SyntaxTreeBuilder {
     val builder = ParsingTreeBuilder(
       lexer = lexer,
@@ -152,6 +168,7 @@ private class BuilderImpl(
       logger = logger ?: noopLogger(),
       whitespaceOrCommentBindingPolicy = whitespaceOrCommentBindingPolicy ?: WhitespaceOrCommentBindingPolicy { false },
       opaquePolicy = opaquePolicy ?: OpaqueElementPolicy { null },
+      completionDelegate = completionProvider
     )
     return builder as SyntaxTreeBuilder
   }

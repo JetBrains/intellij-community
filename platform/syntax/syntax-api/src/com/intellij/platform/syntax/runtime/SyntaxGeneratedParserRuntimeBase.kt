@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 
-package com.intellij.platform.syntax.util
+package com.intellij.platform.syntax.runtime
 
 import com.intellij.openapi.util.text.StringHash
 import com.intellij.platform.syntax.SyntaxElementType
@@ -10,10 +10,14 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
-import com.intellij.platform.syntax.util.SyntaxGeneratedParserRuntimeBase.*
+import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntimeBase.Hook
+import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntimeBase.Parser
+import com.intellij.platform.syntax.util.BundleAdapter
+import com.intellij.platform.syntax.util.LimitedPool
+import com.intellij.platform.syntax.util.Logger
+import com.intellij.platform.syntax.util.NoopLogger
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
-
 import kotlin.math.min
 
 
@@ -46,59 +50,58 @@ val _AND_: Int = 0x8
 val _NOT_: Int = 0x10
 val _UPPER_: Int = 0x20
 
+fun isWhitespaceOrComment(builder: SyntaxTreeBuilder, type: SyntaxElementType?): Boolean {
+  return type != null && builder.isWhitespaceOrComment(type)
+}
+
+val TOKEN_ADVANCER: Parser = object : Parser {
+  override fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean {
+    if (builder.eof()) return false
+    builder.advanceLexer()
+    return true
+  }
+}
+
+val TRUE_CONDITION: Parser = object : Parser {
+  override fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean = true
+}
+
+val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
+  override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+    marker?.setCustomEdgeTokenBinders(param, null)
+    return marker
+  }
+}
+
+val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
+
+  override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+    marker?.setCustomEdgeTokenBinders(null, param)
+    return marker
+  }
+}
+
+val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array<WhitespacesAndCommentsBinder?>> {
+  override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
+    marker?.setCustomEdgeTokenBinders(param!![0], param[1])
+    return marker
+  }
+}
+
+val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
+
 open class SyntaxGeneratedParserRuntimeBase(
   protected val MAX_RECURSION_LEVEL: Int = 1000,
-  protected val isLanguageCaseSensitive: Boolean,
   protected val bundle: BundleAdapter,
   protected val lexer: Lexer,
-  protected val parser: (SyntaxElementType, SyntaxTreeBuilder) -> Unit,
-  protected val braces: Collection<BracePair>,
+  protected val errorState: ErrorState = ErrorState(bundle),
+  protected val isLanguageCaseSensitive: Boolean = true,
+  protected val braces: Collection<BracePair>?,
 ) {
   private val LOG: Logger = NoopLogger
+  private var parser: (SyntaxElementType, SyntaxTreeBuilder) -> Unit = { _, _ -> }
 
   //private val MAX_RECURSION_LEVEL = StringUtil.parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000)
-  companion object {
-
-    fun isWhitespaceOrComment(builder: SyntaxTreeBuilder, type: SyntaxElementType?): Boolean {
-      return type != null && builder.isWhitespaceOrComment(type)
-    }
-
-    val TOKEN_ADVANCER: Parser = object : Parser {
-      override fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean {
-        if (builder.eof()) return false
-        builder.advanceLexer()
-        return true
-      }
-    }
-
-    val TRUE_CONDITION: Parser = object : Parser {
-      override fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean = true
-    }
-
-    val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
-      override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
-        marker?.setCustomEdgeTokenBinders(param, null)
-        return marker
-      }
-    }
-
-    val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
-
-      override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
-        marker?.setCustomEdgeTokenBinders(null, param)
-        return marker
-      }
-    }
-
-    val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array<WhitespacesAndCommentsBinder?>> {
-      override fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
-        marker?.setCustomEdgeTokenBinders(param!![0], param[1])
-        return marker
-      }
-    }
-
-    val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
-  }
 
   fun eof(builder: SyntaxTreeBuilder, level: Int): Boolean {
     return builder.eof()
@@ -129,9 +132,7 @@ open class SyntaxGeneratedParserRuntimeBase(
     //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
     val goodMarker = marker != null // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
     if (!goodMarker) return false
-    val state: ErrorState = ErrorState.get(builder)
-
-    return state.currentFrame != null
+    return errorState.currentFrame != null
   }
 
   fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementType?> {
@@ -144,13 +145,12 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   private fun consumeTokens(builder: SyntaxTreeBuilder, smart: Boolean, pin: Int, vararg tokens: SyntaxElementType?): Boolean {
-    val state = ErrorState.get(builder)
-    if (state.completionState != null && state.predicateSign) {
-      (builder as? CompletionVariantProvider)?.addCompletionVariant(builder, state.completionState, tokens)
+    if (errorState.completionState != null && errorState.predicateSign) {
+      addCompletionVariant(builder, errorState.completionState, tokens)
     }
     // suppress single token completion
-    val completionState: CompletionState? = state.completionState
-    state.completionState = null
+    val completionState: CompletionState? = errorState.completionState
+    errorState.completionState = null
     var result = true
     var pinned = false
     var i = 0
@@ -162,13 +162,13 @@ open class SyntaxGeneratedParserRuntimeBase(
         tokens[i]?.let {
           if (!(if (fast) consumeTokenFast(builder, it) else consumeToken(builder, it))) {
             result = false
-            if (pin < 0 || pinned) report_error_(builder, state, false)
+            if (pin < 0 || pinned) report_error_(builder, errorState, false)
           }
         }
       }
       i++
     }
-    state.completionState = completionState
+    errorState.completionState = completionState
     return pinned || result
   }
 
@@ -201,12 +201,12 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   fun consumeTokenSmart(builder: SyntaxTreeBuilder, token: SyntaxElementType): Boolean {
-    (builder as? CompletionVariantProvider)?.addCompletionVariantSmart(builder, token)
+    addCompletionVariantSmart(builder, token)
     return consumeTokenFast(builder, token)
   }
 
   fun consumeTokenSmart(builder: SyntaxTreeBuilder, token: String): Boolean {
-    (builder as? CompletionVariantProvider)?.addCompletionVariantSmart(builder, token)
+    addCompletionVariantSmart(builder, token)
     return consumeTokenFast(builder, token)
   }
 
@@ -225,7 +225,7 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   @JvmOverloads
-  fun consumeToken(builder: SyntaxTreeBuilder, text: String, caseSensitive: Boolean = ErrorState.Companion.get(builder).caseSensitive): Boolean {
+  fun consumeToken(builder: SyntaxTreeBuilder, text: String, caseSensitive: Boolean = isLanguageCaseSensitive): Boolean {
     addVariantSmart(builder, text, true)
     var count: Int = nextTokenIsFast(builder, text, caseSensitive)
     if (count > 0) {
@@ -236,7 +236,7 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   fun consumeTokenFast(builder: SyntaxTreeBuilder, text: String): Boolean {
-    var count: Int = nextTokenIsFast(builder, text, ErrorState.Companion.get(builder).caseSensitive)
+    var count: Int = nextTokenIsFast(builder, text, isLanguageCaseSensitive)
     if (count > 0) {
       while (count-- > 0) builder.advanceLexer()
       return true
@@ -250,7 +250,7 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   fun consumeTokenSmart(builder: SyntaxTreeBuilder, tokens: Set<SyntaxElementType>): Boolean {
-    (builder as? CompletionVariantProvider)?.addCompletionVariantSmart(builder, tokens)
+    addCompletionVariantSmart(builder, tokens)
     return consumeTokenFast(builder, tokens)
   }
 
@@ -276,29 +276,27 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   fun nextTokenIsSmart(builder: SyntaxTreeBuilder, token: SyntaxElementType?): Boolean {
-    return nextTokenIsFast(builder, token) || ErrorState.Companion.get(builder).completionState != null
+    return nextTokenIsFast(builder, token) || errorState.completionState != null
   }
 
   fun nextTokenIsSmart(builder: SyntaxTreeBuilder, vararg tokens: SyntaxElementType): Boolean {
-    return nextTokenIsFast(builder, *tokens) || ErrorState.Companion.get(builder).completionState != null
+    return nextTokenIsFast(builder, *tokens) || errorState.completionState != null
   }
 
   fun nextTokenIs(builder: SyntaxTreeBuilder, frameName: String?, vararg tokens: SyntaxElementType): Boolean {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    if (state.completionState != null) return true
-    val track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign
+    if (errorState.completionState != null) return true
+    val track = !errorState.suppressErrors && errorState.predicateCount < 2 && errorState.predicateSign
     return if (!track) nextTokenIsFast(builder, *tokens) else nextTokenIsSlow(builder, frameName, *tokens)
   }
 
   fun nextTokenIsSlow(builder: SyntaxTreeBuilder, frameName: String?, vararg tokens: SyntaxElementType): Boolean {
-    val state: ErrorState = ErrorState.Companion.get(builder)
     val tokenType: SyntaxElementType? = builder.tokenType
     if (!frameName.isNullOrEmpty()) {
-      addVariantInner(state, state.currentFrame, builder.rawTokenIndex(), frameName)
+      addVariantInner(errorState, errorState.currentFrame, builder.rawTokenIndex(), frameName)
     }
     else {
       for (token in tokens) {
-        addVariant(builder, state, token)
+        addVariant(builder, errorState, token)
       }
     }
     if (tokenType == null) return false
@@ -312,11 +310,11 @@ open class SyntaxGeneratedParserRuntimeBase(
 
   fun nextTokenIs(builder: SyntaxTreeBuilder, tokenText: String): Boolean {
     if (!addVariantSmart(builder, tokenText, false)) return true
-    return nextTokenIsFast(builder, tokenText, ErrorState.Companion.get(builder).caseSensitive) > 0
+    return nextTokenIsFast(builder, tokenText, isLanguageCaseSensitive) > 0
   }
 
   fun nextTokenIsFast(builder: SyntaxTreeBuilder, tokenText: String): Boolean {
-    return nextTokenIsFast(builder, tokenText, ErrorState.Companion.get(builder).caseSensitive) > 0
+    return nextTokenIsFast(builder, tokenText, isLanguageCaseSensitive) > 0
   }
 
   fun nextTokenIsFast(builder: SyntaxTreeBuilder, tokenText: String, caseSensitive: Boolean): Int {
@@ -340,18 +338,17 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   private fun addVariantSmart(builder: SyntaxTreeBuilder, token: Any, force: Boolean): Boolean {
-    val state: ErrorState = ErrorState.Companion.get(builder)
     // skip FIRST check in completion mode
-    if (state.completionState != null && !force) return false
+    if (errorState.completionState != null && !force) return false
     builder.eof()
-    if (!state.suppressErrors && state.predicateCount < 2) {
-      addVariant(builder, state, token)
+    if (!errorState.suppressErrors && errorState.predicateCount < 2) {
+      addVariant(builder, errorState, token)
     }
     return true
   }
 
   fun addVariant(builder: SyntaxTreeBuilder, text: String) {
-    addVariant(builder, ErrorState.Companion.get(builder), text)
+    addVariant(builder, errorState, text)
   }
 
   private fun addVariant(builder: SyntaxTreeBuilder, state: ErrorState, o: Any) {
@@ -360,7 +357,7 @@ open class SyntaxGeneratedParserRuntimeBase(
 
     val completionState: CompletionState? = state.completionState
     if (completionState != null && state.predicateSign) {
-      (builder as? CompletionVariantProvider)?.addCompletionVariant(builder, completionState, o)
+      addCompletionVariant(builder, completionState, o)
     }
   }
 
@@ -377,6 +374,27 @@ open class SyntaxGeneratedParserRuntimeBase(
     }
   }
 
+  private fun addCompletionVariantSmart(builder: SyntaxTreeBuilder, token: Any) {
+    val completionState: CompletionState? = errorState.completionState
+    if (completionState != null && errorState.predicateSign) {
+      addCompletionVariant(builder, completionState, token)
+    }
+  }
+
+  private fun addCompletionVariant(builder : SyntaxTreeBuilder, completionState: CompletionState?, o: Any) {
+    val offset: Int = builder.currentOffset
+    if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return  // suppress for zero-length tokens
+    completionState?.let {
+      val text = completionState.convertItem(o)
+      val length = text.length
+      var add = length != 0 && completionState.prefixMatches(builder, text)
+      add = add && length > 1 && !(text[0] == '<' && text[length - 1] == '>') && !(text[0] == '\'' && text[length - 1] == '\'' && length < 5)
+      if (add) {
+        completionState.addItem(builder, text)
+      }
+    }
+  }
+
   private fun wasAutoSkipped(builder: SyntaxTreeBuilder, steps: Int): Boolean {
     for (i in -1 downTo -steps) {
       if (!isWhitespaceOrComment(builder, builder.rawLookup(i))) return false
@@ -386,9 +404,8 @@ open class SyntaxGeneratedParserRuntimeBase(
 
   // simple enter/exit methods pair that doesn't require frame object
   fun enter_section_(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    reportFrameError(builder, state)
-    state.level++
+    reportFrameError(builder, errorState)
+    errorState.level++
     return builder.mark()
   }
 
@@ -398,10 +415,9 @@ open class SyntaxGeneratedParserRuntimeBase(
     elementType: SyntaxElementType?,
     result: Boolean,
   ) {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    close_marker_impl_(state.currentFrame, marker, elementType, result)
-    run_hooks_impl_(builder, state, if (result) elementType else null)
-    state.level--
+    close_marker_impl_(errorState.currentFrame, marker, elementType, result)
+    run_hooks_impl_(builder, errorState, if (result) elementType else null)
+    errorState.level--
   }
 
   // complex enter/exit methods pair with frame object
@@ -411,32 +427,31 @@ open class SyntaxGeneratedParserRuntimeBase(
 
   @JvmOverloads
   fun enter_section_(builder: SyntaxTreeBuilder, level: Int, modifiers: Int, elementType: SyntaxElementType? = null, frameName: String? = null): SyntaxTreeBuilder.Marker {
-    reportFrameError(builder, ErrorState.Companion.get(builder))
+    reportFrameError(builder, errorState)
     val marker: SyntaxTreeBuilder.Marker = builder.mark()
     enter_section_impl_(builder, level, modifiers, elementType, frameName)
     return marker
   }
 
   private fun enter_section_impl_(builder: SyntaxTreeBuilder, level: Int, modifiers: Int, elementType: SyntaxElementType?, frameName: String?) {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    state.level++
-    val frame: Frame = state.FRAMES.alloc().init(builder, state, level, modifiers, elementType, frameName)
+    errorState.level++
+    val frame: Frame = errorState.FRAMES.alloc().init(builder, errorState, level, modifiers, elementType, frameName)
     if (((frame.modifiers and _LEFT_) or (frame.modifiers and _LEFT_INNER_)) != 0) {
       val left: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
       if (invalid_left_marker_guard_(builder, left, frameName)) {
         frame.leftMarker = left
       }
     }
-    state.currentFrame = frame
+    errorState.currentFrame = frame
     if ((modifiers and _AND_) != 0) {
-      if (state.predicateCount == 0 && !state.predicateSign) {
+      if (errorState.predicateCount == 0 && !errorState.predicateSign) {
         throw AssertionError("Incorrect false predicate sign")
       }
-      state.predicateCount++
+      errorState.predicateCount++
     }
     else if ((modifiers and _NOT_) != 0) {
-      state.predicateSign = state.predicateCount != 0 && !state.predicateSign
-      state.predicateCount++
+      errorState.predicateSign = errorState.predicateCount != 0 && !errorState.predicateSign
+      errorState.predicateCount++
     }
   }
 
@@ -461,34 +476,31 @@ open class SyntaxGeneratedParserRuntimeBase(
     eatMore: Parser?,
   ) {
     var elementType: SyntaxElementType? = elementType
-    val state: ErrorState = ErrorState.Companion.get(builder)
 
-    val frame: Frame? = state.currentFrame
-    state.currentFrame = if (frame == null) null else frame.parentFrame
+    val frame: Frame? = errorState.currentFrame
+    errorState.currentFrame = if (frame == null) null else frame.parentFrame
     if (frame != null && frame.elementType != null) elementType = frame.elementType
     if (frame == null || level != frame.level) {
       LOG.error("Unbalanced error section: got " + frame + ", expected level " + level)
-      if (frame != null) state.FRAMES.recycle(frame)
+      if (frame != null) errorState.FRAMES.recycle(frame)
       close_marker_impl_(frame, marker, elementType, result)
       return
     }
 
-    close_frame_impl_(state, frame, builder, marker, elementType, result, pinned)
-    exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore)
-    run_hooks_impl_(builder, state, if (pinned || result) elementType else null)
-    state.FRAMES.recycle(frame)
-    state.level--
+    close_frame_impl_(errorState, frame, builder, marker, elementType, result, pinned)
+    exit_section_impl_(errorState, frame, builder, elementType, result, pinned, eatMore)
+    run_hooks_impl_(builder, errorState, if (pinned || result) elementType else null)
+    errorState.FRAMES.recycle(frame)
+    errorState.level--
   }
 
   fun <T> register_hook_(builder: SyntaxTreeBuilder, hook: Hook<T?>?, param: T?) {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    state.hooks = Hooks.Companion.concat<T?>(hook, param, state.level, state.hooks)
+    errorState.hooks = Hooks.Companion.concat<T?>(hook, param, errorState.level, errorState.hooks)
   }
 
   @SafeVarargs
   fun <T> register_hook_(builder: SyntaxTreeBuilder, hook: Hook<Array<T?>?>?, vararg param: T?) {
-    val state: ErrorState = ErrorState.Companion.get(builder)
-    state.hooks = Hooks.Companion.concat<Array<T?>?>(hook, arrayOf(param.asIterable()), state.level, state.hooks)
+    errorState.hooks = Hooks.Companion.concat<Array<T?>?>(hook, arrayOf(param.asIterable()) as Array<T?>, errorState.level, errorState.hooks)
   }
 
   private fun run_hooks_impl_(builder: SyntaxTreeBuilder, state: ErrorState, elementType: SyntaxElementType?) {
@@ -499,7 +511,7 @@ open class SyntaxGeneratedParserRuntimeBase(
       }
       while (hooks.level >= state.level) {
         if (hooks.level == state.level) {
-          marker = (hooks.hook as Hook<*>).run(builder, marker, hooks.param)
+          marker = (hooks.hook as Hook<Any?>).run(builder, marker, hooks.param)
         }
         state.hooks = hooks.next
       }
@@ -720,7 +732,7 @@ open class SyntaxGeneratedParserRuntimeBase(
   }
 
   fun report_error_(builder: SyntaxTreeBuilder, result: Boolean): Boolean {
-    if (!result) report_error_(builder, ErrorState.Companion.get(builder), false)
+    if (!result) report_error_(builder, errorState, false)
     return result
   }
 
@@ -807,11 +819,10 @@ open class SyntaxGeneratedParserRuntimeBase(
     }
   }
 
-
   @JvmOverloads
-  fun init_runtime_(root: SyntaxElementType, builder: SyntaxTreeBuilder, extendsSets: Array<Set<SyntaxElementType>>? = null) {
-    val state: ErrorState = ErrorState(bundle)
-    ErrorState.Companion.initState(state, builder, root, this, extendsSets)
+  fun init_runtime_(root: SyntaxElementType, builder: SyntaxTreeBuilder, parse: (SyntaxElementType, SyntaxTreeBuilder) -> Unit, extendsSets: Array<Set<SyntaxElementType>>? = null) {
+    parser = parse
+    errorState.initState(builder, this, extendsSets)
   }
 
   private fun checkSiblings(
@@ -856,7 +867,7 @@ open class SyntaxGeneratedParserRuntimeBase(
     if (lBrace != null) {
       var tokenIdx = -1
       while (builder.rawLookup(tokenIdx) === SyntaxTokenTypes.WHITE_SPACE) tokenIdx--
-      val doneMarker = if (builder.rawLookup(tokenIdx) === lBrace) builder.lastDoneMarker else null
+      val doneMarker = if (builder.rawLookup(tokenIdx) == lBrace) builder.lastDoneMarker else null
       if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getTokenType() === SyntaxTokenTypes.ERROR_ELEMENT) {
         parens.add(Pair(doneMarker.precede(), null))
       }
@@ -864,27 +875,29 @@ open class SyntaxGeneratedParserRuntimeBase(
     var c: Int = current_position_(builder)
     while (true) {
       val tokenType: SyntaxElementType? = builder.tokenType
-      if (lBrace != null && (tokenType === lBrace || tokenType === rBrace && !parens.isEmpty())) {
+      if (lBrace != null && (tokenType == lBrace || tokenType == rBrace && !parens.isEmpty())) {
         if (marker != null) {
           marker.done(chunkType)
           siblings.addFirst(Pair(marker, 1))
           marker = null
           tokenCount = 0
         }
-        if (tokenType === lBrace) {
+        if (tokenType == lBrace) {
           val prev = siblings.first()
           parens.addFirst(Pair(builder.mark(), prev.first))
         }
         checkSiblings(chunkType, parens, siblings)
         state.tokenAdvancer.parse(builder, level)
-        if (tokenType === rBrace) {
+        if (tokenType == rBrace) {
           val pair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.removeFirst()
-          pair.first?.done(chunkType)
-          // drop all markers inside parens
-          while (!siblings.isEmpty() && siblings.first().first !== pair.second) {
-            siblings.removeFirst()
+          pair.first?.let{
+            it.done(chunkType)
+            while (!siblings.isEmpty() && siblings.first().first != pair.second) {
+              siblings.removeFirst()
+            }
+            siblings.addFirst(Pair(it, 1))
           }
-          siblings.addFirst(Pair(pair.first, 1))
+          // drop all markers inside parens
           checkSiblings(chunkType, parens, siblings)
         }
       }
@@ -905,8 +918,10 @@ open class SyntaxGeneratedParserRuntimeBase(
       }
 
       if (tokenCount >= MAX_CHILDREN_IN_TREE) {
-        marker?.done(chunkType)
-        siblings.addFirst(Pair(marker, 1))
+        marker?.let {
+          marker.done(chunkType)
+          siblings.addFirst(Pair(marker, 1))
+        }
         checkSiblings(chunkType, parens, siblings)
         marker = null
         tokenCount = 0
@@ -914,7 +929,7 @@ open class SyntaxGeneratedParserRuntimeBase(
       if (!empty_element_parsed_guard_(builder, "parseAsTree", c)) break
       c = current_position_(builder)
     }
-    if (marker != null) marker.drop()
+    marker?.drop()
     for (pair in parens) {
       pair.first?.drop()
     }
@@ -925,36 +940,13 @@ open class SyntaxGeneratedParserRuntimeBase(
     fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean
   }
 
-  class Builder(private val builder: SyntaxTreeBuilder, state_: ErrorState) {
-    val state: ErrorState
-
-    init {
-      state = state_
-    }
-
-    val lexer: Lexer
-      get() = this.lexer
-
-    internal val productions: MutableList<SyntaxTreeBuilder.Production>
-      get() = builder.productions.toMutableList()
-  }
-
 
   interface Hook<T> {
     @Contract("_,null,_->null")
     fun run(builder: SyntaxTreeBuilder, marker: SyntaxTreeBuilder.Marker?, param: T?): SyntaxTreeBuilder.Marker?
   }
 
-  internal class Hooks<T>(val hook: Hook<T?>?, param: T?, level: Int, next: Hooks<*>?) {
-    val param: T?
-    val level: Int
-    val next: Hooks<*>?
-
-    init {
-      this.param = param
-      this.level = level
-      this.next = next
-    }
+  internal class Hooks<T>(val hook: Hook<T?>?, val param: T?, val level: Int, val next: Hooks<*>?) {
 
     companion object {
       fun <E> concat(hook: Hook<E?>?, param: E?, level: Int, hooks: Hooks<*>?): Hooks<E?> {
@@ -965,11 +957,11 @@ open class SyntaxGeneratedParserRuntimeBase(
 
   internal class MyList<E>(initialCapacity: Int) : ArrayList<E>(initialCapacity) {
     fun setSize(fromIndex: Int) {
-      removeRange(fromIndex, size)
+      removeRange(fromIndex, this.size)
     }
 
     override fun add(e: E): Boolean {
-      val size = size
+      val size = this.size
       if (size >= MAX_VARIANTS_SIZE) {
         removeRange(MAX_VARIANTS_SIZE / 4, size - MAX_VARIANTS_SIZE / 4)
       }
@@ -990,13 +982,12 @@ open class SyntaxGeneratedParserRuntimeBase(
     internal var hooks: Hooks<*>? = null
 
     var extendsSets: Array<Set<SyntaxElementType>>? = null
-    var caseSensitive = false
     var braces: Array<BracePair>? = null
     var tokenAdvancer: Parser = TOKEN_ADVANCER
     var altMode: Boolean = false
 
-    internal val VARIANTS: LimitedPool<Variant> = LimitedPool<Variant>(VARIANTS_POOL_SIZE){ Variant() }
-    val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE){ Frame() }
+    internal val VARIANTS: LimitedPool<Variant> = LimitedPool<Variant>(VARIANTS_POOL_SIZE) { Variant() }
+    val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE) { Frame() }
 
     fun getExpected(position: Int, expected: Boolean): String {
       val sb = StringBuilder()
@@ -1068,17 +1059,10 @@ open class SyntaxGeneratedParserRuntimeBase(
       return false
     }
 
-    companion object {
-      fun get(builder: SyntaxTreeBuilder): ErrorState {
-        return (builder as Builder).state
-      }
-
-      fun initState(state: ErrorState, builder: SyntaxTreeBuilder, root: SyntaxElementType, util: SyntaxGeneratedParserRuntimeBase, extendsSets: Array<Set<SyntaxElementType>>?) {
-        state.extendsSets = extendsSets
-        state.completionState = if (builder is CompletionVariantProvider) builder.getCompletionState() else null
-        state.caseSensitive = util.isLanguageCaseSensitive
-        state.braces = util.braces.toTypedArray()
-      }
+    fun initState(builder: SyntaxTreeBuilder, util: SyntaxGeneratedParserRuntimeBase, extendsSets: Array<Set<SyntaxElementType>>?) {
+      this.extendsSets = extendsSets
+      this.completionState = if (builder is CompletionVariantProvider) builder.getCompletionState() else null
+      this.braces = util.braces?.toTypedArray()
     }
   }
 
@@ -1150,7 +1134,14 @@ open class SyntaxGeneratedParserRuntimeBase(
   data class BracePair(
     val myLeftBrace: SyntaxElementType? = null,
     val myRightBrace: SyntaxElementType? = null,
-    private val myStructural: Boolean = false)
+    private val myStructural: Boolean = false,
+  )
+
+  interface LanguageInfoProvider {
+    fun getLexer(): Lexer
+    fun isLanguageCaseSensitive(): Boolean
+    fun getBraces(): Collection<BracePair>?
+  }
 }
 
 private fun CharSequence.crop(length: Int, addEllipses: Boolean): CharSequence {
