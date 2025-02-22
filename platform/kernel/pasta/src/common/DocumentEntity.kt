@@ -40,6 +40,16 @@ class DocumentEntity(override val eid: EID) : Entity {
     val WritableAttr: Required<Boolean> = requiredValue("writable", Boolean.serializer())
     val EditLogAttr: Required<EditLogEntity> = requiredRef<EditLogEntity>("editLogEntity", RefFlags.UNIQUE)
     val SharedAnchorStorageAttr: Required<AnchorStorage> = requiredValue("sharedAnchorStorage", AnchorStorage.serializer())
+
+    fun fromText(uid: UID, text: CharSequence): DocumentEntity = requireChangeScope {
+      DocumentEntity.new {
+        it[Durable.Id] = uid
+        it[TextAttr] = Text.fromString(text.toString())
+        it[WritableAttr] = true
+        it[EditLogAttr] = createEmptyEditLog()
+        it[SharedAnchorStorageAttr] = AnchorStorage.empty()
+      }
+    }
   }
 
   val timestamp: Long

@@ -37,7 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.ad.v2.AdTheManagerV2;
+import com.intellij.openapi.editor.impl.ad.AdTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -342,7 +342,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   final EditorView myView;
   final @Nullable EditorView myAdView;
-  private static final boolean AD_V2 = Registry.is("ijpl.rhizome.ad.v2.enabled", false);
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
@@ -479,27 +478,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorModel = new EditorModelImpl(this);
 
-    if (AD_V2) {
-      DocumentEx adDocumentV2 = AdTheManagerV2.getInstance().getAdDocument(myDocument);
-      myAdEditorModel = adDocumentV2 == null ? null : new EditorModel() {
-        @Override public DocumentEx getDocument() { return adDocumentV2; }
-        @Override public MarkupModelEx getEditorMarkupModel() { return myMarkupModel; }
-        @Override public MarkupModelEx getDocumentMarkupModel() { return myEditorFilteringMarkupModel; }
-        @Override public EditorHighlighter getHighlighter() { return myHighlighter; }
-        @Override public InlayModelEx getInlayModel() { return myInlayModel; }
-        @Override public FoldingModelEx getFoldingModel() { return myFoldingModel; }
-        @Override public SoftWrapModelEx getSoftWrapModel() { return mySoftWrapModel; }
-        @Override public CaretModel getCaretModel() { return myCaretModel; }
-        @Override public SelectionModel getSelectionModel() { return mySelectionModel; }
-        @Override public ScrollingModel getScrollingModel() { return myScrollingModel; }
-        @Override public FocusModeModel getFocusModel() { return myFocusModeModel; }
-        @Override public boolean isAd() { return true; }
-        @Override public void dispose() { AdTheManagerV2.getInstance().releaseDocEntity(myDocument); }
-      };
-    }
-    else {
-      myAdEditorModel = project == null ? null : AdTheManager.getInstance(project).createEditorModel(this);
-    }
+    DocumentEx adDocument = AdTheManager.getInstance().getAdDocument(myDocument);
+    myAdEditorModel = adDocument == null ? null : new EditorModel() {
+      @Override public DocumentEx getDocument() { return adDocument; }
+      @Override public MarkupModelEx getEditorMarkupModel() { return myMarkupModel; }
+      @Override public MarkupModelEx getDocumentMarkupModel() { return myEditorFilteringMarkupModel; }
+      @Override public EditorHighlighter getHighlighter() { return myHighlighter; }
+      @Override public InlayModelEx getInlayModel() { return myInlayModel; }
+      @Override public FoldingModelEx getFoldingModel() { return myFoldingModel; }
+      @Override public SoftWrapModelEx getSoftWrapModel() { return mySoftWrapModel; }
+      @Override public CaretModel getCaretModel() { return myCaretModel; }
+      @Override public SelectionModel getSelectionModel() { return mySelectionModel; }
+      @Override public ScrollingModel getScrollingModel() { return myScrollingModel; }
+      @Override public FocusModeModel getFocusModel() { return myFocusModeModel; }
+      @Override public boolean isAd() { return true; }
+      @Override public void dispose() { AdTheManager.getInstance().releaseDocEntity(myDocument); }
+    };
 
     myView = new EditorView(this, myEditorModel);
     myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
@@ -532,8 +526,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     addListeners();
 
-    if (AD_V2 && myAdEditorModel != null) {
-      AdTheManagerV2.getInstance().bindEditor(this);
+    if (myAdEditorModel != null) {
+      AdTheManager.getInstance().bindEditor(this);
     }
   }
 
@@ -1188,9 +1182,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(myView);
       if (myAdView != null) {
         Disposer.dispose(myAdView);
-        if (AD_V2) {
-          Disposer.dispose(myAdEditorModel);
-        }
+        Disposer.dispose(myAdEditorModel);
       }
       clearCaretThread();
 

@@ -1,11 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad
 
-import andel.editor.RangeMarkerId
-import andel.intervals.Interval
-import andel.operation.Operation
-import andel.operation.captureOperation
-import andel.operation.rebase
 import andel.text.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.RangeMarker
@@ -14,65 +9,16 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditReadOnlyListener
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.editor.ex.RangeMarkerEx
+import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
-import com.intellij.util.concurrency.ThreadingAssertions
-import com.jetbrains.rhizomedb.ChangeScope
-import com.jetbrains.rhizomedb.DbContext
-import com.jetbrains.rhizomedb.asOf
-import com.jetbrains.rhizomedb.requireChangeScope
-import fleet.util.UID
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.beans.PropertyChangeListener
 import java.util.*
 
 @Experimental
-internal class AdDocument(
-  private val name: String,
-  private val entity: AdDocumentEntity,
-) : DocumentEx {
-
-  internal fun replaceString(startOffset: Int, endOffset: Int, chars: CharSequence, modStamp: Long) {
-    performTextOperation(modStamp) {
-      textView().replaceOperation(startOffset, endOffset, chars.toString())
-    }
-  }
-
-  internal fun queryRangeMarkers(startOffset: Long, endOffset: Long): Sequence<Interval<UID, Unit>> {
-    return documentRead {
-      entity.anchorStorage.intervals.query(startOffset, endOffset)
-    }
-  }
-
-  internal fun addRangeMarkers(rangeIds: List<RangeMarkerId>, ranges: List<andel.text.TextRange>) {
-    documentChange {
-      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.batchUpdate(
-        emptyList(),
-        LongArray(0),
-        rangeIds,
-        ranges, // TODO: greedy
-      )
-    }
-  }
-
-  internal fun addRangeMarker(rangeId: RangeMarkerId, startOffset: Long, endOffset: Long) {
-    documentChange {
-      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.addRangeMarker(
-        rangeId,
-        startOffset,
-        endOffset,
-        false, // TODO: greedy
-        false,
-      )
-    }
-  }
-
-  internal fun removeRangeMarker(rangeId: RangeMarkerId) {
-    documentChange {
-      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.removeRangeMarker(rangeId)
-    }
-  }
+internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
 
   // region TEXT
 
@@ -214,7 +160,7 @@ internal class AdDocument(
 
   override fun getModificationStamp(): Long {
     return documentRead {
-      entity.modStamp
+      entity.editLog.timestamp
     }
   }
 
@@ -361,50 +307,8 @@ internal class AdDocument(
     return text().view()
   }
 
-  private fun textMutableView(): MutableTextView {
-    return text().mutableView()
-  }
-
   private fun <T> documentRead(block: () -> T): T {
-    if (DbContext.threadLocal.get() != null) {
-      return block()
-    }
-
-    ThreadingAssertions.assertBackgroundThread() // DB always exists w/i EDT
-
-    // TODO: lastKnownOrPendingDb
-    return asOf(ThreadLocalRhizomeDB.lastKnownDb()) {
-      block()
-    }
-  }
-
-  private fun <T> documentChange(block: ChangeScope.() -> T): T {
-    return requireChangeScope {
-      block()
-    }
-  }
-
-  private fun performTextOperation(modStamp: Long, operationLambda: ChangeScope.() -> Operation) {
-    documentChange {
-      val operationId = UID.random()
-      val textBefore = entity.text
-      val doc = entity.asAndelDocument()
-      val versionedOperation = doc.captureOperation(operationLambda())
-      val operation = versionedOperation.rebase(doc)
-
-      val textAfter = textMutableView().apply { edit(operation) }.text()
-      val editLogAfter = entity.editLog.append(operationId, operation).trim()
-      val anchorStorageAfter = entity.anchorStorage.edit(textBefore, textAfter, operation)
-
-      entity[AdDocumentEntity.TextAttr] = textAfter
-      entity[AdDocumentEntity.ModStampAttr] = modStamp
-      entity[AdDocumentEntity.EditLogAttr] = editLogAfter
-      entity[AdDocumentEntity.AnchorStorageAttr] = anchorStorageAfter
-    }
-  }
-
-  override fun toString(): String {
-    return name
+    return block()
   }
 
   //endregion

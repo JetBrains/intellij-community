@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.ad.v2
+package com.intellij.openapi.editor.impl.ad
 
-import andel.intervals.AnchorStorage
-import andel.text.Text
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.isRhizomeAdEnabled
@@ -13,24 +11,16 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.ad.ThreadLocalRhizomeDB
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.pasta.common.DocumentEntity
-import com.intellij.platform.pasta.common.DocumentEntity.Companion.EditLogAttr
-import com.intellij.platform.pasta.common.DocumentEntity.Companion.SharedAnchorStorageAttr
-import com.intellij.platform.pasta.common.DocumentEntity.Companion.TextAttr
-import com.intellij.platform.pasta.common.DocumentEntity.Companion.WritableAttr
-import com.intellij.platform.pasta.common.createEmptyEditLog
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
-import fleet.kernel.Durable
 import fleet.kernel.change
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
@@ -49,11 +39,11 @@ private val AD_DISPATCHER by lazy {
 
 @Experimental
 @Service(Level.APP)
-class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
+class AdTheManager(private val coroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
-    fun getInstance(): AdTheManagerV2 = service()
+    fun getInstance(): AdTheManager = service()
   }
 
   private val docToHandle = IdentityHashMap<DocumentEx, DocumentEntityHandle>()
@@ -119,7 +109,7 @@ class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
       }?.entity()
       if (entity != null) {
         ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-        return AdDocumentV2(entity)
+        return AdDocument(entity)
       }
     }
     return null
@@ -157,13 +147,7 @@ class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
       createEntity = { entityId ->
         change {
           shared {
-            DocumentEntity.new {
-              it[Durable.Id] = entityId
-              it[TextAttr] = Text.fromString(text.toString())
-              it[WritableAttr] = true
-              it[EditLogAttr] = createEmptyEditLog()
-              it[SharedAnchorStorageAttr] = AnchorStorage.empty()
-            }
+            DocumentEntity.fromText(entityId, text.toString())
           }
         }
       },
@@ -203,7 +187,7 @@ class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
           entity
         }
         if (bindType != BindType.FRONTEND) {
-          val documentListener = AdDocumentSynchronizerV2(documentId, entityId, cs, entityDeferred)
+          val documentListener = AdDocumentSynchronizer(documentId, entityId, cs, entityDeferred)
           document.addDocumentListener(documentListener)
           @Suppress("OPT_IN_USAGE")
           cs.awaitCancellationAndInvoke {
@@ -240,7 +224,7 @@ class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled && Registry.`is`("ijpl.rhizome.ad.v2.enabled", false)
+    return isRhizomeAdEnabled
   }
 }
 
