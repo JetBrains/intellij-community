@@ -112,7 +112,9 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(it))
         } ?: PathUtil.toSystemDependentName(defaultWorkingDirectory())
 
-    protected open fun defaultWorkingDirectory() = project.basePath
+    protected open fun defaultWorkingDirectory(): String? {
+        return ProgramParametersUtil.getWorkingDirectoryByModule(this)
+    }
 
     override fun setVMParameters(value: String?) {
         options.vmParameters = value

@@ -376,7 +376,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
     String workingDirectory = options.getWorkingDirectory();
     if (workingDirectory == null) {
-      workingDirectory = PathUtil.toSystemDependentName(getProject().getBasePath());
+      workingDirectory = ProgramParametersUtil.getWorkingDirectoryByModule(this);
     }
     else {
       workingDirectory = FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(workingDirectory));

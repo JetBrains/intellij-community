@@ -2053,6 +2053,7 @@ f:com.intellij.execution.util.ProgramParametersUtil
 - s:expandPathAndMacros(java.lang.String,com.intellij.openapi.module.Module,com.intellij.openapi.project.Project):java.lang.String
 - s:getModule(com.intellij.execution.CommonProgramRunConfigurationParameters):com.intellij.openapi.module.Module
 - s:getWorkingDir(com.intellij.execution.CommonProgramRunConfigurationParameters,com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):java.lang.String
+- s:getWorkingDirectoryByModule(com.intellij.execution.configurations.ModuleBasedConfiguration):java.lang.String
 f:com.intellij.execution.util.ScriptFileUtil
 - s:copyToTempFile(java.lang.String):java.io.File
 - s:findScriptFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
