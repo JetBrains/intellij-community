@@ -59,6 +59,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
@@ -801,7 +802,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
           val module = configuration.module ?: return null
 
           val elementFile = element.containingFile as? PyFile ?: return null
-          val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
+          val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
           val context = QNameResolveContext(ModuleBasedContextAnchor(module),
                                             evalContext = TypeEvalContext.userInitiated(configuration.project,
                                                                                         null),
@@ -814,7 +815,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
           val virtualFile = element.virtualFile
 
           val workingDirectory: VirtualFile = when (element) {
-                                                is PyFile -> getDirectoryForFileToBeImportedFrom(element)?.virtualFile
+                                                is PyFile -> getDirectoryForFileToBeImportedFrom(element, configuration.module)?.virtualFile
                                                 is PsiDirectory -> virtualFile
                                                 else -> return null
                                               } ?: return null
@@ -828,9 +829,13 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
      * Inspect file relative imports, find farthest and return folder with imported file
      */
-    private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+    private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
       getExplicitlyConfiguredTestRoot(file)?.let {
         return PsiManager.getInstance(file.project).findDirectory(it)
+      }
+
+      module?.baseDir?.let {
+        return file.manager.findDirectory(it)
       }
 
       val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
