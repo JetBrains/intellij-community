@@ -163,7 +163,13 @@ internal class UrlCache(val cacheFile: Path) {
       .uri(URI.create(url))
       .GET()
     addAuthIfNeeded(repo, requestBuilder)
+
     val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
+    if (response.statusCode() != 200) {
+      val body = response.body().use { it.readAllBytes() }.decodeToString()
+      error("Cannot download $url: ${response.statusCode()}\n$body")
+    }
+
     response.body().use { inputStream ->
       val buffer = ByteArray(8192)
       var bytesRead: Int
