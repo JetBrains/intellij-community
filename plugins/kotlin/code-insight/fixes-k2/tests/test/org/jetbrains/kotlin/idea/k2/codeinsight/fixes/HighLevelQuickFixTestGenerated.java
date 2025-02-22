@@ -7839,6 +7839,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/invokeOnString.kt");
         }
 
+        @TestMetadata("missingParameterName.kt")
+        public void testMissingParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/missingParameterName.kt");
+        }
+
         @TestMetadata("mixedNamedAndPositionalArguments.kt")
         public void testMixedNamedAndPositionalArguments() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArguments.kt");
