@@ -32,6 +32,11 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                     ReportingExternalDependenciesResolver(it, DependencyResolutionService.getInstance(project))
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
+                    ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                        id = "main-kts"
+                        title = ".main.kts"
+                        templateName = "Kotlin Script MainKts"
+                    })
                 }
 
                 ScriptDefinition.FromConfigurations(
