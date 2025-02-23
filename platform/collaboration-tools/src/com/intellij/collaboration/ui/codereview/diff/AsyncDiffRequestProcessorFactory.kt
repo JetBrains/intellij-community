@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -248,4 +249,14 @@ object AsyncDiffRequestProcessorFactory {
       }
   }
   //endregion
+}
+
+private val CONSTANT_BLOCK_ID = CombinedPathBlockId(LocalFilePath("/", false), null)
+
+private fun <T> DiffRequestProcessor.putData(keyValue: KeyValuePair<T>) {
+  putContextUserData(keyValue.key, keyValue.value)
+}
+
+private fun DiffRequestProcessor.clearData(keyValue: KeyValuePair<*>) {
+  putContextUserData(keyValue.key, null)
 }

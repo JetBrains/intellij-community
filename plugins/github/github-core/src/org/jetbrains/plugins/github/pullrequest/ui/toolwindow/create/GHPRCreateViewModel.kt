@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
-import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
+import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
@@ -11,6 +10,7 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -61,7 +61,7 @@ internal interface GHPRCreateViewModel {
   val branches: StateFlow<BranchesState>
 
   val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?>
-  val diffVm: ComputedDiffViewModel
+  val diffVm: GHPRCreateDiffViewModel
 
   val titleText: StateFlow<String>
   val descriptionText: StateFlow<String>
@@ -245,22 +245,20 @@ internal class GHPRCreateViewModelImpl(
       }.collectScoped { vm ->
         vm?.handleSelection {
           if (it != null) {
-            diffVm.showChanges(it)
+            diffVm.showChanges(ListSelection.createAt(it.changes, it.selectedIdx))
           }
         }
       }
     }
 
     cs.launchNow {
-      diffVm.diffVm.collectScoped {
-        it.getOrNull()?.handleSelection { producer ->
-          val change = (producer as? CodeReviewDiffRequestProducer)?.change ?: return@handleSelection
-          val changesVm = changesVm.value?.getOrNull()
-          //TODO: handle different commit
-          val commitChangesVm = changesVm?.commitChangesVm?.value
-          val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
-          changeListVm?.selectChange(change)
-        }
+      diffVm.handleSelection {
+        val change = it?.selectedItem ?: return@handleSelection
+        val changesVm = changesVm.value?.getOrNull()
+        //TODO: handle different commit
+        val commitChangesVm = changesVm?.commitChangesVm?.value
+        val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
+        changeListVm?.selectChange(change)
       }
     }
   }

@@ -6,13 +6,12 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
+import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -147,12 +146,10 @@ internal class GHPRViewModelContainerImpl(
     }
 
     cs.launchNow {
-      diffVm.collectScoped {
-        it.getOrNull()?.handleSelection { producer ->
-          val change = producer?.asSafely<CodeReviewDiffRequestProducer>()?.change
-          if (lazyInfoVm.isInitialized() && change != null) {
-            lazyInfoVm.value.detailsVm.value.getOrNull()?.changesVm?.selectChange(change)
-          }
+      handleSelection {
+        val change = it?.selectedItem ?: return@handleSelection
+        if (lazyInfoVm.isInitialized()) {
+          lazyInfoVm.value.detailsVm.value.getOrNull()?.changesVm?.selectChange(change)
         }
       }
     }

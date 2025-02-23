@@ -871,24 +871,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
 - f:createCombinedIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
-*f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:createCombinedDiffModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- f:createDiffRequestProcessor(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
-*f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
-- com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
-- com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-- <init>(com.intellij.openapi.project.Project,com.intellij.collaboration.util.RefComparisonChange,com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer,kotlin.jvm.functions.Function1):V
-- b:<init>(com.intellij.openapi.project.Project,com.intellij.collaboration.util.RefComparisonChange,com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- equals(java.lang.Object):Z
-- f:getChange():com.intellij.collaboration.util.RefComparisonChange
-- getFilePath():com.intellij.openapi.vcs.FilePath
-- getFileStatus():com.intellij.openapi.vcs.FileStatus
-- getName():java.lang.String
-- getScrollRequests():kotlinx.coroutines.flow.Flow
-- hashCode():I
-- process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-- f:scrollTo(kotlin.Pair):V
 *a:com.intellij.collaboration.ui.codereview.diff.CreateDiffCommentAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -920,9 +902,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *c:com.intellij.collaboration.ui.codereview.diff.EditorRangesController
 - <init>(com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory,com.intellij.openapi.editor.ex.EditorEx):V
 - pf:markCommentableLines(com.intellij.diff.util.LineRange):V
-*:com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
-- com.intellij.diff.chains.DiffRequestProducer
-- a:getScrollRequests():kotlinx.coroutines.flow.Flow
 *:com.intellij.collaboration.ui.codereview.diff.model.AsyncDiffViewModel
 - a:getRequest():kotlinx.coroutines.flow.StateFlow
 - a:reloadRequest():V
@@ -934,29 +913,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel,java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
 *:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel$State
 - a:getSelectedChanges():com.intellij.openapi.ListSelection
-*f:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
-- <init>(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
-- *:<init>(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
-- f:getDiffVm():kotlinx.coroutines.flow.Flow
-- f:showChanges(com.intellij.collaboration.util.ChangesSelection,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 - a:getDiscussionsViewOption():kotlinx.coroutines.flow.StateFlow
 - a:setDiscussionsViewOption(com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption):V
-*:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
-- a:getDiffVm():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModelKt
-- sf:getSelected(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-*f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
-- f:getProducers():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- f:component1():java.util.List
-- f:component2():I
-- f:copy(java.util.List,I):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- bs:copy$default(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State,java.util.List,I,I,java.lang.Object):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- equals(java.lang.Object):Z
-- f:getProducers():java.util.List
-- f:getSelectedIdx():I
-- hashCode():I
 *:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
 - *sf:Companion:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion
 *f:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion

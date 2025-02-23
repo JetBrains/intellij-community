@@ -2,24 +2,22 @@
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.*
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.changes.createVcsChange
-import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -32,7 +30,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
-interface GHPRDiffViewModel : ComputedDiffViewModel, CodeReviewDiscussionsViewModel {
+@ApiStatus.Internal
+interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeViewModel>, CodeReviewDiscussionsViewModel {
   val reviewVm: GHPRReviewViewModel
   val isLoadingReviewData: StateFlow<Boolean>
 
@@ -76,13 +75,13 @@ internal class GHPRDiffViewModelImpl(
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
   private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState
-    .map { RefComparisonChangesSorter.Grouping(project, it) }
-  private val helper =
-    CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
-      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
-                               ?: error("Could not create diff producer from $change")
-      CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
+    .map { groupings ->
+      { changes: List<RefComparisonChange> -> RefComparisonChangesSorter.Grouping(project, groupings).sort(changes) }
     }
+
+  private val delegate = PreLoadingCodeReviewAsyncDiffViewModelDelegate.create(changesFetchFlow, changesSorter) { allChanges, change ->
+    GHPRDiffChangeViewModelImpl(project, this, allChanges, change) as GHPRDiffChangeViewModel
+  }
 
   private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffReviewViewModelImpl?>>()
 
@@ -103,9 +102,6 @@ internal class GHPRDiffViewModelImpl(
     }
   }
 
-  override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =
-    helper.diffVm.stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
-
   override fun getViewModelFor(change: RefComparisonChange): StateFlow<GHPRDiffReviewViewModelImpl?> =
     changeVmsMap.getOrPut(change) {
       changesFetchFlow
@@ -115,14 +111,31 @@ internal class GHPRDiffViewModelImpl(
         .stateIn(cs, SharingStarted.Lazily, null)
     }
 
-  override suspend fun showDiffFor(changes: ChangesSelection) {
-    helper.showChanges(changes)
-  }
-
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
     _discussionsViewOption.value = viewOption
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =
     GHPRDiffReviewViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
+
+  suspend fun handleSelection(listener: (ListSelection<RefComparisonChange>?) -> Unit): Nothing {
+    delegate.handleSelection(listener)
+  }
+
+  override suspend fun showDiffFor(changes: ChangesSelection) {
+    val scrollLocation = if (changes is ChangesSelection.Precise) changes.location else null
+    delegate.showChanges(ListSelection.createAt(changes.changes, changes.selectedIdx), scrollLocation?.let(DiffViewerScrollRequest::toLine))
+  }
+
+  override val changes: StateFlow<ComputedResult<CodeReviewDiffProcessorViewModel.State<GHPRDiffChangeViewModel>>?> =
+    delegate.changes.stateIn(cs, SharingStarted.Eagerly, null)
+
+  override fun showChange(change: GHPRDiffChangeViewModel, scrollRequest: DiffViewerScrollRequest?) {
+    delegate.showChange(change.change, scrollRequest)
+  }
+
+  override fun showChange(changeIdx: Int, scrollRequest: DiffViewerScrollRequest?) {
+    val changeVm = changes.value?.result?.getOrNull()?.selectedChanges?.list?.getOrNull(changeIdx) ?: return
+    showChange(changeVm, scrollRequest)
+  }
 }
