@@ -2591,6 +2591,7 @@ c:com.intellij.openapi.vfs.VfsUtilCore
 - s:inputStreamSkippingBOM(java.io.InputStream,com.intellij.openapi.vfs.VirtualFile):java.io.InputStream
 - s:isAncestor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:isAncestor(java.io.File,java.io.File,Z):Z
+- s:isAncestorOrSelf(java.lang.String,com.intellij.openapi.vfs.VirtualFile):Z
 - s:isBrokenLink(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isEqualOrAncestor(java.lang.String,java.lang.String):Z
 - s:isInvalidLink(com.intellij.openapi.vfs.VirtualFile):Z
@@ -2604,6 +2605,7 @@ c:com.intellij.openapi.vfs.VfsUtilCore
 - s:loadText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:loadText(com.intellij.openapi.vfs.VirtualFile,I):java.lang.String
 - s:outputStreamAddingBOM(java.io.OutputStream,com.intellij.openapi.vfs.VirtualFile):java.io.OutputStream
+- s:pathEqualsTo(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 - s:pathToUrl(java.lang.String):java.lang.String
 - s:processFilesRecursively(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):Z
 - s:saveText(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
@@ -2853,7 +2855,7 @@ c:com.intellij.openapi.vfs.VirtualFileVisitor$Option
 f:com.intellij.openapi.vfs.VirtualFileVisitor$Result
 - f:skipChildren:Z
 - f:skipToParent:com.intellij.openapi.vfs.VirtualFile
-pc:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
+c:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable):V
 com.intellij.openapi.vfs.VirtualFileWithId

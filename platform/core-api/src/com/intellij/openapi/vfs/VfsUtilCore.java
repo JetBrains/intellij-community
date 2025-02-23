@@ -820,7 +820,6 @@ public class VfsUtilCore {
    * @return true if the {@code file} path is equal to the {@code path},
    * according to the file's parent directories case sensitivity.
    */
-  @ApiStatus.Experimental
   public static boolean pathEqualsTo(@NotNull VirtualFile file, @NotNull @SystemIndependent String path) {
     path = FileUtil.toCanonicalPath(path);
     int li = path.length();
@@ -853,7 +852,6 @@ public class VfsUtilCore {
    * @return true if the {@code ancestorPath} is equal one of {@code file}'s parents.
    * Corresponding directories case sensitivities are taken into account automatically.
    */
-  @ApiStatus.Experimental
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
     if (ancestorPath.isEmpty()) {

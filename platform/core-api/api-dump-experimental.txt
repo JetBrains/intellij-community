@@ -270,9 +270,6 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
-c:com.intellij.openapi.vfs.VfsUtilCore
-- *s:isAncestorOrSelf(java.lang.String,com.intellij.openapi.vfs.VirtualFile):Z
-- *s:pathEqualsTo(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 a:com.intellij.openapi.vfs.VirtualFile
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.util.ModificationTracker
