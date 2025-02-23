@@ -31,9 +31,6 @@ object FleetFromSourcesPaths {
     intellijProjectRoot.resolve("fleet")
   }
 
-  @Deprecated(message = "use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
-  val fontsDirectory: Path = Path.of("/frontend/fonts")
-
   // TODO: remove the usages of this property and delete it.
   // Ideally `skiko.library.path` should always be set by the tooling or distribution argfile, making `skikoLibraryDirectory` property redundant.
   // Currently, this is needed for GalleryApp and some isolated UI tests.
@@ -59,15 +56,6 @@ object FleetFromSourcesPaths {
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.plugins.keymap.test", "fleet.app.fleet.tests"])
   val bundledKeymapsDirectory: Path by lazy {
     projectRoot.resolve("plugins/keymap/frontend/resources/fleet/keymap")
-  }
-
-  //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.noria.ui.test"])
-  object Fonts {
-    @Deprecated("use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
-    val jbMonoTTF: String = "/frontend/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf"
-
-    @Deprecated("use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
-    val notoColorEmoji: String = "/frontend/fonts/NotoColorEmoji/NotoColorEmoji.ttf"
   }
 
   private fun findRepositoryRoot(): Path? {
