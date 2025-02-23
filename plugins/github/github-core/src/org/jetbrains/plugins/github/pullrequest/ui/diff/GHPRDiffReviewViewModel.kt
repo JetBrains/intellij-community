@@ -8,8 +8,6 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
-import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
@@ -31,8 +29,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosi
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
 
-interface GHPRDiffChangeViewModel {
+interface GHPRDiffReviewViewModel {
   val commentableRanges: List<Range>
   val canComment: Boolean
 
@@ -48,7 +47,7 @@ interface GHPRDiffChangeViewModel {
   fun markViewed()
 }
 
-internal class GHPRDiffChangeViewModelImpl(
+internal class GHPRDiffReviewViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
@@ -57,7 +56,7 @@ internal class GHPRDiffChangeViewModelImpl(
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
-) : GHPRDiffChangeViewModel {
+) : GHPRDiffReviewViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
@@ -132,6 +131,3 @@ internal class GHPRDiffChangeViewModelImpl(
     }
   }
 }
-
-private val TextFilePatch.ranges: List<Range>
-  get() = hunks.map(PatchHunkUtil::getRange)

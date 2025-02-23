@@ -80,7 +80,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 
 private class DiffEditorModel(
   cs: CoroutineScope,
-  private val diffVm: GHPRDiffChangeViewModel,
+  private val diffVm: GHPRDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
 ) : CodeReviewEditorModel<GHPREditorMappedComponentModel>,

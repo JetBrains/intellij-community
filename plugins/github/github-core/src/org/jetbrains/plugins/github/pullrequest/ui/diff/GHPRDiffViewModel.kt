@@ -39,7 +39,7 @@ interface GHPRDiffViewModel : ComputedDiffViewModel, CodeReviewDiscussionsViewMo
   val iconProvider: GHAvatarIconsProvider
   val currentUser: GHUser
 
-  fun getViewModelFor(change: RefComparisonChange): Flow<GHPRDiffChangeViewModel?>
+  fun getViewModelFor(change: RefComparisonChange): Flow<GHPRDiffReviewViewModel?>
 
   fun reloadReview()
 
@@ -84,7 +84,7 @@ internal class GHPRDiffViewModelImpl(
       CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
     }
 
-  private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffChangeViewModelImpl?>>()
+  private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffReviewViewModelImpl?>>()
 
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
     reviewDataProvider.threadsComputationFlow.stateInNow(cs, ComputedResult.loading())
@@ -106,7 +106,7 @@ internal class GHPRDiffViewModelImpl(
   override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =
     helper.diffVm.stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
-  override fun getViewModelFor(change: RefComparisonChange): StateFlow<GHPRDiffChangeViewModelImpl?> =
+  override fun getViewModelFor(change: RefComparisonChange): StateFlow<GHPRDiffReviewViewModelImpl?> =
     changeVmsMap.getOrPut(change) {
       changesFetchFlow
         .mapNotNull { it.getOrNull() }
@@ -124,5 +124,5 @@ internal class GHPRDiffViewModelImpl(
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =
-    GHPRDiffChangeViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
+    GHPRDiffReviewViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
 }
