@@ -7,20 +7,32 @@ import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FocusModeModel
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizer
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.pasta.common.DocumentComponentEntity
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
+import com.jetbrains.rhizomedb.entities
 import fleet.kernel.change
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
@@ -34,12 +46,14 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 private val AD_DISPATCHER by lazy {
-  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER_V2", 1).asCoroutineDispatcher()
+  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
 }
+
+private val MARKUP_SYNC_KEY: Key<AdMarkupSynchronizer> = Key.create("AD_MARKUP_SYNC_KEY")
 
 @Experimental
 @Service(Level.APP)
-class AdTheManager(private val coroutineScope: CoroutineScope) {
+class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
@@ -86,30 +100,59 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  fun releaseDocEntity(document: DocumentEx) {
-    if (isEnabled()) {
-      synchronized(docToHandle) {
-        val handle = docToHandle[document]
-        checkNotNull(handle) { "doc entity not found" }
-        val nextHandle = handle.decRef()
-        if (nextHandle != null) {
-          docToHandle[document] = nextHandle
-        } else {
-          handle.dispose()
-          docToHandle.remove(document)
+  // TODO: Only monolith mode so far. EditorId needed for split mode
+  fun bindMarkupEntity(project: Project?, document: Document) {
+    if (isEnabled() && isSharedMarkupEnabled() && project != null && document is DocumentEx) {
+      val documentMarkup = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
+      if (documentMarkup.getUserData(MARKUP_SYNC_KEY) == null) {
+        val handle = synchronized(docToHandle) {
+          docToHandle[document]
+        }!!
+        val cs = appCoroutineScope.childScope("AdMarkupSynchronizer", AD_DISPATCHER)
+        val async = cs.async {
+          val docEntity = handle.entityDeferred.await()
+          change {
+            shared {
+              AdMarkupEntity.empty(docEntity)
+            }
+          }
         }
+        val markupEntity = runBlocking { async.await() }
+        val markupSynchronizer = AdMarkupSynchronizer(markupEntity, documentMarkup, cs)
+
+        // TODO: dispose with editor, remove MARKUP_SYNC_KEY
+        val disposable = Disposer.newDisposable(project)
+
+        document.addDocumentListener(markupSynchronizer, disposable)
+        documentMarkup.addMarkupModelListener(disposable, markupSynchronizer)
       }
     }
   }
 
-  fun getAdDocument(document: DocumentEx): DocumentEx? {
+  fun getEditorModel(editor: EditorImpl): EditorModel? {
     if (isEnabled()) {
-      val entity = synchronized(docToHandle) {
+      val document = editor.document
+      val docEntity = synchronized(docToHandle) {
         docToHandle[document]
       }?.entity()
-      if (entity != null) {
+      if (docEntity != null) {
         ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-        return AdDocument(entity)
+        val adMarkupModel = adMarkupModel(docEntity)
+        return object : EditorModel {
+          override fun getDocument(): DocumentEx = AdDocument(docEntity)
+          override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
+          override fun getDocumentMarkupModel(): MarkupModelEx = adMarkupModel ?: editor.filteredDocumentMarkupModel
+          override fun getHighlighter(): EditorHighlighter = editor.highlighter
+          override fun getInlayModel(): InlayModelEx = editor.inlayModel
+          override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
+          override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
+          override fun getCaretModel(): CaretModel = editor.caretModel
+          override fun getSelectionModel(): SelectionModel = editor.selectionModel
+          override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
+          override fun getFocusModel(): FocusModeModel = editor.focusModeModel
+          override fun isAd(): Boolean = true
+          override fun dispose() = releaseDocEntity(document)
+        }
       }
     }
     return null
@@ -117,7 +160,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
 
   fun bindEditor(editor: Editor) {
     if (isEnabled()) {
-      val cs = coroutineScope.childScope("editor repaint on doc entity change")
+      val cs = appCoroutineScope.childScope("editor repaint on doc entity change")
       val disposable = Disposable { cs.cancel() }
       EditorUtil.disposeWithEditor(editor, disposable)
       cs.launch(AD_DISPATCHER) {
@@ -179,7 +222,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
       } else {
         val documentId = lazyDocumentId(document)
         val entityId = hackyEntityId(documentId)
-        val cs = coroutineScope.childScope("docEntityScope($entityId)", AD_DISPATCHER)
+        val cs = appCoroutineScope.childScope("docEntityScope($entityId)", AD_DISPATCHER)
         val entityRef = AtomicReference<DocumentEntity>()
         val entityDeferred = cs.async {
           val entity = createEntity(entityId)
@@ -209,6 +252,22 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
     }
   }
 
+  private fun releaseDocEntity(document: DocumentEx) {
+    if (isEnabled()) {
+      synchronized(docToHandle) {
+        val handle = docToHandle[document]
+        checkNotNull(handle) { "doc entity not found" }
+        val nextHandle = handle.decRef()
+        if (nextHandle != null) {
+          docToHandle[document] = nextHandle
+        } else {
+          handle.dispose()
+          docToHandle.remove(document)
+        }
+      }
+    }
+  }
+
   private fun removeLocalDocEntity(document: DocumentEx) {
     val handle = docToHandle[document]
     if (handle != null && handle.isLocal()) {
@@ -226,6 +285,20 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
   private fun isEnabled(): Boolean {
     return isRhizomeAdEnabled
   }
+
+  private fun adMarkupModel(docEntity: DocumentEntity): AdMarkupModel? {
+    if (isSharedMarkupEnabled()) {
+      val markupEntity = entities(DocumentComponentEntity.DocumentAttr, docEntity)
+        .filterIsInstance<AdMarkupEntity>()
+        .single()
+      return AdMarkupModel(markupEntity)
+    }
+    return null
+  }
+
+  private fun isSharedMarkupEnabled(): Boolean {
+    return Registry.`is`("ijpl.rhizome.ad.markup.enabled", false)
+  }
 }
 
 private enum class BindType {
@@ -238,7 +311,7 @@ private data class DocumentEntityHandle(
   private val bindType: BindType,
   private val refCount: Int,
   private val coroutineScope: CoroutineScope,
-  private val entityDeferred: Deferred<DocumentEntity>,
+  val entityDeferred: Deferred<DocumentEntity>,
   private val entityRef: AtomicReference<DocumentEntity>,
 ) {
 

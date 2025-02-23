@@ -477,23 +477,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myEditorModel = new EditorModelImpl(this);
-
-    DocumentEx adDocument = AdTheManager.getInstance().getAdDocument(myDocument);
-    myAdEditorModel = adDocument == null ? null : new EditorModel() {
-      @Override public DocumentEx getDocument() { return adDocument; }
-      @Override public MarkupModelEx getEditorMarkupModel() { return myMarkupModel; }
-      @Override public MarkupModelEx getDocumentMarkupModel() { return myEditorFilteringMarkupModel; }
-      @Override public EditorHighlighter getHighlighter() { return myHighlighter; }
-      @Override public InlayModelEx getInlayModel() { return myInlayModel; }
-      @Override public FoldingModelEx getFoldingModel() { return myFoldingModel; }
-      @Override public SoftWrapModelEx getSoftWrapModel() { return mySoftWrapModel; }
-      @Override public CaretModel getCaretModel() { return myCaretModel; }
-      @Override public SelectionModel getSelectionModel() { return mySelectionModel; }
-      @Override public ScrollingModel getScrollingModel() { return myScrollingModel; }
-      @Override public FocusModeModel getFocusModel() { return myFocusModeModel; }
-      @Override public boolean isAd() { return true; }
-      @Override public void dispose() { AdTheManager.getInstance().releaseDocEntity(myDocument); }
-    };
+    myAdEditorModel = AdTheManager.getInstance().getEditorModel(this);
 
     myView = new EditorView(this, myEditorModel);
     myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);

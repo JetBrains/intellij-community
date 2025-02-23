@@ -2,6 +2,7 @@
 package com.intellij.platform.editor
 
 import com.intellij.openapi.application.isRhizomeAdEnabled
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.pasta.common.EditLogEntity
@@ -15,6 +16,7 @@ internal class EditorEntityTypeProvider : EntityTypeProvider {
       EditorEntity,
       DocumentEntity,
       EditLogEntity,
+      AdMarkupEntity,
     )
   }
 }

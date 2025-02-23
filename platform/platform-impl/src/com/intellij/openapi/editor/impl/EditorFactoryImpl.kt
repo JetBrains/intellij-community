@@ -210,6 +210,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
     AdTheManager.getInstance().bindLocalDocEntity(document)
+    AdTheManager.getInstance().bindMarkupEntity(project, document)
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
     editor.putEditorId()
     // must be _before_ event firing

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.platform.pasta.common.DocumentEntity
 import fleet.kernel.awaitCommitted
 import fleet.kernel.change
+import fleet.kernel.shared
 import fleet.util.UID
 import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope
@@ -30,19 +31,16 @@ internal data class AdDocumentSynchronizer(
     val entityChange = coroutineScope.async {
       val operation = operation(event)
       val entity = entityDeferred.await()
-      change { // it is a shared change
-        entity.mutate(this, OpenMap.empty()) {
-          edit(operation)
+      change {
+        shared { // shared to mutate shared document components (e.g., AdMarkupModel)
+          entity.mutate(this, OpenMap.empty()) {
+            edit(operation)
+          }
         }
       }
       awaitCommitted()
     }
-    // TODO: pumping events in runWithModalProgressBlocking ruins the models
-    //@Suppress("HardCodedStringLiteral")
-    //runWithModalProgressBlocking(
-    //  ModalTaskOwner.guess(),
-    //  "Shared document entity synchronization $entityId",
-    //) { entityChange.await() }
+    // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
     runBlocking { entityChange.await() }
     ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
   }
