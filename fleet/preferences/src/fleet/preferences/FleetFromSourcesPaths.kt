@@ -34,11 +34,6 @@ object FleetFromSourcesPaths {
   @Deprecated(message = "use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
   val fontsDirectory: Path = Path.of("/frontend/fonts")
 
-  @Deprecated(message = "Delete on Dock API breaking", level = DeprecationLevel.ERROR)
-  val nemmetPath: Path by lazy {
-    projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
-  }
-
   // TODO: remove the usages of this property and delete it.
   // Ideally `skiko.library.path` should always be set by the tooling or distribution argfile, making `skikoLibraryDirectory` property redundant.
   // Currently, this is needed for GalleryApp and some isolated UI tests.
