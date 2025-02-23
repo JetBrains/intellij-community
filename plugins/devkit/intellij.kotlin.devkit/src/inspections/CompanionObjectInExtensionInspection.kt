@@ -5,9 +5,11 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
@@ -28,7 +30,7 @@ internal class CompanionObjectInExtensionInspection : LocalInspectionTool() {
         val ktLightClass = companionObject.getStrictParentOfType<KtClass>()?.toLightClass() ?: return
 
         if (!ExtensionUtil.isExtensionPointImplementationCandidate(ktLightClass)) return
-        if (!ExtensionUtil.isInstantiatedExtension(ktLightClass) { ExtensionUtil.hasServiceBeanFqn(it) }) return
+        if (!isExtension(ktLightClass) && !isAnAction(ktLightClass)) return
 
         val anchor = companionObject.modifierList?.getModifier(KtTokens.COMPANION_KEYWORD) ?: return
 
@@ -53,6 +55,14 @@ internal class CompanionObjectInExtensionInspection : LocalInspectionTool() {
             )
           }
         }
+      }
+
+      private fun isAnAction(ktLightClass: KtLightClass): Boolean {
+        return InheritanceUtil.isInheritor(ktLightClass, "com.intellij.openapi.actionSystem.AnAction")
+      }
+
+      private fun isExtension(ktLightClass: KtLightClass): Boolean {
+        return ExtensionUtil.isInstantiatedExtension(ktLightClass) { ExtensionUtil.hasServiceBeanFqn(it) }
       }
     }
   }
