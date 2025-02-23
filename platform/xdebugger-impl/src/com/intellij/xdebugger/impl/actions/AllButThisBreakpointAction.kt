@@ -12,60 +12,60 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointManager
 
 abstract class AllButThisBreakpointAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-      if (!Registry.`is`("debugger.remove.disable.actions", false)) {
-        e.presentation.isEnabledAndVisible = false
-        return
+  override fun update(e: AnActionEvent) {
+    if (!Registry.`is`("debugger.remove.disable.actions", false)) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val project = e.project ?: return
+    val (currentFile, caretLines) = getCurrentLines(e) ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    val breakpoints = breakpointManager.allBreakpoints
+
+    e.presentation.isEnabledAndVisible = breakpoints.any { it.matches(currentFile, caretLines) }
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    val (currentFile, caretLines) = getCurrentLines(e) ?: return
+
+    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    val breakpoints = breakpointManager.allBreakpoints
+
+    for (breakpoint in breakpoints) {
+      if (!breakpoint.matches(currentFile, caretLines)) {
+        performAction(breakpointManager, breakpoint)
       }
-
-        val project = e.project ?: return
-        val (currentFile, caretLines) = getCurrentLines(e) ?: run {
-            e.presentation.isEnabledAndVisible = false
-            return
-        }
-
-        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-        val breakpoints = breakpointManager.allBreakpoints
-
-        e.presentation.isEnabledAndVisible = breakpoints.any { it.matches(currentFile, caretLines) }
     }
+  }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val (currentFile, caretLines) = getCurrentLines(e) ?: return
+  protected abstract fun performAction(breakpointManager: XBreakpointManager, breakpoint: XBreakpoint<*>)
 
-        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-        val breakpoints = breakpointManager.allBreakpoints
+  private fun getCurrentLines(e: AnActionEvent): Pair<VirtualFile, List<Int>>? {
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
+    val caretLines = e.getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)?.let(::listOf)
+                     ?: editor.caretModel.allCarets.map { it.logicalPosition.line }
+    val currentFile = editor.virtualFile
 
-        for (breakpoint in breakpoints) {
-            if (!breakpoint.matches(currentFile, caretLines)) {
-                performAction(breakpointManager, breakpoint)
-            }
-        }
-    }
+    if (caretLines.isEmpty()) return null
 
-    protected abstract fun performAction(breakpointManager: XBreakpointManager, breakpoint: XBreakpoint<*>)
+    return currentFile to caretLines
+  }
 
-    private fun getCurrentLines(e: AnActionEvent): Pair<VirtualFile, List<Int>>? {
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
-        val caretLines = e.getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)?.let(::listOf)
-            ?: editor.caretModel.allCarets.map { it.logicalPosition.line }
-        val currentFile = editor.virtualFile
+  private fun XBreakpoint<*>.matches(currentFile: VirtualFile, caretLines: List<Int>): Boolean {
+    val sourcePosition = this.sourcePosition
+    val breakpointFile = sourcePosition?.file
+    val breakpointLine = sourcePosition?.line
 
-        if (caretLines.isEmpty()) return null
+    return breakpointFile == currentFile && caretLines.contains(breakpointLine)
+  }
 
-        return currentFile to caretLines
-    }
-
-    private fun XBreakpoint<*>.matches(currentFile: VirtualFile, caretLines: List<Int>): Boolean {
-        val sourcePosition = this.sourcePosition
-        val breakpointFile = sourcePosition?.file
-        val breakpointLine = sourcePosition?.line
-
-        return breakpointFile == currentFile && caretLines.contains(breakpointLine)
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.BGT
-    }
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
