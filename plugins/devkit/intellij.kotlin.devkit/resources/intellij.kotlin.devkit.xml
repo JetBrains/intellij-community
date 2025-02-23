@@ -47,6 +47,22 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection"
                      key="inspection.use.platform.process.await.exit.display.name"/>
 
+    <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.driver.PublicTestExtensionFunctionInspection"
+                     key="inspection.public.extension.function.in.test.display.name"/>
+
+    <localInspection language="JVM" shortName="ObsoleteDispatchersEdt"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.DispatchersEdtInspection"
+                     key="inspection.dispatchers.edt.display.name"/>
+
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
 
     <annotator language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.compose.ComposeColorAnnotator"/>
@@ -74,9 +90,6 @@
     <lightServiceMustBeFinalErrorMessageProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
-      language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
     <uElementAsPsiCheckProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>

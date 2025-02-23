@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.grazie.grammar.assertIsEmpty
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.utils.io.deleteRecursively
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Files

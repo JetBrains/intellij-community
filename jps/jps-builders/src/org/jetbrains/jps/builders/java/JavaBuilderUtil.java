@@ -19,6 +19,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.dependencies.LibraryDef;
+import org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -57,11 +59,17 @@ public final class JavaBuilderUtil {
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   private static final Key<BackendCallbackToGraphDeltaAdapter> GRAPH_DELTA_CALLBACK_KEY = Key.create("_graph_delta_");
   private static final Key<Set<NodeSource>> ALL_AFFECTED_NODE_SOURCES_KEY = Key.create("_all_compiled_node_sources_");
+  private static final GlobalContextKey<LibraryDependenciesUpdater> LIBRARIES_STATE_UPDATER_KEY = GlobalContextKey.create("_libraries_state_updater_");
 
   private static final String MODULE_INFO_FILE = "module-info.java";
 
-  public static  boolean isDepGraphEnabled() {
+  public static boolean isDepGraphEnabled() {
     return Boolean.parseBoolean(System.getProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "false"));
+  }
+  
+  @ApiStatus.Internal
+  public static boolean isTrackLibraryDependenciesEnabled() {
+    return isDepGraphEnabled() && Boolean.parseBoolean(System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED, "false"));
   }
 
   public static void registerFileToCompile(CompileContext context, File file) {
@@ -124,32 +132,20 @@ public final class JavaBuilderUtil {
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if(isDepGraphEnabled() && graphConfig != null) {
       Delta delta = null;
-      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-
-      NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
       Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
-
-      if (callback != null) {
-        // Important: in case of errors some sources sent to recompilation might not have corresponding output classes either because a source has compilation errors
-        // or because compiler stopped compilation and has not managed to compile some sources.
-        // In this case use empty set of delta's "base sources" for dependency calculation, so that only actually recompiled sources will take part in dependency analysis and affected files calculation.
-        // Otherwise, some classes that correspond to non-compiled sources might be considered as "deleted" which might result in a large set of affected files,
-        // so the next compilation might compile much more files than is actually needed.
-        Set<File> deltaBaseSources = Utils.errorsDetected(context)? Collections.emptySet() : inputFiles;
+      Set<String> deletedFiles = getRemovedPaths(chunk, dirtyFilesHolder);
+      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
+      if (callback != null || !inputFiles.isEmpty() || !deletedFiles.isEmpty()) {
         delta = graphConfig.getGraph().createDelta(
-          Iterators.map(deltaBaseSources, pathMapper::toNodeSource),
-          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource),
+          Iterators.map(inputFiles, graphConfig.getPathMapper()::toNodeSource),
+          Iterators.map(deletedFiles, graphConfig.getPathMapper()::toNodeSource),
           false
         );
-        for (var nodeData : callback.getNodes()) {
-          delta.associate(nodeData.getFirst(), nodeData.getSecond());
+        if (callback != null) {
+          for (var nodeData : callback.getNodes()) {
+            delta.associate(nodeData.getFirst(), nodeData.getSecond());
+          }
         }
-        // todo: consider using delta for marking additional sources for compilation
-        //for (NodeSource src : delta.getBaseSources()) {
-        //  if (!inputFiles.contains(src.getPath())) {
-        //    FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, src.getPath().toFile());
-        //  }
-        //}
       }
 
       for (Key<?> key : List.of(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
@@ -204,6 +200,17 @@ public final class JavaBuilderUtil {
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if (isDepGraphEnabled() && graphConfig != null) {
       NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+
+      boolean incremental = LIBRARIES_STATE_UPDATER_KEY.getOrCreate(context, LibraryDependenciesUpdater::new).update(context, chunk);
+      if (!incremental) {
+        // for now conservative approach; no reaction
+        LOG.warn("Libraries update for " + chunk.getPresentableShortName() + " returned non-incremental exitcode");
+      }
+
+      if (context.isCanceled()) {
+        return;
+      }
+
       Set<NodeSource> toCompile = new HashSet<>();
       dfh.processDirtyFiles((target, file, root) -> toCompile.add(mapper.toNodeSource(file)));
       if (!toCompile.isEmpty() || hasRemovedPaths(chunk, dfh)) {
@@ -416,9 +423,9 @@ public final class JavaBuilderUtil {
    * @return true if additional compilation pass is required, false otherwise
    */
   private static boolean updateDependencyGraph(CompileContext context, Delta delta, ModuleChunk chunk, final CompilationRound markDirtyRound, @Nullable FileFilter skipMarkDirtyFilter) throws IOException {
-    boolean performIntegrate = true;
-    boolean additionalPassRequired = false;
     final boolean errorsDetected = Utils.errorsDetected(context);
+    boolean performIntegrate = !errorsDetected;
+    boolean additionalPassRequired = false;
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     GraphConfiguration graphConfig = Objects.requireNonNull(dataManager.getDependencyGraph());
     DependencyGraph dependencyGraph = graphConfig.getGraph();
@@ -426,9 +433,10 @@ public final class JavaBuilderUtil {
     
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
+      .compiledWithErrors(errorsDetected)
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()))
+      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()));
     DifferentiateParameters differentiateParams = params.get();
     DifferentiateResult diffResult = dependencyGraph.differentiate(delta, differentiateParams);
@@ -544,10 +552,6 @@ public final class JavaBuilderUtil {
 
     if (!additionalPassRequired) {
       ALL_AFFECTED_NODE_SOURCES_KEY.set(context, null); // cleanup
-    }
-
-    if (errorsDetected) {
-      return false;
     }
 
     if (performIntegrate) {

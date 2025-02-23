@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -209,7 +209,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   }
 
   private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method))) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method)).asIterable()) {
       if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
         return true;
       }

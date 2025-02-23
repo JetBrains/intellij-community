@@ -46,7 +46,7 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
     UPDATE_MANAGER_KEY.set(editor, this)
   }
 
-  fun <T> update(force: Boolean = false, block: (updateCtx: UpdateContext) -> T): T {
+  fun <T> update(force: Boolean = false, keepScrollingPositon: Boolean = true, block: (updateCtx: UpdateContext) -> T): T {
     val ctx = updateCtx
     return if (ctx != null) {
       block(ctx)
@@ -55,26 +55,34 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
       val newCtx = UpdateContext(force)
       updateCtx = newCtx
       try {
-        val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-        jupyterBoundsChangeHandler.postponeUpdates()
-        val r = keepScrollingPositionWhile(editor) {
-          val r = block(newCtx)
-          updateCtx = null
-          if (editorIsProcessingDocument) {
-            postponedUpdates.add(newCtx)
+        if (keepScrollingPositon) {
+          keepScrollingPositionWhile(editor) {
+            updateImpl(newCtx, block)
           }
-          else {
-            newCtx.applyUpdates(editor)
-            finalizeChanges()
-          }
-          r
         }
-        r
+        else {
+          updateImpl(newCtx, block)
+        }
       }
       finally {
         updateCtx = null
       }
     }
+  }
+
+  private fun <T> updateImpl(newCtx: UpdateContext, block: (updateCtx: UpdateContext) -> T): T {
+    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
+    jupyterBoundsChangeHandler.postponeUpdates()
+    val r = block(newCtx)
+    updateCtx = null
+    if (editorIsProcessingDocument) {
+      postponedUpdates.add(newCtx)
+    }
+    else {
+      newCtx.applyUpdates(editor)
+      finalizeChanges()
+    }
+    return r
   }
 
   private fun finalizeChanges() {
@@ -95,5 +103,5 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
 
 private val UPDATE_MANAGER_KEY = Key<UpdateManager>("UPDATE_MANAGER_KEY")
 
-val Editor.updateManager
+val Editor.updateManager: UpdateManager
   get() = UPDATE_MANAGER_KEY.get(this)

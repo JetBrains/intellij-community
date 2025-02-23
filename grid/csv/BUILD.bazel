@@ -3,23 +3,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "csv-core-impl_resources",
-  files = glob(["core-impl/resources/**/*"]),
-  strip_prefix = "core-impl/resources"
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
   name = "csv-core-impl",
   module_name = "intellij.grid.csv.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["core-impl/src/**/*.kt", "core-impl/src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
-    "@community//platform/util",
-    "@community//platform/util/jdom",
-    "@community//platform/core-api:core",
-    "//dbe/grid:grid-types",
-    "@community//platform/core-impl",
-    "@community//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/core-api:core",
+    "//grid/types",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
     "@lib//:automaton",
   ],
   runtime_deps = [":csv-core-impl_resources"]

@@ -18,7 +18,6 @@ package org.jetbrains.bazel.jvm
 import com.google.devtools.build.lib.worker.WorkerProtocol
 import com.google.devtools.build.lib.worker.WorkerProtocol.WorkResponse
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -40,9 +39,9 @@ class WorkRequestHandlerTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun normalWorkRequest() {
     val out = ByteArrayOutputStream()
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ -> 1 },
-      input = ByteArrayInputStream(ByteArray(0)),
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ -> 1 },
+      //input = ByteArrayInputStream(ByteArray(0)),
       out = out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
@@ -50,14 +49,13 @@ class WorkRequestHandlerTest {
     val request = WorkRequest(
       arguments = arrayOf("--sources", "A.java"),
       inputPaths = emptyArray(),
-      inputDigests = emptyArray(),
       requestId = 0,
       cancel = false,
       verbosity = 0,
       sandboxDir = null,
     )
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -70,16 +68,16 @@ class WorkRequestHandlerTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun multiplexWorkRequest() {
     val out = ByteArrayOutputStream()
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ -> 0 },
-      input = ByteArray(0).inputStream(),
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ -> 0 },
+      //input = ByteArray(0).inputStream(),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
 
     val request = newWorkRequest(listOf("--sources", "A.java"))
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -96,8 +94,8 @@ class WorkRequestHandlerTest {
     // work request threads release this when they have started
     val started = Semaphore(0)
     val workerThreads = AtomicInteger()
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         // each call to this, runs in its own thread
         workerThreads.incrementAndGet()
         started.release()
@@ -112,12 +110,11 @@ class WorkRequestHandlerTest {
         }
         0
       },
-      input = PipedInputStream(src),
       out = OutputStream.nullOutputStream(),
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
 
-    useHandler(handler = handler, waitForProcessing = true, errorFilter = { it.message != "Intentional death!" }) {
+    useHandler(handler = handler, input = PipedInputStream(src), waitForProcessing = true, errorFilter = { it.message != "Intentional death!" }) {
       val args = listOf("--sources", "A.java")
       WorkerProtocol.WorkRequest.newBuilder().addAllArguments(args).setRequestId(42).build().writeDelimitedTo(src)
       WorkerProtocol.WorkRequest.newBuilder().addAllArguments(args).setRequestId(43).build().writeDelimitedTo(src)
@@ -131,12 +128,12 @@ class WorkRequestHandlerTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun testOutput() {
     val out = ByteArrayOutputStream()
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         err.appendLine("Failed!")
         1
       },
-      input = ByteArray(0).inputStream(),
+      //input = ByteArray(0).inputStream(),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
@@ -144,7 +141,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "A.java")
     val request = newWorkRequest(args, requestId = 0)
     runBlocking {
-      handler.handleRequest(request, AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request, AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -157,11 +154,11 @@ class WorkRequestHandlerTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun testException() {
     val out = ByteArrayOutputStream()
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         throw RuntimeException("Exploded!")
       },
-      input = ByteArray(0).inputStream(),
+      //input = ByteArray(0).inputStream(),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
@@ -169,7 +166,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "A.java")
     val request = newWorkRequest(args, 342)
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
@@ -186,13 +183,13 @@ class WorkRequestHandlerTest {
     val src = PipedOutputStream()
     val dest = PipedInputStream()
 
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val input = PipedInputStream(src)
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         handlerCalled = true
         err.appendLine("Such work! Much progress! Wow!")
         1
       },
-      input = PipedInputStream(src),
       out = PipedOutputStream(dest),
       tracer = OpenTelemetry.noop().getTracer("noop"),
       cancelHandler = {
@@ -200,7 +197,7 @@ class WorkRequestHandlerTest {
       },
     )
 
-    useHandler(handler) {
+    useHandler(handler, input) {
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
 
@@ -235,8 +232,8 @@ class WorkRequestHandlerTest {
     val failures = ConcurrentLinkedQueue<String>()
 
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         // this handler waits until the main thread has sent a cancel request
         handlerCalled.release()
         try {
@@ -248,14 +245,13 @@ class WorkRequestHandlerTest {
         }
         0
       },
-      input = PipedInputStream(src),
       out = PipedOutputStream(dest),
       tracer = OpenTelemetry.noop().getTracer("noop"),
       cancelHandler = { i -> cancelCalled.incrementAndGet() }
     )
 
     // this thread just makes sure the WorkRequestHandler does work asynchronously
-    useHandler(handler, failures, waitForProcessing = true) {
+    useHandler(handler, PipedInputStream(src), failures, waitForProcessing = true) {
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       // make sure the handler is called before sending the cancel request, or we might process the cancellation entirely before that
       handlerCalled.acquire()
@@ -285,8 +281,8 @@ class WorkRequestHandlerTest {
 
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
     val inputStream = PipedInputStream(src)
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         try {
           waitForCancel.acquire()
         }
@@ -296,7 +292,6 @@ class WorkRequestHandlerTest {
         }
         0
       },
-      input = inputStream,
       out = PipedOutputStream(dest),
       tracer = OpenTelemetry.noop().getTracer("noop"),
       cancelHandler = {
@@ -304,7 +299,7 @@ class WorkRequestHandlerTest {
       },
     )
 
-    useHandler(handler, failures, waitForProcessing = true) {
+    useHandler(handler, inputStream, failures, waitForProcessing = true) {
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
@@ -332,19 +327,18 @@ class WorkRequestHandlerTest {
     val dest = PipedInputStream()
 
     // we force the cancel request to not happen until after we have read the normal response, to avoid flakiness
-    val handler = WorkRequestHandler(
-      requestExecutor = { args, err, _, _, _ ->
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { args, err, _, _ ->
         handlerCalled.release()
         err.appendLine("Such work! Much progress! Wow!")
         2
       },
-      input = PipedInputStream(src),
       out = PipedOutputStream(dest),
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
 
     var r: WorkResponse? = null
-    useHandler(handler, waitForProcessing = true) {
+    useHandler(handler, PipedInputStream(src), waitForProcessing = true) {
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       r = WorkResponse.parseDelimitedFrom(dest)
       WorkerProtocol.WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
@@ -367,9 +361,9 @@ class WorkRequestHandlerTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun workRequestHandlerWithWorkRequestCallback() {
     val out = ByteArrayOutputStream()
-    val handler = WorkRequestHandler(
-      requestExecutor = { request, err, _, _, _ -> request.arguments.size },
-      ByteArrayInputStream(ByteArray(0)),
+    val handler = WorkRequestHandler<WorkRequest>(
+      requestExecutor = { request, err, _, _ -> request.arguments.size },
+      //ByteArrayInputStream(ByteArray(0)),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
     )
@@ -377,7 +371,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "B.java")
     val request = newWorkRequest(args, requestId = 0)
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
@@ -392,7 +386,7 @@ private fun newWorkRequest(args: List<String>, requestId: Int = 42): WorkRequest
     arguments = args.toTypedArray(),
     requestId = requestId,
     inputPaths = emptyArray(),
-    inputDigests = emptyArray(),
+    //inputDigests = emptyArray(),
     cancel = false,
     verbosity = 0,
     sandboxDir = null
@@ -401,7 +395,8 @@ private fun newWorkRequest(args: List<String>, requestId: Int = 42): WorkRequest
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 private inline fun useHandler(
-  handler: WorkRequestHandler,
+  handler: WorkRequestHandler<WorkRequest>,
+  input: InputStream,
   failures: ConcurrentLinkedQueue<String> = ConcurrentLinkedQueue<String>(),
   waitForProcessing: Boolean = false,
   crossinline errorFilter: (Throwable) -> Boolean = { true },
@@ -409,7 +404,7 @@ private inline fun useHandler(
 ) {
   val processor = GlobalScope.async(Dispatchers.Default) {
     try {
-      handler.processRequests(Context.current())
+      handler.processRequests(WorkRequestReaderWithoutDigest(input))
     }
     catch (_: CancellationException) {
     }
@@ -440,4 +435,11 @@ private inline fun useHandler(
       processor.cancel()
     }
   }
+}
+
+private suspend fun WorkRequestHandler<WorkRequest>.handleRequest(
+  request: WorkRequest,
+  requestState: AtomicReference<WorkRequestState>,
+) {
+  executeRequest(request = request, requestState = requestState, parentSpan = null, tracer = OpenTelemetry.noop().getTracer("noop"))
 }

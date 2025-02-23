@@ -5,42 +5,57 @@ import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ConsoleViewUtil
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class CompositeFilterWrapper(private val project: Project, private val disposable: Disposable) {
+internal class CompositeFilterWrapper(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val filtersComputationInProgress: AtomicBoolean = AtomicBoolean(false)
+
   @Volatile
   private var cachedFilter: CompositeFilter? = null
+
+  @Volatile
+  private var filtersComputed: CompletableDeferred<Unit> = CompletableDeferred()
 
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener({
                                                                cachedFilter = null
+                                                               filtersComputed = CompletableDeferred()
                                                                scheduleFiltersComputation()
-                                                             }, disposable)
+                                                             }, coroutineScope.asDisposable())
     scheduleFiltersComputation()
   }
 
   private fun scheduleFiltersComputation() {
     if (filtersComputationInProgress.compareAndSet(false, true)) {
-      ReadAction
-        .nonBlocking<List<Filter>> { ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project)) }
-        .expireWith(disposable)
-        .finishOnUiThread(ModalityState.defaultModalityState()) { filters: List<Filter> ->
-          filtersComputationInProgress.set(false)
-          cachedFilter = CompositeFilter(project, filters).also {
-            it.setForceUseAllFilters(true)
-          }
+      coroutineScope.launch {
+        val filters = readAction {
+          ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project))
+        }
+        filtersComputationInProgress.set(false)
+        cachedFilter = CompositeFilter(project, filters).also {
+          it.setForceUseAllFilters(true)
+        }
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
-        }.submit(AppExecutorUtil.getAppExecutorService())
+          filtersComputed.complete(Unit)
+        }
+      }
     }
   }
 
@@ -57,7 +72,6 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
   /**
    * @return [Filter] instance if cached. Otherwise, returns `null` and starts computing filters in background;
    *         when filters are ready, `filtersUpdated` event will be fired.
-   *
    */
   fun getFilter(): CompositeFilter? {
     cachedFilter?.let {
@@ -65,5 +79,10 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
     }
     scheduleFiltersComputation()
     return null
+  }
+
+  @TestOnly
+  internal suspend fun awaitFiltersComputed() {
+    filtersComputed.await()
   }
 }

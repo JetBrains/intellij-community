@@ -18,7 +18,7 @@ jvm_library(
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/util",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
   ],

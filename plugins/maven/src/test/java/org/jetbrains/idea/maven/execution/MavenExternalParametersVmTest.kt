@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
-import java.io.IOException
 
 class MavenExternalParametersVmTest : MavenTestCase() {
   fun testGetRunVmOptionsSettingsAndJvm() {

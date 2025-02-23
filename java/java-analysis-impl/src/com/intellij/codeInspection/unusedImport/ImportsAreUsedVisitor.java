@@ -17,7 +17,6 @@ package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,8 +154,15 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         else if (target instanceof PsiClass aClass) {
           // a regular import statement does NOT import inner classes from super classes, but a static import does
           if (importStatement instanceof PsiImportStaticStatement) {
-            if (member.hasModifierProperty(PsiModifier.STATIC) && InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {
-              return importStatement;
+            if (member.hasModifierProperty(PsiModifier.STATIC)) {
+              PsiManager manager = aClass.getManager();
+              if (manager.areElementsEquivalent(aClass, containingClass) ||
+                  (containingClass != null &&
+                   //impossible to reference to static methods in interfaces via inheritances
+                   !(member instanceof PsiMethod && containingClass.isInterface()) &&
+                   aClass.isInheritor(containingClass, true))) {
+                return importStatement;
+              }
             }
           }
           else if (importStatement instanceof PsiImportStatement && member instanceof PsiClass && aClass.equals(containingClass)) {

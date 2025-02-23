@@ -9,6 +9,7 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.k2.codeinsight.K2KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -43,9 +45,9 @@ object K2CreateClassFromUsageBuilder {
 
         analyze(refExpr) {
             val expectedType: ExpectedKotlinType? = refExpr.getExpectedKotlinType()
-            val superClass: KtClass? = expectedType?.ktType?.convertToClass()
+            val superClass: KtClass? = expectedType?.kaType?.convertToClass()
 
-            val superClassSymbol = superClass?.classSymbol ?: (expectedType?.ktType as? KaClassType)?.symbol as? KaClassSymbol
+            val superClassSymbol = superClass?.classSymbol ?: (expectedType?.kaType as? KaClassType)?.symbol as? KaClassSymbol
             val superClassName:String? = superClass?.name
             val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
             val returnTypeString: String = if (superClass == null || superClassName == null || isAny) ""
@@ -121,7 +123,8 @@ object K2CreateClassFromUsageBuilder {
         val expectedParams = computeExpectedParams(superTypeCallEntry, isAnnotation)
         val candidateList = renderCandidatesOfParameterTypes(expectedParams, refExpr)
         // find params from the ref parameters, e.g.: `class F: Foo(1,"2")`
-        renderedParameters = candidateList.joinToString(", ") { prefix + it.names.first() + ": " + it.renderedTypes.first() }
+        val uniqueNameGenerator = UniqueNameGenerator()
+        renderedParameters = candidateList.joinToString(", ") { prefix + uniqueNameGenerator.generateUniqueName(it.names.first()) + ": " + it.renderedTypes.first() }
         shouldParenthesize = expectedParams.isNotEmpty()
         val renderedParamList = if (shouldParenthesize)
             "($renderedParameters)"
@@ -211,7 +214,7 @@ object K2CreateClassFromUsageBuilder {
         analyze (element) {
             val isReceiverAccepted = receiverExpression == null ||
                     receiverExpression is KtNameReferenceExpression &&
-                    receiverExpression.resolveExpression()?.psi<PsiElement>().let {it is KtClass || it is PsiPackage}
+                    receiverExpression.resolveExpression()?.psi.let { it is KtClass || it is PsiPackage }
             if (!isReceiverAccepted) {
                 // for `expression.Foo()` we can't create object nor enum
                 return null

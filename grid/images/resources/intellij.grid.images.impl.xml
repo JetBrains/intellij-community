@@ -2,9 +2,9 @@
   <dependencies>
     <plugin id="com.intellij.platform.images"/>
     <module name="intellij.grid.core.impl"/>
-    <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.grid.impl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.database.datagrid">

@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import org.jetbrains.annotations.ApiStatus
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
@@ -40,13 +39,27 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * for entities of type [E] are implemented.
    * If the contributor is actually registered for a child entity of [E], the function will return nothing.
    */
-  fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile, 
-                                                  entityClass: Class<E>, 
+  fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile,
+                                                  entityClass: Class<E>,
                                                   honorExclusion: Boolean, 
                                                   includeContentSets: Boolean, 
                                                   includeExternalSets: Boolean,
                                                   includeExternalSourceSets: Boolean,
                                                   includeCustomKindSets: Boolean): Collection<E>
+
+  /**
+   * Searches for the first parent of [file] (or [file] itself), which has an associated [WorkspaceFileSet]s (taking into account
+   * passed flags), and returns all entities from which these filesets were contributed.
+   */
+  @ApiStatus.Experimental
+  fun findContainingEntities(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
+  ): Collection<WorkspaceEntity>
 
   /**
    * Holds references to the currently stored data.
@@ -133,6 +146,7 @@ sealed interface WorkspaceFileInternalInfo {
     override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = emptyList()
 
     override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? = null
+    override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> = emptyList()
   }
 
   /**
@@ -144,6 +158,13 @@ sealed interface WorkspaceFileInternalInfo {
    * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
    */
   fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>?
+
+  /**
+   * Returns file sets stored in this instance which satisfies the given [condition]
+   * todo ijpl-339 mark experimental
+   */
+  @ApiStatus.Internal
+  fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>>
   
   abstract override fun toString(): String
 }

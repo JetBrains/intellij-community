@@ -18,6 +18,7 @@ import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
 import java.io.File
+import java.net.SocketTimeoutException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.hours
@@ -89,6 +90,9 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
           writeText(yamlContent)
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
+      }
+      catch (_: SocketTimeoutException) {
+        // offline mode
       }
       catch (e: Exception) {
         logger<DocumentationContentProvider>().warn("Could not download documentation content from ${coordinates.url}", e)

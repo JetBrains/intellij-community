@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
@@ -56,7 +56,7 @@ public final class MoveClassesOrPackagesUtil {
     ArrayList<UsageInfo> results = new ArrayList<>();
     Set<PsiReference> foundReferences = new HashSet<>();
 
-    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false)) {
+    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false).asIterable()) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
       results.add(new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(), element, false));

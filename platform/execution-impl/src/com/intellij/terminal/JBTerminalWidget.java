@@ -1,28 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.search.DefaultJediTermSearchComponent;
 import com.intellij.terminal.search.JediTermSearchComponentProvider;
+import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
@@ -32,11 +31,7 @@ import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.model.hyperlinks.LinkInfo;
-import com.jediterm.terminal.model.hyperlinks.LinkResult;
-import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
 import com.jediterm.terminal.ui.*;
-import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
@@ -45,9 +40,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
@@ -55,10 +50,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
 
-  private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
   private final Project myProject;
   private final @NotNull TerminalTitle myTerminalTitle = new TerminalTitle();
+  private final @NotNull JediTermHyperlinkFilterAdapter myHyperlinkFilter;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -73,9 +68,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
                           @Nullable TerminalExecutionConsole console,
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
-    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     myProject = project;
-    addHyperlinkFilter(line -> runFilters(project, line));
+    myHyperlinkFilter = new JediTermHyperlinkFilterAdapter(project, console, this);
+    addAsyncHyperlinkFilter(myHyperlinkFilter);
     Disposer.register(parent, this);
     Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
@@ -85,70 +80,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       }
     });
     TerminalTitleKt.bindApplicationTitle(myTerminalTitle, getTerminal(), this);
-  }
-
-  private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {
-    Filter.Result r = ReadAction.nonBlocking(() -> {
-      if (project.isDisposed()) {
-        return null;
-      }
-      try {
-        return myCompositeFilterWrapper.getCompositeFilter().applyFilter(line, line.length());
-      }
-      catch (ProcessCanceledException e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipping running filters on " + line, e);
-        }
-        return null;
-      }
-      catch (CompositeFilter.ApplyFilterException applyFilterException) {
-        LOG.error(applyFilterException);
-        return null;
-      }
-    }).executeSynchronously();
-    if (r != null) {
-      return new LinkResult(ContainerUtil.mapNotNull(r.getResultItems(), item -> convertResultItem(project, item)));
-    }
-    return null;
-  }
-
-  private @Nullable LinkResultItem convertResultItem(@NotNull Project project, @NotNull Filter.ResultItem item) {
-    HyperlinkInfo info = item.getHyperlinkInfo();
-    if (info != null) {
-      return new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                convertInfo(project, info));
-    }
-    return null;
-  }
-
-  private @NotNull LinkInfo convertInfo(@NotNull Project project, @NotNull HyperlinkInfo info) {
-    LinkInfoEx.Builder builder = new LinkInfoEx.Builder().setNavigateCallback(() -> {
-      info.navigate(project);
-    });
-    if (info instanceof HyperlinkWithPopupMenuInfo) {
-      builder.setPopupMenuGroupProvider(new LinkInfoEx.PopupMenuGroupProvider() {
-        @Override
-        public @NotNull List<TerminalAction> getPopupMenuGroup(@NotNull MouseEvent event) {
-          ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
-          AnAction[] actions = group != null ? group.getChildren(null) : AnAction.EMPTY_ARRAY;
-          return ContainerUtil.map(actions, action -> TerminalActionUtil.createTerminalAction(JBTerminalWidget.this, action));
-        }
-      });
-    }
-    if (info instanceof HyperlinkWithHoverInfo) {
-      builder.setHoverConsumer(new LinkInfoEx.HoverConsumer() {
-        @Override
-        public void onMouseEntered(@NotNull JComponent hostComponent, @NotNull Rectangle linkBounds) {
-          ((HyperlinkWithHoverInfo)info).onMouseEntered(hostComponent, linkBounds);
-        }
-
-        @Override
-        public void onMouseExited() {
-          ((HyperlinkWithHoverInfo)info).onMouseExited();
-        }
-      });
-    }
-    return builder.build();
   }
 
   public JBTerminalWidgetListener getListener() {
@@ -257,7 +188,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   public void addMessageFilter(@NotNull Filter filter) {
-    myCompositeFilterWrapper.addFilter(filter);
+    myHyperlinkFilter.addFilter(filter);
   }
 
   public void start(TtyConnector connector) {
@@ -392,6 +323,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     }
 
     @Override
+    public @Nullable TerminalSession getSession() {
+      return null;
+    }
+
+    @Override
+    public void connectToSession(@NotNull TerminalSession session) {
+      throw new IllegalStateException("TerminalSession is not supported in TerminalWidgetBridge");
+    }
+
+    @Override
     public @Nullable TermSize getTermSize() {
       return widget().getTerminalPanel().getTerminalSizeFromComponent();
     }
@@ -469,6 +410,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     @Override
     public void setShellCommand(@Nullable List<String> command) {
       widget().setShellCommand(command);
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull TermSize> getTerminalSizeInitializedFuture() {
+      throw new IllegalStateException("getTerminalSizeInitializedFuture is not supported in TerminalWidgetBridge");
     }
   }
 }

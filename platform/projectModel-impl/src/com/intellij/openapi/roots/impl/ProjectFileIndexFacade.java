@@ -17,8 +17,10 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
+import java.util.Set;
 
 
 public class ProjectFileIndexFacade extends FileIndexFacade {
@@ -66,6 +68,12 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isExcludedFile(final @NotNull VirtualFile file) {
     return myFileIndex.isExcluded(file);
+  }
+  
+  @ApiStatus.Internal
+  @Override
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
+    return myFileIndex.isUnderSourceRootOfType(file, (Set<? extends JpsModuleSourceRootType<?>>)rootTypes);
   }
 
   @Override

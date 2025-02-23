@@ -30,8 +30,7 @@ class FoldIfToReturnAsymmetricallyIntention : KotlinApplicableModCommandAction<K
         return ApplicabilityRange.self(element.ifKeyword)
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtIfExpression) {}
+    override fun KaSession.prepareContext(element: KtIfExpression) {}
 
     override fun invoke(
         actionContext: ActionContext,

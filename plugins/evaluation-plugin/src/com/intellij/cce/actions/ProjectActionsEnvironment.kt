@@ -270,7 +270,7 @@ open class ProjectActionsEnvironment(
   }
 
   companion object {
-    fun open(projectPath: String, init: (Project) -> ProjectActionsEnvironment): ProjectActionsEnvironment {
+    fun<T> open(projectPath: String, init: (Project) -> T): T {
       println("Open and load project $projectPath. Operation may take a few minutes.")
       @Suppress("DEPRECATION")
       val project = runUnderModalProgressIfIsEdt {

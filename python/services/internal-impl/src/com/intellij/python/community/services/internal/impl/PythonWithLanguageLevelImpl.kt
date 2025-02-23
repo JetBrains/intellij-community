@@ -5,12 +5,18 @@ import com.intellij.platform.eel.fs.pathOs
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.concurrentLimit
+import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.createByPythonBinary
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
-import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.validatePythonAndGetVersion
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import kotlin.io.path.pathString
@@ -20,8 +26,26 @@ import kotlin.io.path.relativeTo
 class PythonWithLanguageLevelImpl internal constructor(
   override val pythonBinary: PythonBinary,
   override val languageLevel: LanguageLevel,
-) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevelImpl> {
+) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevel> {
   companion object {
+
+    private val concurrentLimit = Semaphore(permits = 4)
+
+    /**
+     * Like [createByPythonBinary] but runs in parallel up to [concurrentLimit]
+     * @return python path -> python with language level sorted from highest to lowest.
+     */
+    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, Result<PythonWithLanguageLevel, @Nls String>>> =
+      coroutineScope {
+        pythonBinaries.map {
+          async {
+            concurrentLimit.withPermit {
+              Pair(it, createByPythonBinary(it))
+            }
+          }
+        }.awaitAll()
+      }.sortedBy { it.first }
+
     suspend fun createByPythonBinary(pythonBinary: PythonBinary): Result<PythonWithLanguageLevelImpl, @Nls String> {
       val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
       return Result.success(PythonWithLanguageLevelImpl(pythonBinary, languageLevel))
@@ -57,6 +81,6 @@ class PythonWithLanguageLevelImpl internal constructor(
     return "$pythonString ($languageLevel)"
   }
 
-  // TODO: DOC backward
-  override fun compareTo(other: PythonWithLanguageLevelImpl): Int = other.languageLevel.compareTo(languageLevel)
+  // Backward: first python is the highest
+  override fun compareTo(other: PythonWithLanguageLevel): Int = languageLevel.compareTo(other.languageLevel) * -1
 }

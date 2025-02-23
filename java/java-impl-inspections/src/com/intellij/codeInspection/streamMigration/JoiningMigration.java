@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 
@@ -26,9 +26,9 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
+import static com.intellij.psi.controlFlow.ControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.ExpressionUtils.resolveLocalVariable;
@@ -73,6 +73,10 @@ public class JoiningMigration extends BaseStreamApiMigration {
       JoiningTerminal.DelimiterRewriteJoiningTerminal::extractDelimiterRewritingTerminal,
       JoiningTerminal.IndexBasedJoiningTerminal::extractIndexBasedTerminal
     );
+    if (terminalBlock.operations().select(StreamApiMigrationInspection.LimitOp.class)
+      .anyMatch(limitOp -> limitOp.getCounterVariable() == null)) {
+      return null;
+    }
     return StreamEx.of(extractors)
       .map(extractor -> extractor.apply(terminalBlock, nonFinalVariables))
       .nonNull()
@@ -272,7 +276,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiElement parent = variable.getParent();
         PsiExpression initializer = variable.getInitializer();
         if(parent == null || initializer == null) return null;
-        if(!isEffectivelyFinal(variable, parent, null)) return null;
+        if(!isEffectivelyFinal(variable, parent)) return null;
         Object initializerConstant = ExpressionUtils.computeConstantExpression(initializer);
         if(initializerConstant == null) return null;
         return String.valueOf(initializerConstant);
@@ -1188,7 +1192,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
                                                           @NotNull PsiExpression replacement) {
         List<PsiExpression> copies = ContainerUtil.map(joinParts, expression -> (PsiExpression)expression.copy());
         for (PsiElement joinPart : copies) {
-          ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).forEach(reference -> {
+          ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).asIterable().forEach(reference -> {
             reference.getElement().replace(replacement);
           });
         }

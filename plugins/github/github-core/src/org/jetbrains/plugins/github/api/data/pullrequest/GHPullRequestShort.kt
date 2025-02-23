@@ -11,42 +11,44 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestInfoShort.graphql")
-open class GHPullRequestShort(id: String,
-                              val url: String,
-                              val number: Long,
-                              @NlsSafe val title: String,
-                              val state: GHPullRequestState,
-                              val isDraft: Boolean,
-                              val author: GHActor?,
-                              val createdAt: Date,
-                              val updatedAt: Date,
-                              @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
-                              @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
-                              @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
-                              @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
-                              @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>,
-                              val mergeable: GHPullRequestMergeableState,
-                              val viewerCanUpdate: Boolean,
-                              val viewerCanReact: Boolean,
-                              val viewerDidAuthor: Boolean,
-                              override val reactions: GHReactable.ReactionConnection) : GHNode(id), GHReactable {
-
+open class GHPullRequestShort(
+  id: String,
+  val url: String,
+  val number: Long,
+  @NlsSafe val title: String,
+  val state: GHPullRequestState,
+  val isDraft: Boolean,
+  val author: GHActor?,
+  val createdAt: Date,
+  val updatedAt: Date,
+  @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
+  @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>?,
+  @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>?,
+  @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
+  @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>?,
+  val mergeable: GHPullRequestMergeableState,
+  val viewerCanUpdate: Boolean,
+  val viewerCanReact: Boolean,
+  val viewerDidAuthor: Boolean,
+  override val reactions: GHReactable.ReactionConnection,
+) : GHNode(id), GHReactable {
+  @JsonIgnore
   val prId = GHPRIdentifier(id, number)
 
   @JsonIgnore
   val assignees = assignees.nodes
 
   @JsonIgnore
-  val labels = labels.nodes
+  val labels = labels?.nodes.orEmpty()
 
   @JsonIgnore
-  val reviewRequests = reviewRequests.nodes
+  val reviewRequests = reviewRequests?.nodes.orEmpty()
 
   @JsonIgnore
   val unresolvedReviewThreadsCount = reviewThreads.nodes.count { !it.isResolved && !it.isOutdated }
 
   @JsonIgnore
-  val reviews: List<GHPullRequestReview> = reviews.nodes
+  val reviews: List<GHPullRequestReview> = reviews?.nodes.orEmpty()
 
   override fun toString(): String = "#$number $title"
 

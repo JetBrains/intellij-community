@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
-class TBPanel implements NSTLibrary.ItemCreator {
+@ApiStatus.Internal
+public class TBPanel implements NSTLibrary.ItemCreator {
   static final Logger LOG = Logger.getInstance(TBPanel.class);
   static final boolean ourCollectStats = Boolean.getBoolean("touchbar.collect.stats");
 

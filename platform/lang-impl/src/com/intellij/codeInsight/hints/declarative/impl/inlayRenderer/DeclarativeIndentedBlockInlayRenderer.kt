@@ -2,14 +2,11 @@
 package com.intellij.codeInsight.hints.declarative.impl.inlayRenderer
 
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
-import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.views.IndentedDeclarativeHintView
 import com.intellij.codeInsight.hints.declarative.impl.views.MultipleDeclarativeHintsView
-import com.intellij.codeInsight.hints.declarative.impl.views.SingleDeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Inlay
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 class DeclarativeIndentedBlockInlayRenderer(
@@ -17,10 +14,10 @@ class DeclarativeIndentedBlockInlayRenderer(
   fontMetricsStorage: InlayTextMetricsStorage,
   providerId: String,
   sourceId: String,
-  indentAnchorOffsetHint: Int,
+  initialIndentAnchorOffset: Int,
 ) : DeclarativeInlayRendererBase<List<InlayData>>(providerId, sourceId, fontMetricsStorage) {
 
-  override val view = IndentedDeclarativeHintView(MultipleDeclarativeHintsView(inlayData), indentAnchorOffsetHint)
+  override val view = IndentedDeclarativeHintView(MultipleDeclarativeHintsView(inlayData), initialIndentAnchorOffset)
 
   override val presentationLists get() = view.view.presentationLists
 

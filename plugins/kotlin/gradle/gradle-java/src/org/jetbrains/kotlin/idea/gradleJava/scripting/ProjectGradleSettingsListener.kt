@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(
@@ -28,8 +29,9 @@ class ProjectGradleSettingsListener(
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
-                writeAction {
-                    val newRoot = buildRootsManager.loadLinkedRoot(it)
+                val gradleVersion = getGradleVersion(project, it)
+                edtWriteAction {
+                    val newRoot = buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     buildRootsManager.add(newRoot)
                 }
             }
@@ -40,8 +42,9 @@ class ProjectGradleSettingsListener(
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
                 coroutineScope.launchTracked(Dispatchers.IO) {
-                    val newRoot = writeAction {
-                        buildRootsManager.loadLinkedRoot(it)
+                    val gradleVersion = getGradleVersion(project, it)
+                    val newRoot = edtWriteAction {
+                        buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     }
                     if (newRoot is Imported) {
                         loadScriptConfigurations(newRoot, it)
@@ -58,7 +61,7 @@ class ProjectGradleSettingsListener(
     }
 
     override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-        val version = GradleInstallationManager.getGradleVersion(newPath)
+        val version = GradleInstallationManager.getGradleVersion(newPath?.let { Path.of(it) })
         buildRootsManager.reloadBuildRoot(linkedProjectPath, version)
     }
 

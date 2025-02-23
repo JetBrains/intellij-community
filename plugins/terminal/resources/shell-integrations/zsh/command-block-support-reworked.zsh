@@ -37,6 +37,15 @@ __jetbrains_intellij_command_preexec() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  if [[ -z "${__jetbrains_intellij_initialized-}" ]]; then
+    # As `precmd` is executed before each prompt, for the first time it is called after
+    # all rc files have been processed and before the first prompt is displayed.
+    # So, here it finishes the initialization block, not a user command.
+    __jetbrains_intellij_initialized=1
+    builtin printf '\e]1341;initialized\a'
+    __jetbrains_intellij_update_prompt
+    builtin return
+  fi
   builtin local LAST_EXIT_CODE="$?"
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
 
@@ -63,8 +72,3 @@ __jetbrains_intellij_prompt_finished() {
 builtin autoload -Uz add-zsh-hook
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
-
-__jetbrains_intellij_update_prompt
-
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized\a'

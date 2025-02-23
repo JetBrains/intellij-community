@@ -566,13 +566,6 @@ a:com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction
 - pa:getExecutor(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.CommitExecutor
 - p:isActionEnabled(com.intellij.openapi.vcs.changes.ChangeListManager,com.intellij.openapi.vcs.changes.Change):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
-- sf:INSTANCE:com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
-- f:getInitiallySelectedChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vcs.changes.LocalChangeList
-- f:getInitiallySelectedChangeListFor(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.vcs.changes.LocalChangeList
-- f:performCheckInAfterUpdate(com.intellij.openapi.project.Project,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,com.intellij.openapi.vcs.changes.CommitExecutor,Z):V
-- f:performCommonCommitAction(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,java.lang.String,com.intellij.openapi.vcs.changes.CommitExecutor,Z):V
-- f:updateCommonCommitAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -742,7 +735,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - replaceCommitMessage(java.lang.String,java.lang.String):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- scheduleUpdate():V
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - setDefaultChangeList(java.lang.String):V
@@ -967,17 +959,9 @@ com.intellij.openapi.vcs.changes.FileHolder
 - a:cleanUnderScope(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
 - a:copy():com.intellij.openapi.vcs.changes.FileHolder
 - notifyVcsStarted(com.intellij.openapi.vcs.AbstractVcs):V
-c:com.intellij.openapi.vcs.changes.IgnoredViewDialog
+f:com.intellij.openapi.vcs.changes.IgnoredViewDialog
 - com.intellij.openapi.ui.DialogWrapper
-- pf:myPanel:javax.swing.JPanel
-- pf:myProject:com.intellij.openapi.project.Project
-- pf:myView:com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - <init>(com.intellij.openapi.project.Project):V
-- p:addCustomActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- p:getDimensionServiceKey():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
 f:com.intellij.openapi.vcs.changes.LastUnchangedContentTracker
 - <init>():V
 - s:forceSavedContent(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
@@ -1052,17 +1036,9 @@ c:com.intellij.openapi.vcs.changes.ToggleDetailsAction
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.openapi.vcs.changes.UnversionedViewDialog
+f:com.intellij.openapi.vcs.changes.UnversionedViewDialog
 - com.intellij.openapi.ui.DialogWrapper
-- pf:myPanel:javax.swing.JPanel
-- pf:myProject:com.intellij.openapi.project.Project
-- pf:myView:com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - <init>(com.intellij.openapi.project.Project):V
-- p:addCustomActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- p:getDimensionServiceKey():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
 - s:getUnversionedPopupGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:getUnversionedToolbarGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:registerUnversionedPopupGroup(javax.swing.JComponent):com.intellij.openapi.actionSystem.ActionGroup
@@ -2221,13 +2197,16 @@ c:com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
+- com.intellij.ide.util.treeView.PathElementIdProvider
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode$Companion
 - <init>(java.lang.Object,com.intellij.openapi.vcs.FileStatus):V
 - compareUserObjects(java.lang.Object):I
 - pa:filePath(java.lang.Object):com.intellij.openapi.vcs.FilePath
 - getBackgroundColor(com.intellij.openapi.project.Project):java.awt.Color
+- getFlattenedElements():java.util.List
 - f:getOriginText():java.lang.String
+- getPathElementId():java.lang.String
 - f:getRelativeFilePath(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):java.lang.String
 - p:getRelativePath(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,com.intellij.openapi.vcs.FilePath):java.lang.String
 - getSortWeight():I
@@ -2329,7 +2308,7 @@ c:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 - sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:createContent(com.intellij.ui.dsl.builder.Panel):V
-- sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
+- sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,javax.swing.Icon,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - p:createOptionContent(com.intellij.ui.dsl.builder.Panel):V
 - pf:getCheckBox():com.intellij.ui.components.JBCheckBox
@@ -2345,10 +2324,11 @@ c:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 f:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$Companion
 - f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0):com.intellij.openapi.vcs.ui.RefreshableOnComponent
-- f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
+- f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,javax.swing.Icon,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$LinkContext
-- a:setCheckboxText(java.lang.String):V
+- a:update(java.lang.String,javax.swing.Icon):V
+- bs:update$default(com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$LinkContext,java.lang.String,javax.swing.Icon,I,java.lang.Object):V
 c:com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diff.actions.impl.GoToChangePopupBuilder$Chain
@@ -3766,7 +3746,8 @@ a:com.intellij.openapi.vcs.impl.ContentRootChangeListener
 a:com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.project.Project):V
-- a:getDefaultVcsRoots():java.util.Collection
+- f:getDefaultVcsRoots():java.util.Collection
+- pa:getDefaultVcsRootsCandidates():java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - getProjectConfigurationMessage():java.lang.String
 - p:scheduleMappedRootsUpdate():V
@@ -3997,10 +3978,6 @@ f:com.intellij.openapi.vcs.impl.VcsEP
 - displayName:java.lang.String
 - name:java.lang.String
 - vcsClass:java.lang.String
-f:com.intellij.openapi.vcs.impl.VcsFileStatusProvider
-- getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsFileStatusProvider
-- refreshFileStatusFromDocument(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
 e:com.intellij.openapi.vcs.impl.VcsInitObject
 - java.lang.Enum
 - sf:AFTER_COMMON:com.intellij.openapi.vcs.impl.VcsInitObject
@@ -4354,7 +4331,6 @@ a:com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 c:com.intellij.openapi.vcs.vfs.VcsFileSystem
 - com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 - com.intellij.openapi.vfs.NonPhysicalFileSystem
-- sf:COULD_NOT_IMPLEMENT_MESSAGE:java.lang.String
 - <init>():V
 - findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - fireContentsChanged(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,J):V
@@ -4840,41 +4816,6 @@ f:com.intellij.vcs.commit.CommitCheckFailure$WithDetails
 - f:getViewDetailsLinkText():java.lang.String
 com.intellij.vcs.commit.CommitExceptionWithActions
 - a:getActions():java.util.List
-a:com.intellij.vcs.commit.CommitMode
-- disableDefaultCommitAction():Z
-- hideLocalChangesTab():Z
-- a:useCommitToolWindow():Z
-f:com.intellij.vcs.commit.CommitMode$ExternalCommitMode
-- com.intellij.vcs.commit.CommitMode
-- <init>(com.intellij.openapi.vcs.AbstractVcs):V
-- f:component1():com.intellij.openapi.vcs.AbstractVcs
-- f:copy(com.intellij.openapi.vcs.AbstractVcs):com.intellij.vcs.commit.CommitMode$ExternalCommitMode
-- bs:copy$default(com.intellij.vcs.commit.CommitMode$ExternalCommitMode,com.intellij.openapi.vcs.AbstractVcs,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$ExternalCommitMode
-- disableDefaultCommitAction():Z
-- equals(java.lang.Object):Z
-- f:getVcs():com.intellij.openapi.vcs.AbstractVcs
-- hashCode():I
-- hideLocalChangesTab():Z
-- useCommitToolWindow():Z
-f:com.intellij.vcs.commit.CommitMode$ModalCommitMode
-- com.intellij.vcs.commit.CommitMode
-- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$ModalCommitMode
-- useCommitToolWindow():Z
-f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
-- com.intellij.vcs.commit.CommitMode
-- <init>(Z):V
-- f:component1():Z
-- f:copy(Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
-- bs:copy$default(com.intellij.vcs.commit.CommitMode$NonModalCommitMode,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
-- equals(java.lang.Object):Z
-- hashCode():I
-- f:isToggleMode():Z
-- useCommitToolWindow():Z
-f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
-- com.intellij.vcs.commit.CommitMode
-- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
-- disableDefaultCommitAction():Z
-- useCommitToolWindow():Z
 f:com.intellij.vcs.commit.CommitModeManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.commit.CommitModeManager$Companion
@@ -4883,15 +4824,12 @@ f:com.intellij.vcs.commit.CommitModeManager
 - dispose():V
 - f:getCurrentCommitMode():com.intellij.vcs.commit.CommitMode
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
-- sf:setCommitFromLocalChanges(com.intellij.openapi.project.Project,Z):V
 - sf:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$CommitModeListener
 - java.util.EventListener
 - a:commitModeChanged():V
 f:com.intellij.vcs.commit.CommitModeManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
-- f:isNonModalInSettings():Z
-- f:setCommitFromLocalChanges(com.intellij.openapi.project.Project,Z):V
 - f:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$SettingsListener
 - java.util.EventListener

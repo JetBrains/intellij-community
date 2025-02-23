@@ -5,7 +5,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.ide.projectWizard.generators.prepareOnboardingTips as prepareOnboardingTipsImpl
 
-@Suppress("unused")
 @Deprecated("Use AssetsOnboardingTips util instead")
 abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
   protected fun rawShortcut(shortcut: String) = AssetsOnboardingTips.rawShortcut(shortcut)

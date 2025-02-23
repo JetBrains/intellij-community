@@ -49,8 +49,7 @@ internal class PutCallsOnSeparateLinesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("put.calls.on.separate.lines")
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression) {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression) {
     }
 
     override fun invoke(

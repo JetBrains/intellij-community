@@ -610,6 +610,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/MultiDeclaration.kt");
     }
 
+    @TestMetadata("NamedArguments.kt")
+    public void testNamedArguments() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedArguments.kt");
+    }
+
     @TestMetadata("NoReformat.kt")
     public void testNoReformat() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NoReformat.kt");
@@ -678,6 +683,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("QuotedLocalVar.kt")
     public void testQuotedLocalVar() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedLocalVar.kt");
+    }
+
+    @TestMetadata("QuotedOuterNames.kt")
+    public void testQuotedOuterNames() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedOuterNames.kt");
     }
 
     @TestMetadata("QuotedParameter.kt")

@@ -38,6 +38,8 @@ Fa:com.intellij.openapi.module.ModuleManager
 *:com.intellij.openapi.project.ProjectTypesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:inferProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
+Fa:com.intellij.openapi.projectRoots.ProjectJdkTable
+- *s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.ProjectJdkTable
 *:com.intellij.openapi.roots.AdditionalLibraryRootsListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V

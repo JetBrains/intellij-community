@@ -18,7 +18,9 @@
   - name: intellij.evaluationPlugin.languages.ruby
   - name: intellij.evaluationPlugin.languages.sql
   - name: intellij.evaluationPlugin.languages.terraform
+  - name: intellij.evaluationPlugin.languages.yaml
   - name: intellij.evaluationPlugin.inlineCompletion
+  - name: intellij.evaluationPlugin.agent
   - name: intellij.evaluationPlugin.fullLine
   - name: intellij.evaluationPlugin.llm
   - name: intellij.evaluationPlugin.ultimate

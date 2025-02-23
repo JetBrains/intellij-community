@@ -7,6 +7,7 @@ module fleet.andel {
   requires kotlinx.serialization.json;
   requires kotlinx.collections.immutable.jvm;
   requires it.unimi.dsi.fastutil;
+  requires kotlin.codepoints.jvm;
 
   exports andel.editor;
   exports andel.intervals;

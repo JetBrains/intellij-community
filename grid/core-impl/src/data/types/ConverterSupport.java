@@ -64,14 +64,18 @@ public final class ConverterSupport {
 
     @Override
     protected TemporalAccessor toTemporalAccessor(@NotNull Object value) {
-      if (!(value instanceof TemporalAccessor)) throw new IllegalArgumentException(
-        String.format("Value class is not TemporalAccessor: %s", value.getClass())
-      );
-      return value instanceof LocalTime ?
-             ((LocalTime)value)
-               .atOffset(DataGridFormattersUtilCore.getLocalTimeOffset())
-               .withOffsetSameInstant(DataGridFormattersUtilCore.getDefaultOffset()) :
-             (TemporalAccessor)value;
+      if (value instanceof LocalTime localTime) {
+        return localTime
+          .atOffset(DataGridFormattersUtilCore.getLocalTimeOffset())
+          .withOffsetSameInstant(DataGridFormattersUtilCore.getDefaultOffset());
+      }
+
+      if (!(value instanceof TemporalAccessor temporalAccessor)) {
+        throw new IllegalArgumentException(
+          String.format("Value class is not TemporalAccessor: %s", value.getClass())
+        );
+      }
+      return temporalAccessor;
     }
 
     @Override

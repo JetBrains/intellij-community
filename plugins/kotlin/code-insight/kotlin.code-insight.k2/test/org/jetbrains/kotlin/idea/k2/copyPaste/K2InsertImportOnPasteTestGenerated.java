@@ -310,6 +310,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
                 runTest("../../idea/tests/testData/copyPaste/imports/KeywordClassName.kt");
             }
 
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/LabelReference.kt");
+            }
+
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
@@ -880,6 +885,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
             @TestMetadata("KeywordClassName.kt")
             public void testKeywordClassName() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/KeywordClassName.kt");
+            }
+
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/LabelReference.kt");
             }
 
             @TestMetadata("Local.kt")

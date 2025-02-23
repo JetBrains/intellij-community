@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -17,8 +18,9 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
+@Deprecated("will be moved to inline.completion.v2")
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 38)
+  private val GROUP = EventLogGroup("inline.completion", 39)
 
   const val INVOKED_EVENT_ID: String = "invoked"
   const val SHOWN_EVENT_ID: String = "shown"
@@ -44,6 +46,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   object InvokedEvents {
     val REQUEST_ID: EventField<Long> = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
     val EVENT: EventField<Class<*>?> = EventFields.Class("event", "Event which triggered completion")
+    val EDITOR_TYPE: EventField<InlineCompletionEditorType> = EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor")
     val PROVIDER: EventField<Class<*>?> = EventFields.Class("provider", "Completion provider class")
     val PROVIDER_PLUGIN_INFO: EventField<PluginInfo?> = PluginInfoField("plugin_id_of_provider", "Id of provider's plugin")
     val TIME_TO_COMPUTE: EventField<Long> = EventFields.Long("time_to_compute", "Time of provider execution (ms)")
@@ -62,6 +65,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
     INVOKED_EVENT_ID,
     InvokedEvents.REQUEST_ID,
+    InvokedEvents.EDITOR_TYPE,
     EventFields.Language,
     EventFields.CurrentFile,
     InvokedEvents.EVENT,
@@ -75,6 +79,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   @ApiStatus.Internal
   object ShownEvents {
     val REQUEST_ID: EventField<Long> = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
+    val EDITOR_TYPE: EventField<InlineCompletionEditorType> = EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor")
     val PROVIDER: EventField<Class<*>?> = EventFields.Class("provider", "Completion provider class")
     val LINES: EventField<List<Int>> = EventFields.IntList("lines", "Number of lines in the suggestion")
     val LENGTH: EventField<List<Int>> = EventFields.IntList("length", "Length of the 'gray text' shown (in chars)")
@@ -109,6 +114,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   internal val SHOWN_EVENT: VarargEventId = GROUP.registerVarargEvent(
     SHOWN_EVENT_ID,
     ShownEvents.REQUEST_ID,
+    ShownEvents.EDITOR_TYPE,
     EventFields.Language,
     EventFields.CurrentFile,
     ShownEvents.PROVIDER,
@@ -132,7 +138,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val COMMON_SUFFIX_LENGTH: EventField<Int> = EventFields.Int("common_suffix_length", "Length of common suffix between the suggestion and what remained in Editor")
   }
 
-  internal val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
+  @Deprecated("Superseded by INSERTED_STATE_EVENT")
+  internal val INSERTED_STATE_EVENT_OLD: VarargEventId = GROUP.registerVarargEvent(
     eventId = INSERTED_STATE_EVENT_ID,
     description = "State of the inserted inline proposal in the editor after some time",
     ShownEvents.REQUEST_ID,

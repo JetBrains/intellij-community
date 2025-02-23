@@ -58,8 +58,6 @@ import javax.xml.namespace.QName;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
-
 public class RngElementDescriptor implements XmlElementDescriptor {
 
   private static final Logger LOG = Logger.getInstance(RngElementDescriptor.class);
@@ -423,7 +421,8 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       myColumn = column;
       PsiElement definition = getNavigationElement();
       myName = definition.getText();
-      PsiElement prevPrevSibling = doIfNotNull(definition.getPrevSibling(), PsiElement::getPrevSibling);
+      PsiElement obj = definition.getPrevSibling();
+      PsiElement prevPrevSibling = obj == null ? null : obj.getPrevSibling();
       if (prevPrevSibling == null) {
         LOG.error("Failed to locate type for RNC element - " + myName);
       }

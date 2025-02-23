@@ -3,6 +3,8 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -31,13 +33,15 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNullElse;
+
 final class ClassChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
   ClassChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
   /**
-   * new ref(...) or new ref(...) { ... } where ref is abstract class
+   * new ref(...) or new ref(...) { ... } where ref is an abstract class
    */
   void checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
@@ -61,7 +65,7 @@ final class ClassChecker {
   void checkEnumWithAbstractMethods(@NotNull PsiEnumConstant enumConstant) {
     PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
     PsiClass enumClass = enumConstant.getContainingClass();
-    PsiClass aClass = Objects.requireNonNullElse(initializingClass, enumClass);
+    PsiClass aClass = requireNonNullElse(initializingClass, enumClass);
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
     if (abstractMethod == null) return;
 
@@ -153,7 +157,7 @@ final class ClassChecker {
     PsiElement parent = aClass.getParent();
     boolean checkSiblings;
     if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      // optimization: instead of iterating PsiClass children manually we can get'em all from caches
+      // optimization: instead of iterating PsiClass children manually, we can get them all from caches
       PsiClass innerClass = psiClass.findInnerClassByName(name, false);
       if (innerClass != null && innerClass != aClass) {
         if (innerClass.getTextOffset() > aClass.getTextOffset()) {
@@ -230,10 +234,10 @@ final class ClassChecker {
     if (module == null) return;
 
     GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope());
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, scope);
+    PsiClass[] classes = JavaPsiFacade.getInstance(myVisitor.project()).findClasses(qualifiedName, scope);
     if (aClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null) {
       Collection<? extends PsiClass> implicitClasses =
-        ImplicitClassSearch.search(qualifiedName, javaFile.getProject(), scope).findAll();
+        ImplicitClassSearch.search(qualifiedName, myVisitor.project(), scope).findAll();
       if (!implicitClasses.isEmpty()) {
         ArrayList<PsiClass> newClasses = new ArrayList<>();
         ContainerUtil.addAll(newClasses, classes);
@@ -256,7 +260,7 @@ final class ClassChecker {
     GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(implicitClass.getResolveScope());
     String qualifiedName = implicitClass.getQualifiedName();
     if (qualifiedName == null) return;
-    PsiClass[] classes = JavaPsiFacade.getInstance(implicitClass.getProject()).findClasses(qualifiedName, scope);
+    PsiClass[] classes = JavaPsiFacade.getInstance(myVisitor.project()).findClasses(qualifiedName, scope);
     checkDuplicateClasses(implicitClass, classes);
   }
 
@@ -389,7 +393,7 @@ final class ClassChecker {
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return;
     String name = implicitClass.getQualifiedName();
-    if (!PsiNameHelper.getInstance(file.getProject()).isIdentifier(name)) {
+    if (!PsiNameHelper.getInstance(myVisitor.project()).isIdentifier(name)) {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INVALID_FILE_NAME.create(file, implicitClass));
       return;
     }
@@ -548,8 +552,50 @@ final class ClassChecker {
       myVisitor.report(JavaErrorKinds.CLASS_SEALED_PERMITS_ON_NON_SEALED.create(aClass));
       return;
     }
+    PsiJavaModule currentModule = myVisitor.javaModule();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myVisitor.project());
+    for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
+      for (PsiAnnotation annotation : PsiTreeUtil.findChildrenOfType(permitted, PsiAnnotation.class)) {
+        myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST.create(annotation));
+      }
 
-    // TODO: module graph
+      PsiReferenceParameterList parameterList = permitted.getParameterList();
+      if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
+        myVisitor.report(JavaErrorKinds.TYPE_ARGUMENT_IN_PERMITS_LIST.create(parameterList));
+        continue;
+      }
+      @Nullable PsiElement resolve = permitted.resolve();
+      if (resolve instanceof PsiClass inheritorClass) {
+        PsiManager manager = inheritorClass.getManager();
+        if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> manager.areElementsEquivalent(aClass, type.resolve()))) {
+          myVisitor.report(JavaErrorKinds.CLASS_PERMITTED_NOT_DIRECT_SUBCLASS.create(
+            permitted, new JavaErrorKinds.SuperclassSubclassContext(aClass, inheritorClass)));
+        }
+        else if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
+          myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE.create(
+            permitted, new JavaErrorKinds.SuperclassSubclassContext(aClass, inheritorClass)));
+        }
+        else if (currentModule != null && !areModulesTheSame(currentModule, JavaPsiModuleUtil.findDescriptorByElement(inheritorClass))) {
+          myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_ANOTHER_MODULE.create(
+            permitted, new JavaErrorKinds.SuperclassSubclassContext(aClass, inheritorClass)));
+        }
+        else if (!(inheritorClass instanceof PsiCompiledElement) && !hasPermittedSubclassModifier(inheritorClass)) {
+          myVisitor.report(JavaErrorKinds.CLASS_PERMITTED_MUST_HAVE_MODIFIER.create(permitted, inheritorClass));
+        }
+      }
+    }
+  }
+
+  private static boolean areModulesTheSame(@NotNull PsiJavaModule module, PsiJavaModule module1) {
+    return module1 != null && module.getOriginalElement() == module1.getOriginalElement();
+  }
+
+  private static boolean hasPermittedSubclassModifier(@NotNull PsiClass psiClass) {
+    PsiModifierList modifiers = psiClass.getModifierList();
+    if (modifiers == null) return false;
+    return modifiers.hasModifierProperty(PsiModifier.SEALED) ||
+           modifiers.hasModifierProperty(PsiModifier.NON_SEALED) ||
+           modifiers.hasModifierProperty(PsiModifier.FINAL);
   }
 
   void checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
@@ -648,7 +694,7 @@ final class ClassChecker {
 
   void checkClassDoesNotCallSuperConstructorOrHandleExceptions(PsiClass aClass) {
     if (aClass.isEnum()) return;
-    // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
+    // Check only no-ctr classes. Problem with a specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return;
     // find no-args base class ctr
     checkBaseClassDefaultConstructorProblem(aClass, aClass, PsiClassType.EMPTY_ARRAY);
@@ -663,14 +709,14 @@ final class ClassChecker {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return;
 
-    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, aClass.getProject(), baseClass);
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, myVisitor.project(), baseClass);
     List<PsiMethod> constructorCandidates = (resolved != null ? Collections.singletonList((PsiMethod)resolved)
                                                               : Arrays.asList(constructors))
       .stream()
       .filter(constructor -> {
         PsiParameter[] parameters = constructor.getParameterList().getParameters();
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
-               PsiResolveHelper.getInstance(aClass.getProject()).isAccessible(constructor, aClass, null);
+               PsiResolveHelper.getInstance(myVisitor.project()).isAccessible(constructor, aClass, null);
       })
       .limit(2).toList();
 
@@ -808,15 +854,47 @@ final class ClassChecker {
     // 'this' can be used as an (implicit) super() qualifier
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
-      myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(aClass, aClass));
+      myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(aClass, aClass.getName() + ".this"));
       return;
     }
     for (PsiMethod constructor : constructors) {
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
       if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-        myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(constructor, aClass));
+        myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(constructor, aClass.getName() + ".this"));
         return;
       }
     }
   }
+
+  void checkExtendsSealedClass(@NotNull PsiClass aClass,
+                               @NotNull PsiClass superClass,
+                               @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
+    if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if (PsiUtil.isLocalClass(aClass)) {
+        myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_LOCAL.create(elementToHighlight, aClass));
+        return;
+      }
+      if (!JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass) &&
+          JavaPsiModuleUtil.findDescriptorByElement(aClass) == null) {
+        myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE.create(
+          elementToHighlight, new JavaErrorKinds.SuperclassSubclassContext(superClass, aClass)));
+      }
+
+      PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
+      if (permittedTypes.length > 0) {
+        PsiManager manager = superClass.getManager();
+        if (ContainerUtil.exists(permittedTypes, permittedType -> manager.areElementsEquivalent(aClass, permittedType.resolve()))) {
+          return;
+        }
+      }
+      else if (aClass.getContainingFile() == superClass.getContainingFile()) {
+        return;
+      }
+      PsiIdentifier identifier = aClass.getNameIdentifier();
+      if (identifier == null) return;
+      myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_NOT_PERMITTED.create(
+        elementToHighlight, new JavaErrorKinds.SuperclassSubclassContext(superClass, aClass)));
+    }
+  }
+
 }

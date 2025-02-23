@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
 import com.intellij.execution.CommandLineUtil
@@ -110,9 +110,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry shouldn't be configured twice`() {
-    assertTrue(project.service<GpgAgentConfigurator>().canBeConfigured(project))
+    assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
     configureGpgAgent(createPathLocator().resolvePaths()!!)
-    assertFalse(project.service<GpgAgentConfigurator>().canBeConfigured(project))
+    assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
   }
 
   fun `test pinentry fallbak preserved after update`() {
@@ -126,7 +126,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     assertPinentryFallback(paths, pinetryFallback)
     FileUtil.writeToFile(paths.gpgPinentryAppLauncher.toFile(), "irrelevant content")
     runBlocking {
-      project.service<GpgAgentConfigurator>().updateExistingPinentryLauncher()
+      GpgAgentConfigurator.getInstance(project).updateExistingPinentryLauncher()
     }
     assertPinentryFallback(paths, pinetryFallback)
   }
@@ -139,7 +139,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
     val config = readConfig(gpgAgentPaths.gpgAgentConf)
     runBlocking {
-      project.service<GpgAgentConfigurator>().doConfigure(
+      GpgAgentConfigurator.getInstance(project).doConfigure(
         GitExecutableManager.getInstance().getExecutable(project),
         gpgAgentPaths,
         config,

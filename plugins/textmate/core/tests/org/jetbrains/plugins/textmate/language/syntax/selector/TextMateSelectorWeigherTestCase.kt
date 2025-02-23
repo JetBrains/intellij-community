@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector
 
 import org.jetbrains.plugins.textmate.TestUtil
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

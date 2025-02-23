@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -10,7 +11,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaProblemHighlightFilter extends ProblemHighlightFilter {

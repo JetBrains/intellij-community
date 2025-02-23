@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions
 
 import com.intellij.codeInsight.folding.impl.actions.BaseFoldingHandler
@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.jetbrains.python.PythonFoldingBuilder
 
-class PyCollapseTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(false))
+private class PyCollapseTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(false))
 
-class PyExpandTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(true))
+private class PyExpandTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(true))
 
-class PyTypeAnnotationsFoldingHandler(val expand: Boolean) : BaseFoldingHandler() {
+internal class PyTypeAnnotationsFoldingHandler(val expand: Boolean) : BaseFoldingHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val pythonTypeRegions = getFoldRegionsForSelection(editor, caret)
       .filter { it.group != null && it.group.toString() == PythonFoldingBuilder.PYTHON_TYPE_ANNOTATION_GROUP_NAME }

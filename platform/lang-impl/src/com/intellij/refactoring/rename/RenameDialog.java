@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -180,10 +180,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     if (initialName != null) {
       result.add(initialName);
     }
-    result.addAll(myPredefinedSuggestedNames);
-    result.add(UsageViewUtil.getShortName(myPsiElement));
     mySuggestedNameInfo = ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.collecting.suggested.names"),
-                                                        () -> NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result));
+                                                        () -> {
+                                                          result.addAll(myPredefinedSuggestedNames);
+                                                          result.add(UsageViewUtil.getShortName(myPsiElement));
+                                                          return NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext,
+                                                                                                     result);
+                                                        });
     return ArrayUtilRt.toStringArray(result);
   }
 
@@ -346,7 +349,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   protected void doAction() {
     PsiUtilCore.ensureValid(myPsiElement);
     String newName = getNewName();
-    performRename(newName);
+    String oldName = UsageViewUtil.getShortName(myPsiElement);
+    if (oldName.equals(newName)) {
+      close(OK_EXIT_CODE);
+    }
+    else {
+      performRename(newName);
+    }
   }
 
   @Override

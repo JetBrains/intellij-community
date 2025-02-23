@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +16,7 @@ import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.jps.entities.SdkId;
 import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
@@ -88,7 +88,7 @@ public final class ReincludedRootsUtil {
     private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
     private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
     private final List<CustomKindRootData<?>> filesFromCustomKind = new ArrayList<>();
-    private final MultiMap<Sdk, VirtualFile> filesFromSdks = MultiMap.createSet();
+    private final MultiMap<SdkId, VirtualFile> filesFromSdks = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> sourceFilesFromLibraries = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> classFilesFromLibraries = MultiMap.createSet();
     private final List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
@@ -133,9 +133,9 @@ public final class ReincludedRootsUtil {
         }
 
         //here we have WorkspaceFileKind.EXTERNAL or WorkspaceFileKind.EXTERNAL_SOURCE
-        Sdk sdk = WorkspaceFileSetRecognizer.INSTANCE.getSdk(fileSet);
-        if (sdk != null) {
-          addSdkFile(sdk, file);
+        SdkId sdkId = WorkspaceFileSetRecognizer.INSTANCE.getSdkId(fileSet);
+        if (sdkId != null) {
+          addSdkFile(sdkId, file);
           continue;
         }
 
@@ -184,8 +184,8 @@ public final class ReincludedRootsUtil {
       pointers.add(entityPointer);
     }
 
-    private void addSdkFile(Sdk sdk, VirtualFile file) {
-      filesFromSdks.putValue(sdk, file);
+    private void addSdkFile(SdkId sdkId, VirtualFile file) {
+      filesFromSdks.putValue(sdkId, file);
     }
 
     private void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
@@ -274,8 +274,8 @@ public final class ReincludedRootsUtil {
         result.addAll(IndexableIteratorBuilders.INSTANCE.
                         forLibraryEntity(entry.getKey(), true, entry.getValue(), Collections.emptyList()));
       }
-      for (Map.Entry<Sdk, Collection<VirtualFile>> entry : filesFromSdks.entrySet()) {
-        result.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
+      for (Map.Entry<SdkId, Collection<VirtualFile>> entry : filesFromSdks.entrySet()) {
+        result.add(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
       }
       for (ExternalRootData<?> data : filesFromExternal) {
         result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));

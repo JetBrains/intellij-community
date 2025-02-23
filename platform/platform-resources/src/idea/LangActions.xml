@@ -1076,6 +1076,7 @@
       <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
       <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
       <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.large"/>
       <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
       <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>

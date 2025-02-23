@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -1076,7 +1076,7 @@ public class TypeMigrationLabeler {
 
   public static List<PsiReference> filterReferences(PsiClass psiClass, Query<? extends PsiReference> memberReferences) {
     final List<PsiReference> refs = new ArrayList<>();
-    for (PsiReference memberReference : memberReferences) {
+    for (PsiReference memberReference : memberReferences.asIterable()) {
       if (psiClass == null) {
         refs.add(memberReference);
       } else {

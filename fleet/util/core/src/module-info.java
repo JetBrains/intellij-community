@@ -18,10 +18,13 @@ module fleet.util.core {
   requires transitive kotlinx.collections.immutable.jvm;
   requires transitive fleet.util.logging.api;
   requires transitive fleet.fastutil;
+  requires transitive fleet.multiplatform.shims;
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
   requires kotlinx.datetime;
   requires fleet.preferences;
   requires fleet.reporting.api;
   requires fleet.util.os;
+
+  requires static fleet.util.multiplatform;
 }

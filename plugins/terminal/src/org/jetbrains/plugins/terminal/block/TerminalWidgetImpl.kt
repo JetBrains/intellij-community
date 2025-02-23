@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
@@ -14,7 +15,6 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.block.reworked.ReworkedTerminalView
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -32,7 +32,6 @@ import javax.swing.JPanel
 internal class TerminalWidgetImpl(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProvider,
-  private val isReworked: Boolean,
   parent: Disposable,
 ) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
@@ -65,11 +64,10 @@ internal class TerminalWidgetImpl(
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
 
-    view = when {
-      isReworked -> ReworkedTerminalView(project, settings)
-      options.shellIntegration?.commandBlockIntegration != null -> createBlockTerminalView(options)
-      else -> OldPlainTerminalView(project, settings, terminalTitle)
+    view = if (options.shellIntegration?.commandBlockIntegration != null) {
+      createBlockTerminalView(options)
     }
+    else OldPlainTerminalView(project, settings, terminalTitle)
 
     if (oldView is TerminalPlaceholder) {
       oldView.moveTerminationCallbacksTo(view)
@@ -134,6 +132,17 @@ internal class TerminalWidgetImpl(
   override fun getComponent(): JComponent = wrapper
 
   override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
+
+  override val session: TerminalSession?
+    get() = null
+
+  override fun connectToSession(session: TerminalSession) {
+    error("connectToSession is not supported in TerminalWidgetImpl, use connectToTty instead")
+  }
+
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize> {
+    error("getTerminalSizeInitializedFuture is not supported in TerminalWidgetImpl")
+  }
 
   private class TerminalPlaceholder : TerminalContentView {
 

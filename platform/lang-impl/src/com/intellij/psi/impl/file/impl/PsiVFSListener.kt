@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
+import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.ide.PsiCopyPasteManager
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -101,7 +102,8 @@ class PsiVFSListener internal constructor(private val project: Project) {
       val vFile = de.file
       val parent = vFile.parent
 
-      val psiFile = fileManager.getCachedPsiFileInner(vFile)
+      // todo ijpl-339 implement proper event for multiple files
+      val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext())
       var element: PsiElement?
       if (psiFile != null) {
         fileManager.setViewProvider(vFile, null)
@@ -211,7 +213,8 @@ class PsiVFSListener internal constructor(private val project: Project) {
         }
       }
       else if (propertyName == VirtualFile.PROP_WRITABLE) {
-        val psiFile = fileManager.getCachedPsiFileInner(vFile) ?: return@ExternalChangeAction
+        // todo ijpl-339 implement proper event for multiple files
+        val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext()) ?: return@ExternalChangeAction
         treeEvent.element = psiFile
         treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
         treeEvent.oldValue = event.oldValue
@@ -402,7 +405,8 @@ class PsiVFSListener internal constructor(private val project: Project) {
         fileManager.getCachedDirectory(vFile)
       }
       else {
-        fileManager.getCachedPsiFileInner(vFile)
+        // todo ijpl-339 implement proper event for multiple files
+        fileManager.getCachedPsiFileInner(vFile, anyContext())
       }
       val oldProject = ProjectLocator.getInstance().guessProjectForFile(vFile)
       if (oldProject != null && oldProject !== project) {

@@ -18,7 +18,7 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
   companion object {
     private const val MODEL_DIR = "ec_model_exp"
     private const val RESOURCE_DIR = "ec_features_exp"
-    private const val TRUE_THRESHOLD = 0.5
+    private const val TRUE_THRESHOLD = 0.4
   }
 
   private val model: SearchEverywhereCatBoostBinaryClassifierModel = CatBoostModelFactory()
@@ -30,8 +30,7 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     get() = Registry.`is`("search.everywhere.force.disable.experiment.essential.contributors.ml")
 
   override fun isAvailable(): Boolean {
-    return false  // TODO: Remove this line and edit model and resource directories defined above once a model is ready
-    // return isActiveExperiment() && isSearchStateActive()
+    return isActiveExperiment() && isSearchStateActive()
   }
 
   private fun isActiveExperiment(): Boolean {

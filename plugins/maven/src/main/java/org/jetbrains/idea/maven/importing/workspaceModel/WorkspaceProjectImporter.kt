@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -114,6 +116,12 @@ internal open class WorkspaceProjectImporter(
     stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
       tracer.spanBuilder("configLegacyFacets").use {
         configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
+      }
+    }
+
+    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) { activity ->
+      tracer.spanBuilder("updateLibrarySubstitutions").use {
+        updateLibrarySubstitutions()
       }
     }
 
@@ -542,6 +550,19 @@ internal open class WorkspaceProjectImporter(
     MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 
+  private fun updateLibrarySubstitutions() {
+    if (Registry.`is`("external.system.substitute.library.dependencies")) {
+      // commit does nothing for this provider, so it should be reused
+      val provider = myModifiableModelsProvider as? IdeUIModifiableModelsProvider
+                     ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+      MavenUtil.invokeAndWaitWriteAction(myProject) {
+        // The ModifiableWorkspaceModel#updateLibrarySubstitutions function is automatically called
+        // inside the IdeModifiableModelsProviderImpl#commit function
+        provider.commit()
+      }
+    }
+  }
+
   override fun createdModules(): List<Module> {
     return createdModulesList
   }
@@ -578,7 +599,8 @@ internal open class WorkspaceProjectImporter(
                                              workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
                                              folderImportingContext,
-                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList)
+                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList,
+                                             project)
 
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->

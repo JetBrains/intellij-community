@@ -26,6 +26,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lexer.TokenList
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
+- *:addWriteActionListener(com.intellij.openapi.application.WriteActionListener,com.intellij.openapi.Disposable):V
 - *:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 - *:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 a:com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -73,5 +74,7 @@ c:com.intellij.psi.stubs.PsiFileStubImpl
 - com.intellij.psi.stubs.PsiFileStub
 - *:getElementType():com.intellij.psi.tree.IElementType
 - *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubElementUtil
+- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
 f:com.intellij.psi.stubs.StubTreeBuilder
 - *s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List

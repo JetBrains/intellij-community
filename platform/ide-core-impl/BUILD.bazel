@@ -24,7 +24,7 @@ jvm_library(
     "//platform/analysis-impl",
     "@lib//:icu4j",
     "@lib//:fastutil-min",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//jps/model-impl",
     "@lib//:kotlinx-coroutines-core",

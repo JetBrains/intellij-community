@@ -13,7 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/extensions",
     "//platform/core-api:core",
@@ -26,9 +26,10 @@ jvm_library(
     "//platform/util:util-ui",
     "@lib//:fastutil-min",
     "//platform/core-ui",
+    "//platform/statistics",
   ],
   exports = [
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/extensions",
   ],

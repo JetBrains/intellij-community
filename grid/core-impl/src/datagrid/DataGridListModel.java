@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class DataGridListModel extends GridListModelBase<GridRow, GridColumn> {
+public class DataGridListModel extends GridListModelBase<GridRow, GridColumn> implements GridModelWithInjections<GridRow, GridColumn> {
   private final BiFunction<Object, Object, Boolean> myValuesEquals;
 
   public DataGridListModel(@NotNull BiFunction<Object, Object, Boolean> valuesEquals) {
@@ -44,5 +44,13 @@ public class DataGridListModel extends GridListModelBase<GridRow, GridColumn> {
       if (!GridUtilCore.isRowId(getColumn(column)) && !myValuesEquals.apply(value, oldValue)) return false;
     }
     return true;
+  }
+
+  @Override
+  public void injectValue(@NotNull ModelIndex<GridRow> rowIndex, @NotNull ModelIndex<GridColumn> columnIndex, @NotNull Object value) {
+    var row = getRow(rowIndex);
+    if (row != null) {
+      row.setValue(columnIndex.value, value);
+    }
   }
 }

@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.ide.internal` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-internal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "ide-internal",
@@ -33,6 +39,7 @@ jvm_library(
     "@lib//:gson",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlin-reflect",
-  ]
+  ],
+  runtime_deps = [":ide-internal_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

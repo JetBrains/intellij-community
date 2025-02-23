@@ -13,6 +13,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -24,6 +25,7 @@ class TokenLoginDialog @JvmOverloads constructor(
   private val centerPanelSupplier: CoroutineScope.() -> DialogPanel
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("A proper coroutine scope should be provided")
   @OptIn(DelicateCoroutinesApi::class)
   @JvmOverloads

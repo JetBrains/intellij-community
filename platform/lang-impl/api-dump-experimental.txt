@@ -143,6 +143,89 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.openapi.extensions.ExtensionPointName
+*a:com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+- com.intellij.openapi.project.DumbAware
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- f:getActionId():java.lang.String
+- getAdditionalInfo():java.lang.String
+- getI18nName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getPriority():java.lang.Integer
+- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
+- f:setActionId(java.lang.String):V
+*a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- a:findChangeSignatureOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
+- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- a:placeIsApplicable(com.intellij.psi.PsiElement,I):Z
+- f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommand
+- com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+- <init>():V
+- f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- f:getI18nName():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getName():java.lang.String
+- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- a:generationIsAvailable(com.intellij.psi.PsiElement,I):Z
+- getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- pf:isOnlySpaceInLine(com.intellij.openapi.editor.Document,I):Z
+*pf:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider$GenerateCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- <init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String):V
+- b:<init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- f:getAction():com.intellij.codeInsight.actions.CodeInsightAction
+- f:getCustomI18nName():java.lang.String
+- f:getCustomName():java.lang.String
+- getI18nName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- f:setCustomI18nName(java.lang.String):V
+- f:setCustomName(java.lang.String):V
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- a:canNavigateToDeclaration(com.intellij.psi.PsiElement):Z
+- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToImplementationCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- a:canGoToImplementation(com.intellij.psi.PsiElement,I):Z
+- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesActionCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- a:hasToShow(com.intellij.psi.PsiElement):Z
+- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
+*:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
+- *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
+- findOffsets(com.intellij.psi.PsiFile,I):java.util.List
+*f:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
+*:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper
+- *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
+- skip(com.intellij.codeInsight.intention.CommonIntentionAction,com.intellij.psi.PsiFile,I):Z
+*f:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
 *:com.intellij.codeInsight.editorActions.TypingActionsExtension
@@ -202,6 +285,8 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 *f:com.intellij.codeInsight.hints.InlayHintsUtils
 - sf:INSTANCE:com.intellij.codeInsight.hints.InlayHintsUtils
 - f:computeCodeVisionUnderReadAction(kotlin.jvm.functions.Function0):com.intellij.codeInsight.codeVision.CodeVisionState
+- f:computeCodeVisionUnderReadAction(Z,kotlin.jvm.functions.Function0):com.intellij.codeInsight.codeVision.CodeVisionState
+- bs:computeCodeVisionUnderReadAction$default(com.intellij.codeInsight.hints.InlayHintsUtils,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.codeInsight.codeVision.CodeVisionState
 - f:getDefaultInlayHintsProviderPopupActions(com.intellij.codeInsight.hints.SettingsKey,java.util.function.Supplier):java.util.List
 - f:getTextRangeWithoutLeadingCommentsAndWhitespaces(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - sf:isFirstInLine(com.intellij.psi.PsiElement):Z
@@ -301,65 +386,6 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - mouseClicked(java.awt.event.MouseEvent,java.awt.Point):V
 - mouseExited():V
 - mouseMoved(java.awt.event.MouseEvent,java.awt.Point):V
-*f:com.intellij.codeInsight.hints.presentation.PresentationFactory
-- com.intellij.codeInsight.hints.InlayPresentationFactory
-- *sf:Companion:com.intellij.codeInsight.hints.presentation.PresentationFactory$Companion
-- <init>(com.intellij.openapi.editor.Editor):V
-- f:button(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$ClickListener,com.intellij.codeInsight.hints.InlayPresentationFactory$HoverListener,Z):kotlin.Pair
-- bs:button$default(com.intellij.codeInsight.hints.presentation.PresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$ClickListener,com.intellij.codeInsight.hints.InlayPresentationFactory$HoverListener,Z,I,java.lang.Object):kotlin.Pair
-- f:changeOnHover(com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- bs:changeOnHover$default(com.intellij.codeInsight.hints.presentation.PresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:collapsible(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0,com.intellij.codeInsight.hints.presentation.InlayPresentation,Z):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- bs:collapsible$default(com.intellij.codeInsight.hints.presentation.PresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0,com.intellij.codeInsight.hints.presentation.InlayPresentation,Z,I,java.lang.Object):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- container(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$Padding,com.intellij.codeInsight.hints.InlayPresentationFactory$RoundedCorners,java.awt.Color,F):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:folding(com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- icon(javax.swing.Icon):com.intellij.codeInsight.hints.presentation.IconPresentation
-- f:inset(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,I,I):com.intellij.codeInsight.hints.presentation.InsetPresentation
-- bs:inset$default(com.intellij.codeInsight.hints.presentation.PresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,I,I,I,java.lang.Object):com.intellij.codeInsight.hints.presentation.InsetPresentation
-- f:join(java.util.List,kotlin.jvm.functions.Function0):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:matching(java.util.List):java.util.List
-- f:matchingBraces(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.InlayPresentation):kotlin.Pair
-- mouseHandling(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$ClickListener,com.intellij.codeInsight.hints.InlayPresentationFactory$HoverListener):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:onClick(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.presentation.MouseButton,kotlin.jvm.functions.Function2):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:onClick(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.util.EnumSet,kotlin.jvm.functions.Function2):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:onHover(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$HoverListener):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:psiSingleReference(com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:psiSingleReference(com.intellij.codeInsight.hints.presentation.InlayPresentation,Z,kotlin.jvm.functions.Function0):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- bs:psiSingleReference$default(com.intellij.codeInsight.hints.presentation.PresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:reference(com.intellij.codeInsight.hints.presentation.InlayPresentation,kotlin.jvm.functions.Function0):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:referenceOnHover(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$ClickListener):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:roundWithBackground(com.intellij.codeInsight.hints.presentation.InlayPresentation):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:roundWithBackgroundAndSmallInset(com.intellij.codeInsight.hints.presentation.InlayPresentation):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:seq(com.intellij.codeInsight.hints.presentation.InlayPresentation[]):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:showTooltip(java.awt.event.MouseEvent,java.lang.String):com.intellij.ui.LightweightHint
-- smallScaledIcon(javax.swing.Icon):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- smallText(java.lang.String):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:smallTextWithoutBackground(java.lang.String):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:synchronousOnHover(java.util.List,kotlin.jvm.functions.Function1):java.util.List
-- text(java.lang.String):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- *f:textSpacePlaceholder(I,Z):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:withCursorOnHover(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Cursor):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:withCursorOnHoverWhenControlDown(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Cursor):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:withReferenceAttributes(com.intellij.codeInsight.hints.presentation.InlayPresentation):com.intellij.codeInsight.hints.presentation.WithAttributesPresentation
-- f:withTooltip(java.lang.String,com.intellij.codeInsight.hints.presentation.InlayPresentation):com.intellij.codeInsight.hints.presentation.InlayPresentation
-*f:com.intellij.codeInsight.hints.presentation.PresentationFactory$Companion
-- f:getCustomToStringProvider():kotlin.jvm.functions.Function1
-- f:setCustomToStringProvider(kotlin.jvm.functions.Function1):V
-*f:com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory
-- com.intellij.codeInsight.hints.InlayPresentationFactory
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.presentation.PresentationFactory):V
-- container(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$Padding,com.intellij.codeInsight.hints.InlayPresentationFactory$RoundedCorners,java.awt.Color,F):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:getEditor():com.intellij.openapi.editor.Editor
-- icon(javax.swing.Icon):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:icon(javax.swing.Icon,java.lang.String,I):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:inset(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,I,I):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- bs:inset$default(com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory,com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,I,I,I,java.lang.Object):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:lineCentered(com.intellij.codeInsight.hints.presentation.InlayPresentation):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- mouseHandling(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$ClickListener,com.intellij.codeInsight.hints.InlayPresentationFactory$HoverListener):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- f:seq(com.intellij.codeInsight.hints.presentation.InlayPresentation[]):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- smallScaledIcon(javax.swing.Icon):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- smallText(java.lang.String):com.intellij.codeInsight.hints.presentation.InlayPresentation
-- text(java.lang.String):com.intellij.codeInsight.hints.presentation.InlayPresentation
 *e:com.intellij.codeInsight.intention.IntentionSource
 - java.lang.Enum
 - sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource

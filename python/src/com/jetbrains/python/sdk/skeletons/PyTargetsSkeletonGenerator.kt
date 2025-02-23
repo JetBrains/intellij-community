@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.div
 import kotlin.io.path.exists
 
@@ -100,7 +101,9 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         val existingStateFile = Paths.get(skeletonsPath) / STATE_MARKER_FILE
         if (existingStateFile.exists()) {
           val stateFileUploadRoot = TargetEnvironment.UploadRoot(
-            localRootPath = Files.createTempDirectory("generator3"),
+            localRootPath = Files.createTempDirectory(
+              "generator3", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x"))
+            ),
             targetRootPath = TargetEnvironment.TargetPath.Temporary(),
           )
           targetEnvRequest.uploadVolumes += stateFileUploadRoot

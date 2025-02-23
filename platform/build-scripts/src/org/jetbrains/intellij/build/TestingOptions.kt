@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
+import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
+import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -12,6 +15,12 @@ private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n")
 private val OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
 private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
 
+/**
+ * Options available for tests running on TeamCity.
+ * If you want to run it locally, see [CommunityRunTestsBuildTarget] or [IdeaUltimateRunTestsBuildTarget].
+ *
+ * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=JAVA_TESTS`
+ */
 open class TestingOptions {
   companion object {
     const val ALL_EXCLUDE_DEFINED_GROUP: String = "ALL_EXCLUDE_DEFINED"
@@ -169,6 +178,12 @@ open class TestingOptions {
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
   val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+
+  /** Skip running (and collection) of JUnit5 tests */
+  val shouldSkipJUnit5Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit5", false)
+
+  /** Skip running (and collection) of JUnit3/4 tests */
+  val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

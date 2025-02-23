@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -231,7 +231,7 @@ public final class DfaPsiUtil {
         refExpr.resolve() instanceof PsiParameter parameter &&
         parameter.getParent() instanceof PsiForeachStatement targetLoop &&
         PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
-        !HighlightControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
+        !ControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
       iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
     }
     return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
@@ -247,15 +247,19 @@ public final class DfaPsiUtil {
     if (type == null || type instanceof PsiPrimitiveType) return null;
 
     Ref<NullabilityAnnotationInfo> result = Ref.create(null);
+    boolean local = type instanceof PsiClassType classType &&
+                    classType.getPsiContext() instanceof PsiJavaCodeReferenceElement ref &&
+                    ref.getParent() instanceof PsiTypeElement typeElement &&
+                    typeElement.getParent() instanceof PsiLocalVariable;
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(eachType));
+      result.set(getTypeOwnNullability(eachType, local));
       return result.get() == null &&
              (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }
 
-  private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(PsiType eachType) {
+  private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(@NotNull PsiType eachType, boolean local) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
@@ -266,8 +270,8 @@ public final class DfaPsiUtil {
         return new NullabilityAnnotationInfo(annotation, nullability, false);
       }
     }
-    if (eachType instanceof PsiClassType) {
-      PsiElement context = ((PsiClassType)eachType).getPsiContext();
+    if (eachType instanceof PsiClassType classType && !local) {
+      PsiElement context = classType.getPsiContext();
       if (context != null) {
         return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
       }

@@ -2,11 +2,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalInt;
+
+import static java.util.Objects.requireNonNull;
 
 public final class InstanceOfUtils {
 
@@ -415,8 +416,8 @@ public final class InstanceOfUtils {
       PsiTypeElement typeElement = findCheckTypeElement(instanceOf);
       if (typeElement != null) {
         PsiType type = typeElement.getType();
-        PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();
-        PsiExpression castOperand = Objects.requireNonNull(cast.getOperand());
+        PsiType castType = requireNonNull(cast.getCastType()).getType();
+        PsiExpression castOperand = requireNonNull(cast.getOperand());
         if (PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), castOperand)) {
           if (typeCompatible(type, castType, castOperand) ||
               PsiUtil.isJvmLocalVariable(variable) && isSafeToNarrowType(variable, cast, type)) {
@@ -443,7 +444,7 @@ public final class InstanceOfUtils {
    * @param variable a variable, which is used to check if the scope contains variables with the same name
    * @param instanceOf an instanceof expression that is used to calculate declaration scope
    * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
-   * {@link HighlightUtil#checkVariableAlreadyDefined(PsiVariable)} is used on copy files
+   * {@link JavaPsiVariableUtil#findPreviousVariableDeclaration(PsiVariable)} is used on copy files
    */
   public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
     PsiIdentifier identifier = variable.getNameIdentifier();
@@ -555,7 +556,7 @@ public final class InstanceOfUtils {
       if (name != null &&
           myVariable != variable &&
           myIdentifier.textMatches(name) &&
-          (!myCheckRedeclared || HighlightUtil.checkVariableAlreadyDefined(variable) != null)) {
+          (!myCheckRedeclared || JavaPsiVariableUtil.findPreviousVariableDeclaration(variable) != null)) {
         hasConflict = true;
         stopWalking();
       }

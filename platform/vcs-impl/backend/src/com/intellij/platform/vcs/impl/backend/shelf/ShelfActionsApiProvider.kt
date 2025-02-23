@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.backend.shelf
 
 import com.intellij.platform.project.ProjectId
@@ -9,10 +9,8 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import fleet.kernel.DurableRef
 import fleet.rpc.remoteApiDescriptor
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ShelfActionsApiProvider : RemoteApiProvider {
+private class ShelfActionsApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RemoteShelfActionsApi>()) {
       BackendShelfActionsApi()
@@ -20,8 +18,7 @@ class ShelfActionsApiProvider : RemoteApiProvider {
   }
 }
 
-internal class BackendShelfActionsApi : RemoteShelfActionsApi {
-
+private class BackendShelfActionsApi : RemoteShelfActionsApi {
   override suspend fun unshelve(projectId: ProjectId, changeListRpc: List<ChangeListRpc>, withDialog: Boolean) {
     getShelfRemoteActionExecutor(projectId).unshelve(changeListRpc, withDialog)
   }
@@ -30,8 +27,8 @@ internal class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectId).delete(selectedLists, selectedChanges)
   }
 
-  override suspend fun createPatchForShelvedChanges(projectId: ProjectId, changeListRpc: List<ChangeListRpc>, silentClipboard: Boolean) {
-    getShelfRemoteActionExecutor(projectId).createPatchForShelvedChanges(changeListRpc, silentClipboard)
+  override suspend fun createPatchForShelvedChanges(projectId: ProjectId, changeListsDto: List<ChangeListRpc>, silentClipboard: Boolean) {
+    getShelfRemoteActionExecutor(projectId).createPatchForShelvedChanges(changeListsDto, silentClipboard)
   }
 
   override suspend fun showStandaloneDiff(projectId: ProjectId, changeListsDto: List<ChangeListRpc>, withLocal: Boolean) {

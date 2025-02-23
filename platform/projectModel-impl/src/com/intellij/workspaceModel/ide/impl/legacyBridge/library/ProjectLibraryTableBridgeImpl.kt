@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -45,7 +45,7 @@ private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
       builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder,
@@ -147,7 +147,7 @@ class ProjectLibraryTableBridgeImpl(
       .map { libraryEntity ->
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = libraryEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = targetBuilder
@@ -166,7 +166,7 @@ class ProjectLibraryTableBridgeImpl(
             it.mutableLibraryMap.addIfAbsent(entity, library)
           }
         }
-        writeAction {
+        edtWriteAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)
           }

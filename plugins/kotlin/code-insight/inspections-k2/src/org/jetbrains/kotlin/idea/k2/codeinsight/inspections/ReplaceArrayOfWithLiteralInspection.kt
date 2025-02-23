@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.with.array.literal.fix.family.name")
@@ -46,7 +46,7 @@ internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionB
 
             element.replace(arrayLiteral)
         }
-    })
+    }
 
     override fun getProblemDescription(
         element: KtCallExpression,
@@ -87,7 +87,6 @@ internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionB
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? =
         element.isArrayOfFunction().asUnit
 }

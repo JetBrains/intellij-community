@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -42,7 +43,7 @@ internal class WorkspaceFileIndexDataImpl(
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project)
-  private val librariesAndSdkContributors: LibrariesAndSdkContributors
+  private val librariesAndSdkContributors: LibrariesAndSdkContributors?
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
@@ -54,15 +55,21 @@ internal class WorkspaceFileIndexDataImpl(
   init {
     Disposer.register(parentDisposable, this)
     //do not move before registration to parentDisposable
-    librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
+    librariesAndSdkContributors = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
+      null
+    } else {
+      LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
+    }
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
 
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      librariesAndSdkContributors.registerFileSets()
+    if (librariesAndSdkContributors != null) {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+        librariesAndSdkContributors.registerFileSets()
+      }
     }
 
     WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)

@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util:util-ui",
     "//platform/refactoring",

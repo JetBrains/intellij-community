@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -130,8 +129,7 @@ public final class JavaSourceInference {
                                                                      @NotNull MethodData data,
                                                                      @NotNull Nullability nullability,
                                                                      @NotNull IntPredicate notNullParameter) {
-    PsiAnnotation explicitContract = AnnotationUtil.findAnnotationInHierarchy(
-      method, Collections.singleton(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT), true);
+    PsiAnnotation explicitContract = JavaMethodContractUtil.findContractAnnotation(method, true);
     if (explicitContract != null) {
       // Explicit contract may suppress inferred nullability, so parse them
       return JavaMethodContractUtil.parseContracts(method, explicitContract);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
@@ -332,7 +332,6 @@ private fun getIgnoredNames(): Set<String> {
   // compilation cache on TC
   set.add(".hash")
   set.add("classpath.index")
-  @Suppress("SpellCheckingInspection")
   set.add(".gitattributes")
   set.add("pom.xml")
   set.add("about.html")
@@ -386,7 +385,7 @@ private fun getIgnoredNames(): Set<String> {
    * merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
    * to provide a correctly merged version in plugin.
    */
-  set.add("META-INF/services/com.oracle.truffle.api.TruffleLanguage${'$'}Provider")
+  set.add("META-INF/services/com.oracle.truffle.api.provider.TruffleLanguageProvider")
   return java.util.Set.copyOf(set)
 }
 

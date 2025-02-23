@@ -2,7 +2,6 @@
 package git4idea.fetch;
 
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface GitFetchResult {

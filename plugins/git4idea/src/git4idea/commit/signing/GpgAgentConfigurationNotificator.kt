@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
 import com.intellij.ide.util.runOnceForProject
@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
@@ -40,7 +39,7 @@ internal class GpgAgentConfigurationNotificator(private val project: Project,
   @RequiresBackgroundThread
   fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean, type: NotificationType = NotificationType.INFORMATION) {
     if (!isEnabled()) return
-    if (!project.service<GpgAgentConfigurator>().canBeConfigured(project)) return
+    if (!GpgAgentConfigurator.getInstance(project).canBeConfigured(project)) return
 
     if (isSuggestion) {
       coroutineScope.launch {
@@ -67,7 +66,7 @@ internal class GpgAgentConfigurationNotificator(private val project: Project,
       addAction(NotificationAction.createSimple(GitBundle.message("gpg.pinentry.configuration.proposal.configure"),
                                                 configureActionId) {
         expire()
-        project.service<GpgAgentConfigurator>().configure()
+        GpgAgentConfigurator.getInstance(project).configure()
       })
       val manualActionId =
         if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_MANUAL.id else GPG_AGENT_CONFIGURATION_PROPOSE_MANUAL.id

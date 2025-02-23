@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.compose.ide.plugin.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
+
+jvm_resources(
+  name = "ide-plugin-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-plugin-k2",
+  module_name = "intellij.compose.ide.plugin.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
+    "//platform/util",
+    "//platform/analysis-impl",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//java/java-psi-api:psi",
+  ],
+  runtime_deps = [":ide-plugin-k2_resources"]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k2` end
+
+### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom_ide-plugin-k2-tests",
+  context_receivers = True
+)
+
+jvm_test(
+  name = "ide-plugin-k2-tests_test",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom_ide-plugin-k2-tests",
+  associates = ["//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2"],
+  deps = [
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/core",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlin-test-assertions-core-jvm",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end

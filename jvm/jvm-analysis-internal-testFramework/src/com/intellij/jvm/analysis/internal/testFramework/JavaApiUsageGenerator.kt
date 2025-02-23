@@ -1,6 +1,6 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
-import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME
@@ -169,8 +169,8 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         previews.addAll(
           PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
             .filter { member ->
-              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE) ||
-              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
+              member.hasAnnotation(JavaPreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE) ||
+              member.hasAnnotation(JavaPreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
             }
             .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
             .mapNotNull { LanguageLevelUtil.getSignature(it) }
@@ -179,9 +179,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
       }
 
       private fun getLanguageLevel(e: PsiMember): LanguageLevel? {
-        val annotation = PreviewFeatureUtil.getPreviewFeatureAnnotation(e)
+        val annotation = JavaPreviewFeatureUtil.getPreviewFeatureAnnotation(e)
                          ?: return null
-        val feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
+        val feature = JavaPreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
         return feature?.minimumLevel
       }
     }

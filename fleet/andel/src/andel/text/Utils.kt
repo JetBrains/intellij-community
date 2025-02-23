@@ -12,6 +12,9 @@ fun isWhiteSpaceLine(text: TextView, lineNumber: Int): Boolean {
 fun lineHasTabIndentation(textView: TextView, lineNumber: Int): Boolean =
   indentStringOfLine(textView, lineNumber.line).contains('\t')
 
+fun tabCount(textView: TextView, lineNumber: Int): Int =
+  indentStringOfLine(textView, lineNumber.line).count { it == '\t' }
+
 fun TextFragment.indentOfLine(): Long {
   return this.asCharSequence().takeWhile { it in WHITESPACES }.count().toLong()
 }

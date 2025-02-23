@@ -59,7 +59,7 @@ internal class IgnoreRequirementFix(private val packageNames: Set<String>) : Loc
     packagesToIgnore: Set<String>,
     profileManager: ProjectInspectionProfileManager,
   ): NotificationAction =
-    NotificationAction.createSimpleExpiring(ActionsBundle.actionText("action.\$Undo.text")) {
+    NotificationAction.createSimpleExpiring(ActionsBundle.message("action.\$Undo.text")) {
       val packagesToRestore = inspection.getIgnoredPackages() - packagesToIgnore
       inspection.setIgnoredPackages(packagesToRestore.toSet())
       profileManager.fireProfileChanged()

@@ -25,15 +25,12 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
-import com.jetbrains.python.packaging.PyPIPackageRanking
-import com.jetbrains.python.packaging.PyPackageRequirementsSettings
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.getConfirmedPackages
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.packaging.management.runPackagingTool
-import com.jetbrains.python.packaging.syncWithImports
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.Requirement
@@ -97,14 +94,14 @@ class InstallAllRequirementsQuickFix(requirements: List<Requirement>) : LocalQui
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    fun Requirement.presentableName(): String {
-      return if (this is NameReq) this.displayName + (this.versionspec?.text ?: "") else this.displayName
-    }
-
     val requirementElements =  requirements.mapNotNull { it.element }
-    val confirmedPackages = getConfirmedPackages(requirementElements.map(Requirement::presentableName), project)
+    val confirmedPackages = getConfirmedPackages(requirementElements.map { pyRequirement(it.displayName) }, project)
 
-    InstallRequirementQuickFix.installPackages(project, descriptor, requirementElements.filter { it.presentableName() in confirmedPackages })
+    InstallRequirementQuickFix.installPackages(
+      project,
+      descriptor,
+      requirementElements.filter { pkg -> confirmedPackages.any { it.name == pkg.displayName } }
+    )
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {

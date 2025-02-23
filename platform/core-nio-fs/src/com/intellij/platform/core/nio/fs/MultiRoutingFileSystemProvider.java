@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -14,6 +14,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
 /**
@@ -77,6 +78,7 @@ public final class MultiRoutingFileSystemProvider
   ) {
     if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
       Map<String, Object> arguments = new HashMap<>();
+      arguments.put(KEY_MRFS, Void.TYPE);
       arguments.put(KEY_ROOT, root);
       arguments.put(KEY_PREFIX, isPrefix);
       arguments.put(KEY_CASE_SENSITIVE, caseSensitive);
@@ -106,14 +108,18 @@ public final class MultiRoutingFileSystemProvider
   }
 
   @Override
-  public @NotNull MultiRoutingFileSystem newFileSystem(Path path, Map<String, ?> env) {
-    return getFileSystem(path.toUri());
+  public @Nullable MultiRoutingFileSystem newFileSystem(Path path, @Nullable Map<String, ?> env) {
+    throw new UnsupportedOperationException(MultiRoutingFileSystemProvider.class.getName() + " doesn't open other files as filesystems");
   }
 
   @Override
   public @Nullable MultiRoutingFileSystem newFileSystem(URI uri, @Nullable Map<String, ?> env) {
-    if (env == null) {
-      return getFileSystem(uri);
+    if (env == null || !env.containsKey(KEY_MRFS)) {
+      throw new UnsupportedOperationException(
+        MultiRoutingFileSystem.class.getName() + " can be created only with `" +
+        MultiRoutingFileSystemProvider.class.getName() + ".computeBackend()`." +
+        " Otherwise, this file system provider behaves as a default file system provider and throws an error."
+      );
     }
 
     String root = Objects.requireNonNull((String)env.get(KEY_ROOT));
@@ -128,6 +134,7 @@ public final class MultiRoutingFileSystemProvider
     return null;
   }
 
+  private static final String KEY_MRFS = "MRFS." + ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
   private static final String KEY_ROOT = "KEY_ROOT";
   private static final String KEY_PREFIX = "KEY_PREFIX";
   private static final String KEY_CASE_SENSITIVE = "KEY_CASE_SENSITIVE";

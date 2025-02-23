@@ -7,15 +7,15 @@ import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
+import com.intellij.python.community.impl.venv.tests.pyVenvFixture
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
-import com.intellij.python.junit5Tests.framework.env.pyVenvFixture
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.hamcrest.CoreMatchers.*
@@ -121,6 +121,6 @@ class PyVirtualEnvTerminalCustomizerTest {
       .shellCommand(command.toList())
       .shellIntegration(ShellIntegration(ShellType.POWERSHELL, null))
       .build()
-    return LocalShellIntegrationInjector.injectShellIntegration(options, true, true)
+    return LocalShellIntegrationInjector.injectShellIntegration(options, false, false)
   }
 }

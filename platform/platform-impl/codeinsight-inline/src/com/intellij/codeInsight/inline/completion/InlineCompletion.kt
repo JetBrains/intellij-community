@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -16,16 +17,24 @@ import com.intellij.util.application
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import javax.swing.SwingUtilities
 
 object InlineCompletion {
   private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
+  private val LOG = logger<InlineCompletionHandler>()
 
   fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)
 
   fun install(editor: EditorEx, scope: CoroutineScope) {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      LOG.error("Inline Completion should be installed only in EDT. This error will be replaced with assertion.")
+    }
+
     if (editor.isDisposed) {
       return
     }
+
+    val currentHandler = getHandlerOrNull(editor)
 
     val disposable = Disposer.newDisposable("inline-completion").also {
       EditorUtil.disposeWithEditor(editor, it)
@@ -36,17 +45,25 @@ object InlineCompletion {
     if (handler == null) {
       workingScope.cancel()
       Disposer.dispose(disposable)
-      logger<InlineCompletionHandler>().trace("[Inline Completion] No handler initializer is found for $editor.")
+      LOG.trace { "[Inline Completion] No handler initializer is found for $editor." }
       return
+    }
+
+    if (currentHandler != null) {
+      LOG.trace { "[Inline Completion] Handler is being replaced for $editor." }
+      remove(editor)
     }
 
     editor.putUserData(KEY, handler)
 
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
+    editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
+
+    LOG.trace { "[Inline Completion] Handler is installed for $editor." }
   }
 
   fun remove(editor: Editor) {
@@ -56,6 +73,7 @@ object InlineCompletion {
       handler.cancel(FinishType.EDITOR_REMOVED)
       application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerUninstalled(editor, handler)
       editor.putUserData(KEY, null)
+      LOG.trace { "[Inline Completion] Handler is removed for $editor." }
     }
   }
 }

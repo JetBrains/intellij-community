@@ -24,7 +24,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -311,7 +312,7 @@ class RpcExecutor private constructor(
     require(previous == null) {
       "There is no way you can use the same channel twice ${descriptor.displayName}"
     }
-    routeChannels.computeIfAbsent(route) { ConcurrentHashMap.newKeySet() }.add(descriptor.uid)
+    routeChannels.computeIfAbsent(route) { ConcurrentHashSet() }.add(descriptor.uid)
     return registeredStream
   }
 
@@ -323,7 +324,7 @@ class RpcExecutor private constructor(
   ) {
     requestJobs[requestId] = requestJob
     spans[requestId] = span
-    if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashMap.newKeySet() }.add(requestId)
+    if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashSet() }.add(requestId)
   }
 
   private fun removeRequest(requestId: UID, route: UID?, spanAction: Span.() -> Unit = {}, jobAction: CompletableJob.() -> Unit) {

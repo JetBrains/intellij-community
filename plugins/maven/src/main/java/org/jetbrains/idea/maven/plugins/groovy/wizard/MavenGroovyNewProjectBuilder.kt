@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -21,7 +20,6 @@ import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
-import org.jetbrains.plugins.groovy.config.wizard.createSampleGroovyCodeFile
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -30,7 +28,7 @@ import kotlin.io.path.createDirectories
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
 internal class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
-  var createSampleCode = false
+
   var groovySdkVersion = GROOVY_SDK_FALLBACK_VERSION
 
   override fun setupRootModel(rootModel: ModifiableRootModel) {
@@ -73,14 +71,6 @@ internal class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
                                                          conditions, MAVEN_GROOVY_XML_TEMPLATE, false)
             file
           }
-
-        val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
-        VfsUtil.createDirectories(root.path + "/src/main/resources")
-        VfsUtil.createDirectories(root.path + "/src/test/groovy")
-        if (createSampleCode) {
-          vcsFileAdder.markFileForAdding(sourceDirectory)
-          createSampleGroovyCodeFile(project, sourceDirectory)
-        }
 
         MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
         MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()

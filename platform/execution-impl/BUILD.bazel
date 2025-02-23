@@ -54,6 +54,8 @@ jvm_library(
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
     "//platform/eel-provider",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   exports = ["//platform/macro"],
   runtime_deps = [":execution-impl_resources"]
@@ -80,6 +82,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/execution",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "@lib//:assert_j",
   ]
 )

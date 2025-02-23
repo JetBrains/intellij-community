@@ -153,7 +153,7 @@ fun <T> waitForOne(
   interval: Duration = 1.seconds,
   errorMessage: ((List<T>) -> String)? = null,
   getter: () -> List<T>,
-  checker: (T) -> Boolean,
+  checker: (T) -> Boolean = { true },
 ): T {
   logAwaitStart(message, timeout)
   var resultList = getter()
@@ -166,45 +166,6 @@ fun <T> waitForOne(
     filteredResultList = resultList.filter { checker(it) }
   }
   if (filteredResultList.size != 1) {
-    throw WaitForException(timeout,
-                           errorMessage = errorMessage?.invoke(resultList)
-                                          ?: ("Failed: $message. " +
-                                              "\n\tExpected one suitable instance, but got: " +
-                                              "\n\tReceived list: ${resultList.joinToString("\n\t")}" +
-                                              "\n\tSuitable list: ${filteredResultList.joinToString("\n\t")}"))
-      .also { LOG.warn(it) }
-  }
-  else {
-    return filteredResultList.single().also {
-      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
-      logAwaitFinish(message, it, passedTime)
-    }
-  }
-}
-
-/**
- * Waits for a single item to be returned by the given `getter` function.
- *
- * @return The single item returned by the `getter` function.
- *
- * @throws WaitForException If the single item is not found within the specified timeout.
- */
-fun <T> waitForOne(
-  message: String? = null,
-  timeout: Duration = 5.seconds,
-  interval: Duration = 1.seconds,
-  errorMessage: ((List<T>) -> String)? = null,
-  getter: () -> List<T>,
-): T {
-  logAwaitStart(message, timeout)
-  var resultList = getter()
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
-  while (endTime > System.currentTimeMillis() && resultList.size != 1) {
-    Thread.sleep(interval.inWholeMilliseconds)
-    resultList = getter()
-  }
-  if (resultList.size != 1) {
     val resultListString = if (resultList.isEmpty()) "none" else resultList.joinToString("\n\t")
     throw WaitForException(timeout,
                            errorMessage = errorMessage?.invoke(resultList)
@@ -214,7 +175,7 @@ fun <T> waitForOne(
       .also { LOG.warn(it) }
   }
   else {
-    return resultList.single().also {
+    return filteredResultList.single().also {
       val passedTime = (System.currentTimeMillis() - startTime).milliseconds
       logAwaitFinish(message, it, passedTime)
     }

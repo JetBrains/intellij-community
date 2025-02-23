@@ -1,12 +1,8 @@
 fragment actor on Actor {
+  ...actorInfo
+
   ... on User {
     ...userInfo
-  }
-  ... on Bot {
-    ...botInfo
-  }
-  ... on Mannequin {
-    ...mannequinInfo
   }
   ... on EnterpriseUserAccount {
     ...enterpriseUserAccountInfo

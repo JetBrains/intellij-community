@@ -286,6 +286,17 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return myTree;
     }
 
+    @ApiStatus.Internal
+    protected void runUnderWriteLock(@NotNull Runnable runnable) {
+      myTree.l.writeLock().lock();
+      try {
+        runnable.run();
+      }
+      finally {
+        myTree.l.writeLock().unlock();
+      }
+    }
+
     /**
      * packing/unpacking cachedDeltaUpToRoot field parts
      * Bits layout:

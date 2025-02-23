@@ -75,12 +75,14 @@ object CliArgumentStringBuilder {
             replace(existingFeatureMatchResult.value, featureArgumentString)
         } else {
             val splitText = if (postfix.isNotEmpty()) split(postfix) else listOf(this, "")
+            // Split by `)` or `))` or some other postfix to add a new value between the old value and such brackets.
             if (splitText.size != 2) {
                 "$prefix$quote$featureArgumentString$quote$postfix"
             } else {
                 val (mainPart, commentPart) = splitText
+                val newArgumentString = "$separator$quote$featureArgumentString$quote"
                 // In Groovy / Kotlin DSL, we can have comment after [...] or listOf(...)
-                mainPart + "$separator$quote$featureArgumentString$quote$postfix" + commentPart
+                mainPart + newArgumentString + postfix + commentPart
             }
         }
     }

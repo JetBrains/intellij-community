@@ -45,18 +45,17 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "count" && element.valueArguments.isEmpty()
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
         val functionSymbol = element.resolveToFunctionSymbol() ?: return null
         val receiverClassId = (functionSymbol.receiverType as? KaClassType)?.classId ?: return null
         return (functionSymbol.callableId == COLLECTION_COUNT_CALLABLE_ID
                 && receiverClassId in COLLECTION_CLASS_IDS).asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
@@ -68,7 +67,7 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
         ) {
             element.replace(KtPsiFactory(element.project).createExpression("size"))
         }
-    })
+    }
 }
 
 context(KaSession)

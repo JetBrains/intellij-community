@@ -19,7 +19,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
-import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaReader2;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 

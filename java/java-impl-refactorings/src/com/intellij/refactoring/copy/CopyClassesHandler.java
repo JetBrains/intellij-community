@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
@@ -556,7 +556,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     final LocalSearchScope searchScope = new LocalSearchScope(element);
     for (PsiClass aClass : oldToNewMap.keySet()) {
       final PsiElement newClass = oldToNewMap.get(aClass);
-      for (PsiReference reference : ReferencesSearch.search(aClass, searchScope)) {
+      for (PsiReference reference : ReferencesSearch.search(aClass, searchScope).asIterable()) {
         rebindExpressions.add(reference.bindToElement(newClass));
       }
     }

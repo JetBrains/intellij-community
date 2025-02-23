@@ -234,6 +234,25 @@ class BuildContextImpl internal constructor(
 
   override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
 
+  private val contentModuleFilter = computeContentModuleFilter()
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun computeContentModuleFilter(): Deferred<ContentModuleFilter> {
+    if (productProperties.productMode == ProductMode.MONOLITH) {
+      if (productProperties.productLayout.skipUnresolvedContentModules) {
+        return CompletableDeferred(SkipUnresolvedOptionalContentModuleFilter(context = this))
+      }
+      return CompletableDeferred(IncludeAllContentModuleFilter)
+    }
+    
+    return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), start = CoroutineStart.LAZY) {
+      val bundledPluginModules = getBundledPluginModules()
+      ContentModuleByProductModeFilter(getOriginalModuleRepository().repository, bundledPluginModules, productProperties.productMode)
+    }
+  }
+
+  override suspend fun getContentModuleFilter(): ContentModuleFilter = contentModuleFilter.await()
+
   override val isEmbeddedFrontendEnabled: Boolean
     get() = productProperties.embeddedFrontendRootModule != null && options.enableEmbeddedFrontend
 
@@ -296,8 +315,6 @@ class BuildContextImpl internal constructor(
     }
     return copy
   }
-
-  override suspend fun includeBreakGenLibraries(): Boolean = getBundledPluginModules().contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead

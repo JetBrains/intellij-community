@@ -76,8 +76,7 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    context(KaSession)
-    override fun prepareContext(element: KtDeclarationWithBody): Context? {
+    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
         val requireType = valueStatement.expressionType?.isNothingType == true
         return when {
@@ -133,10 +132,10 @@ internal class UseExpressionBodyInspection :
         else -> false
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDeclarationWithBody,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtDeclarationWithBody>> = arrayOf(object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
+    ): KotlinModCommandQuickFix<KtDeclarationWithBody> = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.to.expression.body.fix.text")
@@ -161,5 +160,5 @@ internal class UseExpressionBodyInspection :
                 updater.moveCaretTo(newBody.startOffset)
             }
         }
-    })
+    }
 }

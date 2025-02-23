@@ -76,9 +76,6 @@ object GHShareProjectUtil {
                            root: VirtualFile,
                            projectName: @NlsSafe String) {
     FileDocumentManager.getInstance().saveAllDocuments()
-    runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
-      saveSettings(project)
-    }
 
     val possibleRemotes = gitRepository
       ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
@@ -235,13 +232,22 @@ object GHShareProjectUtil {
           return true
         }
 
+        invokeAndWaitIfNeeded(indicator.modalityState) {
+          runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
+            saveSettings(project, forceSavingAllSettings = true)
+          }
+        }
+
         LOG.info("Trying to commit")
         try {
           LOG.info("Adding files for commit")
           indicator.text = GithubBundle.message("share.process.adding.files")
 
           // ask for files to add
-          val trackedFiles = ChangeListManager.getInstance(project).affectedFiles.toMutableList()
+          val manager = GitUtil.getRepositoryManager(project)
+          val trackedFiles = ChangeListManager.getInstance(project).affectedFiles.filter {
+            it.isInLocalFileSystem && manager.getRepositoryForFileQuick(it) == repository
+          }.toMutableList()
           val untrackedFiles =
             filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
           trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855

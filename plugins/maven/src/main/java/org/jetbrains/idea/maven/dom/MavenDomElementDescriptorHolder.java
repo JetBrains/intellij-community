@@ -25,6 +25,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
+
 @Service(Service.Level.PROJECT)
 public final class MavenDomElementDescriptorHolder {
   private static final Logger LOG = Logger.getInstance(MavenDomElementDescriptorHolder.class);
@@ -137,7 +139,7 @@ public final class MavenDomElementDescriptorHolder {
 
   private static @NotNull FileKind getProjectFileKind(PsiFile file) {
     String modelVersion = MavenDomUtil.getXmlProjectModelVersion(file);
-    if ("4.1.0".equals(modelVersion)) return FileKind.PROJECT_FILE_4_1;
+    if (MODEL_VERSION_4_1_0.equals(modelVersion)) return FileKind.PROJECT_FILE_4_1;
     return FileKind.PROJECT_FILE_4_0;
   }
 

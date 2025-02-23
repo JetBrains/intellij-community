@@ -36,8 +36,7 @@ internal class ConvertPropertyGetterToInitializerIntention :
                 element.containingClass()?.hasExpectModifier() != true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtPropertyAccessor) {
+    override fun KaSession.prepareContext(element: KtPropertyAccessor) {
     }
 
     override fun invoke(

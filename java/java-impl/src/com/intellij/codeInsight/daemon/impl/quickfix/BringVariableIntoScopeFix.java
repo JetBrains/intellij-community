@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
@@ -14,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +170,7 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
       outOfScopeVariable.delete();
     }
 
-    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(reference, addedVar, new HashMap<>(), file) != null) {
+    if (!ControlFlowUtil.isInitializedBeforeUsage(reference, addedVar, new HashMap<>(), false)) {
       initialize(addedVar);
     }
   }

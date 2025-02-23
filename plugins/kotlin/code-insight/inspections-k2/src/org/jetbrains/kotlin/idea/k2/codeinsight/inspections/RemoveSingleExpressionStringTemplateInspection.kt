@@ -30,21 +30,20 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         KotlinBundle.message("remove.single.expression.string.template")
 
     override fun getProblemHighlightType(element: KtStringTemplateExpression, context: Context): ProblemHighlightType =
-      if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
+        if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
         val type = expression.expressionType
         return Context(type?.isStringType == true && !type.isMarkedNullable)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): KotlinModCommandQuickFix<KtStringTemplateExpression> = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.single.expression.string.template")
@@ -68,7 +67,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
             }
             element.replace(newElement)
         }
-    })
+    }
 
     private fun KtStringTemplateExpression.singleExpressionOrNull() = children.singleOrNull()?.children?.firstOrNull() as? KtExpression
 }

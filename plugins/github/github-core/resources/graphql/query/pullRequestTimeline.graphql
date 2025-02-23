@@ -68,7 +68,7 @@ fragment mergedEvent on MergedEvent {
     ...actor
   }
   createdAt
-  commit {
+  mergedEventCommit: commit {
     ...commitShort
   }
   mergeRefName
@@ -80,7 +80,7 @@ fragment assignedEvent on AssignedEvent {
   }
   createdAt
   user {
-    ...userInfo
+    ...user
   }
 }
 
@@ -90,7 +90,7 @@ fragment unassignedEvent on UnassignedEvent {
   }
   createdAt
   user {
-    ...userInfo
+    ...user
   }
 }
 
@@ -191,14 +191,14 @@ fragment referenceSubject on ReferencedSubject {
   ... on PullRequest {
     title
     number
-    state
+    prState: state
     isDraft
     url
   }
   ... on Issue {
     title
     number
-    state
+    issueState: state
     url
   }
 }

@@ -9,13 +9,11 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewNodeAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
-import com.intellij.util.containers.JBIterable
 import git4idea.conflicts.GitConflictsUtil
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
 import git4idea.repo.GitRepositoryManager
-import org.jetbrains.annotations.NotNull
 
 class GitChangesViewNodeAction(val project: Project) : ChangesViewNodeAction {
   override fun createNodeHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {

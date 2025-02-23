@@ -17,6 +17,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.common.timeoutRunBlocking
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -79,7 +80,9 @@ class ExternalSystemProjectSaveTest {
       val externalModulePaths = ExternalSystemApiUtil.findAll(node, ProjectKeys.MODULE).map { it.data.linkedExternalProjectPath }.toSet()
       settings.getLinkedProjectSettings(projectPath)!!.setModules(externalModulePaths)
 
-      ProjectDataManager.getInstance().importData(node, projectRule.project)
+      timeoutRunBlocking {
+          ProjectDataManager.getInstance().importData(node, projectRule.project)
+      }
       val projectInfo = InternalExternalProjectInfo(projectSystemId, projectPath, node)
       projectManager.updateExternalProjectData(projectInfo)
     }

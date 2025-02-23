@@ -32,6 +32,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -40,7 +41,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -51,13 +51,6 @@ import java.util.stream.Collectors;
  * @see PySdkUtil for run-time Python SDK utils
  */
 public final class PythonSdkUtil {
-  /**
-   * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
-   * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
-   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>.
-   * As with a new workspace model paths changed on save, hence we need to support <code>//wsl</code> as well
-   */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\|//wsl).+");
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   /**
@@ -79,19 +72,6 @@ public final class PythonSdkUtil {
 
   public static @Unmodifiable List<Sdk> getAllSdks() {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
-  }
-
-  /**
-   * Returns whether provided Python interpreter path corresponds to custom
-   * Python SDK.
-   *
-   * @param homePath SDK home path
-   * @return whether provided Python interpreter path corresponds to custom Python SDK
-   */
-  @Contract(pure = true)
-  @ApiStatus.Internal
-  public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
-    return CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches();
   }
 
   private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
@@ -530,7 +510,7 @@ public final class PythonSdkUtil {
   }
 
   public static @Nullable VirtualFile findCondaMeta(@Nullable String sdkPath) {
-    if (sdkPath == null || isCustomPythonSdkHomePath(sdkPath)) {
+    if (sdkPath == null || CustomSdkHomePattern.isCustomPythonSdkHomePath(sdkPath)) {
       return null;
     }
     final VirtualFile homeDirectory = StandardFileSystems.local().findFileByPath(sdkPath);

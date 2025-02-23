@@ -26,7 +26,7 @@ class CondaPackageSpecification(name: String,
     get() = if (field != null) "${field}" else if (version != null) "${relation?.presentableText ?: "="}$version" else ""
 
   override fun buildInstallationString(): List<String> {
-    return listOf("\"$name${versionSpecs}\"")
+    return listOf("$name$versionSpecs")
   }
 }
 

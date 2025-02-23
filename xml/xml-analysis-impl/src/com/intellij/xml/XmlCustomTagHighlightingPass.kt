@@ -27,8 +27,8 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlTokenType
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 
@@ -71,7 +71,7 @@ internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) :
 
   private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
-    val effectiveElementType = if (elementType == XmlElementType.XML_NAME) XmlElementType.XML_TAG_NAME else elementType
+    val effectiveElementType = if (elementType == XmlTokenType.XML_NAME) XmlTokenType.XML_TAG_NAME else elementType
 
     val attributesKeys = myHighlighter.getTokenHighlights(effectiveElementType)
     val newAttributesKeys = replaceTextAttributeKeys(originalXmlTag, attributesKeys)
@@ -97,7 +97,8 @@ internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) :
     //debug only
     @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) {
       getCustomAttributeKey(originalXmlTag)?.externalName ?: "Custom tag name"
-    } else null
+    }
+    else null
     var textAttributes = HighlightInfo.newHighlightInfo(INFORMATION)
       .severity(SYMBOL_TYPE_SEVERITY)
       .range(node)

@@ -5,8 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.newEditor.SettingsDialog
-import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.annotations.ApiStatus.Internal

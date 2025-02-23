@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.XmlSerializerUtil
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import kotlin.io.path.absolutePathString

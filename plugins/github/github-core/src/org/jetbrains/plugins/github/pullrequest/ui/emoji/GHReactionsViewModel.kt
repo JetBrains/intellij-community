@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +43,8 @@ internal class GHReactionViewModelImpl(
 
   override val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>> = reactionsState.map { data ->
     val reactionToUsers = data.groupBy({ it.content }, { it.user })
-    reactionToUsers.mapValues { (_, users) ->
+    reactionToUsers.mapValues { (_, usersNullable) ->
+      val users = usersNullable.filterNotNull()
       ReactionInfo(users, users.map(GHUser::id).contains(currentUser.id))
     }
   }.stateInNow(cs, emptyMap())

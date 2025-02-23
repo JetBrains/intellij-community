@@ -31,6 +31,12 @@
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
+      <action id="XDebugger.RemoveAllButThisBreakpoint" class="com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction">
+        <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      </action>
+      <action id="XDebugger.DisableAllButThisBreakpoint" class="com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction">
+        <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      </action>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
@@ -38,13 +44,27 @@
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
       <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
       <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
-      <action id="Debugger.FreezeActiveThreadAction" class="com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction" icon="AllIcons.Debugger.Freeze"/>
-      <action id="Debugger.ThawActiveThreadAction" class="com.intellij.xdebugger.impl.actions.ThawActiveThreadAction" icon="AllIcons.Debugger.Thaw"/>
-      <action id="Debugger.FreezeInactiveThreadsAction" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAction" icon="AllIcons.Debugger.FreezeAll"/>
-      <action id="Debugger.ThawAllThreadsAction" class="com.intellij.xdebugger.impl.actions.ThawAllThreadsAction" icon="AllIcons.Debugger.ThawAll"/>
-      <action id="Debugger.FreezeInactiveThreadsAmongSelected" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAmongSelectedAction" icon="AllIcons.Debugger.FreezeAll" />
-      <action id="Debugger.FreezeSelectedThreads" class="com.intellij.xdebugger.impl.actions.FreezeSelectedThreadsAction" icon="AllIcons.Debugger.Freeze"/>
-      <action id="Debugger.ThawSelectedThreads" class="com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction" icon="AllIcons.Debugger.Thaw"/>
+      <action id="Debugger.FreezeActiveThreadAction" class="com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction" icon="AllIcons.Debugger.Freeze">
+        <synonym key="action.Debugger.FreezeActiveThreadAction.synonym"/>
+      </action>
+      <action id="Debugger.ThawActiveThreadAction" class="com.intellij.xdebugger.impl.actions.ThawActiveThreadAction" icon="AllIcons.Debugger.Thaw">
+        <synonym key="action.Debugger.ThawActiveThreadAction.synonym"/>
+      </action>
+      <action id="Debugger.FreezeInactiveThreadsAction" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAction" icon="AllIcons.Debugger.FreezeAll">
+        <synonym key="action.Debugger.FreezeInactiveThreadsAction.synonym"/>
+      </action>
+      <action id="Debugger.ThawAllThreadsAction" class="com.intellij.xdebugger.impl.actions.ThawAllThreadsAction" icon="AllIcons.Debugger.ThawAll">
+        <synonym key="action.Debugger.ThawAllThreadsAction.synonym"/>
+      </action>
+      <action id="Debugger.FreezeInactiveThreadsAmongSelected" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAmongSelectedAction" icon="AllIcons.Debugger.FreezeAll" >
+        <synonym key="action.Debugger.FreezeInactiveThreadsAmongSelected.synonym"/>
+      </action>
+      <action id="Debugger.FreezeSelectedThreads" class="com.intellij.xdebugger.impl.actions.FreezeSelectedThreadsAction" icon="AllIcons.Debugger.Freeze">
+        <synonym key="action.Debugger.FreezeSelectedThreads.synonym"/>
+      </action>
+      <action id="Debugger.ThawSelectedThreads" class="com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction" icon="AllIcons.Debugger.Thaw">
+        <synonym key="action.Debugger.ThawSelectedThreads.synonym"/>
+      </action>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -188,6 +208,7 @@
     </group>
 
     <group id="XDebugger.Touchbar.Debug">
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
       <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>

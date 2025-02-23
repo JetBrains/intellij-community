@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
-    private val excludeListMatchers: List<Matcher> =
-        listOf(
+    private val excludeListMatchers: List<Matcher> by lazy {
+        setOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
             "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
@@ -51,7 +51,58 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             "org.gradle.kotlin.dsl.project(path,configuration)",
             "org.gradle.api.provider.Property.set(value)",
             "org.gradle.api.plugins.ObjectConfigurationAction.plugin(pluginId)",
+
+            /* copied from com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider.defaultBlackList */
+            // TODO: IJPL-166464 should provide API like InlayParameterHintsProvider#getBlackListDependencyLanguage
+
+            "(begin*, end*)",
+            "(start*, end*)",
+            "(first*, last*)",
+            "(first*, second*)",
+            "(from*, to*)",
+            "(min*, max*)",
+            "(key, value)",
+            "(format, arg*)",
+            "(message)",
+            "(message, error)",
+
+            "*Exception",
+
+            "*.set*(*)",
+            "*.add(*)",
+            "*.set(*,*)",
+            "*.get(*)",
+            "*.create(*)",
+            "*.getProperty(*)",
+            "*.setProperty(*,*)",
+            "*.print(*)",
+            "*.println(*)",
+            "*.append(*)",
+            "*.charAt(*)",
+            "*.indexOf(*)",
+            "*.contains(*)",
+            "*.startsWith(*)",
+            "*.endsWith(*)",
+            "*.equals(*)",
+            "*.equal(*)",
+            "*.compareTo(*)",
+            "*.compare(*,*)",
+
+            "java.lang.Math.*",
+            "org.slf4j.Logger.*",
+
+            "*.singleton(*)",
+            "*.singletonList(*)",
+
+            "*.Set.of",
+            "*.ImmutableList.of",
+            "*.ImmutableMultiset.of",
+            "*.ImmutableSortedMultiset.of",
+            "*.ImmutableSortedSet.of",
+            "*.Arrays.asList"
+
         ).mapNotNull { MatcherConstructor.createMatcher(it) }
+    }
 
     override fun collectFromElement(
         element: PsiElement,
@@ -141,8 +192,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val symbolName = symbol.name.asString()
         if (argumentText == symbolName) return true
 
-        // avoid cases like "`value =` myValue"
-        if (symbolName.length > 1 && argumentText.endsWith(symbolName[0].uppercaseChar() + symbolName.substring(1))) return true
+        if (symbolName.length > 1) {
+            val name = symbolName[0].uppercaseChar() + symbolName.substring(1)
+            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
+            if (argumentText.startsWith(name) || argumentText.endsWith(name)) return true
+        }
 
         // avoid cases like "/* value = */ value"
         var sibling: PsiElement? = this.prevSibling

@@ -2,7 +2,6 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand

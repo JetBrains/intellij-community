@@ -7,24 +7,20 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.console.PyConsoleOptions
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -61,7 +57,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
         val fileTypeManager = FileTypeManager.getInstance()
         val ignoredFilesList = fileTypeManager.getIgnoredFilesList()
-        writeAction {
+        edtWriteAction {
           fileTypeManager.setIgnoredFilesList("$ignoredFilesList;*\$py.class")
         }
       }

@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-markdown",
@@ -23,7 +23,7 @@ jvm_library(
   associates = [":markdown-utils"],
   deps = [
     "//platform/core-api:core",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-markdown",

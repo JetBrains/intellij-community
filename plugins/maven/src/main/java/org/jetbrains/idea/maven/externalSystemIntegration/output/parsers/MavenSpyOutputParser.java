@@ -6,6 +6,7 @@ import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -33,7 +34,8 @@ public class MavenSpyOutputParser {
 
   public void processLine(@NotNull String spyLine,
                           @NotNull Consumer<? super BuildEvent> messageConsumer) {
-    String line = spyLine.substring(PREFIX.length());
+    String line = extractLine(spyLine);
+    if (line == null) return;
     try {
       int threadSeparatorIdx = line.indexOf('-');
       if (threadSeparatorIdx < 0) {
@@ -70,6 +72,13 @@ public class MavenSpyOutputParser {
     catch (Exception e) {
       MavenLog.LOG.error("Error processing line " + spyLine, e);
     }
+  }
+
+  private static @Nullable String extractLine(@NotNull String line) {
+    if (line.startsWith(PREFIX)) {
+      return line.substring(PREFIX.length());
+    }
+    return null;
   }
 
   protected void parse(int threadId,

@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.python.hatch` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlin.time.ExperimentalTime"]
+)
+
+jvm_resources(
+  name = "hatch_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "hatch",
+  module_name = "intellij.python.hatch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/core-api:core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//python/openapi:community",
+    "//python/python-exec-service:community-execService",
+    "@lib//:io-github-z4kn4fein-semver-jvm",
+  ],
+  runtime_deps = [":hatch_resources"]
+)
+### auto-generated section `build intellij.python.hatch` end

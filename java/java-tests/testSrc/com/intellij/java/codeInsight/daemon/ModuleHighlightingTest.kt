@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
+import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
@@ -14,6 +15,7 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -50,6 +52,8 @@ import java.util.jar.JarFile
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+    
+    myFixture.enableInspections(JavaModuleDefinitionInspection())
 
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
@@ -73,7 +77,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testModuleImportDeclarationUnresolvedModule() {
+  fun testModuleImportDeclarationInModuleInfoFile() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("module-info.java", """
+        <error descr="Import module is not allowed">import module M2;</error>
+        module my.module {
+          requires M2;
+        }
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationInModuleInfoFileFix() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
+        <error descr="Import module is not allowed">import module <caret>M2;</error>
+        module my.module {
+          requires M2;
+        }
+      """.trimIndent()))
+
+      val availableIntentions = myFixture.availableIntentions
+      val available = availableIntentions
+        .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+        .map { it.simpleName }
+      assertThat(available).describedAs(availableIntentions.toString()).contains("ReplaceOnDemandImportAction")
+    }
+  }
+
+    fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
@@ -90,7 +122,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testPackageStatement() {
     highlight("package pkg;")
     highlight("""
-        <error descr="A module file should not have 'package' statement">package pkg;</error>
+        <error descr="A module file should not have a 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
     fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix", "FixAllHighlightingProblems"))
   }
@@ -193,8 +225,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
-          requires <error descr="Cyclic dependence: M1">M1</error>;
-          requires <error descr="Cyclic dependence: M1, M2">M2</error>;
+          requires <error descr="Cyclic dependency: M1">M1</error>;
+          requires <error descr="Cyclic dependency: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;
@@ -261,7 +293,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWeakModule() {
-    highlight("""open module M { <error descr="'opens' is not allowed in an open module">opens pkg.missing;</error> }""")
+    highlight("""open module M { <error descr="'opens' is not allowed in an open module">opens <warning descr="Package not found: pkg.missing">pkg.missing</warning>;</error> }""")
   }
 
   fun testUses() {
@@ -299,6 +331,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import pkg.main.Impl6;
         module M {
           requires M2;
+          exports pkg.main;
           provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation type must be a subtype of the service interface type, or have a public static no-args 'provider' method">Impl2</error>;
@@ -945,9 +978,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions
-      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .map { ReportingClassSubstitutor.getClassToReport(it) }
       .filter { it.name.startsWith("com.intellij.codeInsight.") &&
                 !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
+                && !it.name.endsWith("DisableHighlightingIntentionAction")
                 && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)

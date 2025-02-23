@@ -44,7 +44,6 @@ jvm_library(
     "//platform/statistics",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:jsoup",
-    "//json",
     "//platform/util/coroutines",
   ],
   runtime_deps = [":vcs-gitlab_resources"]
@@ -103,7 +102,6 @@ jvm_library(
     "@lib//:testcontainers",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//json",
     "//platform/util/coroutines",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",

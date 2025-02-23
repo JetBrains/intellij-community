@@ -24,8 +24,7 @@ data class KotlinLambdaInfo(
         "${callerMethodInfo.name}: $parameterName.$methodName()"
 }
 
-context(KaSession)
-internal fun KotlinLambdaInfo(
+internal fun KaSession.KotlinLambdaInfo(
     methodSymbol: KaFunctionSymbol,
     argumentSymbol: KaValueParameterSymbol,
     callerMethodOrdinal: Int,
@@ -45,14 +44,13 @@ internal fun KotlinLambdaInfo(
     isSamSuspendMethod = isSamSuspendMethod,
 )
 
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun countParameterIndex(methodSymbol: KaFunctionSymbol, argumentSymbol: KaValueParameterSymbol): Int {
+private fun KaSession.countParameterIndex(methodSymbol: KaFunctionSymbol, argumentSymbol: KaValueParameterSymbol): Int {
     var resultIndex = methodSymbol.valueParameters.indexOf(argumentSymbol)
 
     if (methodSymbol.isExtension)
         resultIndex++
-    if (methodSymbol.isInsideInlineClass())
+    if (isInsideInlineClass(methodSymbol))
         resultIndex++
     resultIndex += methodSymbol.contextReceivers.size
 

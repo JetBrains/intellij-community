@@ -8,10 +8,7 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.Service
 import com.intellij.util.io.createParentDirectories
 import io.ktor.client.engine.java.Java
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -173,7 +170,7 @@ private fun ApiMavenPackage.repositoryArtifactData(): MavenRepositoryArtifactInf
   )
 }
 
-private fun UserAgent.Config.intelliJ(): String {
+private fun UserAgentConfig.intelliJ(): String {
   val app = ApplicationManager.getApplication()
   if (app != null && !app.isDisposed) {
     val productName = ApplicationNamesInfo.getInstance().fullProductName

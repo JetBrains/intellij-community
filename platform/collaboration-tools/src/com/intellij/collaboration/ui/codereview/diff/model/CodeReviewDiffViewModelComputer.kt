@@ -26,6 +26,7 @@ class CodeReviewDiffViewModelComputer<D> @ApiStatus.Experimental constructor(
   private val changesSorter: Flow<RefComparisonChangesSorter>,
   private val diffProducerFactory: (D, RefComparisonChange) -> CodeReviewDiffRequestProducer?
 ) {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use a more simplified constructor instead")
   constructor(dataLoadingFlow: Flow<Deferred<D>>, diffProducerFactory: (D, RefComparisonChange) -> CodeReviewDiffRequestProducer?) :
     this(dataLoadingFlow.computationState(), flowOf(RefComparisonChangesSorter.None), diffProducerFactory)

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -173,7 +174,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
         .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
         .filter(myImportedPackages::contains)
-        .anyMatch(packageName -> JavaModuleGraphUtil.exports(transitiveModule, packageName, currentModule));
+        .anyMatch(packageName -> JavaPsiModuleUtil.exports(transitiveModule, packageName, currentModule));
     }
 
     private void addTransitiveDependencies(@NotNull PsiRequiresStatement statementToDelete) {

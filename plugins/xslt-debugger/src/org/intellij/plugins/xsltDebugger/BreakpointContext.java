@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,7 +18,7 @@ import org.intellij.lang.xpath.xslt.context.XsltVariableContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BreakpointContext extends XsltContextProvider {
+public final class BreakpointContext extends XsltContextProvider {
   public BreakpointContext(PsiElement contextElement) {
     super((XmlElement)contextElement);
   }

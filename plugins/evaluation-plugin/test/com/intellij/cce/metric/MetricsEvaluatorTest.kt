@@ -55,7 +55,7 @@ class MetricsEvaluatorTest {
   @Test
   fun `test metrics evaluator`() {
     val evaluator = MetricsEvaluator.withDefaultMetrics("")
-    val result = evaluator.evaluate(listOf(sessionTop1, sessionTop3, sessionTop3, sessionNone))
+    val result = evaluator.evaluate(listOf(sessionTop1, sessionTop3, sessionTop3, sessionNone), 0)
     Assertions.assertTrue(result.isNotEmpty())
   }
 

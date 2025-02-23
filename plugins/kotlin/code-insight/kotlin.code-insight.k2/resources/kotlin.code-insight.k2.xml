@@ -240,6 +240,26 @@
             nameKey="java.method.chains.inlay.provider.name"
             descriptionKey="inlay.MethodChainsInlayProvider.description" />
 
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerPluginModalityHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.modality"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.modality"
+            descriptionKey="hints.description.compiler.plugins.modality"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerSupertypesHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.supertypes"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.supertypes"
+            descriptionKey="hints.description.compiler.plugins.supertypes"/>
+
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
     <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>

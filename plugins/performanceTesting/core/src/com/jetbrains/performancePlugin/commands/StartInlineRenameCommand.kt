@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.InplaceRefactoringContinuation
-import com.intellij.refactoring.RefactoringSettings
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.Renamer
 import com.intellij.refactoring.rename.RenamerFactory

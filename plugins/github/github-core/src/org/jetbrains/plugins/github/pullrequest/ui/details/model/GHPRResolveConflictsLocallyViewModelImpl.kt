@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
-import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.util.getOrNull

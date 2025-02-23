@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -79,11 +79,5 @@ public abstract class SourceSearcher {
     catch (IOException ignore) {
     }
     return null;
-  }
-}
-
-class SourceSearchException extends Exception {
-  SourceSearchException(String message) {
-    super(message);
   }
 }

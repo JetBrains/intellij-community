@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.editorconfig.language.codeinsight.inspections.EditorConfigUnexpectedCommaInspection
 import org.editorconfig.language.codeinsight.inspections.findBadCommas
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueList

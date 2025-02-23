@@ -7,20 +7,15 @@ import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.LightweightHint
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
@@ -90,29 +85,7 @@ class InlayPresentationList(
     pointInsideInlay: Point,
     fontMetricsStorage: InlayTextMetricsStorage,
   ) {
-    val project = e.editor.project ?: return
-    val document = e.editor.document
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
-    val providerId = model.providerId
-    val providerInfo = InlayHintsProviderFactory.getProviderInfo(psiFile.language, providerId) ?: return
-    val providerName = providerInfo.providerName
-
-    val inlayMenu: AnAction = ActionManager.getInstance().getAction("InlayMenu")
-    val inlayMenuActionGroup = inlayMenu as ActionGroup
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu("InlayMenuPopup", inlayMenuActionGroup)
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(CommonDataKeys.PSI_FILE, psiFile)
-      .add(CommonDataKeys.EDITOR, e.editor)
-      .add(InlayHintsProvider.PROVIDER_ID, providerId)
-      .add(InlayHintsProvider.PROVIDER_NAME, providerName)
-      .add(InlayHintsProvider.INLAY_PAYLOADS, model.payloads?.associate { it.payloadName to it.payload })
-      .build()
-    popupMenu.setDataContext {
-      dataContext
-    }
-
-    JBPopupMenu.showByEvent(e.mouseEvent, popupMenu.component)
+    service<DeclarativeInlayActionService>().invokeInlayMenu(model, e, RelativePoint(e.mouseEvent.locationOnScreen))
   }
 
   private val marginAndPadding: Pair<Int, Int> get() = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!

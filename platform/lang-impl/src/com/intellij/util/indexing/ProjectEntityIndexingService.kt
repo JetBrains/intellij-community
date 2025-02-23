@@ -11,16 +11,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityPointer
@@ -103,7 +99,7 @@ class ProjectEntityIndexingService(
   fun createIteratorsForOrigins(
     entityStorage: EntityStorage,
     entityPointers: Collection<EntityPointer<*>>,
-    sdks: Collection<Sdk>,
+    sdks: Collection<SdkId>,
     libraryIds: Collection<LibraryId>,
     filesFromAdditionalLibraryRootsProviders: Collection<VirtualFile>,
     filesFromIndexableSetContributors: Collection<VirtualFile>,
@@ -114,7 +110,7 @@ class ProjectEntityIndexingService(
     val builders = ArrayList<IndexableIteratorBuilder>(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
 
     for (sdk in sdks) {
-      builders.addAll(forSdk(sdk.getName(), sdk.getSdkType().getName()))
+      builders.add(forSdk(sdk))
     }
     for (id in libraryIds) {
       builders.addAll(forLibraryEntity(id, true))
@@ -450,7 +446,7 @@ class ProjectEntityIndexingService(
 
       newElements.removeAll(oldElements)
       for (element in newElements) {
-        descriptionsBuilder.registerAddedEntity<C>(element, contributor, entityStorage)
+        descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage)
       }
     }
 
@@ -484,7 +480,7 @@ class ProjectEntityIndexingService(
         builders.addAll(instance.forInheritedSdk())
       }
       for (sdk in info.sdks) {
-        builders.addAll(instance.forSdk(sdk.first, sdk.second))
+        builders.add(instance.forSdk(sdk.first, sdk.second))
       }
       for (library in info.libraries) {
         builders.addAll(instance.forLibraryEntity(library, true))

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -83,12 +83,12 @@ public abstract class MoveDirectoryWithClassesHelper {
                            boolean searchInNonJavaFiles,
                            Project project) {
       for (PsiFile file : filesToMove) {
-        for (PsiReference reference : ReferencesSearch.search(file)) {
+        for (PsiReference reference : ReferencesSearch.search(file).asIterable()) {
           result.add(new MoveDirectoryUsageInfo(reference, file));
         }
       }
       for (PsiDirectory psiDirectory : directoriesToMove) {
-        for (PsiReference reference : ReferencesSearch.search(psiDirectory)) {
+        for (PsiReference reference : ReferencesSearch.search(psiDirectory).asIterable()) {
           result.add(new MoveDirectoryUsageInfo(reference, psiDirectory));
         }
       }

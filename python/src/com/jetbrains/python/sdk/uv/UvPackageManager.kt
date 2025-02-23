@@ -21,7 +21,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   @Volatile
   var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
       uv.installPackage(specification, emptyList())
     }
@@ -33,20 +33,18 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
     installPackageCommand(specification, emptyList()).getOrElse {
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
       uv.uninstallPackage(pkg)
     }
@@ -58,12 +56,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    // ignoring errors as handling outdated packages is pretty new option
+    // ignoring errors as handling outdated packages is a pretty new option
     uv.listOutdatedPackages().onSuccess {
       outdatedPackages = it.associateBy { it.name }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -117,7 +117,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
 
             val template = TemplateBuilderImpl(file).let { builder ->
                 builder.replaceElement(introducedClass.nameIdentifier!!, NEW_CLASS_NAME, ChooseStringExpression(classNames), true)
-                for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false)) {
+                for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false).asIterable()) {
                     runWriteAction {
                         builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
                     }

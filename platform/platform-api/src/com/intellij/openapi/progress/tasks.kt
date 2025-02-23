@@ -228,6 +228,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Function was renamed to `runWithModalProgressBlocking`",
   replaceWith = ReplaceWith(
@@ -245,6 +246,7 @@ fun <T> runBlockingModal(
   return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Function was renamed to `runWithModalProgressBlocking`",
   replaceWith = ReplaceWith(

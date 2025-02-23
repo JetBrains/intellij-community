@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
-import com.intellij.execution.ExecutionException
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator.Companion.locateProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -17,10 +18,8 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -31,14 +30,16 @@ import com.intellij.psi.PsiManager
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
+import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.*
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.io.IOException
@@ -46,12 +47,12 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
 
 internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
-internal val miscProjectEnabled: Lazy<Boolean> = lazy { ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(PyMiscProjectExperimentOption::class.java) }
 
 /**
  * Creates a project in [projectPath] in a modal window.
@@ -155,12 +156,8 @@ private suspend fun createProjectAndSdk(
     val systemPythonBinary = getSystemPython(confirmInstallation = confirmInstallation, systemPythonService).getOr { return it }
     logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
     // create venv using this system python
-    createVenv(systemPythonBinary, venvDirPath = venvDirPath, projectPath = projectPath).getOr { return it }
-    // try to find venv again
-    venvPython = findExistingVenv(venvDirPath)
-    if (venvPython == null) {
-      // No venv even after venv installation
-      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath))
+    venvPython = createVenv(systemPythonBinary, venvDir = venvDirPath).getOr {
+      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", it.error.message, venvDirPath))
     }
   }
 
@@ -169,7 +166,12 @@ private suspend fun createProjectAndSdk(
   val sdk = getSdk(venvPython, project)
   val module = project.modules.first()
   ensureModuleHasRoot(module, projectPathVfs)
-  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  withContext(Dispatchers.IO) {
+    // generated files should be readable by VFS
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectPathVfs)
+  }
+  configurePythonSdk(project, module, sdk)
+  sdk.getOrCreateAdditionalData().associateWithModule(module)
   return Result.Success(Pair(project, sdk))
 }
 
@@ -195,20 +197,12 @@ private suspend fun findExistingVenv(
   }
 }
 
-private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, @Nls String> =
-  try {
-    createVirtualenv(systemPython, venvDirPath, projectPath)
-    Result.success(Unit)
-  }
-  catch (e: ExecutionException) {
-    Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath))
-  }
 
 private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, pythonService: SystemPythonService): Result<PythonBinary, @Nls String> {
 
 
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons().minByOrNull { it.languageLevel }
+  var systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
 
   // No python found?
   if (systemPythonBinary == null) {
@@ -226,7 +220,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons().minByOrNull { it.languageLevel }
+          systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
         }
       }
     }
@@ -241,14 +235,17 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
 }
 
 private suspend fun openProject(projectPath: Path): Project {
+  TrustedProjects.setProjectTrusted(locateProject(projectPath, null), isTrusted = true)
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
+    isProjectCreatedWithWizard = true
+
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless number of reasons `openProjectAsync` might return null
   if (project.modules.isEmpty()) {
-    writeAction {
-      ModuleManager.getInstance(project).newModule(projectPath, PythonModuleTypeBase.getInstance().id)
+    edtWriteAction {
+      ModuleManager.getInstance(project).newModule(projectPath.resolve("${projectPath.name}.iml"), PythonModuleTypeBase.getInstance().id)
     }
   }
   return project
@@ -282,10 +279,10 @@ private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, @Nl
   return@withContext Result.Success(projectPathVfs)
 }
 
-private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = writeAction {
+private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = edtWriteAction {
   with(module.rootManager.modifiableModel) {
     try {
-      if (root in contentRoots) return@writeAction
+      if (root in contentRoots) return@edtWriteAction
       addContentEntry(root)
     }
     finally {

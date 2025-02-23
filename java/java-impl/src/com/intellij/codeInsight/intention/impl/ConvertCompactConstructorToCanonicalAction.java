@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
@@ -9,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -60,7 +60,7 @@ public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateM
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(compactConstructor.getProject());
     for (PsiRecordComponent component : recordClass.getRecordComponents()) {
       PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
-      if (field != null && !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+      if (field != null && !ControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         body.add(factory.createStatementFromText("this." + field.getName() + "=" + field.getName() + ";", body));
       }
     }

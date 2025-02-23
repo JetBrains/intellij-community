@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates

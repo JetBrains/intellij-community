@@ -236,6 +236,15 @@ public abstract class DialogWrapper {
                           boolean canBeParent,
                           @NotNull IdeModalityType ideModalityType,
                           boolean createSouth) {
+    this(project, parentComponent, canBeParent, ideModalityType, createSouth, true);
+  }
+
+  protected DialogWrapper(@Nullable Project project,
+                          @Nullable Component parentComponent,
+                          boolean canBeParent,
+                          @NotNull IdeModalityType ideModalityType,
+                          boolean createSouth,
+                          boolean createTitleBar) {
     ThreadingAssertions.assertEventDispatchThread();
     myPeer = parentComponent == null
              ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
@@ -243,7 +252,7 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
-    if (myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (createTitleBar && myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarService.Companion.getInstance().setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
                                                                     runnable -> {
                                                                       Disposer.register(myDisposable, () -> runnable.run());
@@ -498,8 +507,8 @@ public abstract class DialogWrapper {
    * @param isOk     is OK
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  public final void close(int exitCode, boolean isOk) {
-    logCloseDialogEvent(exitCode);
+  public final void close(int exitCode, boolean isOk, ExitActionType exitActionType) {
+    logCloseDialogEvent(exitCode, exitActionType);
     ensureEventDispatchThread();
     if (myClosed) return;
     myClosed = true;
@@ -523,8 +532,16 @@ public abstract class DialogWrapper {
     }
   }
 
+  public final void close(int exitCode, boolean isOk) {
+    close(exitCode, isOk, ExitActionType.UNDEFINED);
+  }
+
+  public final void close(int exitCode, ExitActionType exitActionType) {
+    close(exitCode, exitCode != CANCEL_EXIT_CODE, exitActionType);
+  }
+
   public final void close(int exitCode) {
-    close(exitCode, exitCode != CANCEL_EXIT_CODE);
+    close(exitCode, exitCode != CANCEL_EXIT_CODE, ExitActionType.UNDEFINED);
   }
 
   /**
@@ -1042,7 +1059,7 @@ public abstract class DialogWrapper {
    */
   public void doCancelAction() {
     if (getCancelAction().isEnabled()) {
-      close(CANCEL_EXIT_CODE);
+      close(CANCEL_EXIT_CODE, ExitActionType.CANCEL);
     }
   }
 
@@ -1096,7 +1113,7 @@ public abstract class DialogWrapper {
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
       applyFields();
-      close(OK_EXIT_CODE);
+      close(OK_EXIT_CODE, ExitActionType.OK);
     }
   }
 
@@ -1888,10 +1905,10 @@ public abstract class DialogWrapper {
       .findFirst();
   }
 
-  private void logCloseDialogEvent(int exitCode) {
+  private void logCloseDialogEvent(int exitCode, ExitActionType exitActionType) {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode, invocationPlace);
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode, exitActionType, invocationPlace);
     }
   }
 

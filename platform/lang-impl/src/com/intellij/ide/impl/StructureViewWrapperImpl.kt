@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureView
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.StructureViewWrapper
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
+import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
 import com.intellij.ide.structureView.impl.StructureViewState
@@ -47,6 +48,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.BitUtil
@@ -109,7 +111,9 @@ class StructureViewWrapperImpl(
       val state = ModalityState.stateForComponent(component)
       if (!ModalityState.current().accepts(state)) return@createNamedTimer
 
-      val successful = loggedRun("check if update needed") { checkUpdate() }
+      val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
+        loggedRun("check if update needed") { checkUpdate() }
+      }
       if (successful) myActivityCount = count // to check on the next turn
     }
     LOG.debug("timer to check if update needed: add")
@@ -137,15 +141,20 @@ class StructureViewWrapperImpl(
       scheduleRebuild()
     }
     myToolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
+      var currentIndex = -1 // to distinguish event "another tab selected" from "contents were removed and added"
       override fun selectionChanged(event: ContentManagerEvent) {
         if (myStructureView is StructureViewComposite) {
           val views = (myStructureView as StructureViewComposite).structureViews
-          for (view in views) {
+          views.forEachIndexed { i, view ->
             if (view.title == event.content.tabName) {
               coroutineScope.launch {
                 updateHeaderActions(view.structureView)
               }
-              break
+              if (myToolWindow.contentManager.contentCount == 2 && i != currentIndex && event.operation == ContentOperation.add) {
+                if (i != -1) StructureViewEventsCollector.logTabSelected(view)
+                currentIndex = i
+              }
+              return@forEachIndexed
             }
           }
         }
@@ -423,10 +432,16 @@ class StructureViewWrapperImpl(
 
               myFileEditor = editor
               Disposer.register(this@StructureViewWrapperImpl, structureView)
+              val previouslySelectedTab = StructureViewState.getInstance(project).selectedTab
               if (structureView is StructureViewComposite) {
                 val views: Array<StructureViewDescriptor> = structureView.structureViews
                 names = views.map { it.title }.toTypedArray()
-                panels = views.map { createContentPanel(it.structureView.component) }
+                panels = views.map {
+                  if (previouslySelectedTab == it.title) {
+                    StructureViewEventsCollector.logBuildStructure(it)
+                  }
+                  createContentPanel(it.structureView.component)
+                }
               }
               else {
                 createSinglePanel(structureView.component)
@@ -473,6 +488,16 @@ class StructureViewWrapperImpl(
         val component = policy?.getDefaultComponent(container)
         if (component != null) IdeFocusManager.getInstance(project).requestFocusInProject(component, project)
       }
+    }
+  }
+
+  @ApiStatus.Internal
+  fun queueUpdate() {
+    if (myStructureView is StructureViewComponent) {
+      (myStructureView as StructureViewComponent).queueUpdate()
+    }
+    if (myStructureView is StructureViewComposite) {
+      ((myStructureView as StructureViewComposite).selectedStructureView as? StructureViewComponent)?.queueUpdate()
     }
   }
 

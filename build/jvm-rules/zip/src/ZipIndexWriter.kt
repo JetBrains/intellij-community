@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -11,7 +11,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
   @JvmField
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.directBuffer(512 * 1024)
 
-  var entryCount = 0
+  internal var entryCount = 0
     private set
 
   private var isReleased = false

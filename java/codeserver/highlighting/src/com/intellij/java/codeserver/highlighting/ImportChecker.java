@@ -3,8 +3,10 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -36,7 +38,7 @@ final class ImportChecker {
     PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (results.length == 0) {
       assert referenceNameElement != null : ref;
-      if (IncompleteModelUtil.isIncompleteModel(ref) && ref.getClassReference().resolve() == null) {
+      if (myVisitor.isIncompleteModel() && ref.getClassReference().resolve() == null) {
         myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(referenceNameElement));
       } else {
         myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
@@ -106,6 +108,18 @@ final class ImportChecker {
         return;
       }
       mySingleImportedClasses.put(name, Pair.pair(null, psiClass));
+    }
+  }
+
+  void checkExtraSemicolonBetweenImportStatements(@NotNull PsiJavaToken token, IElementType type) {
+    if (type == JavaTokenType.SEMICOLON && myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_21) && PsiUtil.isFollowedByImport(token)) {
+      myVisitor.report(JavaErrorKinds.IMPORT_LIST_EXTRA_SEMICOLON.create(token));
+    }
+  }
+
+  void checkImportModuleInModuleInfo(@NotNull PsiImportModuleStatement statement) {
+    if (PsiUtil.isModuleFile(statement.getContainingFile())) {
+      myVisitor.report(JavaErrorKinds.IMPORT_MODULE_NOT_ALLOWED.create(statement));
     }
   }
 }

@@ -136,7 +136,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<>();
     final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass).toArray(PsiClass.EMPTY_ARRAY);
     myClassInheritors = new HashSet<>();
@@ -170,7 +170,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usagesIn = refUsages.get();
     ArrayList<UsageInfo> oldUsages = new ArrayList<>();
     Collections.addAll(oldUsages, usagesIn);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -201,7 +201,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
       if (list.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isLocalOrAnonymousClass(targetClass)) {
-        for (final PsiReference reference : ReferencesSearch.search(member)) {
+        for (final PsiReference reference : ReferencesSearch.search(member).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();

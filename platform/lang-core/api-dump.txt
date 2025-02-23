@@ -514,13 +514,10 @@ com.intellij.openapi.projectRoots.SdkModel$Listener
 a:com.intellij.openapi.projectRoots.SdkType
 - com.intellij.openapi.projectRoots.SdkTypeId
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:HOMEPATH_KEY:com.intellij.openapi.util.Key
-- sf:IS_SYMLINK_KEY:com.intellij.openapi.util.Key
-- sf:VERSION_KEY:com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
 - adjustSelectedSdkHome(java.lang.String):java.lang.String
 - allowCreationByUser():Z
-- collectSdkDetails(com.intellij.openapi.project.Project):java.util.Collection
+- collectSdkEntries(com.intellij.openapi.project.Project):java.util.Collection
 - a:createAdditionalDataConfigurable(com.intellij.openapi.projectRoots.SdkModel,com.intellij.openapi.projectRoots.SdkModificator):com.intellij.openapi.projectRoots.AdditionalDataConfigurable
 - equals(java.lang.Object):Z
 - s:findByName(java.lang.String):com.intellij.openapi.projectRoots.SdkType
@@ -558,6 +555,15 @@ a:com.intellij.openapi.projectRoots.SdkType
 - suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - a:suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - supportsCustomCreateUI():Z
+f:com.intellij.openapi.projectRoots.SdkType$SdkEntry
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,Z):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- homePath():java.lang.String
+- isSymlink():Z
+- versionString():java.lang.String
 c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - com.intellij.openapi.projectRoots.SdkType
 - com.intellij.openapi.projectRoots.JavaSdkType

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -207,7 +207,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       for (PsiClass inheritor : inheritors) {
         if (newName.equals(inheritor.getName())) {
           final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
-          for (PsiReference reference : ReferencesSearch.search(inheritor, new LocalSearchScope(inheritor))) {
+          for (PsiReference reference : ReferencesSearch.search(inheritor, new LocalSearchScope(inheritor)).asIterable()) {
             classCollisionsDetector.addClassCollisions(reference.getElement(), newName, result);
           }
         }
@@ -225,7 +225,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         for (PsiClass superClass : supers) {
           if (newName.equals(superClass.getName())) {
             final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
-            for (PsiReference reference : ReferencesSearch.search(superClass, new LocalSearchScope(superClass))) {
+            for (PsiReference reference : ReferencesSearch.search(superClass, new LocalSearchScope(superClass)).asIterable()) {
               classCollisionsDetector.addClassCollisions(reference.getElement(), newName, result);
             }
           }
@@ -273,7 +273,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final String text = referenceElement.getText();
       if (Objects.equals(myRenamedClassQualifiedName, removeSpaces(text))) return;
       if (myProcessedFiles.contains(containingFile)) return;
-      for (PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(containingFile))) {
+      for (PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(containingFile)).asIterable()) {
         final PsiElement collisionReferenceElement = reference.getElement();
         if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
           final PsiElement parent = collisionReferenceElement.getParent();

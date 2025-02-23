@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -45,14 +45,14 @@ public class GradleBuildClasspathManager {
   public void reload() {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
-    AbstractExternalSystemLocalSettings<?> localSettings = manager.getLocalSettingsProvider().fun(myProject);
+    ProjectBuildClasspathManager buildClasspathManager = myProject.getService(ProjectBuildClasspathManager.class);
 
     Map<String/*module path*/, List<VirtualFile> /*module build classpath*/> map = new HashMap<>();
 
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     final Map<String, VirtualFile> localVFCache = new HashMap<>();
 
-    for (final ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : localSettings.getProjectBuildClasspath().values()) {
+    for (final ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : buildClasspathManager.getProjectBuildClasspath().values()) {
       final List<VirtualFile> projectBuildClasspath = new ArrayList<>();
       for (String path : projectBuildClasspathPojo.getProjectBuildClasspath()) {
         final VirtualFile virtualFile = localVFCache.computeIfAbsent(path, it -> ExternalSystemUtil.findLocalFileByPath(it)) ;

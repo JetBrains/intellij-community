@@ -2,8 +2,6 @@
 package com.intellij.util.net
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.net.ProxyConfiguration.ProxyAutoConfiguration
-import com.intellij.util.net.ProxyConfiguration.StaticProxyConfiguration
 import java.net.URL
 import java.util.function.Predicate
 import java.util.regex.Pattern

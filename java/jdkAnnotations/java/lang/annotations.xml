@@ -146,6 +146,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.lang.Class A getAnnotation(java.lang.Class&lt;A&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -154,6 +155,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.lang.Class A getDeclaredAnnotation(java.lang.Class&lt;A&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -914,6 +916,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.lang.Package A getAnnotation(java.lang.Class&lt;A&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -922,6 +925,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.lang.Package A getDeclaredAnnotation(java.lang.Class&lt;A&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -376,11 +376,18 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     else {
       myExtraActions.add(action);
     }
+
+    if (action instanceof Disposable) {
+      Disposer.register(resourcesDisposable, (Disposable)action);
+    }
   }
 
   @Override
   public void removeInspectionWidgetAction(@NotNull AnAction action) {
     myExtraActions.remove(action);
+    if (action instanceof Disposable) {
+      Disposer.dispose((Disposable)action);
+    }
   }
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {

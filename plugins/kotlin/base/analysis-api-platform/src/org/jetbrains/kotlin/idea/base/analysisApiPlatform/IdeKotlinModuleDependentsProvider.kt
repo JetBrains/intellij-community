@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.platform.caches.getOrPut
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
@@ -105,7 +106,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
         }
 
     override fun getTransitiveDependents(module: KaModule): Set<KaModule> =
-        transitiveDependentsCache.value.get(module) {
+        transitiveDependentsCache.value.getOrPut(module) {
             // The computation does not reuse sub-results that may already have been cached because transitive dependents are usually only
             // computed for select modules, so the performance impact of this computation is expected to be negligible.
             computeTransitiveDependents(it)

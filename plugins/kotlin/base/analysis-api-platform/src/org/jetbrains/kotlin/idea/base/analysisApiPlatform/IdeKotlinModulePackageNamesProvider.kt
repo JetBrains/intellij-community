@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -12,15 +11,28 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
+import org.jetbrains.kotlin.analysis.api.platform.caches.NullableConcurrentCache
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.utils.NullableConcurrentCache
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
+
+interface KotlinModulePackageNamesProvider {
+    companion object {
+        fun getInstance(project: Project): KotlinModulePackageNamesProvider = 
+            project.service() 
+    }
+    
+    fun computePackageNames(module: KaModule): Set<String>?
+}
 
 /**
  * [IdeKotlinModulePackageNamesProvider] caches the results of [computePackageNames][org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider.computePackageNames]
@@ -37,8 +49,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
  * In addition to caching package names for modules, we cache them for binary roots separately. This is because multiple libraries may share
  * some binary roots. We compute package names per binary root, so it makes sense to cache it on this level as well.
  */
-@Service(Service.Level.PROJECT)
-internal class IdeKotlinModulePackageNamesProvider(private val project: Project) : Disposable {
+internal class IdeKotlinModulePackageNamesProvider(private val project: Project) : Disposable, KotlinModulePackageNamesProvider {
     private val cache = NullableConcurrentCache<KaModule, Set<String>?>()
 
     private val binaryRootsCache = NullableConcurrentCache<String, Set<String>>()
@@ -61,7 +72,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
         LowMemoryWatcher.register(::invalidateAll, this)
     }
 
-    fun computePackageNames(module: KaModule): Set<String>? =
+    override fun computePackageNames(module: KaModule): Set<String>? =
         when (module) {
             is KaSourceModule -> computeSourceModulePackageSet(module)
 
@@ -143,6 +154,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     }
 
     companion object {
-        fun getInstance(project: Project): IdeKotlinModulePackageNamesProvider = project.service()
+        fun getInstance(project: Project): IdeKotlinModulePackageNamesProvider = 
+            KotlinModulePackageNamesProvider.getInstance(project) as IdeKotlinModulePackageNamesProvider
     }
 }

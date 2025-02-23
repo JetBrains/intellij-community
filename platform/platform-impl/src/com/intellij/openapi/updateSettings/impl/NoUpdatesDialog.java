@@ -13,8 +13,8 @@ import javax.swing.*;
  * @author pti
  */
 final class NoUpdatesDialog extends AbstractUpdateDialog {
-  NoUpdatesDialog(boolean enableLink) {
-    super(enableLink);
+  NoUpdatesDialog(boolean addConfigureUpdatesLink) {
+    super(addConfigureUpdatesLink);
     init();
   }
 

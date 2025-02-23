@@ -3,14 +3,8 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFsError
-import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.util.text.nullize
 import kotlinx.coroutines.runBlocking
-import java.io.IOException
 import java.nio.file.*
 
 internal fun Path.toEelPath(): EelPath =

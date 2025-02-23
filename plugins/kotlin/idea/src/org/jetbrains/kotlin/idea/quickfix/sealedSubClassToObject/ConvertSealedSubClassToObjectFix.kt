@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject
 
@@ -93,7 +93,7 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> =
         pointer.project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.sealed.subclass.usage"), true) {
             pointer.element?.let { ktClass ->
-                ReferencesSearch.search(ktClass).groupBy({ it.element.language }, { it.element.parent })
+                ReferencesSearch.search(ktClass).asIterable().groupBy({ it.element.language }, { it.element.parent })
             } ?: emptyMap()
         } ?: emptyMap()
 

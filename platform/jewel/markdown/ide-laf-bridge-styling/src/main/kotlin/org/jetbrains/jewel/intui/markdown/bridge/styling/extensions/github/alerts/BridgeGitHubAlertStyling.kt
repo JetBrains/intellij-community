@@ -1,3 +1,5 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,7 +10,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.intellij.ui.JBColor
+import org.jetbrains.jewel.intui.markdown.bridge.styling.isLightTheme
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertIcons
@@ -29,7 +31,7 @@ public fun AlertStyling.Companion.create(
 public fun NoteAlertStyling.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 3.dp,
-    lineColor: Color = if (JBColor.isBright()) Color(0xFF0969DA) else Color(0xFF1F6EEB),
+    lineColor: Color = if (isLightTheme) Color(0xFF0969DA) else Color(0xFF1F6EEB),
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
@@ -52,7 +54,7 @@ public fun NoteAlertStyling.Companion.create(
 public fun TipAlertStyling.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 3.dp,
-    lineColor: Color = if (JBColor.isBright()) Color(0xFF1F883D) else Color(0xFF238636),
+    lineColor: Color = if (isLightTheme) Color(0xFF1F883D) else Color(0xFF238636),
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
@@ -75,7 +77,7 @@ public fun TipAlertStyling.Companion.create(
 public fun ImportantAlertStyling.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 3.dp,
-    lineColor: Color = if (JBColor.isBright()) Color(0xFF8250DF) else Color(0xFF8957E5),
+    lineColor: Color = if (isLightTheme) Color(0xFF8250DF) else Color(0xFF8957E5),
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
@@ -98,7 +100,7 @@ public fun ImportantAlertStyling.Companion.create(
 public fun WarningAlertStyling.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 3.dp,
-    lineColor: Color = if (JBColor.isBright()) Color(0xFF9A6601) else Color(0xFF9E6A02),
+    lineColor: Color = if (isLightTheme) Color(0xFF9A6601) else Color(0xFF9E6A02),
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
@@ -121,7 +123,7 @@ public fun WarningAlertStyling.Companion.create(
 public fun CautionAlertStyling.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 3.dp,
-    lineColor: Color = if (JBColor.isBright()) Color(0xFFCF222E) else Color(0xFFDA3633),
+    lineColor: Color = if (isLightTheme) Color(0xFFCF222E) else Color(0xFFDA3633),
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.proxy
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -15,9 +15,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
-@Suppress("HardCodedStringLiteral") // This is a test, internal only action
-internal class WslProxyAction : DumbAwareAction("WslProxyAction") {
 
+@Suppress("HardCodedStringLiteral") // This is a test, internal only action
+private class WslProxyAction : DumbAwareAction("WslProxyAction") {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   @RequiresEdt

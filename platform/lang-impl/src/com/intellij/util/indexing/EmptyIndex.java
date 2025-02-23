@@ -53,8 +53,8 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    return FileIndexingState.UP_TO_DATE;
+  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    return FileIndexingStateWithExplanation.upToDate();
   }
 
   @Override

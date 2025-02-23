@@ -9,10 +9,13 @@ import com.intellij.internal.ui.sandbox.withStateLabel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
 import java.awt.Font
@@ -117,11 +120,29 @@ internal class ComboBoxPanel : UISandboxPanel {
         val comboBox = comboBox(listOf("Item 1", "Item 2")).component
         setTitledBorder(comboBox)
       }
+
+      collapsibleGroup("Default Renderer") {
+        cbDefaultRenderer("No items:", emptyList())
+        cbDefaultRenderer("Few items:", items(3, "Item"))
+        cbDefaultRenderer("Many items:", items(100, "Item"))
+        cbDefaultRenderer("Long items:", items(100, "Item".repeat(10)))
+        cbDefaultRenderer("Speed search:", items(100, "Item")).applyToComponent {
+          isSwingPopup = false
+        }
+      }.expanded = false
     }
 
     result.registerValidators(disposable)
     result.validateAll()
 
+    return result
+  }
+
+  private fun Panel.cbDefaultRenderer(@Nls label: String, items: List<String>): Cell<ComboBox<String>> {
+    lateinit var result: Cell<ComboBox<String>>
+    row(label) {
+      result = cell(ComboBox(items.toTypedArray()))
+    }
     return result
   }
 

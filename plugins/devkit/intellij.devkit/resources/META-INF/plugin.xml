@@ -26,7 +26,11 @@
     <module name="intellij.devkit.themes"/>
     <module name="intellij.devkit.uiDesigner"/>
     <module name="intellij.devkit.workspaceModel"/>
+    <module name="intellij.devkit.workspaceModel.k1"/>
+    <module name="intellij.devkit.workspaceModel.k2"/>
     <module name="intellij.kotlin.devkit"/>
+    <module name="intellij.kotlin.devkit.k1"/>
+    <module name="intellij.kotlin.devkit.k2"/>
     <module name="intellij.devkit.debugger"/>
     <module name="intellij.devkit.stacktrace"/>
     <module name="intellij.devkit.apiDump"/>

@@ -4,11 +4,11 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleTerminalLinesCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.atomic.AtomicBoolean
 

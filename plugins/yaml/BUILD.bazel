@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "yaml_resources",
@@ -11,70 +11,24 @@ jvm_library(
   name = "yaml",
   module_name = "intellij.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
-    "//spellchecker",
     "//platform/platform-impl:ide-impl",
-    "//xml/openapi:xml",
-    "//json",
-    "//platform/indexing-impl",
-    "//platform/editor-ui-ex:editor-ex",
-    "@lib//:stream_ex",
-    "//platform/ide-core-impl",
-    "@lib//:fastutil-min",
+    "//platform/util:util-ui",
     "//platform/refactoring",
     "//platform/core-ui",
-    "//platform/code-style-impl:codeStyle-impl",
-    "//platform/statistics",
-    "//plugins/yaml/editing",
-  ],
-  runtime_deps = [":yaml_resources"]
-)
-
-jvm_library(
-  name = "yaml_test_lib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":yaml"],
-  deps = [
-    "//platform/platform-api:ide",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//xml/openapi:xml",
-    "//json",
-    "//json/tests:tests_test_lib",
-    "//platform/indexing-impl",
-    "//platform/editor-ui-ex:editor-ex",
-    "@lib//:stream_ex",
-    "//platform/ide-core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/util/jdom",
     "@lib//:fastutil-min",
-    "//platform/refactoring",
-    "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "//plugins/IntelliLang:langInjection",
-    "//platform/statistics",
-    "//platform/statistics:statistics_test_lib",
-    "//RegExpSupport:regexp",
-    "//RegExpSupport:regexp_test_lib",
-    "//plugins/sh",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//plugins/yaml/editing",
+    "@lib//:stream_ex",
   ],
   runtime_deps = [":yaml_resources"]
-)
-
-jvm_test(
-  name = "yaml_test",
-  runtime_deps = [":yaml_test_lib"]
 )
 ### auto-generated section `build intellij.yaml` end

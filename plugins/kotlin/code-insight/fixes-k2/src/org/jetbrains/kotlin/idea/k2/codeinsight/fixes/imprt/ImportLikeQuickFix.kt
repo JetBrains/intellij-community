@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListen
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -19,6 +20,8 @@ abstract class ImportLikeQuickFix(
     element: KtElement,
     protected val importVariants: List<AutoImportVariant>
 ) : KotlinImportQuickFixAction<KtElement>(element) {
+    private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
+
     init {
         require(importVariants.isNotEmpty())
     }
@@ -32,20 +35,24 @@ abstract class ImportLikeQuickFix(
     override fun createImportAction(editor: Editor, file: KtFile): QuestionAction? =
         if (element != null) ImportQuestionAction(file.project, editor, file, importVariants) else null
 
-
-    private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
-
-    /**
-     * This is a safe-guard against showing hint after the quickfix have been applied.
-     *
-     * Inspired by the org.jetbrains.kotlin.idea.quickfix.ImportFixBase.isOutdated
-     */
-    private fun isOutdated(project: Project): Boolean {
-        return modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        if (modificationCountOnCreate == PsiModificationTracker.getInstance(project).modificationCount) {
+            // optimization: we know nothing was changed since the last isAvailable() call
+            return true
+        }
+        val fqName = importVariants.firstOrNull()?.fqName
+        return fqName == null || !isClassDefinitelyPositivelyImportedAlready(file, fqName)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        !isOutdated(project)
+    /**
+     * @return true if the class candidate name to be imported already present in the import list (maybe some auto-import-fix for another reference did it?)
+     * This method is intended to be cheap and resolve-free, because it might be called in EDT.
+     * This method is used as an optimization against trying to import the same class several times,
+     * so false negatives are fine (returning false even when the class already imported is OK) whereas false positives are bad (don't return true when the class wasn't imported).
+     */
+    protected open fun isClassDefinitelyPositivelyImportedAlready(containingFile: KtFile, classQualifiedName: FqName): Boolean {
+        return false
+    }
 
     protected abstract fun fix(importVariant: AutoImportVariant, file: KtFile, project: Project)
 

@@ -49,7 +49,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    fun doTest(testPath: String) {
+    open fun doTest(testPath: String) {
         val defaultFile = File(testPath)
         val k2File = when (pluginMode) {
             KotlinPluginMode.K1 -> null

@@ -207,6 +207,8 @@ fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
     emptyList()
 }
 
+const val DEFINITION_ID: String = "ideGradleScriptDefinitionId"
+
 class GradleKotlinScriptDefinitionWrapper(
     legacyDefinition: KotlinScriptDefinitionFromAnnotatedTemplate,
     override val hostConfiguration: ScriptingHostConfiguration,
@@ -218,7 +220,10 @@ class GradleKotlinScriptDefinitionWrapper(
         order = Int.MIN_VALUE
     }
 
-    override val compilationConfiguration by lazy {
+    override val definitionId: String
+        get() = DEFINITION_ID
+
+    override val compilationConfiguration: ScriptCompilationConfiguration by lazy {
         ScriptCompilationConfigurationFromDefinition(
             hostConfiguration,
             legacyDefinition

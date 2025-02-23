@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.idea.IJIgnore
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Ref
@@ -10,7 +11,10 @@ import git4idea.test.TestDialogHandler
 import git4idea.test.git
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.ui.dialog.GithubExistingRemotesDialog
+import org.junit.Ignore
 
+@Ignore
+@IJIgnore(issue = "no server")
 class GithubShareProjectTest : GithubShareProjectTestBase() {
 
   @Throws(Throwable::class)

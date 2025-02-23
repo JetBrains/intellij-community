@@ -31,7 +31,11 @@ interface IntelliJNewProjectWizardData {
 
   var addSampleCode: Boolean
 
+  @Deprecated("Use addSampleCodeProperty instead")
   val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+    get() = addSampleCodeProperty
 
+  @Deprecated("Use addSampleCode instead")
   val generateOnboardingTips: Boolean
+    get() = addSampleCode
 }

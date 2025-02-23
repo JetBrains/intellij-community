@@ -1,16 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.tests.eelHelpers.network
 
 import org.jetbrains.annotations.TestOnly
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
 
 /**
  * Prints port, accepts connections, sends hello, receives the answer
  */
 @TestOnly
-fun startNetworkHelper() {
+fun startNetworkClientHelper() {
   val serverSocketChannel = ServerSocketChannel.open().also { channel ->
     channel.bind(InetSocketAddress(0))
   }
@@ -29,5 +30,17 @@ fun startNetworkHelper() {
   }
   else {
     error("Wrong data from client")
+  }
+}
+
+/**
+ * Read port number from stdin, connect and write hello there
+ */
+@TestOnly
+fun startNetworkConnectionHelper() {
+  val port = readLine()!!.trim().toInt()
+  SocketChannel.open().use {
+    it.connect(InetSocketAddress(port))
+    it.write(NetworkConstants.HELLO_FROM_SERVER.toBuffer())
   }
 }

@@ -10,10 +10,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
-    "@community//fleet/util/core:fleet-util-core",
+    "//fleet/util/core:fleet-util-core",
     "@lib//:fastutil-min",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
   ]
 )
 ### auto-generated section `build fleet.andel` end

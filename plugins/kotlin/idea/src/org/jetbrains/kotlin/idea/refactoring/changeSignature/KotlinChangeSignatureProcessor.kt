@@ -59,7 +59,7 @@ class KotlinChangeSignatureProcessor(
 
     override fun getChangeInfo(): KotlinChangeInfo = super.getChangeInfo() as KotlinChangeInfo
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         val allUsages = ArrayList<UsageInfo>()
         val javaUsages = mutableSetOf<UsageInfo>()
         changeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->
@@ -119,7 +119,7 @@ class KotlinChangeSignatureProcessor(
         }
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usageProcessors = ChangeSignatureUsageProcessor.EP_NAME.extensions
 
         if (!usageProcessors.all { it.setupDefaultValues(myChangeInfo, refUsages, myProject) }) return false
@@ -150,7 +150,7 @@ class KotlinChangeSignatureProcessor(
         return showConflicts(conflictDescriptions, usageArray)
     }
 
-    override fun isPreviewUsages(usages: Array<UsageInfo>): Boolean = isPreviewUsages
+    protected override fun isPreviewUsages(usages: Array<UsageInfo>): Boolean = isPreviewUsages
 
     override fun getCommandName() = commandName
 

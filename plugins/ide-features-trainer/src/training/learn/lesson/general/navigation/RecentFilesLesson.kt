@@ -3,7 +3,6 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.Switcher
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -93,7 +92,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreByUi()
       test {
         ideFrame {
-          waitComponent(Switcher.SwitcherPanel::class.java)
+          waitComponent(JBListWithOpenInRightSplit::class.java)
         }
         type(prefixes)
       }
@@ -208,8 +207,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   }
 
   private fun TaskRuntimeContext.checkRecentFilesSearch(expected: String): Boolean {
-    val focusOwner = UIUtil.getParentOfType(Switcher.SwitcherPanel::class.java, focusOwner)
-    return focusOwner != null && checkWordInSearch(expected, focusOwner)
+    return UIUtil.uiParents(focusOwner, false).any { it is JComponent && checkWordInSearch(expected, it) }
   }
 
   private fun TaskRuntimeContext.checkRecentLocationsSearch(expected: String): Boolean {

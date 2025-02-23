@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 class SearchEverywhereModelProvider {
@@ -19,12 +20,22 @@ class SearchEverywhereModelProvider {
   }
 
   /**
-   * We have tabs that suffer from exact match issue, where the exactly matched result does not appear at the top,
+   * We have tabs that suffer from the exact match issue, where the exactly matched result does not appear at the top,
    * we have introduced additional logic to address that issue.
    */
   private fun isTabWithExactMatchIssue(tabId: String): Boolean {
     val tab = SearchEverywhereTabWithMlRanking.findById(tabId)
-    return tab == SearchEverywhereTabWithMlRanking.CLASSES || tab == SearchEverywhereTabWithMlRanking.FILES
+    return tab == SearchEverywhereTabWithMlRanking.CLASSES
+           || tab == SearchEverywhereTabWithMlRanking.FILES
+           || tab?.let { isExactMatchExperiment(it) } == true
+  }
+
+  /**
+   * True, if the provided tab is associated with the exact match manual fix experiment.
+   */
+  private fun isExactMatchExperiment(tab: SearchEverywhereTabWithMlRanking): Boolean {
+    val experimentForTab = SearchEverywhereMlExperiment().getExperimentForTab(tab)
+    return experimentForTab == SearchEverywhereMlExperiment.ExperimentType.EM_MANUAL_FIX
   }
 
   private fun getRankingModelForExactMatchIssue(tabId: String): SearchEverywhereRankingModel {

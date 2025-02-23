@@ -2,13 +2,13 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ProjectWindowCustomizerService;
-import com.intellij.ide.ui.MainMenuDisplayMode;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -56,11 +56,12 @@ public class IdeaMenuUI extends BasicMenuUI {
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-      if (UISettings.getShadowInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR) {
+      if (ShowMode.Companion.isMergedMainMenu()) {
+        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
         radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
       }
       else {
+        outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
         radius = 0;
       }
     }
@@ -92,7 +93,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    if (UISettings.getInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR && c instanceof JMenuItem) {
+    if (c instanceof JMenuItem && ShowMode.Companion.isMergedMainMenu()) {
       hoverListener.addTo(c);
     }
   }
@@ -136,7 +137,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
       selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
       selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
-      if (UISettings.getInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR) {
+      if (ShowMode.Companion.isMergedMainMenu()) {
         JBColor hoverBG = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background());
         if (ProjectWindowCustomizerService.Companion.getInstance().isActive()) {
           selectionBackground = JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground",

@@ -5,7 +5,7 @@ plugins {
   id("fleet.toolchain-conventions")
   id("fleet-build-jps-module-plugin")
   id("fleet.multiplatform-module-conventions")
-  alias(libs.plugins.dev.adamko.dokkatoo.html)
+  alias(libs.plugins.dokka)
 }
 
 jpsModule {

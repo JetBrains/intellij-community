@@ -10,18 +10,14 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.util.TreeClassChooserFactory
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
@@ -31,7 +27,6 @@ import javax.swing.JComponent
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
   private val excludeTable = object : ImportTable(project,
                                                   JavaBundle.message("exclude.from.imports.no.exclusions"),
-                                                  JavaBundle.message("exclude.from.imports.no.exclusions.2"),
                                                   JavaBundle.message("exclude.table.mask"),
                                                   JavaBundle.message("exclude.table.scope.column")) {
     override fun getIdeRows(): Array<out String> {
@@ -53,24 +48,8 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
 
   private val autoStaticImportTable = object : ImportTable(project,
                                                            JavaBundle.message("auto.static.import.comment"),
-                                                           JavaBundle.message("auto.static.import.comment.2"),
                                                            JavaBundle.message("auto.static.import.class"),
                                                            JavaBundle.message("auto.static.import.scope")) {
-    override fun createAddAction(): AnActionButtonRunnable? {
-      return AnActionButtonRunnable { button ->
-        val element = createElement()
-
-        if (!project.isDefault && !isDumb(project)) {
-          val chooser = TreeClassChooserFactory.getInstance(project)
-            .createWithInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.class"), GlobalSearchScope.allScope(project), null, null)
-          chooser.showDialog()
-          val selected = chooser.getSelected()
-          element.row = selected?.qualifiedName ?: ""
-        }
-
-        addNewElement(element)
-      }
-    }
 
     override fun getIdeRows(): Array<out String> {
       return JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.toTypedArray()
@@ -144,6 +123,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
         cell(autoStaticImportTable.component)
           .align(AlignX.FILL)
           .label(JavaBundle.message("auto.static.import.completion.group"), LabelPosition.TOP)
+          .comment(JavaBundle.message("auto.static.import.example"))
           .onApply { autoStaticImportTable.apply() }
           .onReset { autoStaticImportTable.reset() }
           .onIsModified { autoStaticImportTable.isModified }

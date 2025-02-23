@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.psi.PsiDirectory
@@ -12,7 +12,6 @@ import kotlin.io.path.name
  */
 internal class MiscProjectListenerProvider : RefactoringElementListenerProvider {
   override fun getListener(element: PsiElement): RefactoringElementListener? {
-    if (!miscProjectEnabled.value) return null
     val dir = (element as? PsiDirectory) ?: return null
     // dir name is enough
     return if (dir.name == miscProjectDefaultPath.value.name) MiscProjectRenameReporter else null

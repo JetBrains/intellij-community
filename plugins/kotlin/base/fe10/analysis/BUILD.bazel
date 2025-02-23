@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -38,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting:kotlin-base-scripting",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//java/java-impl:impl",
     "//java/openapi:java",

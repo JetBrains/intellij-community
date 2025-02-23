@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,8 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 // will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
-abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements HintAction {
+@ApiStatus.Internal
+public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements HintAction {
   private final List<T> candidates;
   final SmartPsiElementPointer<R> myReferencePointer;
   private final long myPsiModificationCount;

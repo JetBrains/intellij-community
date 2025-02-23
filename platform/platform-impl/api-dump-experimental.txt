@@ -4,6 +4,20 @@
 c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.execution.wsl.AbstractWslDistribution
 - *:getUNCRootPath():java.nio.file.Path
+*:com.intellij.frontend.HostIdeInfoService
+- a:getHostInfo():com.intellij.frontend.HostInfo
+*f:com.intellij.frontend.HostInfo
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.frontend.HostInfo
+- bs:copy$default(com.intellij.frontend.HostInfo,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.frontend.HostInfo
+- equals(java.lang.Object):Z
+- f:getOsName():java.lang.String
+- f:getOsVersion():java.lang.String
+- f:getProductCode():java.lang.String
+- hashCode():I
 *:com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 - com.intellij.ide.CommandLineInspectionProjectConfigurator
 - configureProject(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):V
@@ -219,9 +233,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - *bs:openFile$default(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
-*:com.intellij.openapi.fileTypes.impl.FileTypeOverrider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getOverriddenFileType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
 *:com.intellij.openapi.options.ex.MutableConfigurableGroup
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.ConfigurableGroup
@@ -245,6 +256,8 @@ f:com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 - *s:setOfflineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
+- *s:createTemporaryBackgroundTransform(javax.swing.JComponent,com.intellij.openapi.ui.Painter,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.content.ContentUI
@@ -414,6 +427,9 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
+f:com.intellij.util.SwingBindingsKt
+- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
+- *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

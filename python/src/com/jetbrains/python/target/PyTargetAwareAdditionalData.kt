@@ -16,7 +16,6 @@ import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].

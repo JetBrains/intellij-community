@@ -1,0 +1,42 @@
+<idea-plugin package="com.intellij.platform.recentFiles.frontend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.recentFiles"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="switcher.preload.timeout.ms" defaultValue="300"
+                 description="Maximum amount of time allowed to wait for the files list loading before displaying the UI"/>
+    <registryKey key="switcher.preserve.selection.on.model.update" defaultValue="true"
+                 description="Attempt to select first file that is not opened in the focused editor while the files list is updating"/>
+    <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"
+                 description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native" />
+  </extensions>
+  <actions>
+    <group id="SwitcherAndRecentFiles">
+      <action id="Switcher" class="com.intellij.platform.recentFiles.frontend.Switcher"/>
+      <action id="SwitcherForward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherForwardAction"/>
+      <action id="SwitcherBackward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherBackwardAction"/>
+      <action id="SwitcherNextProblem" use-shortcut-of="GotoNextError" class="com.intellij.platform.recentFiles.frontend.SwitcherNextProblemAction"/>
+      <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError" class="com.intellij.platform.recentFiles.frontend.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+      <action id="RecentFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+        <add-to-group group-id="EditorTabsEntryPoint" anchor="first"/>
+      </action>
+      <action id="RecentChangedFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentlyEditedFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <action id="SwitcherRecentEditedChangedToggleCheckBox"
+              class="com.intellij.platform.recentFiles.frontend.SwitcherToggleOnlyEditedFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <action id="SwitcherIterateItems" class="com.intellij.platform.recentFiles.frontend.SwitcherIterateThroughItemsAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -57,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -471,13 +474,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   @Override
   @ApiStatus.Internal
   public synchronized void psiElementVisited(@NotNull Object toolId,
-                                      @NotNull PsiElement visitedPsiElement,
-                                      @NotNull List<? extends HighlightInfo> newInfos,
-                                      @NotNull Document hostDocument,
-                                      @NotNull PsiFile psiFile,
-                                      @NotNull Project project,
-                                      @NotNull HighlightingSession session,
-                                      @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
+                                             @NotNull PsiElement visitedPsiElement,
+                                             @NotNull List<? extends HighlightInfo> newInfos,
+                                             @NotNull Document hostDocument,
+                                             @NotNull PsiFile psiFile,
+                                             @NotNull Project project,
+                                             @NotNull HighlightingSession session,
+                                             @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
     Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
     ToolHighlights toolHighlights = data.get(toolId);
     List<? extends HighlightInfo> oldInfos = ContainerUtil.notNullize(toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement));
@@ -508,6 +511,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         List<? extends HighlightInfo> newInfosToStore = assignRangeHighlighters(newInfos, session, psiFile, hostDocument, invalidElementRecycler, recycler);
         ToolHighlights notNullToolHighlights = toolHighlights == null ? data.computeIfAbsent(toolId, __ -> new ToolHighlights()) : toolHighlights;
+
         if (newInfosToStore.isEmpty()) {
           notNullToolHighlights.elementHighlights.remove(visitedPsiElement);
         }
@@ -525,6 +529,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     });
     //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
     assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+    Reference.reachabilityFence(visitedPsiElement); // ensure no psi is gced while in the middle of modifying soft-ref maps
   }
 
   private synchronized void assertNoDuplicates(@NotNull PsiFile psiFile, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String cause) {
@@ -560,7 +565,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   @NotNull
-  Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return Set.of();
     Project project = psiFile.getProject();
     Document hostDocument;
@@ -586,9 +591,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .collect(Collectors.toList());
   }
 
-  synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
     Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
+    // todo ijpl-339 process top level infos
     Set<HighlightInfo> fromData = new HashSet<>(getAllData(psiFile, toolIdPredicate));
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
@@ -601,6 +607,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
+  @NotNull
   private Collection<HighlightInfo> getAllData(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     PsiFile hostFile = injectedLanguageManager.getTopLevelFile(psiFile);
@@ -637,8 +644,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   // remove all highlight infos from `data` generated by tools absent in 'actualToolsRun'
   @ApiStatus.Internal
   public synchronized void removeHighlightsForObsoleteTools(@NotNull HighlightingSession highlightingSession,
-                                                     @NotNull List<? extends PsiFile> injectedFragments,
-                                                     @NotNull BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate) {
+                                                            @NotNull List<? extends PsiFile> injectedFragments,
+                                                            @NotNull BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate) {
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, highlightingSession.getPsiFile())) {
       Map<Object, ToolHighlights> data = getData(psiFile, highlightingSession.getDocument());
       data.entrySet().removeIf(entry -> {
@@ -1188,13 +1195,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
       InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-      String from = "recycler";
+      String from;
       if (recycled == null) {
         recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
         if (recycled != null) {
           recycledInvalidPsiHighlightersToBeRemovedFromData.add(recycled);
         }
         from = "invalidElementRecycler";
+      }
+      else {
+        from = "recycler";
       }
       if (recycled != null) {
         if (LOG.isDebugEnabled()) {
@@ -1236,16 +1246,17 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
-      newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
     }
+
     RangeHighlighterEx highlighter;
     if (recycled == null) {
       // create new
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup);
+        newInfo.setHighlighter(highlighter);
         ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
       }
       else {
@@ -1253,23 +1264,31 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
+        newInfo.setHighlighter(highlighter);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
     else {
       // recycle
       HighlightInfo oldInfo = recycled.info();
       highlighter = oldInfo.getHighlighter();
+      newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
         ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
+
       }
-      oldInfo.copyComputedLazyFixesTo(newInfo);
+      oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());
       assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
     }
-    newInfo.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);
   }
 

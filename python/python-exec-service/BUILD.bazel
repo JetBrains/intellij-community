@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.python.community.execService` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "community-execService_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-execService",
+  module_name = "intellij.python.community.execService",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/python-sdk:sdk",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/eel-provider",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/eel-impl",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":community-execService_resources"]
+)
+
+jvm_library(
+  name = "community-execService_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":community-execService"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/eel-provider",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/eel-impl",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "@lib//:hamcrest",
+    "@lib//:junit5Params",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":community-execService_resources"]
+)
+
+jvm_test(
+  name = "community-execService_test",
+  runtime_deps = [":community-execService_test_lib"]
+)
+### auto-generated section `build intellij.python.community.execService` end

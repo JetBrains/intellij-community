@@ -8,11 +8,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +25,6 @@ import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -152,6 +149,11 @@ class MavenProject(val file: VirtualFile) {
     val newPluginInfos = myState.pluginInfos.map { MavenPluginInfo(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
     val newState = myState.copy(pluginInfos = newPluginInfos)
     setState(newState)
+  }
+
+  @Internal
+  fun updateMavenId(newMavenId: MavenId) {
+    setState(myState.copy(mavenId = newMavenId))
   }
 
   private fun setState(newState: MavenProjectState): MavenProjectChanges {

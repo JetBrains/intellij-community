@@ -121,8 +121,6 @@ interface BuildContext : CompilationContext {
    */
   fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
-  suspend fun includeBreakGenLibraries(): Boolean
-
   fun patchInspectScript(path: Path)
 
   /**
@@ -144,6 +142,8 @@ interface BuildContext : CompilationContext {
   }
 
   suspend fun getFrontendModuleFilter(): FrontendModuleFilter
+  
+  suspend fun getContentModuleFilter(): ContentModuleFilter
 
   val isEmbeddedFrontendEnabled: Boolean
 

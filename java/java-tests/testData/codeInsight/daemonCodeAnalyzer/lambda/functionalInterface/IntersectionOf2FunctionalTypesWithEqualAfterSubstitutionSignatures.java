@@ -8,6 +8,6 @@ interface Y<T> {
 
 class Test {
   {
-    ((X & <caret>Y<Integer>) (x) -> {}).m(1);
+    ((X & Y<Integer>) <error descr="Multiple non-overriding abstract methods found in X & Y<Integer>">(x) -> {}</error>).m<error descr="Ambiguous method call: both 'X.m(Integer)' and 'Y.m(Integer)' match">(1)</error>;
   }
 }

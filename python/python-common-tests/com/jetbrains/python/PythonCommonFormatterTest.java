@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
@@ -1361,5 +1362,265 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   // PY-77060
   public void testSpaceAfterStarInTypeParameterList() {
     doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingBracketsOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListChopDownBracketsOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingBracketsOnSameLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListChopDownBracketsOnSameLine() {
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingFirstBracketOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingLastBracketOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingDoNotAlign() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingBracesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetChopDownBracesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingBracesOnSameLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingFirstBraceOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingLastBraceOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingDoNotAlign() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingParenthesesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingParenthesesOnNewLineWithContinuationIndent() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleNoWrapping() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleChopDownParenthesesOnSameLine() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingFirstParenthesisOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingFirstParenthesisOnNewLineWithContinuationIndent() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingLastParenthesisOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingTupleOfTuples() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 88);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingTupleOfTuplesParenthesesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 50);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleAlignWhenMultiline() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrapHangClosingParenthesis() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  public void testWrappingInCollectionsCommentsStayOnTheSameLine() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().DICT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getCodeStyleSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getCodeStyleSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest();
+  }
+
+  // PY-31689
+  public void testDoNotWrapListsAndTuplesInsideSubscriptionExpressions() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInListLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInDictLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInSetLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInTupleExpression() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInArgumentList() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInParameterList() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_PARAMETER_LIST = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaMixed() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_PARAMETER_LIST = true;
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
+      doTest();
+    });
   }
 }

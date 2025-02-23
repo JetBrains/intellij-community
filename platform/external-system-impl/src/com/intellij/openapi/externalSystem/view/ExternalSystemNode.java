@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -22,6 +22,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -379,7 +380,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
   }
 
-  protected @Nullable @NonNls String getActionId() {
+  protected @Language("devkit-action-id") @Nullable @NonNls String getActionId() {
     return null;
   }
 

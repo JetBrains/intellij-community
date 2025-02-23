@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,8 @@ import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
 /**
  * Emulates the ANSI terminal state
  */
-class AnsiTerminalEmulator {
+@ApiStatus.Internal
+public final class AnsiTerminalEmulator {
   private static final Logger LOG = Logger.getInstance(AnsiTerminalEmulator.class);
 
   private static final AnsiTerminalEmulator EMPTY_EMULATOR = new AnsiTerminalEmulator();

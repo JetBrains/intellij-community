@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 public class ContainerUtilTest extends TestCase {
@@ -182,7 +183,7 @@ public class ContainerUtilTest extends TestCase {
   public void testLockFreeSingleThreadPerformance() {
     final List<Object> stock = new CopyOnWriteArrayList<>();
     measure(stock);
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
+    final List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
     measure(my);
     measure(stock);
     measure(my); // warm up
@@ -209,10 +210,11 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testLockFreeCOWDoesNotCreateEmptyArrays() {
-    LockFreeCopyOnWriteArrayList<Object> my = (LockFreeCopyOnWriteArrayList<Object>)ContainerUtil.createLockFreeCopyOnWriteList();
+    List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
 
     for (int i = 0; i < 2; i++) {
-      Object[] array = my.getArray();
+      @SuppressWarnings("unchecked")
+      Object[] array = ((AtomicReference<Object @NotNull []>)my).get();
       assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
       assertReallyEmpty(my);
       my.add(this);
@@ -266,7 +268,7 @@ public class ContainerUtilTest extends TestCase {
 
   public void testLockFreeCOWIteratorRemove() {
     List<String> seq = Arrays.asList("0", "1", "2", "3", "4");
-    LockFreeCopyOnWriteArrayList<String> my = (LockFreeCopyOnWriteArrayList<String>)ContainerUtil.createLockFreeCopyOnWriteList(seq);
+    List<String> my = ContainerUtil.createLockFreeCopyOnWriteList(seq);
     {
       Iterator<String> iterator = my.iterator();
       try {
@@ -326,7 +328,7 @@ public class ContainerUtilTest extends TestCase {
 
   public void testImmutableListEquals() {
     String value = "stringValue";
-    List<String> expected = ContainerUtil.immutableList(value);
+    List<String> expected = Collections.singletonList(value);
     List<String> actual = List.of(value);
     assertEquals(expected, actual);
   }

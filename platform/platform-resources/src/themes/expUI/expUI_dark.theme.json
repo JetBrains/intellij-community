@@ -487,7 +487,6 @@
     },
 
     "Popup": {
-      "borderWidth": 1,
       "paintBorder": true,
       "borderColor": "Gray4",
       "inactiveBorderColor": "Gray3",
@@ -749,28 +748,36 @@
 
     "TrialWidget": {
       "Default": {
-        "foreground": "#CED0D6",
-        "background": "#27282E",
-        "borderColor": "#B4B8BF",
-        "hoverBackground": "#494B57"
+        "foreground": "Gray11",
+        "background": "Gray2",
+        "borderColor": "Gray10",
+        "hoverForeground": "Gray11",
+        "hoverBackground": "Gray3",
+        "hoverBorderColor": "Gray10"
       },
       "Active": {
-        "foreground": "#5FAD65",
-        "background": "#273828",
-        "borderColor": "#4E8052",
-        "hoverBackground": "#375239"
+        "foreground": "Green7",
+        "background": "Green2",
+        "borderColor": "Green5",
+        "hoverForeground": "Green7",
+        "hoverBackground": "Green3",
+        "hoverBorderColor": "Green5"
       },
       "Alert": {
-        "foreground": "#D6AE58",
-        "background": "#3D3223",
-        "borderColor": "#826A41",
-        "hoverBackground": "#5E4D33"
+        "foreground": "Yellow6",
+        "background": "Yellow1",
+        "borderColor": "Yellow3",
+        "hoverForeground": "Yellow6",
+        "hoverBackground": "Yellow2",
+        "hoverBorderColor": "Yellow3"
       },
       "Expiring": {
-        "foreground": "#FAE3DE",
-        "background": "#CC3645",
-        "borderColor": "#00000000",
-        "hoverBackground": "#E55765"
+        "foreground": "Red12",
+        "background": "Red7",
+        "borderColor": "Red7",
+        "hoverForeground": "Red12",
+        "hoverBackground": "Red8",
+        "hoverBorderColor": "Red8"
       }
     },
 
@@ -1183,7 +1190,12 @@
     "ManagedIdeMenuItemHover": "Gray4",
 
     "InlineBanner.hoverBackground": "#FFFFFF14",
-    "InlineBanner.pressedBackground": "#FFFFFF1E"
+    "InlineBanner.pressedBackground": "#FFFFFF1E",
+
+    "Settings.Spotlight": {
+      "borderColor": "#A36B4EFF",
+      "backgroundColor": "#2B2D3080"
+    }
   },
 
   "icons": {

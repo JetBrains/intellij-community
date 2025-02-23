@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.yaml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.yaml.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />

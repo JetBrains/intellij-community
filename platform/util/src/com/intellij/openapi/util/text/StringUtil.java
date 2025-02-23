@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -1606,17 +1606,6 @@ public class StringUtil {
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}).
-   * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
-   */
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
-    return Formats.formatDuration(duration, unitSeparator);
-  }
-
-  /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
    *
@@ -2843,6 +2832,14 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  public static boolean isLowerCase(@NotNull CharSequence sequence) {
+    for (int i = 0; i < sequence.length(); i++) {
+      if (!Character.isLowerCase(sequence.charAt(i))) return false;
+    }
+    return true;
+  }
+
+  @Contract(pure = true)
   public static @Nullable LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
@@ -2988,13 +2985,12 @@ public class StringUtil {
    */
   @Contract(pure = true)
   public static boolean hasUpperCaseChar(@NotNull String s) {
-      char[] chars = s.toCharArray();
-      for (char c : chars) {
-          if (Character.isUpperCase(c)) {
-              return true;
-          }
+    for (char c : s.toCharArray()) {
+      if (Character.isUpperCase(c)) {
+        return true;
       }
-      return false;
+    }
+    return false;
   }
 
   /**
@@ -3004,34 +3000,56 @@ public class StringUtil {
    */
   @Contract(pure = true)
   public static boolean hasLowerCaseChar(@NotNull String s) {
-      char[] chars = s.toCharArray();
-      for (char c : chars) {
-          if (Character.isLowerCase(c)) {
-              return true;
-          }
+    for (char c : s.toCharArray()) {
+      if (Character.isLowerCase(c)) {
+        return true;
       }
-      return false;
+    }
+    return false;
   }
-
-  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[\\da-fA-F]{4}");
 
   @Contract(pure = true)
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
-
-    Matcher matcher = UNICODE_CHAR.matcher(text);
-    if (!matcher.find()) return text; // fast path
-
-    matcher.reset();
-    int lastEnd = 0;
+    final int length = text.length();
     StringBuilder sb = new StringBuilder(text.length());
-    while (matcher.find()) {
-      sb.append(text, lastEnd, matcher.start());
-      char c = (char)Integer.parseInt(matcher.group().substring(2), 16);
-      sb.append(c);
-      lastEnd = matcher.end();
+    outer:
+    for (int i = 0; i < length; i++) {
+      char c = text.charAt(i);
+      if (c == '\\') {
+        int j = i + 1;
+        boolean escape = true;
+        while (j < length && (c = text.charAt(j)) == '\\') {
+          escape = !escape;
+          j++;
+        }
+        if (!escape || c != 'u') {
+          sb.append(text, i, j);
+          i = j - 1;
+          continue;
+        }
+        while (j < length && (c = text.charAt(j)) == 'u') j++;
+        if (j > length - 4) {
+          sb.append(text, i, j);
+          i = j - 1;
+          continue;
+        }
+        for (int k = 0; k < 4; k++) {
+          if (!isHexDigit(text.charAt(j + k))) {
+            sb.append(text, i, j + k);
+            i = j + k - 1;
+            continue outer;
+          }
+        }
+        final char d = (char)Integer.parseInt(text.substring(j, j + 4), 16);
+        sb.append(d);
+        i = j + 3;
+      }
+      else {
+        sb.append(c);
+      }
     }
-    sb.append(text.substring(lastEnd));
+
     return sb.toString();
   }
 

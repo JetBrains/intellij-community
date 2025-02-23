@@ -18,7 +18,6 @@ package com.jetbrains.python.console.completion;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.impl.LightNamedElement;

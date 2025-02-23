@@ -533,6 +533,7 @@ a:com.intellij.platform.workspace.jps.JpsFileEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 f:com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 - com.intellij.platform.workspace.jps.JpsFileEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource

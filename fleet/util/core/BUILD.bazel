@@ -5,7 +5,7 @@ jvm_library(
   name = "fleet-util-core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -15,15 +15,18 @@ jvm_library(
     "//fleet/util/logging/api:fleet-util-logging-api",
     "@lib//:kotlinx-collections-immutable",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "//fleet/preferences",
     "//fleet/util/os:fleet-util-os",
     "//fleet/fastutil",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-datetime-jvm",
+    "//fleet/util/multiplatform:fleet-util-multiplatform",
   ],
   exports = [
     "//fleet/util/logging/api:fleet-util-logging-api",
     "@lib//:kotlinx-collections-immutable",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "//fleet/fastutil",
   ]
 )

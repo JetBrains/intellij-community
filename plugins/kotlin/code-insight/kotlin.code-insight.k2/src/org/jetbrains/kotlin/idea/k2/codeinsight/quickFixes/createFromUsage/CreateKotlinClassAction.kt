@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -31,9 +32,14 @@ internal class CreateKotlinClassAction(
     private val parameterCandidates: List<CreateKotlinCallableAction.ParamCandidate>,
     private val returnTypeString: String,
     private val primaryConstructorVisibilityModifier: String?,
-) : IntentionAction {
+) : IntentionAction, PriorityAction {
     override fun getText(): String = KotlinBundle.message("create.0.1", kind.description, name)
+
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
+
+    override fun getPriority(): PriorityAction.Priority {
+        return if (name.firstOrNull()?.isUpperCase() == true) PriorityAction.Priority.NORMAL else PriorityAction.Priority.LOW
+    }
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
         if (kind == ClassKind.DEFAULT) return false

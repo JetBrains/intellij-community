@@ -7,7 +7,6 @@ import fleet.kernel.rebase.clientClock
 import fleet.util.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield

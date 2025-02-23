@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.modules
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,7 +65,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
             return JavaModuleResolver.AccessError.ModuleDoesNotReadUnnamedModule
         }
 
-        if (ourModule != null && !JavaModuleGraphUtil.reads(ourModule, theirModule)) {
+        if (ourModule != null && !JavaPsiModuleUtil.reads(ourModule, theirModule)) {
             return JavaModuleResolver.AccessError.ModuleDoesNotReadModule(theirModule.name)
         }
 
@@ -106,7 +107,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
 
     // Returns whether or not [source] exports [packageName] to [target]
     private fun exports(source: PsiJavaModule, packageName: String, target: PsiJavaModule): Boolean =
-        source is LightJavaModule || JavaModuleGraphUtil.exports(source, packageName, target)
+      source is LightJavaModule || JavaPsiModuleUtil.exports(source, packageName, target)
 
     companion object {
         private const val MODULE_ANNOTATIONS_CACHE_SIZE = 10000

@@ -1,6 +1,6 @@
 value class One {
 
-  <error descr="Variable 'value' might not have been initialized">private int value</error>;
+  <error descr="Field 'value' might not have been initialized">private int value</error>;
 
   <error descr="Modifier 'synchronized' not allowed here">synchronized</error> void x() {}
 }

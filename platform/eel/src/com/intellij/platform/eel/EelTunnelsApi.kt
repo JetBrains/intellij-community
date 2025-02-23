@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
-import java.nio.ByteBuffer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -143,15 +144,12 @@ sealed interface EelTunnelsApi {
     /**
      * A channel to the server
      */
-    // todo: Channel is a bad API here.
-    // The client that sends data to the server is also interested in the error that happens during the send.
-    // This can be fixed by having a suspend function instead of a channel
-    val sendChannel: SendChannel<ByteBuffer>
+    val sendChannel: EelSendChannel<IOException>
 
     /**
      * A channel from the server
      */
-    val receiveChannel: ReceiveChannel<ByteBuffer>
+    val receiveChannel: EelReceiveChannel<IOException>
 
     /**
      * Sets the size of send buffer of the socket
@@ -254,13 +252,13 @@ sealed interface EelTunnelsApi {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
-operator fun Connection.component1(): SendChannel<ByteBuffer> = sendChannel
+operator fun Connection.component1(): EelSendChannel<IOException> = sendChannel
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
-operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = receiveChannel
+operator fun Connection.component2(): EelReceiveChannel<IOException> = receiveChannel
 
 interface EelTunnelsPosixApi : EelTunnelsApi {
   /**
@@ -292,8 +290,8 @@ interface EelTunnelsPosixApi : EelTunnelsApi {
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
-    val tx: SendChannel<ByteBuffer>,
-    val rx: ReceiveChannel<ByteBuffer>,
+    val tx: EelSendChannel<IOException>,
+    val rx: EelReceiveChannel<IOException>,
   )
 
   sealed interface CreateFilePath {

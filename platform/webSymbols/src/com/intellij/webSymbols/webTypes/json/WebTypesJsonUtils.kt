@@ -28,6 +28,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
@@ -284,6 +285,7 @@ internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules 
   WebSymbolsContextKindRules.createEnablementRules {
     pkgManagerDependencies(PKG_MANAGER_NODE_PACKAGES, nodePackages)
     pkgManagerDependencies(PKG_MANAGER_RUBY_GEMS, rubyGems)
+    pkgManagerDependencies(PKG_MANAGER_SYMFONY_BUNDLES, symfonyBundles)
     pkgManagerDependencies(additionalProperties)
     projectToolExecutables(projectToolExecutables)
     fileExtensions(fileExtensions)

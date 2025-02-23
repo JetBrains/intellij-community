@@ -30,6 +30,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 /**
@@ -42,7 +43,7 @@ import javax.swing.SwingUtilities
  * @see com.intellij.ide.ManageRecentProjectsAction
  */
 internal sealed interface RecentProjectTreeItem {
-  fun displayName(): String
+  fun displayName(): @NlsSafe String
 
   fun children(): List<RecentProjectTreeItem>
 
@@ -56,7 +57,8 @@ internal data class RecentProjectItem(
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   @NlsSafe val branchName: String? = null,
-  val projectGroup: ProjectGroup?
+  val projectGroup: ProjectGroup?,
+  val activationTimestamp: Long?,
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
 
@@ -131,6 +133,25 @@ internal data class ProjectsGroupItem(
   override fun displayName(): String = group.name
 
   override fun children(): List<RecentProjectTreeItem> = children
+}
+
+internal data class ProviderRecentProjectItem(
+  val projectId: String,
+  private val recentProject: RecentProject,
+) : RecentProjectTreeItem {
+  override fun displayName(): @NlsSafe String = recentProject.displayName
+
+  override fun children(): List<RecentProjectTreeItem> = emptyList()
+
+  val projectPath: @NlsSafe String? get() = recentProject.projectPath
+  val branchName: @NlsSafe String? get() = recentProject.branchName
+  val providerPath: @NlsSafe String? get() = recentProject.providerPath
+  val icon: Icon? get() = recentProject.icon
+  val activationTimestamp: Long? get() = recentProject.activationTimestamp
+
+  fun openProject() {
+    recentProject.openProject()
+  }
 }
 
 internal data class CloneableProjectItem(

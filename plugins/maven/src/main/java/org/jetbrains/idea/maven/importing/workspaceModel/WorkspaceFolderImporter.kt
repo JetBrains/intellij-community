@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaResourceRoots
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.jps.entities.*
@@ -36,7 +38,8 @@ internal class WorkspaceFolderImporter(
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings,
   private val importingContext: FolderImportingContext,
-  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>
+  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>,
+  private val project: Project
 ) {
 
   fun createContentRoots(
@@ -53,8 +56,7 @@ internal class WorkspaceFolderImporter(
     if (moduleType == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) return outputFolders
 
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
-
-    addContentRoot(cachedFolders, allFolders)
+    addContentRoot(cachedFolders, allFolders, isSharedSourceSupportEnabled(project))
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
     for (root in ContentRootCollector.collect(allFolders)) {
@@ -77,12 +79,15 @@ internal class WorkspaceFolderImporter(
   }
 
   private fun addContentRoot(cachedFolders: CachedProjectFolders,
-                             allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
+                             allFolders: MutableList<ContentRootCollector.ImportedFolder>,
+                             duplicatesAreAllowed: Boolean = false) {
     val contentRoot = cachedFolders.projectContentRootPath
 
-    // make sure we don't have overlapping content roots in different modules
-    val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
-    if (alreadyRegisteredRoot) return
+    if (!duplicatesAreAllowed) {
+      // make sure we don't have overlapping content roots in different modules
+      val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
+      if (alreadyRegisteredRoot) return
+    }
 
     allFolders.add(ContentRootCollector.ProjectRootFolder(contentRoot))
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)

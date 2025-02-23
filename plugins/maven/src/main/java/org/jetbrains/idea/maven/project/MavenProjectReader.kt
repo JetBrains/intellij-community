@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -31,7 +32,6 @@ import java.io.IOException
 import java.nio.file.Path
 
 private const val UNKNOWN = MavenId.UNKNOWN_VALUE
-private const val MODEL_VERSION_4_0_0 = "4.0.0"
 
 class MavenProjectReader(private val myProject: Project) {
   private val myCache = MavenReadProjectCache()

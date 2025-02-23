@@ -13,12 +13,9 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.resolve.ClosureMemberContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
-import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
 
 class SyntheticKeywordConstructorContributor : AbstractGeneratedConstructorContributor() {
 

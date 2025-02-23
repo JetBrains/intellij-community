@@ -19,8 +19,8 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -36,10 +36,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -48,7 +45,9 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
   private long myLexingTimeNs = 0;
-  static PsiBuilderDiagnostics DIAGNOSTICS;
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static PsiBuilderDiagnostics DIAGNOSTICS;
 
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
@@ -97,7 +96,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  @SuppressWarnings("ClassEscapesDefinedScope")
   public PsiBuilderImpl(@Nullable Project project,
                         @Nullable PsiFile containingFile,
                         @NotNull ParserDefinition parserDefinition,
@@ -214,7 +212,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myComments = tokens;
   }
 
-  @SuppressWarnings("ClassEscapesDefinedScope")
   @Override
   public @Nullable StartMarker getLatestDoneMarker() {
     int index = myProduction.size() - 1;
@@ -227,7 +224,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
-  public @NotNull List<ProductionMarker> getProductions() {
+  public @NotNull List<? extends Production> getProductions() {
     return new AbstractList<ProductionMarker>() {
       @Override
       public ProductionMarker get(int index) {
@@ -242,12 +239,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   /**
-   * Base interface for nodes in light tree
+   * Base interface for nodes in a light tree
    */
-  private interface Node extends LighterASTNode {
+  @ApiStatus.Internal
+  public interface Node extends LighterASTNode {
     boolean tokenTextMatches(@NotNull CharSequence chars);
   }
 
+  @ApiStatus.Internal
   public abstract static class ProductionMarker implements Node, Production {
     final int markerId;
     protected final PsiBuilderImpl myBuilder;
@@ -294,7 +293,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract int getLexemeIndex(boolean done);
   }
 
-  static class StartMarker extends ProductionMarker implements Marker, LighterASTSyntaxTreeBuilderBackedNode {
+  // exposed via getLatestDoneMarker method (used by Perl plugin)
+  @ApiStatus.Internal
+  public static class StartMarker extends ProductionMarker implements Marker, LighterASTSyntaxTreeBuilderBackedNode {
     private IElementType myType;
     private int myDoneLexeme = -1;
     private ProductionMarker myFirstChild;
@@ -565,8 +566,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
    * A node in light tree
    * Represents a chameleon consisting several lexemes which does not support light parsing
    */
-  private static class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
-
+  private static final class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
   /**
    * A node in light tree
    * Represents a leaf node
@@ -594,7 +594,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
    * A node in light tree
    * Represents a chameleon consisting of one or several lexemes and supporting light parsing
    */
-  private static class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
+  private static final class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
     private final MyTreeStructure myParentStructure;
     private final int myStartIndex;
     private final int myEndIndex;
@@ -655,7 +655,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  static class ErrorItem extends ProductionMarker {
+  static final class ErrorItem extends ProductionMarker {
     private @NlsContexts.DetailedDescription String myMessage;
 
     ErrorItem(int markerId, @NotNull PsiBuilderImpl builder) {
@@ -1543,7 +1543,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
+  @ApiStatus.Internal
+  public static final class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
     private final LimitedPool<TokenRangeNode> myRangePool;
     private final LimitedPool<SingleLexemeNode> myLexemePool;
     private final StartMarker myRoot;

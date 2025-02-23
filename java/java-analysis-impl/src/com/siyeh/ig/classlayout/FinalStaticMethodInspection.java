@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.JavaPsiModifierUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

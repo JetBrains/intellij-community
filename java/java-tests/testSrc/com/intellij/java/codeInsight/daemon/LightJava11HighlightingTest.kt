@@ -3,10 +3,10 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
-import com.intellij.psi.util.JavaPsiSingleFileSourceUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat

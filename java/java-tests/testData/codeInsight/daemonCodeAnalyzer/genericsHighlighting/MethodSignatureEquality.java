@@ -52,7 +52,7 @@ class Test {
   }*/
 
   abstract class D<T extends Throwable & Runnable> {
-    <error descr="'foo(T, D<? extends Runnable>)' clashes with 'foo(T, D<? extends Throwable>)'; both methods have same erasure">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y)</error>;
+    <error descr="'foo(T, D<? extends Runnable>)' clashes with 'foo(T, D<? extends Throwable>)'; both methods have same erasure">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y);</error>
 
     abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Throwable> y);
   }

@@ -7,16 +7,17 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.selected
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.*
@@ -49,18 +50,9 @@ class CommitDialogConfigurable(private val project: Project)
 
   override fun createPanel(): DialogPanel {
     val disposable = disposable!!
-    val appSettings = VcsApplicationSettings.getInstance()
     val settings = VcsConfiguration.getInstance(project)
 
-    lateinit var nonModalCommitCheckBox: JBCheckBox
     return panel {
-      row {
-        nonModalCommitCheckBox = checkBox(VcsBundle.message("settings.commit.without.dialog"))
-          .comment(VcsBundle.message("settings.commit.without.dialog.applies.to.git.mercurial"))
-          .bindSelected({ appSettings.COMMIT_FROM_LOCAL_CHANGES }, { CommitModeManager.setCommitFromLocalChanges(project, it) })
-          .component
-      }
-
       row {
         checkBox(VcsBundle.message("checkbox.clear.initial.commit.message"))
           .bindSelected(settings::CLEAR_INITIAL_COMMIT_MESSAGE)
@@ -96,7 +88,6 @@ class CommitDialogConfigurable(private val project: Project)
           row {
             checkBox(VcsBundle.message("settings.commit.postpone.slow.checks"))
               .comment(VcsBundle.message("settings.commit.postpone.slow.checks.description"))
-              .enabledIf(nonModalCommitCheckBox.selected)
               .bindSelected({ settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS }, { setRunSlowCommitChecksAfterCommit(project, it) })
           }
         }

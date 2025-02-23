@@ -81,6 +81,52 @@ public class ThemeColorPalette(
         }
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ThemeColorPalette
+
+        if (gray != other.gray) return false
+        if (blue != other.blue) return false
+        if (green != other.green) return false
+        if (red != other.red) return false
+        if (yellow != other.yellow) return false
+        if (orange != other.orange) return false
+        if (purple != other.purple) return false
+        if (teal != other.teal) return false
+        if (rawMap != other.rawMap) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = gray.hashCode()
+        result = 31 * result + blue.hashCode()
+        result = 31 * result + green.hashCode()
+        result = 31 * result + red.hashCode()
+        result = 31 * result + yellow.hashCode()
+        result = 31 * result + orange.hashCode()
+        result = 31 * result + purple.hashCode()
+        result = 31 * result + teal.hashCode()
+        result = 31 * result + rawMap.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "ThemeColorPalette(" +
+            "gray=$gray, " +
+            "blue=$blue, " +
+            "green=$green, " +
+            "red=$red, " +
+            "yellow=$yellow, " +
+            "orange=$orange, " +
+            "purple=$purple, " +
+            "teal=$teal, " +
+            "rawMap=$rawMap" +
+            ")"
+    }
+
     public companion object {
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(

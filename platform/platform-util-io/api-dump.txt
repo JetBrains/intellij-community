@@ -245,7 +245,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - p:destroyProcessImpl():V
 - p:doDestroyProcess():V
 - killProcess():V
-- ps:mediate(com.intellij.execution.configurations.GeneralCommandLine,Z,Z):com.intellij.execution.configurations.GeneralCommandLine
 - setShouldKillProcessSoftly(Z):V
 - shouldKillProcessSoftly():Z
 f:com.intellij.execution.process.LocalPtyOptions

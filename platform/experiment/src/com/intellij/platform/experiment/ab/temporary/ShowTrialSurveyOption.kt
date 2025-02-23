@@ -14,7 +14,7 @@ class ShowTrialSurveyOption : ABExperimentOption {
   override val id: ABExperimentOptionId = ABExperimentOptionId("showTrialSurvey")
 
   override fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize {
-    return ABExperimentOptionGroupSize(128)
+    return ABExperimentOptionGroupSize(192)
   }
 
   override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isIdeaUltimate()
@@ -24,7 +24,7 @@ class ShowTrialSurveyOption : ABExperimentOption {
    */
   override fun checkIdeVersionIsSuitable(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
-    return appInfo.majorVersion == "2024" && appInfo.minorVersion == "3.3"
+    return appInfo.majorVersion == "2024" && appInfo.minorVersion.startsWith("3.3")
   }
 
   @Suppress("CompanionObjectInExtension")

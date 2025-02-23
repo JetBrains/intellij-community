@@ -134,6 +134,9 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
+  /**
+   * Disable all enabled auto-test configurations for the project.
+   */
   public void disableAllAutoTests() {
     deactivateWatcher();
     for (RunContentDescriptor descriptor : RunContentManager.getInstance(myProject).getAllDescriptors()) {
@@ -152,7 +155,8 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 
-  boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+  @ApiStatus.Internal
+  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
     ExecutionEnvironment environment = getCurrentEnvironment(descriptor);
     return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
   }

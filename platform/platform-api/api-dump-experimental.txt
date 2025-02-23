@@ -181,6 +181,9 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
 *:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
+*:com.intellij.openapi.options.ObservableOptionEditor
+- com.intellij.openapi.options.OptionEditor
+- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.openapi.options.OptionEditor
 - a:getComponent():javax.swing.JComponent
 - a:result():java.lang.Object
@@ -361,12 +364,18 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 *c:com.intellij.ui.components.JBHtmlPane
 - javax.swing.JEditorPane
 - com.intellij.openapi.Disposable
+- <init>():V
 - <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
+- p:getContentsScaleFactor():F
+- getSelectedText():java.lang.String
 - getText():java.lang.String
+- p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
+- p:initializeStyleConfiguration(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder):V
 - p:paintComponent(java.awt.Graphics):V
 - p:processKeyEvent(java.awt.event.KeyEvent):V
+- f:reloadCssStylesheets():V
 - setDocument(javax.swing.text.Document):V
 - setEditorKit(javax.swing.text.EditorKit):V
 - setText(java.lang.String):V
@@ -405,19 +414,19 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - <init>():V
 - <init>(kotlin.jvm.functions.Function1):V
 - sf:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
-- equals(java.lang.Object):Z
 - sf:getDefaultSpaceAfterParagraph():I
 - sf:getDefaultSpaceBeforeParagraph():I
 - sf:getEditorColorClassPrefix():java.lang.String
-- hashCode():I
 *f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - <init>():V
 - f:build():com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 - f:colorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:colorSchemeProvider(kotlin.jvm.functions.Function0):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:editorInlineContext(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:enableCodeBlocksBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:enableInlineCodeBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:getColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+- f:getColorSchemeProvider():kotlin.jvm.functions.Function0
 - f:getEditorInlineContext():Z
 - f:getElementStyleOverrides():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides
 - f:getEnableCodeBlocksBackground():Z
@@ -434,6 +443,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:overrideElementStyle(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:overrideElementStyle(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
+- f:setColorSchemeProvider(kotlin.jvm.functions.Function0):V
 - f:setEditorInlineContext(Z):V
 - f:setElementStyleOverrides(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):V
 - f:setEnableCodeBlocksBackground(Z):V

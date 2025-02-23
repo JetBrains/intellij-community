@@ -1,6 +1,6 @@
 <class 'tensorflow.python.framework.sparse_tensor.SparseTensor'>
 __pydev_val__
-(np.int64(3), 1)
+(3, 1)
 __pydev_val__
 None
 __pydev_val__

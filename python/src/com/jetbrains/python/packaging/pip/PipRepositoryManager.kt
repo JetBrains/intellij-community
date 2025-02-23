@@ -5,5 +5,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class PipRepositoryManager(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk)
+@ApiStatus.Internal
+internal class PipRepositoryManager(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk)

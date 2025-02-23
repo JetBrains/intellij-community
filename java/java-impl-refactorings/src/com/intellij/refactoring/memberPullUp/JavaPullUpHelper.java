@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -254,7 +254,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       OverrideImplementUtil.annotateOnOverrideImplement(method, mySourceClass, movedElement);
       if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass) && myIsTargetInterface) {
         if (isOriginalMethodAbstract) {
-          for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
+          for (PsiMethod oMethod : OverridingMethodsSearch.search(method).asIterable()) {
             deleteOverrideAnnotationIfFound(oMethod);
           }
         }
@@ -633,7 +633,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         // find references
-        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false)) {
+        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false).asIterable()) {
           final PsiElement element = reference.getElement();
           if ("super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -797,7 +797,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private boolean willBeUsedInSubclass(PsiElement member, PsiClass superclass, PsiClass subclass) {
-    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
+    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false).asIterable()) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, myMembersToMove, superclass, false)) {
         return true;

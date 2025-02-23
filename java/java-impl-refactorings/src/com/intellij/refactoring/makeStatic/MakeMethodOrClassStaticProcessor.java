@@ -73,7 +73,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  public final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
       MultiMap<PsiElement, @Nls String> conflictDescriptions = getConflictDescriptions(usagesIn);
@@ -193,7 +193,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     ContainerUtil.addAll(result, MakeStaticUtil.findClassRefsInMember(myMember, true));
@@ -218,7 +218,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
 
   protected void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(method)) {
+    for (PsiReference ref : ReferencesSearch.search(method).asIterable()) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
       if (element instanceof PsiReferenceExpression) {

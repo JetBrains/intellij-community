@@ -7,5 +7,5 @@ def f(x):
 
 
 if __name__ == '__main__':
-    with multiprocessing.Pool() as p:
-        print(p.map(f, [1, 2, 3]))
+    p = multiprocessing.Pool()
+    print(p.map(f, [1, 2, 3]))

@@ -1211,7 +1211,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setContentPane(JComponent content) {
-    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !isHeadlessEnv()
+    boolean undecorated = myDialog.getWindow() != null && myDialog.getWindow().isUndecorated();
+    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !undecorated && !isHeadlessEnv()
                             ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
                             : content);
   }

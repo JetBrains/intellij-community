@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,33 +87,34 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, icon);
   }
 
-  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>>,
+  @ApiStatus.Internal
+  public static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<java.util.function.Consumer<? super AnActionEvent>>,
                                                                         LightEditCompatible {
-    private final Consumer<? super AnActionEvent> myActionPerformed;
+    private final java.util.function.Consumer<? super AnActionEvent> myActionPerformed;
 
-    SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
+    SimpleDumbAwareAction(java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
       myActionPerformed = actionPerformed;
     }
 
     SimpleDumbAwareAction(@NlsActions.ActionText String text,
-                          Consumer<? super AnActionEvent> actionPerformed) {
+                          java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }
 
     SimpleDumbAwareAction(@Nullable Icon icon,
-                          Consumer<? super AnActionEvent> actionPerformed) {
+                          java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
       super(icon);
       myActionPerformed = actionPerformed;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myActionPerformed.consume(e);
+      myActionPerformed.accept(e);
     }
 
     @Override
-    public @NotNull Consumer<? super AnActionEvent> getDelegate() {
+    public @NotNull java.util.function.Consumer<? super AnActionEvent> getDelegate() {
       return myActionPerformed;
     }
   }

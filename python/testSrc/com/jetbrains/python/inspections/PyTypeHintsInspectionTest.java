@@ -22,7 +22,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    from typing import List, TypeVar
 
                    T0 = TypeVar('T0')
-                   a: List[T0]
+                   a: List[<warning descr="Unbound type variable">T0</warning>]
                    b: List[<warning descr="A 'TypeVar()' expression must always directly be assigned to a variable">TypeVar('T1')</warning>]""");
   }
 
@@ -80,8 +80,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    T1 = TypeVar('T1', int, str)
 
-                   T2 = TypeVar('T2', int, <warning descr="Constraints cannot be parametrized by type variables">List[T1]</warning>)
-                   T3 = TypeVar('T3', bound=<warning descr="Constraints cannot be parametrized by type variables">List[T1]</warning>)
+                   T2 = TypeVar('T2', int, <warning descr="Constraints cannot be parametrized by type variables">List[<warning descr="Unbound type variable">T1</warning>]</warning>)
+                   T3 = TypeVar('T3', bound=<warning descr="Constraints cannot be parametrized by type variables">List[<warning descr="Unbound type variable">T1</warning>]</warning>)
 
                    T4 = TypeVar('T4', int, List[int])
                    T5 = TypeVar('T5', bound=List[int])
@@ -254,6 +254,78 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    class MyClass1(Generic[T], metaclass=<warning descr="Metaclass cannot be generic">MyMetaClass[T]</warning>): ...
                    class MyClass2(metaclass=MyMetaClass[Any]): ...""");
+  }
+
+  // PY-76866
+  public void testUnboundTypeParameter() {
+    doTestByText(
+      """
+        from typing import Generic, TypeVar, TypeVarTuple, ParamSpec, TypeAlias, Unpack
+        
+        T = TypeVar('T')
+        S = TypeVar('S')
+        
+        T1 = TypeVar('T1', default=T)
+        T2 = TypeVarTuple('T2', default=Unpack[tuple[S, T]])
+        T3 = ParamSpec('T3', default=[S, T])
+        
+        Alias1 = T
+        Alias2 = dict[S, T]
+        Alias3: TypeAlias = list[T]
+        type Alias4[K, V] = dict[K, V]
+        
+        v1: <warning descr="Unbound type variable">T</warning>
+        v2: list[<warning descr="Unbound type variable">T</warning>]
+        
+        list[<warning descr="Unbound type variable">T</warning>]()
+        
+        def f1(x: T) -> None:
+            a1: T
+            a2: list[T] = []
+            a3: <warning descr="Unbound type variable">S</warning>
+            a4: list[<warning descr="Unbound type variable">S</warning>] = []
+        
+            list[T]()
+            list[<warning descr="Unbound type variable">S</warning>]()
+        
+        def f2() -> T:
+            x: T
+            raise Exception()
+        
+        class Bar(Generic[T]):
+            attr1: T
+            attr2: list[T] = []
+            attr3: <warning descr="Unbound type variable">S</warning>
+            attr4: list[<warning descr="Unbound type variable">S</warning>] = []
+        
+            def do_something(self, x: S) -> S:
+                ...
+            def do_something_else(self, other: 'Bar[T]'):
+                ...""");
+  }
+
+  public void testGenericClassCannotUseTypeVariablesFromOuterScope() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, Iterable
+                   
+                   T = TypeVar('T')
+                   S = TypeVar('S')
+                   
+                   def a_fun(x: T) -> None:
+                       a_list: list[T] = []
+                   
+                       class <warning descr="Some type variables (T) are used by an outer scope">MyGeneric</warning>(Generic[T]):
+                           ...
+                   
+                   class Outer(Generic[T]):
+                       class <warning descr="Some type variables (T) are used by an outer scope">Bad</warning>(Iterable[T]):
+                           ...
+                       class AlsoBad:
+                           x: list[<warning descr="Unbound type variable">T</warning>]
+                   
+                       class Inner(Iterable[S]):
+                           ...
+                       attr: Inner[T]""");
   }
 
   // PY-28249
@@ -1128,7 +1200,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-35235
   public void testLiteral() {
     doTestByText("""
-                   from typing_extensions import Literal
+                   from typing_extensions import Literal, LiteralString
 
                    a: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">1 + 2</warning>]
                    b: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">4j</warning>]
@@ -1140,7 +1212,54 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    e: Literal[Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A</warning>]]
                    f = Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A</warning>]
-                   g: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f</warning>]""");
+                   g: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f</warning>]
+                   
+                   h: Literal[-1]
+                   i: Literal['abb']
+                   j: Literal[False]
+                   k: Literal[None]
+                   l: Literal[Literal[-3]]
+                   
+                   ONE = Literal[1]
+                   
+                   m = Literal[ONE]
+                   
+                   def f(c: bool):
+                       v: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">1 if c else 2</warning>]
+                   
+                   expr: LiteralString = "aba"
+                   n: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f"hello {expr}"</warning>]
+                   """);
+  }
+
+  // PY-79227
+  public void testEnumLiteral() {
+    doTestByText("""
+                   from enum import Enum, member, nonmember
+                   from typing import Literal
+                   
+                   class Color(Enum):
+                       R = 1
+                       G = 2
+                       RED = R
+                   
+                       foo = nonmember(3)
+                   
+                       @member
+                       def bar(self): ...
+                   
+                   class A:
+                       X = Color.R
+                   
+                   v1: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A.X</warning>]
+                   
+                   X = Color.R
+                   v2: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">X</warning>]
+                   
+                   v3: Literal[Color.G]
+                   v4: Literal[Color.RED]
+                   v5: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">Color.foo</warning>]
+                   v6: Literal[Color.bar]""");
   }
 
   // PY-35235
@@ -1830,19 +1949,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testNewStyleTypeVarTupleAllowedDefaultValues() {
     doTestByText("""
                    from typing import TypeVar, Generic, ParamSpec, TypeVarTuple, Unpack
-                   T1 = TypeVar("T1")
-                   Ts1 = TypeVarTuple("Ts1")
-                   P1 = ParamSpec("P1")
-                   
-                   class Clazz[*Ts = Unpack[tuple[int, T1]]]: ...
+
+                   class Clazz[T1, *Ts = Unpack[tuple[int, T1]]]: ...
                    class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">1</warning>]: ...
                    class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">True</warning>]: ...
                    class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">tuple[int]</warning>]: ...
                    class Clazz[*Ts = *tuple[int]]: ...
                    class Clazz[*Ts = Unpack[tuple[int]]]: ...
-                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">T1</warning>]: ...
-                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">Ts1</warning>]: ...
-                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">P1</warning>]: ...
+                   class Clazz[T1, *Ts = <warning descr="Default type of TypeVarTuple must be unpacked">T1</warning>]: ...
+                   class Clazz[*Ts1, *Ts = <warning descr="Default type of TypeVarTuple must be unpacked">Ts1</warning>]: ...
+                   class Clazz[**P1, *Ts = <warning descr="Default type of TypeVarTuple must be unpacked">P1</warning>]: ...
                    class Clazz[*Ts = Unpack[tuple[int, ...]]]: ...
                    """);
   }
@@ -2083,6 +2199,21 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    x: ClassA[<warning descr="Passed type arguments do not match type parameters [T, **P1] of class 'ClassA'">int, int</warning>]
                    x1: ClassA[int, [int]]
+                   """);
+  }
+
+  // PY-75759
+  public void testEllipsisNotReported() {
+    doTestByText("""
+                   from typing import Generic, ParamSpec, TypeVar, Callable
+                   T = TypeVar("T")
+                   P1 = ParamSpec("P1")
+                   
+                   class ClassA(Generic[T, P1]):
+                       ...
+                   
+                   def func23(x: ClassA[int, ...]) -> str:  # OK
+                       return ""
                    """);
   }
 

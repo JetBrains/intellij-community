@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -9,12 +10,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
@@ -22,19 +24,26 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +53,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * Fixes attached to error messages provided by {@link JavaErrorCollector}.
@@ -90,18 +100,23 @@ final class JavaErrorFixProvider {
   }
 
   JavaErrorFixProvider() {
-    multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    multi(UNSUPPORTED_FEATURE, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    multi(PREVIEW_API_USAGE, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context().feature()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> myFactory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
-                                            ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,
-                                            RECORD_HEADER_REGULAR_CLASS, INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR,
-                                            CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
-                                            RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
-                                            NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
+                                            ANNOTATION_NOT_ALLOWED_EXTENDS, ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST, 
+                                            RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION, RECORD_HEADER_REGULAR_CLASS, 
+                                            INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR, CLASS_IMPLICIT_INITIALIZER, 
+                                            CLASS_IMPLICIT_PACKAGE, RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, 
+                                            ANNOTATION_PERMITS, NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
-                                            RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND)) {
+                                            RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
+                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER,
+                                            CONSTRUCTOR_IN_IMPLICIT_CLASS, TYPE_ARGUMENT_IN_PERMITS_LIST, MODULE_NO_PACKAGE,
+                                            MODULE_DUPLICATE_REQUIRES, MODULE_DUPLICATE_EXPORTS, MODULE_DUPLICATE_OPENS, 
+                                            MODULE_DUPLICATE_USES, MODULE_DUPLICATE_PROVIDES, MODULE_OPENS_IN_WEAK_MODULE)) {
       fix(kind, genericRemover);
     }
 
@@ -111,6 +126,7 @@ final class JavaErrorFixProvider {
     createMethodFixes();
     createExpressionFixes();
     createVariableFixes();
+    createPatternFixes();
     createStatementFixes();
     createExceptionFixes();
     createGenericFixes();
@@ -119,6 +135,49 @@ final class JavaErrorFixProvider {
     createAccessFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
+    createModuleFixes();
+  }
+
+  private void createModuleFixes() {
+    fix(MODULE_FILE_WRONG_NAME, error -> myFactory.createRenameFileFix(PsiJavaModule.MODULE_INFO_FILE));
+    fix(MODULE_FILE_DUPLICATE, error ->
+      error.context() != null ? new GoToSymbolFix(error.context(), JavaErrorBundle.message("module.open.duplicate.text")) : null);
+    JavaFixProvider<PsiStatement, String> mergeModuleFix = error -> MergeModuleStatementsFix.createFix(error.psi());
+    fix(MODULE_DUPLICATE_REQUIRES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_PROVIDES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_OPENS, mergeModuleFix);
+    fix(MODULE_DUPLICATE_USES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_EXPORTS, mergeModuleFix);
+    fix(MODULE_FILE_WRONG_LOCATION, error -> new MoveFileFix(error.psi().getContainingFile().getVirtualFile(),
+                                                             error.context(), QuickFixBundle.message("move.file.to.source.root.text")));
+    fix(MODULE_OPENS_IN_WEAK_MODULE, error -> removeModifierFix(error.context(), PsiModifier.OPEN));
+    fix(MODULE_DUPLICATE_EXPORTS_TARGET,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(MODULE_DUPLICATE_OPENS_TARGET,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(IMPORT_MODULE_NOT_ALLOWED, error -> myFactory.createReplaceOnDemandImport(error.psi(), QuickFixBundle.message("replace.import.module.fix.text")));
+    fix(MODULE_DUPLICATE_IMPLEMENTATION,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    multi(MODULE_NOT_ON_PATH, error -> {
+      PsiJavaModuleReference ref = error.psi().getReference();
+      if (ref != null) {
+        List<IntentionAction> registrar = new ArrayList<>();
+        myFactory.registerOrderEntryFixes(ref, registrar);
+        return registrar;
+      }
+      return List.of();
+    });
+    fix(MODULE_SERVICE_IMPLEMENTATION_TYPE, error -> {
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.context().superClass());
+      return myFactory.createExtendsListFix(error.context().subClass(), type, true);
+    });
+    JavaFixProvider<PsiPackageAccessibilityStatement, Void> createClassInPackage = error -> {
+      String packageName = error.psi().getPackageName();
+      Module module = ModuleUtilCore.findModuleForFile(error.psi().getContainingFile());
+      return module == null ? null : myFactory.createCreateClassInPackageInModuleFix(module, packageName);
+    };
+    fix(MODULE_REFERENCE_PACKAGE_NOT_FOUND, createClassInPackage);
+    fix(MODULE_REFERENCE_PACKAGE_EMPTY, createClassInPackage);
   }
 
   private void createStatementFixes() {
@@ -147,6 +206,9 @@ final class JavaErrorFixProvider {
     };
     fixes(RETURN_FROM_CONSTRUCTOR, fixReturnFromVoid);
     fixes(RETURN_FROM_VOID_METHOD, fixReturnFromVoid);
+    fix(RETURN_MISSING, error -> myFactory.createAddReturnFix(error.context()));
+    fix(RETURN_MISSING, error -> error.context() instanceof PsiMethod method ?
+                                 myFactory.createMethodReturnFix(method, PsiTypes.voidType(), true) : null);
     fixes(STATEMENT_BAD_EXPRESSION, (error, sink) -> {
       if (error.psi() instanceof PsiExpressionStatement expressionStatement) {
         HighlightFixUtil.registerFixesForExpressionStatement(expressionStatement, sink);
@@ -158,7 +220,30 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fix(STATEMENT_UNREACHABLE,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.unreachable.statement.fix.text")));
+    fix(STATEMENT_UNREACHABLE_LOOP_BODY, error -> myFactory.createSimplifyBooleanFix(error.psi(), false));
     fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
+    fix(SWITCH_LABEL_EXPECTED, error -> {
+      PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(error.psi(), PsiSwitchLabeledRuleStatement.class);
+      return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
+    });
+    fixes(SWITCH_SELECTOR_TYPE_INVALID, (error, sink) -> {
+      HighlightFixUtil.registerFixesOnInvalidSelector(error.psi(), sink);
+      JavaFeature feature = error.context().getFeature();
+      if (feature != null) {
+        HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), feature).forEach(sink);
+      }
+    });
+    fix(SWITCH_LABEL_DUPLICATE, error -> {
+      if (error.psi() instanceof PsiCaseLabelElement caseLabel) {
+        return myFactory.createDeleteSwitchLabelFix(caseLabel);
+      }
+      else if (error.context() == JavaPsiSwitchUtil.SwitchSpecialValue.DEFAULT_VALUE) {
+        return myFactory.createDeleteDefaultFix(null, error.psi());
+      }
+      return null;
+    });
   }
 
   private void createMethodFixes() {
@@ -229,6 +314,17 @@ final class JavaErrorFixProvider {
         sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
       }
     });
+    fixes(METHOD_ABSTRACT_IN_NON_ABSTRACT_CLASS, (error, sink) -> {
+      PsiMethod method = error.context();
+      sink.accept(method.getBody() != null ? removeModifierFix(method, PsiModifier.ABSTRACT) : myFactory.createAddMethodBodyFix(method));
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null && !aClass.isEnum() && !aClass.isRecord()) {
+        sink.accept(addModifierFix(aClass, PsiModifier.ABSTRACT));
+      }
+    });
+    fix(METHOD_GENERIC_CLASH, error ->
+      error.context().method() instanceof SyntheticElement ?
+      null : myFactory.createSameErasureButDifferentMethodsFix(error.context().method(), error.context().superMethod()));
   }
 
   private void createExceptionFixes() {
@@ -257,7 +353,6 @@ final class JavaErrorFixProvider {
       else if (element instanceof PsiClass cls) {
         sink.accept(myFactory.createCreateConstructorMatchingSuperFix(cls));
       }
-      ErrorFixExtensionPoint.registerFixes(sink, element, "unhandled.exceptions");
     });
     fixes(EXCEPTION_UNHANDLED_CLOSE, (error, sink) -> HighlightFixUtil.registerUnhandledExceptionFixes(error.psi(), sink));
   }
@@ -283,11 +378,15 @@ final class JavaErrorFixProvider {
     fix(MODIFIER_NOT_ALLOWED, error -> {
       @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.context();
       PsiModifierList list = (PsiModifierList)error.psi().getParent();
-      if (list.getParent() instanceof PsiClass aClass && !aClass.isInterface()
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiClass aClass && !aClass.isInterface()
           && (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier))) {
         return myFactory.createChangeModifierFix();
       }
-      return removeModifierFix((PsiModifierListOwner)list.getParent(), modifier);
+      if (parent instanceof PsiModifierListOwner owner) {
+        return removeModifierFix(owner, modifier);
+      }
+      return myFactory.createModifierListFix(list, modifier, false, false);
     });
     JavaFixProvider<PsiKeyword, Object> removeModifier = error -> {
       @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.psi().getText();
@@ -300,11 +399,103 @@ final class JavaErrorFixProvider {
     fix(MODIFIER_NOT_ALLOWED_NON_SEALED, removeModifier);
   }
   
+  private void createPatternFixes() {
+    fixes(PATTERN_DECONSTRUCTION_COUNT_MISMATCH, (error, sink) -> {
+      if (error.context().hasMismatch()) return;
+      PsiRecordComponent[] recordComponents = error.context().recordComponents();
+      PsiPattern[] patternComponents = error.context().patternComponents();
+      PsiDeconstructionList list = error.psi();
+      if (patternComponents.length < recordComponents.length) {
+        PsiRecordComponent[] missingRecordComponents =
+          Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
+        List<AddMissingDeconstructionComponentsFix.Pattern> missingPatterns =
+          ContainerUtil.map(missingRecordComponents, component -> AddMissingDeconstructionComponentsFix.Pattern.create(component, list));
+        sink.accept(new AddMissingDeconstructionComponentsFix(list, missingPatterns));
+      }
+      else {
+        PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
+        int diff = patternComponents.length - recordComponents.length;
+        String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
+        sink.accept(QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text));
+      }
+    });
+    fix(UNSUPPORTED_FEATURE, error -> {
+      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS) {
+        return HighlightFixUtil.createPrimitiveToBoxedPatternFix(error.psi());
+      }
+      return null;
+    });
+    fix(CAST_INCONVERTIBLE, error -> {
+      if (error.psi() instanceof PsiInstanceOfExpression instanceOfExpression &&
+          TypeConversionUtil.isPrimitiveAndNotNull(error.context().rType())) {
+        return myFactory.createReplacePrimitiveWithBoxedTypeAction(
+          error.context().lType(), requireNonNull(InstanceOfUtils.findCheckTypeElement(instanceOfExpression)));
+      }
+      return null;
+    });
+    JavaFixProvider<PsiTypeTestPattern, Object> redundantInstanceOfFix = error -> {
+      PsiPatternVariable variable = error.psi().getPatternVariable();
+      if (variable != null && !VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+        return new RedundantInstanceofFix(error.psi().getParent());
+      }
+      return null;
+    };
+    fix(PATTERN_INSTANCEOF_EQUALS, redundantInstanceOfFix);
+    fix(PATTERN_INSTANCEOF_SUPERTYPE, redundantInstanceOfFix);
+  }
+
   private void createVariableFixes() {
     fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
     fixes(LVTI_NO_INITIALIZER, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
     fixes(LVTI_NULL, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
+    JavaFixProvider<PsiJavaCodeReferenceElement, PsiVariable> innerClassAccessFix = error -> {
+      PsiVariable variable = error.context();
+      PsiElement scope = requireNonNull(ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, error.psi()));
+      return myFactory.createVariableAccessFromInnerClassFix(variable, scope);
+    };
+    fix(VARIABLE_MUST_BE_FINAL, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_ALREADY_ASSIGNED, error -> myFactory.createDeferFinalAssignmentFix(error.context(), error.psi()));
+    fix(VARIABLE_ALREADY_ASSIGNED, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_FIELD, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_INITIALIZER, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ASSIGNED_IN_LOOP, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_DEFINED, error -> myFactory.createNavigateToAlreadyDeclaredVariableFix(error.context()));
+    fix(VARIABLE_ALREADY_DEFINED,
+        error -> error.psi() instanceof PsiLocalVariable local ? myFactory.createReuseVariableDeclarationFix(local) : null);
+
+    fixes(FIELD_NOT_INITIALIZED, (error, sink) -> {
+      PsiField field = error.psi();
+      sink.accept(myFactory.createCreateConstructorParameterFromFieldFix(field));
+      sink.accept(myFactory.createInitializeFinalFieldInConstructorFix(field));
+      sink.accept(myFactory.createAddVariableInitializerFix(field));
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && !containingClass.isInterface()) {
+        sink.accept(removeModifierFix(field, PsiModifier.FINAL));
+      }
+    });
+    fixes(VARIABLE_NOT_INITIALIZED, (error, sink) -> {
+      PsiVariable variable = error.context();
+      if (!(variable instanceof LightRecordField)) {
+        sink.accept(myFactory.createAddVariableInitializerFix(variable));
+      }
+      if (variable instanceof PsiLocalVariable) {
+        PsiElement topBlock = PsiUtil.getVariableCodeBlock(variable, null);
+        if (topBlock != null) {
+          sink.accept(HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, error.psi()));
+        }
+      }
+      if (variable instanceof PsiField field) {
+        sink.accept(removeModifierFix(field, PsiModifier.FINAL));
+      }
+    });
   }
 
   private void createExpressionFixes() {
@@ -347,7 +538,7 @@ final class JavaErrorFixProvider {
         error -> error.context() instanceof PsiClass cls ? myFactory.createChangeClassSignatureFromUsageFix(cls, error.psi()) : null);
     JavaFixProvider<PsiTypeElement, TypeParameterBoundMismatchContext> addBoundFix = error -> {
       if (error.context().bound() instanceof PsiClassType bound) {
-        PsiClass psiClass = bound.resolve();
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(error.context().actualType());
         if (psiClass != null) {
           return myFactory.createExtendsListFix(psiClass, bound, true);
         }
@@ -405,14 +596,24 @@ final class JavaErrorFixProvider {
         }
       }
     });
-    fixes(CALL_AMBIGUOUS, (error, sink) -> {
-      PsiMethodCallExpression methodCall = error.psi();
-      JavaResolveResult[] resolveResults = error.context().results();
-      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    fixes(CALL_UNRESOLVED_NAME,
+          (error, sink) -> HighlightFixUtil.registerMethodCallIntentions(sink, error.psi(), error.psi().getArgumentList()));
+    fix(CALL_QUALIFIER_PRIMITIVE, error -> myFactory.createRenameWrongRefFix(error.psi().getMethodExpression()));
+    fixes(CALL_QUALIFIER_PRIMITIVE,
+          (error, sink) -> HighlightFixUtil.registerMethodCallIntentions(sink, error.psi(), error.psi().getArgumentList()));
+    fixes(CALL_AMBIGUOUS, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context().results()));
+    fixes(CALL_AMBIGUOUS_NO_MATCH, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context()));
+    fixes(REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT, (error, sink) -> {
+      HighlightFixUtil.registerStaticProblemQuickFixAction(sink, error.context(), error.psi());
+      if (error.psi().getParent() instanceof PsiMethodCallExpression methodCall) {
+        HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
+      }
+      else if (error.psi() instanceof PsiReferenceExpression expression) {
+        sink.accept(myFactory.createRenameWrongRefFix(expression));
+      }
     });
     fixes(CALL_UNRESOLVED, (error, sink) -> {
       PsiMethodCallExpression methodCall = error.psi();
-      HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
       JavaResolveResult[] resolveResults = error.context();
       if (resolveResults.length == 1) {
         PsiElement element = resolveResults[0].getElement();
@@ -429,7 +630,7 @@ final class JavaErrorFixProvider {
       String text = QuickFixBundle.message("remove.modifier.fix", name, VisibilityUtil.toPresentableText(PsiModifier.ABSTRACT));
       return myFactory.createAddMethodBodyFix(method, text);
     });
-    multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightUtil.getIncreaseLanguageLevelFixes(
+    multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(
       error.psi(), JavaFeature.STATEMENTS_BEFORE_SUPER));
     fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
     fixes(UNARY_OPERATOR_NOT_APPLICABLE, (error, sink) -> {
@@ -445,17 +646,65 @@ final class JavaErrorFixProvider {
     });
     fixes(EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD, (error, sink) ->
       QualifySuperArgumentFix.registerQuickFixAction(error.context(), sink));
-    fix(REFERENCE_UNRESOLVED, error ->
-      PsiTreeUtil.skipParentsOfType(error.psi(), PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
-      HighlightUtil.isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null);
+    fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createUnresolvedReferenceFix(error.psi()));
     fix(REFERENCE_QUALIFIER_PRIMITIVE,
         error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
+    fix(CAST_INTERSECTION_NOT_INTERFACE, error -> {
+      PsiTypeElement conjunct = error.psi();
+      return new FlipIntersectionSidesFix(((PsiClassType)conjunct.getType()).getClassName(), conjunct, 
+                                          PsiTreeUtil.getParentOfType(conjunct, PsiTypeElement.class, true));
+    });
+    fix(CAST_INTERSECTION_REPEATED_INTERFACE, error -> new DeleteRepeatedInterfaceFix(error.psi()));
+    fix(EXPRESSION_CLASS_PARAMETERIZED_TYPE, error -> {
+      PsiTypeElement operand = error.psi();
+      final PsiJavaCodeReferenceElement referenceElement = operand.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          return myFactory.createDeleteFix(parameterList);
+        }
+      }
+      return null;
+    });
+    fix(METHOD_REFERENCE_RETURN_TYPE_ERROR, error -> AdjustFunctionContextFix.createFix(error.psi()));
+    fix(METHOD_REFERENCE_UNRESOLVED_METHOD, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_INFERENCE_ERROR, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_REFERENCE_STATIC_METHOD_RECEIVER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT, error -> addModifierFix(error.context(), PsiModifier.STATIC));
+    fix(ASSIGNMENT_TO_FINAL_VARIABLE, error -> {
+      PsiVariable variable = error.context();
+      PsiElement scope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, error.psi());
+      return scope == null || variable instanceof PsiField
+             ? removeModifierFix(variable, PsiModifier.FINAL)
+             : myFactory.createVariableAccessFromInnerClassFix(variable, scope);
+    });
+    JavaFixProvider<PsiElement, Object> qualifyFix = error -> {
+      if (!(error.psi() instanceof PsiReferenceExpression ref)) return null;
+      PsiClass parentClass = PsiUtil.getContainingClass(ref);
+      if (parentClass == null || !PsiUtil.isInnerClass(parentClass)) return null;
+      String referenceName = ref.getReferenceName();
+      PsiClass containingClass = requireNonNull(parentClass.getContainingClass());
+      PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
+      return fieldInContainingClass != null && ref.getQualifierExpression() == null ? new QualifyWithThisFix(containingClass, ref) : null;
+    };
+    fix(REFERENCE_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
+    fix(CALL_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
+    fix(CLASS_OR_PACKAGE_EXPECTED, error -> myFactory.createRemoveQualifierFix(
+      requireNonNull(error.psi().getQualifierExpression()), error.psi(), error.context()));
+    fix(SWITCH_LABEL_QUALIFIED_ENUM, error -> myFactory.createDeleteFix(
+      requireNonNull(error.psi().getQualifier()), JavaErrorBundle.message("qualified.enum.constant.in.switch.remove.fix")));
+    fix(SWITCH_DEFAULT_LABEL_CONTAINS_CASE, error -> myFactory.createReplaceCaseDefaultWithDefaultFix(error.context()));
   }
 
   private void createAccessFixes() {
     JavaFixesPusher<PsiJavaCodeReferenceElement, JavaResolveResult> accessFix = (error, sink) -> {
       if (error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
         HighlightFixUtil.registerAccessQuickFixAction(sink, member, error.psi(), null);
+        if (error.psi() instanceof PsiReferenceExpression expression) {
+          sink.accept(myFactory.createRenameWrongRefFix(expression));
+        }
       }
     };
     fixes(ACCESS_PRIVATE, accessFix);
@@ -465,77 +714,40 @@ final class JavaErrorFixProvider {
   }
 
   private void createTypeFixes() {
-    fixes(TYPE_INCOMPATIBLE, (error, sink) -> {
-      JavaIncompatibleTypeErrorContext context = error.context();
-      PsiElement anchor = error.psi();
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
-      PsiType lType = context.lType();
-      PsiType rType = context.rType();
-      if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
-          parent.getParent() instanceof PsiMethod method && method.getThrowsList() == parent) {
-        // Incompatible type in throws clause
-        PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(rType);
-        if (usedClass != null && lType instanceof PsiClassType throwableType) {
-          sink.accept(myFactory.createExtendsListFix(usedClass, throwableType, true));
-        }
-      }
-      if (anchor instanceof PsiExpression expression) {
-        AddTypeArgumentsConditionalFix.register(sink, expression, lType);
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, expression, lType, rType);
-        sink.accept(ChangeNewOperatorTypeFix.createFix(expression, lType));
-        if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
-            assignment.getOperationTokenType() == JavaTokenType.EQ) {
-          sink.accept(myFactory.createAssignmentToComparisonFix(assignment));
-        }
-        else if (expression instanceof PsiMethodCallExpression callExpression) {
-          HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
-        }
-        if (parent instanceof PsiArrayInitializerExpression initializerList) {
-          PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
-          sink.accept(sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
-        }
-        else if (parent instanceof PsiReturnStatement && rType != null && !PsiTypes.voidType().equals(rType)) {
-          if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method) {
-            sink.accept(myFactory.createMethodReturnFix(method, rType, true, true));
-            PsiType expectedType = HighlightFixUtil.determineReturnType(method);
-            if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(rType)) {
-              sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
-            }
-          }
-        }
-        else if (parent instanceof PsiVariable var && 
-                 PsiUtil.skipParenthesizedExprDown(var.getInitializer()) == expression && rType != null) {
-          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, sink);
-        }
-        else if (parent instanceof PsiAssignmentExpression assignment && 
-                 PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) == expression) {
-          PsiExpression lExpr = assignment.getLExpression();
-
-          sink.accept(myFactory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
-          if (rType != null) {
-            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, sink);
-            if (expression instanceof PsiMethodCallExpression call && assignment.getParent() instanceof PsiStatement &&
-                PsiTypes.voidType().equals(rType)) {
-              sink.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, call));
-            }
-          }
-        }
-      }
-      if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, lType, sink);
-        PsiExpression iteratedValue = forEach.getIteratedValue();
-        if (iteratedValue != null && rType != null) {
-          PsiType type = iteratedValue.getType();
-          if (type instanceof PsiArrayType) {
-            AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
-          }
-        }
-      }
-      HighlightFixUtil.registerChangeParameterClassFix(lType, rType, sink);
-    });
+    fixes(TYPE_INCOMPATIBLE, (error, sink) -> 
+      HighlightFixUtil.registerIncompatibleTypeFixes(sink, error.psi(), error.context().lType(), error.context().rType()));
+    fixes(SWITCH_EXPRESSION_INCOMPATIBLE_TYPE, (error, sink) ->
+      HighlightFixUtil.registerIncompatibleTypeFixes(sink,
+                                                     requireNonNull(PsiTreeUtil.getParentOfType(error.psi(), PsiSwitchExpression.class)),
+                                                     error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {
         HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
+      }
+    });
+    fixes(LAMBDA_INFERENCE_ERROR, (error, sink) -> {
+      if (error.psi().getParent() instanceof PsiExpressionList list && 
+          list.getParent() instanceof PsiMethodCallExpression callExpression) {
+        MethodCandidateInfo resolveResult = error.context();
+        PsiMethod method = resolveResult.getElement();
+        HighlightFixUtil.registerMethodCallIntentions(sink, callExpression, callExpression.getArgumentList());
+        if (!PsiTypesUtil.mentionsTypeParameters(((PsiExpression)callExpression.copy()).getType(), Set.of(method.getTypeParameters()))) {
+          HighlightFixUtil.registerMethodReturnFixAction(sink, resolveResult, callExpression);
+        }
+        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(callExpression, resolveResult, method, sink);
+        LambdaUtil.getReturnExpressions(error.psi())
+          .stream().map(PsiExpression::getType).distinct()
+          .map(type -> AdjustFunctionContextFix.createFix(type, error.psi()))
+          .forEach(sink);
+      }
+    });
+    fixes(LAMBDA_RETURN_TYPE_ERROR, (error, sink) -> {
+      if (error.psi() instanceof PsiExpression expr) {
+        sink.accept(AdjustFunctionContextFix.createFix(expr));
+        PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class);
+        if (lambda != null) {
+          HighlightFixUtil.registerLambdaReturnTypeFixes(sink, lambda, expr);
+        }
       }
     });
     fixes(CALL_WRONG_ARGUMENTS, (error, sink) -> {
@@ -589,6 +801,8 @@ final class JavaErrorFixProvider {
   }
 
   private void createClassFixes() {
+    fix(CLASS_INHERITS_UNRELATED_DEFAULTS, error -> myFactory.createImplementMethodsFix(error.psi()));
+    fix(CLASS_INHERITS_ABSTRACT_AND_DEFAULT, error -> myFactory.createImplementMethodsFix(error.psi()));
     fix(CLASS_NO_ABSTRACT_METHOD, error -> {
       if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()) {
         return maybeAddModifierFix(aClass, PsiModifier.ABSTRACT);
@@ -650,6 +864,7 @@ final class JavaErrorFixProvider {
         sink.accept(myFactory.createRenameElementFix(aClass));
       }
     });
+    fix(CLASS_SEALED_NO_INHERITORS, error -> addModifierFix(error.psi(), PsiModifier.NON_SEALED));
     fix(CLASS_SEALED_INCOMPLETE_PERMITS, error -> myFactory.createFillPermitsListFix(requireNonNull(error.psi().getNameIdentifier())));
     multi(CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL, error -> List.of(
       addModifierFix(error.psi(), PsiModifier.FINAL),
@@ -707,6 +922,38 @@ final class JavaErrorFixProvider {
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, makeInnerStatic);
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, 
         error -> removeModifierFix(requireNonNull(error.context().enclosingStaticElement()), PsiModifier.STATIC));
+    fix(CLASS_GENERIC_EXTENDS_EXCEPTION, error -> {
+      PsiJavaCodeReferenceElement ref = error.psi();
+      PsiMember owner = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiMethod.class);
+      if (owner instanceof PsiClass klass && !(klass instanceof PsiAnonymousClass) && ref.resolve() instanceof PsiClass throwableClass) {
+        PsiClassType classType = JavaPsiFacade.getElementFactory(error.project()).createType(throwableClass);
+        return myFactory.createExtendsListFix(klass, classType, false);
+      }
+      return null;
+    });
+    fix(CLASS_EXTENDS_SEALED_LOCAL, error -> myFactory.createConvertLocalToInnerAction(error.context()));
+    fix(CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE, error -> {
+      if (error.context().superClass().getContainingFile() instanceof PsiClassOwner classOwner) {
+        return myFactory.createMoveClassToPackageFix(error.context().subClass(), classOwner.getPackageName());
+      }
+      return null;
+    });
+    fix(CLASS_EXTENDS_SEALED_NOT_PERMITTED, error -> error.context().superClass() instanceof PsiCompiledElement
+           ? null
+           : myFactory.createAddToPermitsListFix(error.context().subClass(), error.context().superClass()));
+    fixes(CLASS_PERMITTED_MUST_HAVE_MODIFIER, (error, sink) -> {
+      PsiClass inheritorClass = error.context();
+      sink.accept(addModifierFix(inheritorClass, PsiModifier.NON_SEALED));
+      boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
+      if (!inheritorClass.isInterface() && !inheritorClass.hasModifierProperty(PsiModifier.ABSTRACT) || hasInheritors) {
+        IntentionAction action = hasInheritors ?
+                                 myFactory.createSealClassFromPermitsListFix(inheritorClass) :
+                                 addModifierFix(inheritorClass, PsiModifier.FINAL);
+        sink.accept(action);
+      }
+    });
+    multi(CLASS_PERMITTED_NOT_DIRECT_SUBCLASS, error ->
+      myFactory.createExtendSealedClassFixes(error.psi(), error.context().superClass(), error.context().subClass()));
   }
 
   private void createAnnotationFixes() {
@@ -724,7 +971,7 @@ final class JavaErrorFixProvider {
                                             ANNOTATION_NOT_ALLOWED_REF, ANNOTATION_NOT_ALLOWED_VAR,
                                             ANNOTATION_NOT_ALLOWED_VOID, LAMBDA_MULTIPLE_TARGET_METHODS, LAMBDA_NO_TARGET_METHOD,
                                             LAMBDA_NOT_FUNCTIONAL_INTERFACE, ANNOTATION_NOT_APPLICABLE,
-                                            LAMBDA_FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
+                                            FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
                                             OVERRIDE_ON_NON_OVERRIDING_METHOD, SAFE_VARARGS_ON_FIXED_ARITY,
                                             SAFE_VARARGS_ON_NON_FINAL_METHOD, SAFE_VARARGS_ON_RECORD_COMPONENT,
                                             ANNOTATION_CONTAINER_WRONG_PLACE, ANNOTATION_CONTAINER_NOT_APPLICABLE)) {
@@ -745,7 +992,7 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
     fix(ANNOTATION_MISSING_ATTRIBUTE, error -> myFactory.createAddMissingRequiredAnnotationParametersFix(
       error.psi(), PsiMethod.EMPTY_ARRAY, error.context()));
-    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
+    multi(ANNOTATION_ATTRIBUTE_NAME_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
     multi(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> {
       PsiNameValuePair pair = error.psi();
       if (pair.getName() != null) return List.of();

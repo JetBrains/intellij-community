@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.tasks.jira` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tasks-jira_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tasks-jira",
@@ -18,6 +24,7 @@ jvm_library(
     "@lib//:gson",
     "//platform/core-ui",
     "//platform/util/jdom",
-  ]
+  ],
+  runtime_deps = [":tasks-jira_resources"]
 )
 ### auto-generated section `build intellij.tasks.jira` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -449,31 +449,50 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         descriptor.putUserData(RENDERER_MUTED, true);
         return "";
       }
-      String keyText = calcExpression(evaluationContext, descriptor, myKeyExpression, listener, KEY_DESCRIPTOR);
-      String valueText = calcExpression(evaluationContext, descriptor, myValueExpression, listener, VALUE_DESCRIPTOR);
-      return keyText + " -> " + valueText;
+
+      DescriptorLabelListener customListener = new DescriptorLabelListener() {
+        @Override
+        public void labelChanged() {
+          // ensure `setValueLabel` is called for the parent descriptor, as it is used in the 'Copy Value' action
+          descriptor.setValueLabel(calcMapEntryLabel(descriptor));
+          listener.labelChanged();
+        }
+      };
+      calcExpression(evaluationContext, descriptor, myKeyExpression, customListener, KEY_DESCRIPTOR);
+      calcExpression(evaluationContext, descriptor, myValueExpression, customListener, VALUE_DESCRIPTOR);
+      return calcMapEntryLabel(descriptor);
     }
 
-    private String calcExpression(EvaluationContext evaluationContext,
-                                  ValueDescriptor descriptor,
-                                  MyCachedEvaluator evaluator,
-                                  DescriptorLabelListener listener,
-                                  Key<ValueDescriptorImpl> key) throws EvaluateException {
+    private static String calcMapEntryLabel(ValueDescriptor descriptor) {
+      String keyLabel = calcDescriptorLabel(descriptor.getUserData(KEY_DESCRIPTOR));
+      String valueLabel = calcDescriptorLabel(descriptor.getUserData(VALUE_DESCRIPTOR));
+      return keyLabel + " -> " + valueLabel;
+    }
+
+    private static String calcDescriptorLabel(@Nullable ValueDescriptorImpl descriptor) {
+      if (descriptor == null) return "null";
+      return descriptor.getValueLabel();
+    }
+
+    private void calcExpression(EvaluationContext evaluationContext,
+                                ValueDescriptor descriptor,
+                                MyCachedEvaluator evaluator,
+                                DescriptorLabelListener listener,
+                                Key<ValueDescriptorImpl> key) throws EvaluateException {
       Value eval = doEval(evaluationContext, descriptor.getValue(), evaluator);
-      if (eval != null) {
-        WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(
-          evaluationContext.getProject(), evaluator.getReferenceExpression(), eval, (EvaluationContextImpl)evaluationContext) {
-          @Override
-          public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
-            updateRepresentationNoNotify(context, labelListener);
-          }
-        };
-        evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
-        descriptor.putUserData(key, evalDescriptor);
-        return evalDescriptor.getValueLabel();
+      if (eval == null) {
+        descriptor.putUserData(key, null);
+        return;
       }
-      descriptor.putUserData(key, null);
-      return "null";
+      WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(
+        evaluationContext.getProject(), evaluator.getReferenceExpression(), eval, (EvaluationContextImpl)evaluationContext) {
+        @Override
+        public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
+          updateRepresentationNoNotify(context, labelListener);
+        }
+      };
+      evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
+      descriptor.putUserData(key, evalDescriptor);
     }
 
     @Override
@@ -600,6 +619,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
         if (annotationClass == null) continue;
         AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types)
+          .asIterable()
           .forEach((PsiModifierListOwner owner) -> {
             R element = consumer.apply(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
             if (element != null) {

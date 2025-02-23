@@ -65,8 +65,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return null
         val receiver = element.receiverExpression
@@ -85,10 +84,10 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         }
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtDotQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.with.binary.operator")
@@ -113,7 +112,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
 
             expressionToReplace.replace(newExpression)
         }
-    })
+    }
 
     private fun KtDotQualifiedExpression.getReplacementTarget(operation: KtSingleValueToken): KtExpression? {
         return when (operation) {

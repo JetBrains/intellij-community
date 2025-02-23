@@ -77,6 +77,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
@@ -94,6 +97,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import com.intellij.workspaceModel.ide.impl.InternalEnvironmentNameImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -150,6 +154,9 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -863,9 +870,27 @@ public final class BuildManager implements Disposable {
 
     final String projectPath = getProjectPath(project);
     final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    final EelDescriptor eelDescriptor = EelProviderUtil.getEelDescriptor(project);
     final WSLDistribution wslDistribution = findWSLDistribution(project);
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, wslDistribution != null ? wslDistribution::getWindowsPath : null, isAutomake);
-    Function<String, String> pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
+
+    Function<String, String> pathMapperBack;
+
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      pathMapperBack = e -> EelNioBridgeServiceKt.asNioPath(EelPath.parse(e, eelDescriptor)).toString();
+    }
+    else {
+      pathMapperBack = wslDistribution != null ? wslDistribution::getWindowsPath : null;
+    }
+
+    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
+    Function<String, String> pathMapper;
+
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      pathMapper = e -> asEelPath(Path.of(e)).toString();
+    }
+    else {
+      pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
+    }
 
     final DelegateFuture _future = new DelegateFuture();
     // by using the same queue that processes events,
@@ -895,8 +920,18 @@ public final class BuildManager implements Disposable {
         future.setDone();
       }
       else {
+        String optionsPath = PathManager.getOptionsPath();
+
+        if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+          final var eel = upgradeBlocking(eelDescriptor);
+          optionsPath = asEelPath(transferContentsIfNonLocal(eel, Path.of(optionsPath), null)).toString();
+        }
+        else {
+          optionsPath = pathMapper.apply(optionsPath);
+        }
+
         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals =
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(pathMapper.apply(PathManager.getOptionsPath()))
+          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(optionsPath)
             .build();
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
         final ExecutorService projectTaskQueue;
@@ -1347,7 +1382,8 @@ public final class BuildManager implements Disposable {
       wslPath = null;
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
-      cmdLine.addParameter("-Dide.jps.remote.path.prefix=" + eelBuilder.pathPrefix().replace('\\', '/'));
+      cmdLine.addParameter("-Dide.jps.remote.path.prefixes=" + eelBuilder.pathPrefixes().stream()
+        .map(e -> e.replace('\\', '/')).collect(Collectors.joining(";")));
       buildProcessConnectHost = "127.0.0.1";
       int listenPort = listenSocketAddress.getPort();
       buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
@@ -1430,13 +1466,17 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djna.noclasspath=true");
     }
     if (Registry.is("jps.build.use.workspace.model")) {
+      // todo: upload workspace model to remote side because it runs with eel
+      String globalCacheId = "Local";
+
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
       WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
       GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
-        cmdLine.addParameter("-Djps.workspace.storage.global.cache.path=" + globalCache.getCacheFile());
+        cmdLine.addParameter(
+          "-Djps.workspace.storage.global.cache.path=" + globalCache.cacheFile(new InternalEnvironmentNameImpl(globalCacheId)));
         cmdLine.addParameter("-Djps.workspace.storage.relative.paths.in.cache=" + Registry.is("ide.workspace.model.store.relative.paths.in.cache", false));
       }
       else {
@@ -1569,6 +1609,10 @@ public final class BuildManager implements Disposable {
     // DepGraph-based IC implementation
     if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
+    }
+
+    if (Boolean.parseBoolean(System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED, "false"))) {
+      cmdLine.addParameter("-D" + GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED + "=true");
     }
 
     // Java compiler's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language

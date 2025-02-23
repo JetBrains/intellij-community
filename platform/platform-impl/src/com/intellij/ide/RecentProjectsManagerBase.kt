@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "LiftReturnOrAssignment")
 
 package com.intellij.ide
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.OpenProjectImplOptions
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
@@ -37,9 +37,11 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -202,6 +204,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
   override fun updateLastProjectPath() {
+    if (PlatformUtils.isJetBrainsClient()) {
+      LOG.info("Skipping last project path update for thin client")
+      return
+    }
     val openProjects = ProjectManagerEx.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
@@ -224,8 +230,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
-  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int, name: String? = null): Icon {
-    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize, name)
+  fun getProjectIcon(path: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String? = null): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid, unscaledIconSize, name)
+  }
+
+  fun getNonLocalProjectIcon(id: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String?): Icon {
+    return projectIconHelper.getNonLocalProjectIcon(id = id, isProjectValid = isProjectValid, iconSize = unscaledIconSize, name = name)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
@@ -429,6 +439,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  fun getActivationTimestamp(path: String): Long? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.activationTimestamp
+    }
+  }
+
   fun getCurrentBranchName(path: String): String? {
     return RecentProjectsBranchesProvider.getCurrentBranch(path)
   }
@@ -517,6 +533,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
                                    index: Int,
                                    someProjectWasOpened: Boolean): Boolean {
     val (key, value) = openPaths.get(index)
+    EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
       forceOpenInNewFrame = true
       showWelcomeScreen = false
@@ -542,7 +559,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo
-        val ideFrame = createNewProjectFrameProducer(info.frame).create()
+        val ideFrame = createIdeFrame(info.frame ?: FrameInfo())
         info.frameTitle?.let {
           ideFrame.title = it
         }

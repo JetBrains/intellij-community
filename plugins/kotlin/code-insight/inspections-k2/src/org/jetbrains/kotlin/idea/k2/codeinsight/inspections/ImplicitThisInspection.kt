@@ -45,15 +45,14 @@ internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): ImplicitReceiverInfo? {
+    override fun KaSession.prepareContext(element: KtExpression): ImplicitReceiverInfo? {
         return element.getImplicitReceiverInfo()
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtExpression,
         context: ImplicitReceiverInfo,
-    ): Array<KotlinModCommandQuickFix<KtExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtExpression>() {
+    ): KotlinModCommandQuickFix<KtExpression> = object : KotlinModCommandQuickFix<KtExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.implicit.this.action.name")
@@ -65,7 +64,7 @@ internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         ) {
             element.addImplicitThis(context)
         }
-    })
+    }
 }
 
 private fun KtExpression.isSelectorOfDotQualifiedExpression(): Boolean {

@@ -81,7 +81,7 @@ private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
         ?: return false
 
-    return when (contextReceiverList.parent) {
+    return when (contextReceiverList.parent?.parent) {
         is KtDeclaration -> false
         is KtFunctionType -> false
         else -> true
@@ -93,5 +93,5 @@ private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Bool
     val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
         ?: return false
 
-    return contextReceiverList.parent is KtTypeReference
+    return contextReceiverList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
 }

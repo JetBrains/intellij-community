@@ -6,6 +6,7 @@ from _pydevd_bundle.smart_step_into import get_stepping_variants
 from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.pydevd_constants import IS_PY39
 from _pydevd_bundle.pydevd_constants import IS_PY310
+from _pydevd_bundle.pydevd_constants import IS_PY314
 
 
 @pytest.fixture
@@ -82,6 +83,7 @@ def test_candidates_for_inner_decorator_py2(inner_decorator_code):
 
 
 @pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+@pytest.mark.xfail(IS_PY314, reason='PCQA-943')
 def test_candidates_for_inner_decorator_py3(inner_decorator_code):
     variants = list(get_stepping_variants(inner_decorator_code))
     assert len(variants) == 2

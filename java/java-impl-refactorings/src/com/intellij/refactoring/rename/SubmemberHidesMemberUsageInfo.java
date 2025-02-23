@@ -17,7 +17,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.RefactoringUIUtil;

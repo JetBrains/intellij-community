@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 

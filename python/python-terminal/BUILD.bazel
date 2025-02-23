@@ -47,6 +47,9 @@ jvm_library(
     "//python/testFramework:community-testFramework",
     "//platform/eel-provider",
     "@lib//:hamcrest",
+    "//python/setup-test-environment:community-testFramework-testEnv",
+    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
   ],
   runtime_deps = [":terminal_resources"]
 )

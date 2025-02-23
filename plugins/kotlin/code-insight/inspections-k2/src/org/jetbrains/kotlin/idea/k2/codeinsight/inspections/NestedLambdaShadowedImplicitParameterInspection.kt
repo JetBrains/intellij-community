@@ -88,8 +88,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection :
      * — some other outer lambda also has an implicit `it` that has usages
      * — owner of the referenced `it` parameter is not a scope function call (`also`, `let`, `takeIf`, `takeUnless`) on an outer `it`
      */
-    context(KaSession)
-    override fun prepareContext(element: KtNameReferenceExpression): Context? {
+    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
         val enclosingLambdaImplicitItSymbol = element.getImplicitLambdaParameterSymbol()
         if (enclosingLambdaImplicitItSymbol == null) return null
         val ownerLambda = getOwnerLambdaExpression(enclosingLambdaImplicitItSymbol) ?: return null

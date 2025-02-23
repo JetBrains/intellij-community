@@ -1,0 +1,19 @@
+### auto-generated section `build fleet.multiplatform.shims` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "fleet-util-multiplatform_provided",
+  lib = "//fleet/util/multiplatform:fleet-util-multiplatform"
+)
+
+jvm_library(
+  name = "multiplatform-shims",
+  module_name = "fleet.multiplatform.shims",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    ":fleet-util-multiplatform_provided",
+  ]
+)
+### auto-generated section `build fleet.multiplatform.shims` end

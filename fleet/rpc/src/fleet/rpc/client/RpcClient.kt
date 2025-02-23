@@ -26,8 +26,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlin.coroutines.*
 
 private data class OutgoingRequest(
@@ -368,7 +367,7 @@ class RpcClient internal constructor(
         it.span.addEvent("failure").end()
       }
     }
-    streams.values.removeIf {
+    streams.values.removeAll {
       it.closeStream(throwable)
       true
     }
@@ -385,7 +384,7 @@ class RpcClient internal constructor(
         }
       }
     }
-    streams.values.removeIf {
+    streams.values.removeAll {
       if (it.route == route) {
         it.closeStream(RouteClosedException(route, rpcStreamFailureMessage(it.displayName, message)))
         true
@@ -478,7 +477,7 @@ class RpcClient internal constructor(
       }
       is InternalStreamDescriptor.ToRemote -> {
         val cancellationException = (cause as? CancellationException) ?: cause?.let { CancellationException(it.message, it) }
-        budget.cancel(cancellationException ?: CancellationException())
+        budget.cancel(cancellationException ?: CancellationException("The stream was cancelled"))
         channel.cancel(cancellationException)
       }
     }
@@ -516,98 +515,96 @@ class RpcClient internal constructor(
                                                       service = call.service,
                                                       method = call.signature.methodName,
                                                       args = serializedArguments)
-    withTimeoutOrNull(RPC_TIMEOUT) {
-      optional {
-        val callRequest = requestInterceptor.interceptCallRequest(uninterceptedRequest)
-        logger.trace { "Interceptor completed for request ${callRequest}" }
-        val rpcStrategy = coroutineContext[RpcStrategyContextElement] ?: RpcStrategyContextElement()
-        if (rpcStrategy.awaitConnection) {
-          logger.trace { "request $requestId, waiting for ${call.route} to become available" }
-          grayList[call.route]?.await()
-          logger.trace { "request $requestId, ${call.route} is available" }
-        }
-        else if (grayList.contains(call.route)) {
-          throw RouteClosedException(call.route, rpcCallFailureMessage(callRequest, "Route ${call.route} closed"))
-        }
+    withTimeoutOrNull<Unit>(RPC_TIMEOUT) {
+      val callRequest = requestInterceptor.interceptCallRequest(uninterceptedRequest)
+      logger.trace { "Interceptor completed for request ${callRequest}" }
+      val rpcStrategy = coroutineContext[RpcStrategyContextElement] ?: RpcStrategyContextElement()
+      if (rpcStrategy.awaitConnection) {
+        logger.trace { "request $requestId, waiting for ${call.route} to become available" }
+        grayList[call.route]?.await()
+        logger.trace { "request $requestId, ${call.route} is available" }
+      }
+      else if (grayList.contains(call.route)) {
+        throw RouteClosedException(call.route, rpcCallFailureMessage(callRequest, "Route ${call.route} closed"))
+      }
 
-        val span = tracer.spanBuilder("RPC Call")
-          .setAttribute("service", callRequest.service.id)
-          .setAttribute("method", callRequest.method)
-          .setSpanKind(SpanKind.CLIENT)
-          .startSpan()
-        val otelData = Context.current().with(span).toTelemetryData()
-        suspendCancellableCoroutine<Any?> { cc ->
-          val request = OutgoingRequest(route = call.route,
-                                        call = callRequest,
-                                        token = token,
-                                        continuation = cc,
-                                        returnType = call.signature.returnType,
-                                        streamParameters = streamParameters,
-                                        prefetchStrategy = rpcStrategy.prefetchStrategy)
-          val resumeWithException = { cause: Throwable ->
-            val exToResumeWith = cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
-                                 ?: cause
-            logger.trace(exToResumeWith) { "Failed to send request $requestId with exception, remove it from queue" }
-            outgoingRpc.remove(requestId)?.let<OngoingRequest, Unit> { (r, span) ->
-              span.setStatus(StatusCode.ERROR, "Failed to send call request: ${exToResumeWith.stackTraceToString()}").end()
-              for (stream in r.streamParameters) {
-                unregisterStream(stream.uid) { exToResumeWith }
-              }
-              r.continuation.resumeWithException(exToResumeWith)
+      val span = tracer.spanBuilder("RPC Call")
+        .setAttribute("service", callRequest.service.id)
+        .setAttribute("method", callRequest.method)
+        .setSpanKind(SpanKind.CLIENT)
+        .startSpan()
+      val otelData = Context.current().with(span).toTelemetryData()
+      suspendCancellableCoroutine<Any?> { cc ->
+        val request = OutgoingRequest(route = call.route,
+                                      call = callRequest,
+                                      token = token,
+                                      continuation = cc,
+                                      returnType = call.signature.returnType,
+                                      streamParameters = streamParameters,
+                                      prefetchStrategy = rpcStrategy.prefetchStrategy)
+        val resumeWithException = { cause: Throwable ->
+          val exToResumeWith = cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
+                               ?: cause
+          logger.trace(exToResumeWith) { "Failed to send request $requestId with exception, remove it from queue" }
+          outgoingRpc.remove(requestId)?.let<OngoingRequest, Unit> { (r, span) ->
+            span.setStatus(StatusCode.ERROR, "Failed to send call request: ${exToResumeWith.stackTraceToString()}").end()
+            for (stream in r.streamParameters) {
+              unregisterStream(stream.uid) { exToResumeWith }
             }
+            r.continuation.resumeWithException(exToResumeWith)
           }
-          executeCommand { cause ->
-            if (cause == null) {
-              logger.trace { "Register request ${request.call} in queue" }
-              val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request, span))
-              check(previous == null) { "Request with id $requestId is already present in the queue" }
-              val streamDescriptors = registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy)
-              sendAsync(callRequest.seal(destination = request.route, origin = origin, otelData = otelData)) { cause ->
-                if (cause == null) {
-                  logger.trace { "Request sent ${request.call}" }
-                  // register cancellation handler only after the request is enqueued or we can end up sending CancelCall before CallRequest
-                  request.continuation.invokeOnCancellation { c ->
-                    if (c != null) {
-                      // be careful, invokeOnCancellation is invoked concurrently to the main event loop
-                      executeCommand { ex ->
-                        if (ex == null) {
-                          requestCanceledByClient(requestId, c)
-                        }
+        }
+        executeCommand { cause ->
+          if (cause == null) {
+            logger.trace { "Register request ${request.call} in queue" }
+            val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request, span))
+            check(previous == null) { "Request with id $requestId is already present in the queue" }
+            val streamDescriptors = registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy)
+            sendAsync(callRequest.seal(destination = request.route, origin = origin, otelData = otelData)) { cause ->
+              if (cause == null) {
+                logger.trace { "Request sent ${request.call}" }
+                // register cancellation handler only after the request is enqueued or we can end up sending CancelCall before CallRequest
+                request.continuation.invokeOnCancellation { c ->
+                  if (c != null) {
+                    // be careful, invokeOnCancellation is invoked concurrently to the main event loop
+                    executeCommand { ex ->
+                      if (ex == null) {
+                        requestCanceledByClient(requestId, c)
                       }
                     }
                   }
-                  for (internalDescriptor in streamDescriptors) {
-                    serveStream(internalDescriptor, rpcStrategy.prefetchStrategy)
-                  }
                 }
-                else {
-                  resumeWithException(cause)
+                for (internalDescriptor in streamDescriptors) {
+                  serveStream(internalDescriptor, rpcStrategy.prefetchStrategy)
                 }
               }
-            }
-            else {
-              val exToResumeWith = cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
-                                   ?: cause
-              cc.resumeWithException(exToResumeWith)
+              else {
+                resumeWithException(cause)
+              }
             }
           }
-        }.let { result ->
-          logger.trace { "Resumed $requestId, serving response streams" }
-          // resumed successfully, start serving streams
-          val resource = completedRpc.remove(requestId)?.also {
-            for (internalDescriptor in it.streams) {
-              serveStream(internalDescriptor, it.prefetchStrategy)
-            }
-          } ?: run {
-            logger.trace { "No resources assigned for $requestId, was it cancelled already?" }
-            null
+          else {
+            val exToResumeWith = cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
+                                 ?: cause
+            cc.resumeWithException(exToResumeWith)
           }
-          val disposable = SuspendInvocationHandler.CallResult(result) {
-            resource?.let(::disposeResponseResource)
-          }
-          publish(disposable)
-          logger.trace { "Result published for request $requestId" }
         }
+      }.let { result ->
+        logger.trace { "Resumed $requestId, serving response streams" }
+        // resumed successfully, start serving streams
+        val resource = completedRpc.remove(requestId)?.also {
+          for (internalDescriptor in it.streams) {
+            serveStream(internalDescriptor, it.prefetchStrategy)
+          }
+        } ?: run {
+          logger.trace { "No resources assigned for $requestId, was it cancelled already?" }
+          null
+        }
+        val disposable = SuspendInvocationHandler.CallResult(result) {
+          resource?.let(::disposeResponseResource)
+        }
+        publish(disposable)
+        logger.trace { "Result published for request $requestId" }
       }
     } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}ms", cause = null)
   }
@@ -639,8 +636,4 @@ class RpcClient internal constructor(
                 },
                 sendAsync = ::sendAsync)
   }
-}
-
-internal inline fun <T : Any> optional(body: () -> T?): Optional<T> {
-  return Optional.ofNullable(body())
 }

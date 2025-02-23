@@ -8,7 +8,6 @@ import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -16,11 +15,13 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.endLine
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.stubs.elements.KtFunctionElementType
 
 class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
@@ -43,12 +44,9 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         descriptors: MutableList<FoldingDescriptor>,
         root: PsiElement, document: Document, quick: Boolean
     ) {
-        if (root !is KtFile) {
-            return
-        }
+        if (root !is KtFile) return
 
-        val importList = root.importList
-        if (importList != null) {
+        root.importList?.let { importList ->
             val firstImport = importList.imports.firstOrNull()
             if (firstImport != null && importList.imports.size > 1) {
                 val importKeyword = firstImport.firstChild
@@ -95,22 +93,13 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
                 (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL && parentType != KtNodeTypes.SCRIPT) ||
                 type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
                 type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
-                node.shouldFoldCollection(document)
+                node.shouldFoldCall(document)
     }
 
-    private fun ASTNode.shouldFoldCollection(document: Document): Boolean {
-        val call = psi as? KtCallExpression ?: return false
-        if (DumbService.isDumb(call.project)) return false
+    private fun ASTNode.shouldFoldCall(document: Document): Boolean {
+        val call = (psi as? KtCallExpression)?.takeUnless { it.valueArguments.size < 2 } ?: return false
 
-        if (call.valueArguments.size < 2) return false
-
-        // Similar check will be done latter, but we still use it here to avoid unnecessary resolve.
-        if (call.startLine(document) == call.endLine(document)) return false
-
-        val reference = call.referenceExpression() ?: return false
-        return !reference.mainReference.resolvesByNames.any {
-                name -> name.isSpecial || name.identifier !in collectionFactoryFunctionsNames
-        }
+        return call.startLine(document) != call.endLine(document)
     }
 
     private fun getRangeToFold(node: ASTNode, document: Document): TextRange {

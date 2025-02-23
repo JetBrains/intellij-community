@@ -60,6 +60,7 @@ public class FindSettingsBase extends FindSettings implements PersistentStateCom
   @SuppressWarnings("WeakerAccess") public boolean LOCAL_REGULAR_EXPRESSIONS;
   @SuppressWarnings("WeakerAccess") public boolean WITH_SUBDIRECTORIES = true;
   @SuppressWarnings("WeakerAccess") public boolean SHOW_RESULTS_IN_SEPARATE_VIEW;
+  @SuppressWarnings("WeakerAccess") public boolean SCROLL_TO_RESULTS_DURING_TYPING = true;
 
   @SuppressWarnings("WeakerAccess") public @Nls String SEARCH_SCOPE = getDefaultSearchScope();
   @SuppressWarnings("WeakerAccess") public String FILE_MASK;
@@ -316,5 +317,15 @@ public class FindSettingsBase extends FindSettings implements PersistentStateCom
   @Override
   public void setExceptStringLiterals(boolean selected) {
     EXCEPT_STRING_LITERALS = selected;
+  }
+
+  @Override
+  public boolean isScrollToResultsDuringTyping() {
+    return SCROLL_TO_RESULTS_DURING_TYPING;
+  }
+
+  @Override
+  public void setScrollToResultsDuringTyping(boolean selected) {
+    SCROLL_TO_RESULTS_DURING_TYPING = selected;
   }
 }

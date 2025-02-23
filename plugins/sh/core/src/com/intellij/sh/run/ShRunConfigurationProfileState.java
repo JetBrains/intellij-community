@@ -48,14 +48,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   @Override
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    final EelDescriptor eelDescriptor;
-
-    if (!myRunConfiguration.getScriptWorkingDirectory().isEmpty()) {
-     eelDescriptor = getEelDescriptor(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
-    }
-    else {
-      eelDescriptor = getEelDescriptor(myProject);
-    }
+    final EelDescriptor eelDescriptor = computeEelDescriptor();
 
     if (EelPathUtils.isProjectLocal(myProject) && // fixme!!!: remove this check after terminal will be migrated to eel
         myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
@@ -80,7 +73,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       commandLine = createCommandLineForFile(eelDescriptor);
     }
     else {
-      commandLine = createCommandLineForScript();
+      commandLine = createCommandLineForScript(eelDescriptor);
     }
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
@@ -98,13 +91,13 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     };
   }
 
-  private @NotNull GeneralCommandLine createCommandLineForScript() {
+  private @NotNull GeneralCommandLine createCommandLineForScript(@NotNull EelDescriptor eelDescriptor) {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
-    commandLine.withExePath(ShConfigurationType.getDefaultShell(myProject));
+    commandLine.withWorkingDirectory(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
+    commandLine.withExePath(convertPathUsingEel(ShConfigurationType.getDefaultShell(myProject), eelDescriptor));
     commandLine.withParameters("-c");
     commandLine.withParameters(myRunConfiguration.getScriptText());
     return commandLine;
@@ -158,6 +151,34 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs(), true);
       addIfPresent(commandLine, myRunConfiguration.getScriptText());
       return String.join(" ", commandLine);
+    }
+  }
+
+  private EelDescriptor computeEelDescriptor() {
+    EelDescriptor eelDescriptor = null;
+
+    if (!myRunConfiguration.getScriptWorkingDirectory().isEmpty()) {
+      eelDescriptor = nullizeIfLocal(getEelDescriptor(Path.of(myRunConfiguration.getScriptWorkingDirectory())));
+    }
+
+    if (eelDescriptor == null && !myRunConfiguration.getInterpreterPath().isEmpty()) {
+      eelDescriptor = nullizeIfLocal(getEelDescriptor(Path.of(myRunConfiguration.getInterpreterPath())));
+    }
+
+    if (eelDescriptor == null) {
+      return getEelDescriptor(myProject);
+    }
+    else {
+      return eelDescriptor;
+    }
+  }
+
+  private static @Nullable EelDescriptor nullizeIfLocal(@NotNull EelDescriptor eelDescriptor) {
+    if (eelDescriptor == LocalEelDescriptor.INSTANCE) {
+      return null;
+    }
+    else {
+      return eelDescriptor;
     }
   }
 

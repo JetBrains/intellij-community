@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -52,6 +52,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -209,11 +210,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
 
-  private suspend fun importAllProjects() {
-    val projectsToImport = projectsTree.projects
-    importMavenProjects(projectsToImport)
-  }
-
   @Deprecated("Use {@link #scheduleForceUpdateMavenProjects(List)}}")
   override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
     val promise = AsyncPromise<Void>()
@@ -327,6 +323,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenSyncSpec,
                                                modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    MavenDistributionsCache.getInstance(myProject).cleanCaches()
     tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
       checkOrInstallMavenWrapper(project)
     }
@@ -367,7 +364,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
               return@useWithScope result.modules
             }
             incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
-              writeAction {
+              edtWriteAction {
                 project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
               }
             }
@@ -386,7 +383,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       finally {
         logDebug("Finish update ${project.name}, $spec ${myProject.name}")
         incompleteState?.let {
-          writeAction { it.finish() }
+          edtWriteAction { it.finish() }
         }
         console.finishTransaction(spec.resolveIncrementally())
         syncActivity.finished {
@@ -720,7 +717,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 }
 
 class MavenProjectsManagerProjectActivity : ProjectActivity {
-  override suspend fun execute(project: Project) = project.trackActivity(MavenActivityKey) {
+  override suspend fun execute(project: Project): Unit = project.trackActivity(MavenActivityKey) {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
     }

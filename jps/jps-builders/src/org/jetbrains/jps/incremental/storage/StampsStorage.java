@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-/**
- * @author Eugene Zhuravlev
- */
 public interface StampsStorage<T> {
   void updateStamp(@NotNull Path file, BuildTarget<?> buildTarget, long currentFileTimestamp) throws IOException;
 

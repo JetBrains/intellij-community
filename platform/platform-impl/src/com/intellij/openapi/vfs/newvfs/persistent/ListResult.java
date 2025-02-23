@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.Application;
@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FastUtilHashingStrategies;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -19,14 +20,13 @@ import java.util.List;
 import java.util.Objects;
 
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
-final class ListResult {
+@ApiStatus.Internal
+public final class ListResult {
   private final int parentModStamp;
-  final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
+  public final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int parentId;
 
-  ListResult(int parentModStamp,
-             @NotNull @Unmodifiable List<? extends ChildInfo> children,
-             int parentId) {
+  public ListResult(int parentModStamp, @NotNull @Unmodifiable List<? extends ChildInfo> children, int parentId) {
     this.parentModStamp = parentModStamp;
     this.children = children;
     this.parentId = parentId;

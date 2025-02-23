@@ -160,7 +160,7 @@ public interface Application extends ComponentManager {
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @RequiresBlockingContext
   void runWriteAction(@NotNull Runnable action);
@@ -174,7 +174,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @RequiresBlockingContext
@@ -190,7 +190,7 @@ public interface Application extends ComponentManager {
    * @param computation the computation to run
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @RequiresBlockingContext
@@ -687,7 +687,7 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext(boolean shared) {
+  default CoroutineContext getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
     return EmptyCoroutineContext.INSTANCE;
   }
 
@@ -700,5 +700,14 @@ public interface Application extends ComponentManager {
   @ApiStatus.Internal
   default boolean hasLockStateInContext(CoroutineContext context) {
     return false;
+  }
+
+  /**
+   * TODO: IJPL-177760 We need to revoke read access from a runnable properly
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default boolean isTopmostReadAccessAllowed() {
+    return isReadAccessAllowed();
   }
 }

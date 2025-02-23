@@ -200,8 +200,12 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       });
       button.setOptions(actions);
       ExecutorAction action = createAction(selected, executor);
-      String tooltip = UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) +
-                       " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")";
+      String tooltip = UIUtil.removeMnemonic(executor.getStartActionText(selected.getName()));
+      String actionShortcut = KeymapUtil.getFirstKeyboardShortcutText(action);
+      if(!actionShortcut.isEmpty()) {
+        tooltip += " (" + actionShortcut + ")";
+      }
+
       button.setToolTipText(tooltip);
     }
   }

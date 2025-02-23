@@ -140,12 +140,6 @@ public abstract class ActionManager {
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated(forRemoval = true)
-  public abstract void addAnActionListener(AnActionListener listener);
-
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
@@ -102,13 +102,13 @@ public final class TouchbarTest {
         txt = "show";
         action = ()->SwingUtilities.invokeLater(()->{
           ourVisible = !ourVisible;
-          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible, false);
+          NST.showScrubberItem(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourVisible, false);
         });
       } else if (c == 2) {
         txt = "enable";
         action = ()->SwingUtilities.invokeLater(()->{
           ourEnabled = !ourEnabled;
-          NST.enableScrubberItems(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
+          NST.enableScrubberItems(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourEnabled);
         });
       }
 

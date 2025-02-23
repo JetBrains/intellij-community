@@ -40,6 +40,7 @@ jvm_library(
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )
@@ -89,6 +90,7 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )

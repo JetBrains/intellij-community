@@ -82,6 +82,8 @@
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.CodeInsightContextManager"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"

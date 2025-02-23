@@ -2,11 +2,13 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.pycharm.community"/>
   <module value="com.intellij.modules.python-core-capable"/>
+  <!-- for compatibility -->
+  <module value="com.intellij.platform.ide.provisioner"/>
+  <!-- for compatibility -->
 
   <content>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
-    <module name="intellij.settingsSync.core"/>
     <module name="intellij.platform.tips"/>
   </content>
 

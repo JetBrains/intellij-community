@@ -29,7 +29,6 @@ f:com.intellij.dvcs.DvcsUtil
 - s:findVirtualFilesWithRefresh(java.util.List):java.util.List
 - s:getDateString(com.intellij.vcs.log.TimedVcsCommit):java.lang.String
 - s:getPushSupport(com.intellij.openapi.vcs.AbstractVcs):com.intellij.dvcs.push.PushSupport
-- s:getSelectedFile(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.vfs.VirtualFile
 - s:getSelectedFile(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile
 - s:getShortHash(java.lang.String):java.lang.String
 - s:getShortNames(java.util.Collection):java.lang.String
@@ -67,6 +66,7 @@ f:com.intellij.dvcs.MultiRootBranches
 - sf:diverged(java.util.Collection):Z
 - sf:getCommonCurrentBranch(java.util.Collection):java.lang.String
 - sf:getCommonName(java.util.Collection,kotlin.jvm.functions.Function1):java.lang.String
+- sf:isSyncOptionEnabled(com.intellij.dvcs.branch.DvcsSyncSettings):Z
 f:com.intellij.dvcs.MultiRootMessage
 - com.intellij.dvcs.MultiMessage
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,Z,Z):V

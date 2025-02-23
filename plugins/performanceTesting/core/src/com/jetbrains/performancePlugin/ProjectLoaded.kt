@@ -213,8 +213,12 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 @Internal
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute() {
-    IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
-      EelInitialization.runEelInitialization(this)
+    // Under flag since a proper solution should be implemented in the platform later
+    // https://youtrack.jetbrains.com/issue/IJPL-176231/ProductionWslIjentAvailabilityService-Registry-key-wsl.use.remote.agent.for.nio.filesystem-is-not-defined
+    if (System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
+      IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
+        EelInitialization.runEelInitialization(this)
+      }
     }
 
     if (System.getProperty("com.sun.management.jmxremote") == "true") {

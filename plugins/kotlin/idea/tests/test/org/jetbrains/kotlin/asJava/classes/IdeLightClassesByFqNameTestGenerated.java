@@ -260,6 +260,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
         }
 
+        @TestMetadata("contextParameters.kt")
+        public void testContextParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/contextParameters.kt"));
+        }
+
         @TestMetadata("DelegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/DelegatedProperty.kt"));
@@ -298,6 +303,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("SingleJvmClassName.kt")
         public void testSingleJvmClassName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/SingleJvmClassName.kt"));
+        }
+
+        @TestMetadata("valueClassAsContextParameter.kt")
+        public void testValueClassAsContextParameter() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/valueClassAsContextParameter.kt"));
         }
 
         @TestMetadata("ValueClassInParametersWithJvmName.kt")
@@ -650,9 +660,19 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Constructors.kt"));
         }
 
+        @TestMetadata("contextParameters.kt")
+        public void testContextParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/contextParameters.kt"));
+        }
+
         @TestMetadata("DataClassWithCustomImplementedMembers.kt")
         public void testDataClassWithCustomImplementedMembers() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DataClassWithCustomImplementedMembers.kt"));
+        }
+
+        @TestMetadata("dataClassWithValueClass.kt")
+        public void testDataClassWithValueClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/dataClassWithValueClass.kt"));
         }
 
         @TestMetadata("DefaultImplsWithTypeParameters.kt")
@@ -870,9 +890,29 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/UnitAsTypeAlias.kt"));
         }
 
+        @TestMetadata("valueClassAsContextParameter.kt")
+        public void testValueClassAsContextParameter() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassAsContextParameter.kt"));
+        }
+
         @TestMetadata("ValueClassInParametersWithJvmName.kt")
         public void testValueClassInParametersWithJvmName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ValueClassInParametersWithJvmName.kt"));
+        }
+
+        @TestMetadata("valueClassInsideDefaultImpl.kt")
+        public void testValueClassInsideDefaultImpl() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassInsideDefaultImpl.kt"));
+        }
+
+        @TestMetadata("valueClassInsideDelegatedClass.kt")
+        public void testValueClassInsideDelegatedClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassInsideDelegatedClass.kt"));
+        }
+
+        @TestMetadata("valueClassInsideStaticMembers.kt")
+        public void testValueClassInsideStaticMembers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassInsideStaticMembers.kt"));
         }
 
         @TestMetadata("valueClassMembers.kt")
@@ -908,6 +948,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("VarArgs.kt")
         public void testVarArgs() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/VarArgs.kt"));
+        }
+
+        @TestMetadata("varargAndValueClass.kt")
+        public void testVarargAndValueClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/varargAndValueClass.kt"));
         }
 
         @TestMetadata("wildcardWithoutArguments.kt")

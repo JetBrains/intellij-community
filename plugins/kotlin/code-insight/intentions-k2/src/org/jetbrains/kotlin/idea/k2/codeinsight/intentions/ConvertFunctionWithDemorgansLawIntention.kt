@@ -56,8 +56,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return Presentation.of(KotlinBundle.message("replace.0.with.1", fromFunctionName, toFunctionName))
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
+    override fun KaSession.prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =

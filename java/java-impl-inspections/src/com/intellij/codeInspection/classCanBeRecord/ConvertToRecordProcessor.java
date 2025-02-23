@@ -95,11 +95,11 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = new SmartList<>();
     for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
       if (!psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
-        for (PsiReference reference : ReferencesSearch.search(psiField)) {
+        for (PsiReference reference : ReferencesSearch.search(psiField).asIterable()) {
           usages.add(new FieldUsageInfo(psiField, reference));
         }
       }
@@ -191,7 +191,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     RenameUtil.addConflictDescriptions(usages, conflicts);

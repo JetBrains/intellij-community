@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -59,15 +59,18 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
         registered.set(true);
       }
     };
-    for (UnresolvedReferenceQuickFixProvider<?> each : EP_NAME.getExtensionList()) {
+
+    EP_NAME.forEachExtensionSafe(each -> {
       if (!dumbService.isUsableInCurrentContext(each)) {
-        continue;
+        return;
       }
+
       if (ReflectionUtil.isAssignable(each.getReferenceClass(), referenceClass)) {
         //noinspection unchecked
         ((UnresolvedReferenceQuickFixProvider<T>)each).registerFixes(ref, registrarDelegate);
       }
-    }
+    });
+
     return registered.get();
   }
 

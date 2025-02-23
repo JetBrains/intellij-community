@@ -1734,6 +1734,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
             }
 
+            @TestMetadata("checkCastOtherClassloader.kt")
+            public void testCheckCastOtherClassloader() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/checkCastOtherClassloader.kt");
+            }
+
             @TestMetadata("classFromAnotherPackage.kt")
             public void testClassFromAnotherPackage() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
@@ -2409,6 +2414,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
+            @TestMetadata("withSerializationPlugin_ver_1.7.1.kt")
+            public void testWithSerializationPlugin_ver_1_7_1() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin_ver_1.7.1.kt");
+            }
+
             @TestMetadata(".kt.kt")
             public void test_kt() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/.kt.kt");
@@ -2776,6 +2786,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("internalMembersInInlinedLambda.kt")
             public void testInternalMembersInInlinedLambda() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
+            }
+
+            @TestMetadata("objectsInInlineFunctions.kt")
+            public void testObjectsInInlineFunctions() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/objectsInInlineFunctions.kt");
             }
         }
     }

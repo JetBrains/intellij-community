@@ -18,3 +18,10 @@ fun m() {
     simpleFun2(myName)
     simpleFun2(/*<# [namedParameters.kt:125]name| = #>*/n)
 }
+
+class Buzz(val name: String)
+
+fun buzzyFun(buzz: Buzz) {
+    buzzyFun(Buzz(name))
+    buzzyFun(Buzz(/*<# [namedParameters.kt:546]name| = #>*/"me"))
+}

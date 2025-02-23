@@ -9,6 +9,8 @@ import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
@@ -157,14 +159,17 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
-  private suspend fun handleDownloadSourcesRequest(href: String) {
+  private fun handleDownloadSourcesRequest(href: String) {
     val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
     val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
     if (file != null) {
-      val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
-      if (handler != null) {
-        val success = handler.download(project, file)
-        logDownloadFinished(project, handler::class.java, success)
+      CoroutineScopeService.getCoroutineScope(project)
+        .launch {
+          val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
+          if (handler != null) {
+            val success = handler.download(project, file)
+            logDownloadFinished(project, handler::class.java, success)
+          }
       }
       closeTrigger?.invoke()
     }
@@ -214,5 +219,14 @@ internal class DocumentationBrowser private constructor(
      * @return `true` if a loaded page has some content, `false` if a loaded page is empty
      */
     suspend fun DocumentationBrowser.waitForContent(): Boolean = pageFlow.first().waitForContent()
+  }
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+    companion object {
+      fun getCoroutineScope(project: Project): CoroutineScope {
+        return project.service<CoroutineScopeService>().coroutineScope
+      }
+    }
   }
 }

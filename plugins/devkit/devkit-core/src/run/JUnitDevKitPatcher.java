@@ -32,6 +32,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -49,7 +50,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-final class JUnitDevKitPatcher extends JUnitPatcher {
+@ApiStatus.Internal
+public final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
   private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID_9");

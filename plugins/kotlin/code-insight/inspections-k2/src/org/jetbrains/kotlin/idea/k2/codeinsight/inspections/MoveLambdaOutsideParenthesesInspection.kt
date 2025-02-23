@@ -45,15 +45,14 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
         return if (!element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) null else Unit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("move.lambda.argument.out.of.parentheses")
@@ -65,7 +64,7 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         ) {
             element.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
         }
-    })
+    }
 
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
         val textRange = element.getLastLambdaExpression()?.functionLiteral?.lBrace?.textRangeIn(element)

@@ -1,10 +1,12 @@
 package com.intellij.cce.evaluable
 
 const val AIA_CONTEXT = "aia_context"
+const val AIA_CONTEXT_COLLECTION_DURATION_MS = "aia_context_collection_duration_ms"
 const val AIA_USER_PROMPT = "aia_user_prompt"
 const val AIA_RESPONSE = "aia_response"
 const val AIA_ORIGINAL_CONTENT = "aia_original_content"
 const val AIA_FAILED_FILE_VALIDATIONS = "aia_failed_file_validations"
+const val AIA_FAILED_RELATED_FILE_VALIDATIONS = "aia_failed_related_file_validations"
 const val AIA_HAS_SYNTAX_ERRORS = "has_syntax_errors"
 const val AIA_HAS_HIGHLIGHT_ERRORS = "has_highlight_errors"
 const val AIA_PREDICTED_API_CALLS = "predicted_api_calls"

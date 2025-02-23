@@ -99,7 +99,7 @@ public final class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     return myOldLength;
   }
 
-  // this is a generic event which is send after all events for concrete PSI changes in a file (e.g. childAdded(), childReplaced() etc).
+  // this is a generic event which is sent after all events for concrete PSI changes in a file (e.g. childAdded(), childReplaced() etc).
   // this event means "something changed in the file", not the "this PSI element changed in the file"
   public boolean isGenericChange() {
     return isGenericChange;

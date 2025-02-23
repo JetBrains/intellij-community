@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:caffeine",
     "//fleet/fastutil",
     "@lib//:fastutil-min",
+    "//plugins/textmate/joni",
   ],
   runtime_deps = [":textmate_resources"]
 )
@@ -62,6 +63,8 @@ jvm_library(
     "@lib//:caffeine",
     "//fleet/fastutil",
     "@lib//:fastutil-min",
+    "//plugins/textmate/joni",
+    "//plugins/textmate/joni:joni_test_lib",
   ],
   runtime_deps = [":textmate_resources"]
 )

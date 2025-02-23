@@ -9,10 +9,7 @@ import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.DifferentiateContext;
-import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
 
@@ -29,7 +26,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
-    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(addedClasses, added -> future.allDirectSupertypes(added))), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
+    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(filter(addedClasses, cl -> !cl.isLibrary()), future::allDirectSupertypes)), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
       affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/);
     }
     return super.processAddedClasses(context, addedClasses, future, present);
@@ -62,8 +59,10 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
-    for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KJvmUtils::isSealed)) {
-      affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/);
+    if (!removedClass.isLibrary()) {
+      for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KJvmUtils::isSealed)) {
+        affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/);
+      }
     }
 
     if (!removedClass.isInnerClass()) {
@@ -84,7 +83,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       }
 
       for (KmProperty prop : filter(KJvmUtils.allKmProperties(removedClass), p -> !KJvmUtils.isPrivate(p))) {
-        if (Attributes.isConst(prop) || Attributes.isInline(prop.getGetter()) || (prop.getSetter() != null && Attributes.isInline(prop.getSetter()))) {
+        if (KJvmUtils.isInlinable(prop)) {
           debug("Property in a removed class was a constant or had inlineable accessors, affecting property usages ", prop.getName());
           affectMemberLookupUsages(context, removedClass, prop.getName(), present);
         }
@@ -113,7 +112,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     }
     
     if (KJvmUtils.isKotlinNode(changedClass)) {
-      if (hierarchyChanged) {
+      if (hierarchyChanged && !changedClass.isLibrary()) {
         Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
           map(filter(present.allDirectSupertypes(change.getPast()), KJvmUtils::isSealed), JVMClassNode::getReferenceID),
           map(filter(future.allDirectSupertypes(change.getNow()), KJvmUtils::isSealed), JVMClassNode::getReferenceID)
@@ -287,7 +286,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         if (KJvmUtils.isPrivate(removedProp)) {
           continue;
         }
-        if (Attributes.isInline(removedProp.getGetter()) || (removedProp.getSetter() != null && Attributes.isInline(removedProp.getSetter()))) {
+        if (KJvmUtils.isInlinable(removedProp)) {
           debug("Removed property was inlineable, affecting property usages ", removedProp.getName());
           affectMemberLookupUsages(context, changedClass, removedProp.getName(), present);
         }
@@ -423,6 +422,55 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       }
     }
 
+    return true;
+  }
+
+  @Override
+  public boolean processNodesWithErrors(DifferentiateContext context, Iterable<JVMClassNode<?, ?>> nodes, Utils present) {
+    for (JvmClass jvmClass : Graph.getNodesOfType(nodes, JvmClass.class)) {
+
+      // affect lookups on field constants
+      for (JvmField field : filter(jvmClass.getFields(), f -> !f.isPrivate() && f.isInlinable() && f.getValue() != null)) {
+        debug("Potentially inlined field is contained in a source compiled with errors; affecting lookup usages in Kotlin sources ");
+        affectLookupUsages(
+          context,
+          flat(asIterable(jvmClass.getReferenceID()), present.collectSubclassesWithoutField(jvmClass.getReferenceID(), field)),
+          field.getName(),
+          present,
+          null
+        );
+      }
+      
+      // affect lookups on methods
+      for (JvmMethod method : filter(jvmClass.getMethods(), m -> !m.isPrivate() && m.getValue() != null)) {
+        String name = KJvmUtils.getMethodKotlinName(jvmClass, method);
+        debug("Inlinable function is contained in a source compiled with errors; affecting lookup usages in Kotlin sources ", name);
+        affectMemberLookupUsages(context, jvmClass, name, present);
+      }
+
+      // in case this is a Kotlin container, affect lookups in Kotlin terms
+      
+      for (KmFunction kmFunction : filter(KJvmUtils.allKmFunctions(jvmClass), f -> !KJvmUtils.isPrivate(f))) {
+        if (Attributes.isInline(kmFunction)) {
+          debug("Inlinable function is contained in a source compiled with errors; affecting lookup usages ", kmFunction.getName());
+          affectMemberLookupUsages(context, jvmClass, kmFunction.getName(), present);
+        }
+      }
+
+      for (KmProperty prop : filter(KJvmUtils.allKmProperties(jvmClass), p -> !KJvmUtils.isPrivate(p))) {
+        if (KJvmUtils.isInlinable(prop)) {
+          debug("Inlinable property or its accessors is contained in a source compiled with errors; affecting property lookup usages ", prop.getName());
+          affectMemberLookupUsages(context, jvmClass, prop.getName(), present);
+        }
+      }
+
+      KotlinMeta meta = KJvmUtils.getKotlinMeta(jvmClass);
+      for (KmTypeAlias alias : filter(meta != null? meta.getKmTypeAliases() : List.of(), a -> !KJvmUtils.isPrivate(Attributes.getVisibility(a)))) {
+        debug("A type alias declaration is contained in a source compiled with errors; affecting lookup usages ", alias.getName());
+        affectMemberLookupUsages(context, jvmClass, alias.getName(), present);
+      }
+    }
+    
     return true;
   }
 

@@ -1,8 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery
 
-import com.intellij.execution.testDiscovery.JavaAutoRunFloatingToolbarService.JavaAutoRunFloatingToolbarState
+import com.intellij.execution.ExecutionListener
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.autotest.AutoTestListener
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
+import com.intellij.execution.ui.ConsoleViewWithDelegate
+import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.java.JavaBundle
@@ -10,15 +19,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.application
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagLayout
 import javax.swing.JComponent
@@ -30,7 +41,9 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
 
-  override val backgroundAlpha: Float = 0.9f
+  private var configuration: RunContentDescriptor? = null
+
+  override val backgroundAlpha: Float = JBUI.CurrentTheme.FloatingToolbar.TRANSLUCENT_BACKGROUND_ALPHA
 
   override val autoHideable: Boolean = false
 
@@ -49,21 +62,47 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
     val autoRunManager = JavaAutoRunManager.getInstance(project)
 
     application.invokeLater {
-      updateFloatingToolbarVisibility(component, autoRunManager)
+      updateFloatingToolbarVisibility(project, component, autoRunManager)
     }
 
     project.messageBus.connect(parentDisposable).subscribe(AutoTestListener.TOPIC, object: AutoTestListener {
       override fun autoTestStatusChanged() {
-        updateFloatingToolbarVisibility(component, autoRunManager)
+        updateFloatingToolbarVisibility(project, component, autoRunManager)
+        // Picks up the current descriptor when auto-test is enabled (auto-test is always disabled on project opening)
+        updateCurrentConfiguration(project, autoRunManager, component)
       }
-      override fun autoTestSettingsChanged() {
-        updateFloatingToolbarVisibility(component, autoRunManager)
+    })
+
+    // The descriptor is disposed and created again after each run.
+    project.messageBus.connect(parentDisposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+      override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+        updateCurrentConfiguration(project, autoRunManager, component)
       }
     })
   }
 
-  private fun updateFloatingToolbarVisibility(component: FloatingToolbarComponent, autoRunManager: JavaAutoRunManager) {
-    val isToolbarEnabled = service<JavaAutoRunFloatingToolbarService>().toolbarEnabled
+  /**
+   * Keeps track of the current auto-run test descriptor.
+   */
+  private fun updateCurrentConfiguration(project: Project, autoRunManager: JavaAutoRunManager, component: FloatingToolbarComponent) {
+    val content = RunContentManager.getInstance(project).getAllDescriptors().firstOrNull { autoRunManager.isAutoTestEnabled(it) }
+    if (content != configuration) { configuration = content; } else { return }
+    if (content == null) {
+      updateFloatingToolbarVisibility(project, component, autoRunManager)
+      return
+    }
+
+    content.whenDisposed {
+      updateFloatingToolbarVisibility(project, component, autoRunManager)
+    }
+
+    getConsoleProperties(project)?.addListener(TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR) {
+      updateFloatingToolbarVisibility(project, component, autoRunManager)
+    }
+  }
+
+  private fun updateFloatingToolbarVisibility(project: Project, component: FloatingToolbarComponent, autoRunManager: JavaAutoRunManager) {
+    val isToolbarEnabled = isAutoTestToolbarEnabled(project)
     val hasEnabledAutoTests = autoRunManager.hasEnabledAutoTests()
     if (isToolbarEnabled && hasEnabledAutoTests) {
       component.autoHideable = true
@@ -86,6 +125,7 @@ private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAwa
     val disableButton = ActionButton(DisableAction(), null, ActionPlaces.EDITOR_FLOATING_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     disableButton.putClientProperty(Toggleable.SELECTED_KEY, true)
     panel.add(disableButton, constraints.next())
+    panel.isOpaque = false
 
     return panel
   }
@@ -101,7 +141,9 @@ private class DisableAction : AnAction(IdeBundle.message("button.disable"), Java
 
 private class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    application.service<JavaAutoRunFloatingToolbarService>().toolbarEnabled = false
+    val project = e.project ?: return
+    val properties = getConsoleProperties(project) ?: return
+    TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR.set(properties, false)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -111,26 +153,25 @@ private class HideAction : AnAction() {
   }
 }
 
+private fun getContentDescriptor(project: Project): RunContentDescriptor? {
+  return RunContentManager.getInstanceIfCreated(project)?.selectedContent
+}
 
-@Service(Service.Level.APP)
-@State(name = "JavaAutoRunFloatingToolbarSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
-internal class JavaAutoRunFloatingToolbarService : SimplePersistentStateComponent<JavaAutoRunFloatingToolbarState>(
-  JavaAutoRunFloatingToolbarState()
-) {
-  private val messageBusPublisher by lazy {
-    application.messageBus.syncPublisher(AutoTestListener.TOPIC)
-  }
+private fun getConsoleProperties(project: Project): TestConsoleProperties? {
+  val content = getContentDescriptor(project) ?: return null
+  val console = getSMTRunnerConsoleView(content.executionConsole) ?: return null
+  return console.properties
+}
 
-  var toolbarEnabled: Boolean
-    get() = state.toolbarEnabled
-    set(value) {
-      if (value != state.toolbarEnabled) {
-        state.toolbarEnabled = value
-        messageBusPublisher.autoTestSettingsChanged()
-      }
-    }
+private fun isAutoTestToolbarEnabled(project: Project): Boolean {
+  val properties = getConsoleProperties(project) ?: return false
+  return TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR.get(properties)
+}
 
-  class JavaAutoRunFloatingToolbarState() : BaseState() {
-    var toolbarEnabled by property(true)
+private fun getSMTRunnerConsoleView(console: ExecutionConsole): SMTRunnerConsoleView? {
+  return when (console) {
+    is SMTRunnerConsoleView -> console
+    is ConsoleViewWithDelegate -> getSMTRunnerConsoleView(console.delegate)
+    else -> null
   }
 }

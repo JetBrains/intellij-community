@@ -2,9 +2,11 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupPresentationProvider;
 import org.jetbrains.idea.devkit.dom.impl.KeymapConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -14,6 +16,25 @@ import java.util.List;
 
 @Presentation(typeName = DevkitDomPresentationConstants.ACTION, provider = ActionOrGroupPresentationProvider.class)
 public interface Action extends ActionOrGroup {
+
+  @Override
+  @Nullable
+  default String getEffectiveId() {
+    String id = ActionOrGroup.super.getEffectiveId();
+    if (id != null) return id;
+
+    String clazzValue = getClazz().getStringValue();
+    return clazzValue != null ? StringUtilRt.getShortName(clazzValue) : null;
+  }
+
+  @Override
+  default GenericAttributeValue<?> getEffectiveIdAttribute() {
+    if (DomUtil.hasXml(getId())) {
+      return getId();
+    }
+
+    return getClazz();
+  }
 
   @NotNull
   @Attribute("class")

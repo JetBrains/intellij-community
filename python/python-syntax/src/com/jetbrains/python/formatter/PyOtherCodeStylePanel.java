@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.PresentableEnumUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
@@ -19,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 
 public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
@@ -30,7 +29,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   private JBCheckBox myUseContinuationIndentForParameters;
   private JBCheckBox myUseContinuationIndentForArguments;
   private JBCheckBox myUseContinuationIndentForCollectionsAndComprehensions;
-  private ComboBox myDictAlignmentCombo;
+  private ComboBox<DictAlignment> myDictAlignmentCombo;
   private JPanel myPreviewPanel;
   private JBCheckBox myFormatInjectedFragments;
   private JBCheckBox myAddIndentInsideInjections;
@@ -40,19 +39,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     addPanelToWatch(myPanel);
     installPreviewPanel(myPreviewPanel);
 
-    for (DictAlignment alignment : DictAlignment.values()) {
-      //noinspection unchecked
-      myDictAlignmentCombo.addItem(alignment);
-    }
-
-    myDictAlignmentCombo.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          somethingChanged();
-        }
-      }
-    });
+    PresentableEnumUtil.fill(myDictAlignmentCombo, DictAlignment.class);
 
     myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
       @Override

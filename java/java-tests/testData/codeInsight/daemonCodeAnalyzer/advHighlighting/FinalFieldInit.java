@@ -5,15 +5,15 @@ class a  {
   /**
    * javadoc should not be highlighted
    */
-  <error descr="Variable 'javaDoced' might not have been initialized">final int javaDoced</error>;
+  <error descr="Field 'javaDoced' might not have been initialized">final int javaDoced</error>;
 
-  <error descr="Variable 'sfi1' might not have been initialized">static final int sfi1</error>;
-  <error descr="Variable 'sfi2' might not have been initialized">static final int sfi2</error>;
-  <error descr="Variable 'fi1' might not have been initialized">final int fi1</error>;
-  <error descr="Variable 'fi2' might not have been initialized">final int fi2</error>;
+  <error descr="Field 'sfi1' might not have been initialized">static final int sfi1</error>;
+  <error descr="Field 'sfi2' might not have been initialized">static final int sfi2</error>;
+  <error descr="Field 'fi1' might not have been initialized">final int fi1</error>;
+  <error descr="Field 'fi2' might not have been initialized">final int fi2</error>;
 
   class inner {
-    <error descr="Variable 'fii' might not have been initialized">final int fii</error>;
+    <error descr="Field 'fii' might not have been initialized">final int fii</error>;
   }
   final int fi3;
   final int fi4;
@@ -140,7 +140,7 @@ class c2 {
 }
 
 class UninitializedFinal2 {
-    <error descr="Variable 's' might not have been initialized">private final String s</error>;
+    <error descr="Field 's' might not have been initialized">private final String s</error>;
 
     UninitializedFinal2(){
         try {
@@ -151,7 +151,7 @@ class UninitializedFinal2 {
 }
 class UninitedFinalFied {
 
-	<error descr="Variable 'string' might not have been initialized">private final String string</error>;
+	<error descr="Field 'string' might not have been initialized">private final String string</error>;
 
 	public UninitedFinalFied() throws IOException {
 		init();
@@ -277,7 +277,7 @@ class InitializedInClassInitializerUsedInTheFollowingFieldInitializer {
 }
 
 class AssignInAssert {
-  <error descr="Variable 'b' might not have been initialized">private final boolean b</error>;
+  <error descr="Field 'b' might not have been initialized">private final boolean b</error>;
 
   AssignInAssert() {
     assert b = true;
@@ -301,7 +301,7 @@ class DefiniteAssignmentInFinally {
 }
 class StaticInitializerUsedInAnotherInstanceField {
   private final int myEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
-  private static final int ourEnumerationCacheConstant = <error descr="Cannot read value of field 'ENUMERATION_CACHE_SIZE' before the field's definition">ENUMERATION_CACHE_SIZE</error>;
+  private static final int ourEnumerationCacheConstant = <error descr="Variable 'ENUMERATION_CACHE_SIZE' might not have been initialized">ENUMERATION_CACHE_SIZE</error>;
 
   private static final int ENUMERATION_CACHE_SIZE;
 

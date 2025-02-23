@@ -19,6 +19,13 @@ abstract class AbstractKMPProjectStructureTest : KotlinLightCodeInsightFixtureTe
         KotlinTestUtils.assertEqualsToFile(testDataPath / "kaModules.mmd", mermaid)
     }
 
+    private lateinit var postProjectCreationSetup: () -> Unit
+
+    override fun setUp() {
+        super.setUp()
+        postProjectCreationSetup()
+    }
+
     override fun tearDown() {
         runAll(
             { projectDescriptor.cleanupSourceRoots() },
@@ -37,6 +44,8 @@ abstract class AbstractKMPProjectStructureTest : KotlinLightCodeInsightFixtureTe
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .map { KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.valueOf(it) }
-        return KotlinMultiPlatformProjectDescriptor(platformDescriptors)
+        val descriptor = KotlinMultiPlatformProjectDescriptor(platformDescriptors, postponeKotlinSdkCreation = true)
+        postProjectCreationSetup = descriptor::runPostponedSetup
+        return descriptor
     }
 }

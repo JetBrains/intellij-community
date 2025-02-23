@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
@@ -133,12 +133,7 @@ enum class InterpreterCreationMode(val value: String) {
   NA("not_applicable"),
 }
 
-val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
-                                                                    CONDAVENV.value,
-                                                                    VIRTUALENV.value,
-                                                                    REGULAR.value,
-                                                                    POETRY.value,
-                                                                    PYENV.value))
+val INTERPRETER_TYPE = EventFields.String("interpreterType", InterpreterType.entries.map { it.value } )
 
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                        CUSTOM.value,

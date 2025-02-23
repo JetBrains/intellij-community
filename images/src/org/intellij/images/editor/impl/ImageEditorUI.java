@@ -58,6 +58,7 @@ import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.vfs.IfsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,8 @@ import java.util.Objects;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider, ImageComponentDecorator, Disposable {
+@ApiStatus.Internal
+public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider, ImageComponentDecorator, Disposable {
   private static final @NonNls String IMAGE_PANEL = "image";
   private static final @NonNls String ERROR_PANEL = "error";
   private static final @NonNls String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";

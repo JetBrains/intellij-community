@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
 import com.intellij.configurationStore.saveSettings
@@ -26,7 +26,7 @@ import com.intellij.vcsUtil.VcsImplUtil
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
 
-object CheckinActionUtil {
+internal object CheckinActionUtil {
   private val LOG = logger<CheckinActionUtil>()
 
   fun updateCommonCommitAction(e: AnActionEvent) {

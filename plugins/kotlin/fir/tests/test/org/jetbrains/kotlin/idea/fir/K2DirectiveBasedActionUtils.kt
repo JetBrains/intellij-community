@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.ERROR_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
@@ -21,11 +22,28 @@ object K2DirectiveBasedActionUtils {
     const val K2_ERROR_DIRECTIVE: String = "// K2_ERROR:"
     const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2_AFTER_ERROR:"
 
+    fun checkForUnexpectedErrors(
+        mainFile: File,
+        ktFile: KtFile,
+        fileText: String,
+        vararg directives: String = arrayOf(K2_ERROR_DIRECTIVE, ERROR_DIRECTIVE)
+    ) {
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_K2_ERRORS_DIRECTIVE).isNotEmpty()) {
+            return
+        }
+
+        checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, *directives)
+    }
+
     fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_ERROR_DIRECTIVE, ERROR_DIRECTIVE)
     }
 
     fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_K2_ERRORS_DIRECTIVE, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
+            return
+        }
+
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_AFTER_ERROR_DIRECTIVE, AFTER_ERROR_DIRECTIVE)
     }
 
@@ -52,7 +70,10 @@ object K2DirectiveBasedActionUtils {
         val actual =
             allowAnalysisOnEdt {
                 analyze(file) {
-                    val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    val diagnostics =
+                        // filter level has to be consistent with
+                        // [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor#analyzeFile]
+                        file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     diagnostics
                         .filter { it.severity == severity }
                         .map { "$directive ${it.defaultMessage.replace("\n", "<br>")}" }
@@ -76,7 +97,9 @@ object K2DirectiveBasedActionUtils {
 
         throw FileComparisonFailedError(
             "All actual $name should be mentioned in test data with '$directive' directive. " +
-                    "But no unnecessary $name should be mentioned, file:\n$fileText",
+                    "But no unnecessary $name should be mentioned\n" +
+                    "actual errors:\n$actualString\n" +
+                    "file:\n$fileText",
             expected = fileText,
             actual = actualString,
             expectedFilePath = mainFile.absolutePath,

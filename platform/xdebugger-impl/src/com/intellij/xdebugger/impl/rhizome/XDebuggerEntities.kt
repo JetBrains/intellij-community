@@ -5,7 +5,9 @@ import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.rhizome.XValueEntity.Companion.XValueId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XValueId
@@ -111,6 +113,8 @@ data class XValueEntity(override val eid: EID) : Entity {
 
   val marker: XValueMarkerDto? by Marker
 
+  val fullValueEvaluator: XFullValueEvaluator? by FullValueEvaluator
+
   companion object : EntityType<XValueEntity>(
     XValueEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
@@ -120,6 +124,7 @@ data class XValueEntity(override val eid: EID) : Entity {
     val XValueAttribute: Required<XValue> = requiredTransient("xValue")
     val SessionEntity: Required<XDebugSessionEntity> = requiredRef("sessionEntity", RefFlags.CASCADE_DELETE_BY)
     val ParentXValue: Optional<XValueEntity> = optionalRef<XValueEntity>("parentXValue", RefFlags.CASCADE_DELETE_BY)
+    val FullValueEvaluator: Optional<XFullValueEvaluator> = optionalTransient("fullValueEvaluator")
     val Marker: Optional<XValueMarkerDto> = optionalTransient("marker")
   }
 }

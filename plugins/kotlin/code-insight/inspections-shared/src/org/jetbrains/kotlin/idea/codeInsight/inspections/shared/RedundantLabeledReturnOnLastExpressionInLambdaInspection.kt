@@ -53,17 +53,16 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
         return listOfNotNull(labelRange)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtReturnExpression) {
+    override fun KaSession.prepareContext(element: KtReturnExpression) {
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtReturnExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtReturnExpression>> {
+    ): KotlinModCommandQuickFix<KtReturnExpression> {
         val smartPointer = element.createSmartPointer()
 
-        return arrayOf(object : KotlinModCommandQuickFix<KtReturnExpression>() {
+        return object : KotlinModCommandQuickFix<KtReturnExpression>() {
 
             override fun getFamilyName(): String =
                 KotlinBundle.message("remove.labeled.return.from.last.expression.in.a.lambda")
@@ -84,6 +83,6 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
                     element.replace(returnedExpression)
                 }
             }
-        })
+        }
     }
 }

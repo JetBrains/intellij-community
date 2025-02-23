@@ -8,6 +8,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.jvm.JvmStatic
 
 object TestUtil {
   const val BAT: @NonNls String = "bat"
@@ -63,7 +64,7 @@ object TestUtil {
       BundleType.TEXTMATE -> readTextMateBundle(bundleDirectory)
       BundleType.SUBLIME -> readSublimeBundle(bundleDirectory)
       BundleType.VSCODE -> readVSCBundle { relativePath ->
-        bundleDirectory.resolve(relativePath).inputStream()
+        bundleDirectory.resolve(relativePath).inputStream().buffered()
       } ?: error("Cannot read VSCBundle from $bundleDirectory")
       BundleType.UNDEFINED -> error("Unknown bundle type: $bundleName")
     }

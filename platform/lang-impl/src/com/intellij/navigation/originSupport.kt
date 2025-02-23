@@ -4,7 +4,6 @@ package com.intellij.navigation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
-import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.net.URISyntaxException
 import java.util.Locale

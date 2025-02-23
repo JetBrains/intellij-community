@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import java.awt.Cursor
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -50,7 +51,6 @@ import org.jetbrains.jewel.ui.disabled
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
-import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 public fun Link(
@@ -202,12 +202,10 @@ private fun LinkImpl(
             textStyle.merge(textDecoration = decoration, color = textColor)
         }
 
-    val pointerChangeModifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
-
     Row(
         modifier =
             modifier
-                .thenIf(linkState.isEnabled) { pointerChangeModifier }
+                .thenIf(linkState.isEnabled) { pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))) }
                 .clickable(
                     onClick = {
                         linkState = linkState.copy(visited = true)

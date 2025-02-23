@@ -13,14 +13,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
-import java.util.concurrent.CompletableFuture
 
 internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
                                            private val changesService: GHPRChangesService,
@@ -82,10 +79,6 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
     return changesService.loadPatch(mergeBase, commitSha).find { it.filePath == filePath }
   }
 
-  @Deprecated("Please migrate ro coroutines and use apiCommitsRequest")
-  override fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>> =
-    cs.async { loadCommits() }.asCompletableFuture()
-
   private inner class ChangesDataLoader(parentCs: CoroutineScope, val refs: GHPRBranchesRefs) {
     private val cs = parentCs.childScope()
 
@@ -139,7 +132,6 @@ private data class AllPRReferences(
 // TODO: can we get rid of the tree?
 private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): List<GHCommit> {
   val commitsBySha = mutableMapOf<String, GHCommit>()
-  val parentCommits = mutableSetOf<GHCommitHash>()
 
   var lastCommit: GHCommit? = null
   for (commit in commits) {
@@ -147,11 +139,13 @@ private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): L
       lastCommit = commit
     }
     commitsBySha[commit.oid] = commit
-    parentCommits.addAll(commit.parents)
   }
   checkNotNull(lastCommit) { "Could not determine last commit" }
 
+  val processedCommits = mutableSetOf<String>()
   fun ImmutableGraph.Builder<GHCommit>.addCommits(commit: GHCommit) {
+    val alreadyProcessed = !processedCommits.add(commit.oid)
+    if (alreadyProcessed) return
     addNode(commit)
     for (parent in commit.parents) {
       val parentCommit = commitsBySha[parent.oid]

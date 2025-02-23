@@ -36,14 +36,15 @@ jvm_library(
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/kotlin.ide:ide",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1",
   ],
   runtime_deps = ["//platform/core-api:core"]
 )

@@ -70,8 +70,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         return parentFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtCallExpression): Context? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         val fixType = when (element.valueArguments.size) {
             1 -> {
                 val lambdaArgumentExpression = element.singleLambdaArgumentExpression() ?: return null
@@ -103,10 +102,10 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         )
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
         override fun getName(): String = KotlinBundle.message(context.fixType.key)
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.replace.run.family")
@@ -149,7 +148,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
 
             callNameExpression.replace(psiFactory.createExpression(replacement))
         }
-    })
+    }
 }
 
 private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {

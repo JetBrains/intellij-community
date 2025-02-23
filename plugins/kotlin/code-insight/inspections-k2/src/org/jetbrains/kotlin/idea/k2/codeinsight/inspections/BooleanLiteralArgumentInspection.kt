@@ -52,9 +52,8 @@ internal class BooleanLiteralArgumentInspection(
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("boolean.literal.argument.without.parameter.name")
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtValueArgument): Context? {
+    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
         if (element.isNamed()) return null
         val argumentExpression = element.getArgumentExpression() ?: return null
         if (!argumentExpression.isBooleanLiteral()) return null
@@ -105,10 +104,10 @@ internal class BooleanLiteralArgumentInspection(
         }
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtValueArgument,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtValueArgument>> = arrayOf(object : KotlinModCommandQuickFix<KtValueArgument>() {
+    ): KotlinModCommandQuickFix<KtValueArgument> = object : KotlinModCommandQuickFix<KtValueArgument>() {
         override fun getFamilyName(): @IntentionFamilyName String = context.familyName
 
         override fun applyFix(
@@ -122,7 +121,7 @@ internal class BooleanLiteralArgumentInspection(
                 }
             )
         }
-    })
+    }
 }
 
 private fun KtExpression.isBooleanLiteral(): Boolean = this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT

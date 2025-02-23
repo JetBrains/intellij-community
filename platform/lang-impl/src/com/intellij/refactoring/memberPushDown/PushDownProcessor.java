@@ -84,13 +84,13 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<PsiElement> inheritors = myDelegate.findInheritors(myPushDownData);
     return ContainerUtil.map2Array(inheritors, UsageInfo.EMPTY_ARRAY, myDelegate::createUsageInfo);
   }
 
   @Override
-  public boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.checkSourceClassConflicts(myPushDownData, conflicts);
     final UsageInfo[] usagesIn = refUsages.get();

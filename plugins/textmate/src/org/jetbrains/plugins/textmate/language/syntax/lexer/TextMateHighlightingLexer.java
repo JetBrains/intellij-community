@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.textmate.joni.JoniRegexFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
 import org.jetbrains.plugins.textmate.regex.RegexFactory;
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory;
-import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.LinkedList;
 import java.util.Queue;

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -97,7 +98,7 @@ internal class LinuxFrameButton(action: Action, private val type: Type) : JButto
   override fun updateUI() {
     setUI(BasicButtonUI())
     border = null
-    darkHeader = ColorUtil.isDark(InternalUICustomization.getInstance().getMainToolbarBackground(true))
+    darkHeader = ColorUtil.isDark(InternalUICustomization.getInstanceOrNull()?.getMainToolbarBackground(true) ?: JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
     updateStyle()
   }
 

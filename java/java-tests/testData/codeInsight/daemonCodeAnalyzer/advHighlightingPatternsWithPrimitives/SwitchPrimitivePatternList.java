@@ -172,8 +172,8 @@ public class SwitchPrimitivePatternList {
       case short d -> System.out.println("1");
       case int d -> System.out.println("1");
       case long d -> System.out.println("1");
-      case <error descr="Label is dominated by a preceding case label 'long d'">float d</error> -> System.out.println("1");
-      case <error descr="Label is dominated by a preceding case label 'long d'">double d</error> -> System.out.println("1");
+      case float d -> System.out.println("1");
+      case double d -> System.out.println("1");
     }
   }
 

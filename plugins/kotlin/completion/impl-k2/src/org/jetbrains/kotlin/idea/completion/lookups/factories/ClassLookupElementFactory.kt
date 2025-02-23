@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.name.Name
@@ -39,6 +40,7 @@ private data class ClassifierLookupObject(
  * The simplest implementation of the insertion handler for a classifiers.
  */
 private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
+
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
         val lookupObject = item.`object` as ClassifierLookupObject
@@ -47,7 +49,9 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
         super.handleInsert(context, item)
 
         if (importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
-            val fqNameRendered = importingStrategy.fqName.render()
+            val fqNameRendered = importingStrategy.fqName
+                .withRootPrefixIfNeeded()
+                .render()
             context.insertAndShortenReferencesInStringUsingTemporarySuffix(fqNameRendered)
         } else if (importingStrategy is ImportStrategy.AddImport) {
             addImportIfRequired(targetFile, importingStrategy.nameToImport)

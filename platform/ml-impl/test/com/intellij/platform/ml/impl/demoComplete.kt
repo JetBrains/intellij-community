@@ -119,7 +119,7 @@ object MockTask : MLTask<Double>(
   )
 )
 
-class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> {
+internal class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> {
   companion object {
     val SESSION_IS_GOOD = FeatureDeclaration.boolean("very_good_session")
     val LOOKUP_INDEX = FeatureDeclaration.int("lookup_index")

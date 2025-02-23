@@ -5,7 +5,10 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public enum ThreadOperation {
-  Socket("socket operation"), IO("I/O");
+  SOCKET("socket operation"),
+  IO("I/O"),
+  CARRYING_VTHREAD("carrying virtual thread"),
+  ;
 
   private final String myName;
 

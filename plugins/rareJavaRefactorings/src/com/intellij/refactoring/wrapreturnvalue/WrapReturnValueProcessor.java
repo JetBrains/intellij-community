@@ -111,13 +111,13 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   @Override
   public void findUsages(@NotNull List<? super FixableUsageInfo> usages) {
     findUsagesForMethod(myMethod, usages);
-    for (PsiMethod overridingMethod : OverridingMethodsSearch.search(myMethod)) {
+    for (PsiMethod overridingMethod : OverridingMethodsSearch.search(myMethod).asIterable()) {
       findUsagesForMethod(overridingMethod, usages);
     }
   }
 
   private void findUsagesForMethod(PsiMethod psiMethod, List<? super FixableUsageInfo> usages) {
-    for (PsiReference reference : ReferencesSearch.search(psiMethod, psiMethod.getUseScope())) {
+    for (PsiReference reference : ReferencesSearch.search(psiMethod, psiMethod.getUseScope()).asIterable()) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();
       if (parent instanceof PsiCallExpression) {
@@ -171,7 +171,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  public boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (myUseExistingClass) {

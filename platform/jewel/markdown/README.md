@@ -12,13 +12,14 @@ Additional supported Markdown, via extensions:
 
 * Alerts ([GitHub Flavored Markdown][alerts-specs]) — see [`extension-gfm-alerts`](extension/gfm-alerts)
 * Autolink (standard CommonMark, but provided as extension) — see [`extension-autolink`](extension/autolink)
+* Tables ([GitHub Flavored Markdown](https://github.github.com/gfm/#tables-extension-)) — see [
+  `extension-gfm-tables`](extension/gfm-tables)
+* Strikethrough ([GitHub Flavored Markdown](https://github.github.com/gfm/#strikethrough-extension-))
 
 [alerts-specs]: https://github.com/orgs/community/discussions/16925
 
 On the roadmap, but not currently supported — in no particular order:
 
-* Tables ([GitHub Flavored Markdown](https://github.github.com/gfm/#tables-extension-))
-* Strikethrough ([GitHub Flavored Markdown](https://github.github.com/gfm/#strikethrough-extension-))
 * Image loading (via [Coil 3](https://coil-kt.github.io/coil/upgrading_to_coil3/))
 * Task list items ([GitHub Flavored Markdown](https://github.github.com/gfm/#task-list-items-extension-))
 * Keyboard shortcuts highlighting (specialized HTML handling)
@@ -119,7 +120,7 @@ those.
 By default, the processor will ignore any kind of Markdown it doesn't support. To support additional features, such as
 ones found in GitHub Flavored Markdown, you can use extensions. If you don't specify any extension, the processor will
 be restricted to the [CommonMark specs](https://specs.commonmark.org) as supported by
-[`commonmark-java`](https://github.com/commonmark/commonmark-java). 
+[`commonmark-java`](https://github.com/commonmark/commonmark-java).
 
 > [!NOTE]
 > Images are not supported yet, even if they are part of the CommonMark specs.
@@ -136,7 +137,7 @@ val processor = MarkdownProcessor(parsingExtensions)
 // Where the rendering happens...
 val blockRenderer = remember(markdownStyling, isDark) {
     val rendererExtensions = listOf<MarkdownRendererExtension>(/*...*/)
-    
+
     if (isDark) {
         MarkdownBlockRenderer.dark(rendererExtensions)
     } else {
@@ -156,5 +157,6 @@ own inline renderer, this is something to be careful about.
 
 You can see this in action running the Standalone sample, and selecting Markdown from the top-left menu.
 
-The following image shows Jewel Markdown rendering this very Jewel Markdown README.
-![Image showing the Markdown showcase from the Jewel standalone sample](https://github.com/JetBrains/jewel/assets/19003/67e2cc4e-c9b8-454b-884a-bba526ad2fe4)
+The following image shows the Jewel Markdown renderer displaying the Jewel readme.
+
+![Image showing the Markdown renderer page from the Jewel standalone sample](../art/docs/markdown-renderer.png)

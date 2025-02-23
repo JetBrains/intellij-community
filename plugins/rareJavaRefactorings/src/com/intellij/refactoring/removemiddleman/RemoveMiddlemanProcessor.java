@@ -61,7 +61,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  public boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (MemberInfo memberInfo : myDelegateMethodInfos) {
       if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
@@ -77,7 +77,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
                                       List<? super FixableUsageInfo> usages) {
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();
       final String access;

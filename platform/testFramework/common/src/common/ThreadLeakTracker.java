@@ -240,6 +240,7 @@ public final class ThreadLeakTracker {
            || isStarterTestFramework(stackTrace)
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
+           || isIjentMediatorThread(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
   }
 
@@ -390,6 +391,36 @@ public final class ThreadLeakTracker {
     //at com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor$exportCurrentBatch$2.invokeSuspend(BatchSpanProcessor.kt:155)
 
     return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("org.jetbrains.intellij.build.ConsoleSpanExporter"));
+  }
+
+  /**
+   * We permit leaking IJent threads if IJent is intended to be shared for the whole application
+   * Normally IJent needs to be destroyed after each test. It is relatively cheap to set it up.
+   */
+  private static boolean isIjentMediatorThread(StackTraceElement[] stackTrace) {
+    // at java.base@17.0.9/java.io.FileInputStream.readBytes(Native Method)
+    // at java.base@17.0.9/java.io.FileInputStream.read(FileInputStream.java:276)
+    // at java.base@17.0.9/java.io.BufferedInputStream.read1(BufferedInputStream.java:282)
+    // at java.base@17.0.9/java.io.BufferedInputStream.read(BufferedInputStream.java:343)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:270)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:313)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.read(StreamDecoder.java:188)
+    // at java.base@17.0.9/java.io.InputStreamReader.read(InputStreamReader.java:177)
+    // at java.base@17.0.9/java.io.BufferedReader.fill(BufferedReader.java:162)
+    // at java.base@17.0.9/java.io.BufferedReader.readLine(BufferedReader.java:329)
+    // at java.base@17.0.9/java.io.BufferedReader.readLine(BufferedReader.java:396)
+    // at kotlin.io.LinesSequence$iterator$1.hasNext(ReadWrite.kt:85)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt.ijentProcessStderrLogger(IjentSessionMediator.kt:186)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt.access$ijentProcessStderrLogger(IjentSessionMediator.kt:1)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt$ijentProcessStderrLogger$1.invokeSuspend(IjentSessionMediator.kt)
+    // at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+    // at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+    if (System.getProperty("ide.testFramework.share.ijent.application.wide", "false").equals("true")) {
+      return ContainerUtil.exists(stackTrace, element ->
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentSessionMediatorKt") ||
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory"));
+    }
+    return false;
   }
 
   private static CharSequence dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {

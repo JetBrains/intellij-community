@@ -228,6 +228,15 @@ public final class ScratchFileActions {
 
   @IntellijInternalApi
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+    return doCreateNewScratch(project, context, DataContext.EMPTY_CONTEXT);
+  }
+
+  @IntellijInternalApi
+  public static @Nullable PsiFile doCreateNewScratch(
+    @NotNull Project project,
+    @NotNull ScratchFileCreationHelper.Context context,
+    @NotNull DataContext dataContext
+  ) {
     if (context.fileExtension == null && context.language != null) {
       LanguageFileType fileType = context.language.getAssociatedFileType();
       if (fileType != null) {
@@ -237,7 +246,7 @@ public final class ScratchFileActions {
     if (context.language != null) {
       ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
       if (StringUtil.isEmpty(context.text)) {
-        helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+        helper.prepareText(project, context, dataContext);
       }
       helper.beforeCreate(project, context);
     }

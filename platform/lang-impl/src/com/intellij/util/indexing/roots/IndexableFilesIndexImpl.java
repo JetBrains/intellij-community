@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ReadAction;
@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
@@ -94,26 +95,29 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
-    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots = builder.getIteratorsFromRoots(libraryOrigins, entityStorage);
+    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
+      builder.getIteratorsFromRoots(libraryOrigins, entityStorage, project);
     iterators.addAll(iteratorsFromRoots.getContentIterators());
     iterators.addAll(iteratorsFromRoots.getExternalIterators());
 
-    List<Sdk> sdks = new ArrayList<>();
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (moduleDependencyIndex.hasDependencyOn(sdk)) {
-        sdks.add(sdk);
+    if (!Registry.is("ide.workspace.model.sdk.remove.custom.processing")) {
+      List<Sdk> sdks = new ArrayList<>();
+      for (Sdk sdk : ProjectJdkTable.getInstance(project).getAllJdks()) {
+        if (moduleDependencyIndex.hasDependencyOn(sdk)) {
+          sdks.add(sdk);
+        }
       }
-    }
-    if (sdks.isEmpty()) {
-      Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (projectSdk != null) {
-        sdks.add(projectSdk);
+      if (sdks.isEmpty()) {
+        Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+        if (projectSdk != null) {
+          sdks.add(projectSdk);
+        }
       }
-    }
-    for (Sdk sdk : sdks) {
-      ProgressManager.checkCanceled();
-      iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
+      for (Sdk sdk : sdks) {
+        ProgressManager.checkCanceled();
+        iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
+      }
     }
 
     LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();

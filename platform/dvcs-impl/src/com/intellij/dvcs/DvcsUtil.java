@@ -116,11 +116,8 @@ public final class DvcsUtil {
     return fileEditor == null ? null : fileEditor.getFile();
   }
 
-  /**
-   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
-   */
-  @Deprecated(forRemoval = true)
   @CalledInAny
+  @ApiStatus.Internal
   public static @Nullable VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
     FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
     return fileEditor == null ? null : fileEditor.getFile();

@@ -108,7 +108,6 @@ jvm_library(
     "//platform/core-api:core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//plugins/junit/java-tests:java-tests_test_lib",
     "//platform/util/coroutines",
     "//platform/navbar/testFramework",
     "//java/unscramble",
@@ -116,11 +115,15 @@ jvm_library(
     "//plugins/gradle",
     "//platform/todo",
     "//platform/statistics/testFramework",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/testFramework",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/core:java-codeserver-core",
   ],
   runtime_deps = [
     "//community-resources:customization",
-    "//plugins/IntelliLang:java-langInjection",
-    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
   ]
 )
 

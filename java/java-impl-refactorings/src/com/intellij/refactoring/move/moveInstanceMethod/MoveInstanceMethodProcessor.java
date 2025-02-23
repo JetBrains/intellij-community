@@ -90,7 +90,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMember> members = new HashSet<>();
@@ -158,11 +158,11 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final List<UsageInfo> usages = new ArrayList<>();
-    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
+    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false).asIterable()) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         boolean isInternal = PsiTreeUtil.isAncestor(myMethod, element, true);

@@ -1,5 +1,6 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix" "false"
 // ERROR: 'f' overrides nothing
+// K2_AFTER_ERROR: 'f' overrides nothing.
 open class A {
     open fun foo() {}
     fun f(a: Int) {}

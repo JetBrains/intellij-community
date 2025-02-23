@@ -2,7 +2,7 @@
 
   <dependencies>
     <module name="kotlin.gradle.gradle-java"/>
-    <plugin id="kotlin.plugin.k1"/>
+    <plugin id="com.intellij.modules.kotlin.k1"/>
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

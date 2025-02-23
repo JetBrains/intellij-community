@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "kotlinx.serialization.InternalSerializationApi",
     "kotlinx.serialization.ExperimentalSerializationApi",
@@ -43,6 +42,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-slf4j",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
   exports = ["@lib//:package-search-api-client"],
@@ -71,6 +71,7 @@ jvm_library(
     "//platform/util-ex",
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
@@ -80,6 +81,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
   runtime_deps = [":repository-search_resources"]

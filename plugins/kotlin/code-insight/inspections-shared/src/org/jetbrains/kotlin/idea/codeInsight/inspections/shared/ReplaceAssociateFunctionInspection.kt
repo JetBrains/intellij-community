@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -57,16 +55,12 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
                 val (keySelector, valueTransform) = lastStatement.pair() ?: return null
                 val lambdaParameter: KaValueParameterSymbol = functionLiteral.symbol.valueParameters.singleOrNull() ?: return null
                 return when {
-                    keySelector.isReferenceTo(lambdaParameter) -> {
-                        val memberCall = dotQualifiedExpression.receiverExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
-                        val receiverType = memberCall?.symbol?.returnType ?: return null
-                        if (receiverType.isArrayOrPrimitiveArray &&
-                            dotQualifiedExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_4
-                        ) return null
+                    keySelector.isReferenceTo(lambdaParameter) ->
                         ASSOCIATE_WITH to GENERIC_ERROR_OR_WARNING
-                    }
+
                     valueTransform.isReferenceTo(lambdaParameter) ->
                         ASSOCIATE_BY to GENERIC_ERROR_OR_WARNING
+
                     else -> {
                         if (functionLiteral.bodyExpression?.statements?.size != 1) return null
                         ASSOCIATE_BY_KEY_AND_VALUE to INFORMATION
@@ -84,7 +78,6 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = dotQualifiedExpressionVisitor(fun(dotQualifiedExpression) {
-        if (dotQualifiedExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val calleeExpression = callExpression.calleeExpression ?: return
         if (calleeExpression.text !in associateFunctionNames) return
@@ -126,7 +119,8 @@ class ReplaceAssociateFunctionFix(
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val lambda = callExpression.lambda() ?: return
         val lastStatement = lambda.functionLiteral.lastStatement() ?: return
-        val (keySelector, valueTransform) = analyze(lastStatement) { lastStatement.pair() } ?: return
+        val (keySelector, valueTransform) =
+            analyze(lastStatement) { lastStatement.pair() } ?: return
 
         val psiFactory = KtPsiFactory(project)
         if (function == ASSOCIATE_BY_KEY_AND_VALUE) {
@@ -156,8 +150,7 @@ class ReplaceAssociateFunctionFix(
                 appendExpression(receiverExpression)
                 appendFixedText(".")
                 appendFixedText(functionName)
-                val valueArgumentList = callExpression.valueArgumentList
-                if (valueArgumentList != null) {
+                callExpression.valueArgumentList?.let { valueArgumentList ->
                     appendValueArgumentList(valueArgumentList)
                 }
                 if (callExpression.lambdaArguments.isNotEmpty()) {

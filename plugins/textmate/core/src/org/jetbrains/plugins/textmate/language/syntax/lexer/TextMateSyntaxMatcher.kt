@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
+import kotlinx.coroutines.Runnable
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
@@ -29,6 +30,8 @@ interface TextMateSyntaxMatcher {
     lexerState: TextMateLexerState,
     checkCancelledCallback: Runnable?,
   ): MatchData
+
+  fun createStringToMatch(s: CharSequence): TextMateString
 }
 
 class TextMateSyntaxMatcherImpl(
@@ -86,13 +89,17 @@ class TextMateSyntaxMatcherImpl(
       SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex(regex, lexerState.string, lexerState.matchData)
     }
     else {
-      regex.toString()
+      regex
     }
     return regexFactory.regex(regexString).match(string = string,
                                                  byteOffset = byteOffset,
                                                  matchBeginPosition = matchBeginPosition,
                                                  matchBeginString = matchBeginString,
                                                  checkCancelledCallback = checkCancelledCallback)
+  }
+
+  override fun createStringToMatch(s: CharSequence): TextMateString {
+    return regexFactory.string(s)
   }
 
   private fun matchFirstChild(
@@ -107,13 +114,13 @@ class TextMateSyntaxMatcherImpl(
   ): TextMateLexerState {
     val match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH)
     if (match != null) {
-      val regex = regexFactory.regex(match.toString())
+      val regex = regexFactory.regex(match)
       val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
       return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
     }
     val begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN)
     if (begin != null) {
-      val regex = regexFactory.regex(begin.toString())
+      val regex = regexFactory.regex(begin)
       val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
       return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
     }

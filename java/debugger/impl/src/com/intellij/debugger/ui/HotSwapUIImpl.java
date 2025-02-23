@@ -90,11 +90,13 @@ public final class HotSwapUIImpl extends HotSwapUI {
    * decide which sessions and classes participate in the hotswap and reload them.
    *
    * @param generatedPaths the relative paths of the {@code .class} files that were compiled, grouped by their content root
+   * @param isAutoRun      marks this update as automatic, meaning not explicitly called by a user
    */
   private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
                                @Nullable Map<String, Collection<String>> generatedPaths,
                                @Nullable NotNullLazyValue<List<String>> outputPaths,
-                               @Nullable HotSwapStatusListener callback) {
+                               @Nullable HotSwapStatusListener callback,
+                               boolean isAutoRun) {
     boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
@@ -105,6 +107,11 @@ public final class HotSwapUIImpl extends HotSwapUI {
     HotSwapStatusListener statusListener = makeNullSafe(callback);
 
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
+      statusListener.onCancel(sessions);
+      return;
+    }
+    if (isAutoRun && shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_ASK.equals(runHotswap)) {
+      // never show dialog for automatic runs
       statusListener.onCancel(sessions);
       return;
     }
@@ -148,10 +155,12 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
 
       if (modifiedClasses.isEmpty()) {
-        String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
-        Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
-        HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
-        notification.notify(myProject);
+        if (!isAutoRun) {
+          String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
+          Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
+          HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
+          notification.notify(myProject);
+        }
         HotSwapStatistics.logHotSwapStatus(myProject, HotSwapStatistics.HotSwapStatus.NO_CHANGES);
         statusListener.onNothingToReload(sessions);
         return;
@@ -300,7 +309,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
     else {
       if (session.isAttached()) {
-        hotSwapSessions(Collections.singletonList(session), null, null, callback);
+        hotSwapSessions(Collections.singletonList(session), null, null, callback, false);
       }
       else if (callback != null) {
         callback.onFailure(List.of(session));
@@ -317,7 +326,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
     HotSwapStatusListener callback = HotSwapDebugSessionManager.getInstance(project).createSessionListenerOrNull(session);
     if (callback == null) {
       ProjectTaskManager.getInstance(project).compile(files);
-    } else {
+    }
+    else {
       ProjectTaskManagerImpl taskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(project);
       ProjectTask task = ReadAction.compute(() -> taskManager.createModulesFilesTask(files));
       taskManager.run(createContext(callback), task);
@@ -329,7 +339,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
   }
 
-  private static @Nullable HotSwapStatusListener mergeCallbacksIfNeeded(@Nullable HotSwapStatusListener callback1, @Nullable HotSwapStatusListener callback2) {
+  private static @Nullable HotSwapStatusListener mergeCallbacksIfNeeded(@Nullable HotSwapStatusListener callback1,
+                                                                        @Nullable HotSwapStatusListener callback2) {
     if (callback1 == null) return callback2;
     if (callback2 == null) return callback1;
     return new HotSwapStatusListener() {
@@ -437,7 +448,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
         .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toList())))
         .orElse(null);
-      instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
+      instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback, context.isAutoRun());
     }
 
     private static void notifyCancelled(@Nullable HotSwapStatusListener callback, List<DebuggerSession> sessions) {

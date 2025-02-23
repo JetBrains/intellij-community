@@ -84,10 +84,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
-        ProjectCoordinate publication = node.getData().getPublication();
-        if (publication != null) {
-          modelsProvider.registerModulePublication(module, publication);
-        }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
         setModuleOptions(module, node);

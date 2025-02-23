@@ -5,33 +5,39 @@ import andel.operation.Operation
 import andel.text.CharOffset
 import andel.text.TextRange
 import andel.text.charSequence
+import andel.text.replaceOperation
 
-fun TransientEditor.moveCaret(absoluteOffset: Long) =
+fun TransientEditor.moveCaret(absoluteOffset: Long): Unit =
   moveCarets(listOf(currentCaret.copy(CaretPosition(absoluteOffset))))
 
-fun TransientEditor.moveCaretRelatively(relativeOffset: Int, expandSelection: Boolean = false) =
+fun TransientEditor.moveCaretRelatively(relativeOffset: Int, expandSelection: Boolean = false): Unit =
   moveCaretRelatively(currentCaret, relativeOffset.toLong(), expandSelection)
 
-fun TransientEditor.insert(offset: Long, text: String) =
+fun TransientEditor.insert(offset: Long, text: String): Unit =
   document.edit(
     Operation.insertAt(
       offset, text, document.text.charCount.toLong()
     )
   )
 
-fun TransientEditor.insertBeforeCaret(toInsert: Any) = insertBeforeCarets(mapOf(currentCaret.caretId to toInsert.toString()))
+fun TransientEditor.insertBeforeCaret(toInsert: Any): Unit = insertBeforeCarets(mapOf(currentCaret.caretId to toInsert.toString()))
 
-fun TransientEditor.insertAfterCaret(toInsert: Any) = insertAfterCarets(mapOf(currentCaret.caretId to toInsert.toString()))
+fun TransientEditor.insertAfterCaret(toInsert: Any): Unit = insertAfterCarets(mapOf(currentCaret.caretId to toInsert.toString()))
 
-fun TransientEditor.deleteBeforeCaret(delete: Long) = deleteBeforeCarets(mapOf(currentCaret.caretId to delete))
+fun TransientEditor.deleteBeforeCaret(delete: Long): Unit = deleteBeforeCarets(mapOf(currentCaret.caretId to delete))
 
-fun TransientEditor.deleteAfterCaret(delete: Long) = deleteAfterCarets(mapOf(currentCaret.caretId to delete))
+fun TransientEditor.deleteAfterCaret(delete: Long): Unit = deleteAfterCarets(mapOf(currentCaret.caretId to delete))
 
-fun TransientEditor.delete(range: TextRange) = delete(range.start, range.end)
+fun TransientEditor.delete(range: TextRange): Unit = delete(range.start, range.end)
 
 fun TransientEditor.delete(start: CharOffset, end: CharOffset) {
   val textToDelete = document.text.view().charSequence(start, end)
   document.edit(Operation.deleteAt(start, textToDelete.toString(), document.text.charCount.toLong()))
+}
+
+fun TransientEditor.replace(from: Int, to: Int, replacement: String): Unit {
+  val op = document.text.view().replaceOperation(from, to, replacement)
+  document.edit(op)
 }
 
 fun TransientEditor.handleDefaultTyping(input: String) {

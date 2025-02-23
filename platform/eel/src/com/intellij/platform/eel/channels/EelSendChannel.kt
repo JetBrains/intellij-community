@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.channels
 
 import com.intellij.platform.eel.EelResult
@@ -18,6 +18,8 @@ interface EelSendChannel<out ERR : Any> {
    *
    * It is recommended to use [sendWholeBuffer].
    *
+   * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
+   *
    * @return Either IO [ERR] string or success if [src] was written.
    */
   @EelSendApi
@@ -29,11 +31,18 @@ interface EelSendChannel<out ERR : Any> {
    * Receive side will get [com.intellij.platform.eel.ReadResult.EOF]
    */
   suspend fun close()
+
+  /**
+   * Channel is closed, and any [send] is guaranteed to return an error.
+   * This field is set some time after channel is closed, so you might encounter an error with [send] even though this field is `false`.
+   */
+  val closed: Boolean
 }
 
 /**
- * As [EelSendChannel.send] but writes the whole buffer.
+ * As [EelSendChannel.send] but writes the whole buffer (coroutine is suspended until buffer gets written).
  * In most cases, you need this function.
+ * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
  */
 @CheckReturnValue
 suspend fun <ERR : Any> EelSendChannel<ERR>.sendWholeBuffer(src: ByteBuffer): EelResult<Unit, ERR> {
@@ -48,3 +57,4 @@ suspend fun <ERR : Any> EelSendChannel<ERR>.sendWholeBuffer(src: ByteBuffer): Ee
   while (src.hasRemaining())
   return result
 }
+

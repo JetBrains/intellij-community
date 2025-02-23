@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileNameMatcher;
@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
-public class LightEditFilePatterns {
+public final class LightEditFilePatterns {
   public static final String[] DEFAULT_PATTERNS = {
     "*.txt", "*.log", "*.md", "*.json", "*.xml", "*.sh", "*.ini", "*.yml", "*.conf"};
 

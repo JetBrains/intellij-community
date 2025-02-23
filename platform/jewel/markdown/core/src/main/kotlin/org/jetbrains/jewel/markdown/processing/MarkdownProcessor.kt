@@ -28,6 +28,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownMode
+import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
@@ -56,11 +58,22 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  */
 @ExperimentalJewelApi
 public class MarkdownProcessor(
-    private val extensions: List<MarkdownProcessorExtension> = emptyList(),
+    public val extensions: List<MarkdownProcessorExtension> = emptyList(),
     private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
     private val commonMarkParser: Parser =
-        MarkdownParserFactory.create(markdownMode is MarkdownMode.EditorPreview, extensions),
+        MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
 ) {
+    /** The [block-level processor extensions][MarkdownBlockProcessorExtension]s used by this processor. */
+    public val blockExtensions: List<MarkdownBlockProcessorExtension> =
+        extensions.mapNotNull { it.blockProcessorExtension }
+
+    /**
+     * The [delimited inline node processor extensions][MarkdownDelimitedInlineProcessorExtension]s used by this
+     * processor.
+     */
+    public val delimitedInlineExtensions: List<MarkdownDelimitedInlineProcessorExtension> =
+        extensions.mapNotNull { it.delimitedInlineProcessorExtension }
+
     private var currentState = State(emptyList(), emptyList(), emptyList())
 
     @TestOnly internal fun getCurrentIndexesInTest() = currentState.indexes
@@ -248,10 +261,7 @@ public class MarkdownProcessor(
             is ThematicBreak -> MarkdownBlock.ThematicBreak
             is HtmlBlock -> toMarkdownHtmlBlockOrNull()
             is CustomBlock -> {
-                extensions
-                    .find { it.blockProcessorExtension?.canProcess(this) == true }
-                    ?.blockProcessorExtension
-                    ?.processMarkdownBlock(this, this@MarkdownProcessor)
+                blockExtensions.find { it.canProcess(this) }?.processMarkdownBlock(this, this@MarkdownProcessor)
             }
 
             else -> null
@@ -267,14 +277,14 @@ public class MarkdownProcessor(
     }
 
     private fun Paragraph.toMarkdownParagraph(): MarkdownBlock.Paragraph =
-        MarkdownBlock.Paragraph(readInlineContent().toList())
+        MarkdownBlock.Paragraph(readInlineMarkdown(this@MarkdownProcessor))
 
     private fun BlockQuote.toMarkdownBlockQuote(): MarkdownBlock.BlockQuote =
         MarkdownBlock.BlockQuote(processChildren(this))
 
     private fun Heading.toMarkdownHeadingOrNull(): MarkdownBlock.Heading? {
         if (level < 1 || level > 6) return null
-        return MarkdownBlock.Heading(inlineContent = readInlineContent().toList(), level = level)
+        return MarkdownBlock.Heading(inlineContent = readInlineMarkdown(this@MarkdownProcessor), level = level)
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
@@ -345,7 +355,13 @@ public class MarkdownProcessor(
         return MarkdownBlock.HtmlBlock(literal.trimEnd('\n'))
     }
 
-    private fun Block.readInlineContent() = readInlineContent(this@MarkdownProcessor, extensions)
+    /** Creates a copy of this [MarkdownProcessor] with the same properties, plus the provided [extension]. */
+    @ExperimentalJewelApi
+    public operator fun plus(extension: MarkdownProcessorExtension): MarkdownProcessor = withExtension(extension)
+
+    /** Creates a copy of this [MarkdownProcessor] with the same properties, plus the provided [extension]. */
+    public fun withExtension(extension: MarkdownProcessorExtension): MarkdownProcessor =
+        MarkdownProcessor(extensions + extension, markdownMode, commonMarkParser)
 
     private data class State(val lines: List<String>, val blocks: List<Block>, val indexes: List<Pair<Int, Int>>)
 }

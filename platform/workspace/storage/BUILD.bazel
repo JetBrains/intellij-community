@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.workspace.storage` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -9,6 +9,12 @@ create_kotlinc_options(
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
   ]
+)
+
+jvm_resources(
+  name = "storage_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -30,6 +36,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic",
     "@lib//:kotlinx-collections-immutable",
-  ]
+  ],
+  runtime_deps = [":storage_resources"]
 )
 ### auto-generated section `build intellij.platform.workspace.storage` end

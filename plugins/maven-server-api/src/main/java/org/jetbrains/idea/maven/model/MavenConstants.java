@@ -11,6 +11,9 @@ public final class MavenConstants {
   public static final String[] POM_NAMES = new String[]{POM_XML, "pom.scala", "pom.groovy", "pom.atom", "pom.rb", "pom.yml", "pom.clj"};
   public static final String[] POM_EXTENSIONS = {"pom", "xml", "scala", "groovy", "atom", "rb", "yml", "clj"};
 
+  public static final String MODEL_VERSION_4_0_0 = "4.0.0";
+  public static final String MODEL_VERSION_4_1_0 = "4.1.0";
+
   public static final String SUPER_POM_4_0_XML = "pom-4.0.0.xml";
   public static final String SUPER_POM_4_1_XML = "pom-4.1.0.xml";
   public static final String PROFILES_XML = "profiles.xml";
@@ -47,7 +50,8 @@ public final class MavenConstants {
   public static final List<String> BASIC_PHASES =
     Arrays.asList("clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
 
-  public static final String JVM_CONFIG_RELATIVE_PATH = ".mvn/jvm.config";
-  public static final String MAVEN_CONFIG_RELATIVE_PATH = ".mvn/maven.config";
-  public static final String MAVEN_WRAPPER_RELATIVE_PATH = ".mvn/wrapper/maven-wrapper.properties";
+  public static final String MVN_CONFIG_DIR = ".mvn";
+  public static final String JVM_CONFIG_RELATIVE_PATH = MVN_CONFIG_DIR + "/jvm.config";
+  public static final String MAVEN_CONFIG_RELATIVE_PATH = MVN_CONFIG_DIR + "/maven.config";
+  public static final String MAVEN_WRAPPER_RELATIVE_PATH = MVN_CONFIG_DIR + "/wrapper/maven-wrapper.properties";
 }

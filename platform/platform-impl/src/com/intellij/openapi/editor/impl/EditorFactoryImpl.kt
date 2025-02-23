@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -208,6 +209,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     highlighter: EditorHighlighter?,
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
+    AdTheManager.getInstance().bindLocalDocEntity(document)
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
     editor.putEditorId()
     // must be _before_ event firing

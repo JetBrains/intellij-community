@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test
 
@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import javax.swing.Icon
 
@@ -399,7 +398,7 @@ object ExpectedCompletionUtils {
     }
 
     private fun iconToString(it: Icon): String {
-        return (it.safeAs<RowIcon>()?.allIcons?.firstOrNull() ?: it).toString()
+        return ((it as? RowIcon)?.allIcons?.firstOrNull() ?: it).toString()
             //todo check how do we get not a dummy icon?
             .replace("nodes/property.svg", "Property")
     }

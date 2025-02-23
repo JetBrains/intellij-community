@@ -2,7 +2,6 @@
 package andel.lines
 
 import andel.intervals.Interval
-import andel.lines.LineBasedHeight.Companion.ZERO
 
 interface LinesLayout {
   fun preferredWidth(): Float

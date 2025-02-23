@@ -22,5 +22,7 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.devkit.kotlin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.devkit.k2" scope="RUNTIME" />
   </component>
 </module>

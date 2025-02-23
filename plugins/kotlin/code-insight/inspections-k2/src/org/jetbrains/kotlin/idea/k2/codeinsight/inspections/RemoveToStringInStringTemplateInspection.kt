@@ -52,18 +52,17 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
         return referenceExpression.getReferencedNameAsName() == OperatorNameConventions.TO_STRING && callExpression.valueArguments.isEmpty()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = call.symbol.allOverriddenSymbolsWithSelf
         return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }
             .asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtDotQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.to.string.fix.text")
@@ -85,5 +84,5 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
                 element.replace(receiverExpression)
             }
         }
-    })
+    }
 }

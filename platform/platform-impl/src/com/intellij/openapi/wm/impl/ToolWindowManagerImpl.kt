@@ -1021,7 +1021,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
     if (toBeShownInfo.order == -1) {
-      toBeShownInfo.order = layoutState.getMaxOrder(toBeShownInfo.safeToolWindowPaneId, toBeShownInfo.anchor)
+      toBeShownInfo.order = layoutState.getNextOrder(toBeShownInfo.safeToolWindowPaneId, toBeShownInfo.anchor)
     }
 
     val snapshotInfo = toBeShownInfo.copy()
@@ -1149,7 +1149,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (preparedTask.isButtonNeeded) {
         // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
         // because sibling's order is equal to -1, so, always in the end
-        info.order = layout.getMaxOrder(paneId = info.safeToolWindowPaneId, anchor = task.anchor)
+        info.order = layout.getNextOrder(paneId = info.safeToolWindowPaneId, anchor = task.anchor)
         layout.addInfo(task.id, info)
       }
     }

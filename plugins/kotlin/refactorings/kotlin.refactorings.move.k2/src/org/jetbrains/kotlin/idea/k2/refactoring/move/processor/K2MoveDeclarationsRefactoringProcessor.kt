@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.ide.util.EditorHelper
@@ -74,7 +74,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
             } + findInternalOuterInstanceUsages(moveDescriptor.source)
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         if (!operationDescriptor.searchReferences) return emptyArray()
         val allUsages = operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             val usages = operationDescriptor.moveDescriptors.flatMapTo(mutableSetOf(), ::getUsages)
@@ -125,7 +125,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
 
     private val conflicts: MultiMap<PsiElement, String> = MultiMap<PsiElement, String>()
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
         ActionUtil.underModalProgress(
             operationDescriptor.project,
@@ -185,10 +185,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
             }
         }
 
-        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
-            ApplicationManager.getApplication().invokeLater {
-                EditorHelper.openFilesInEditor(movedElements.toTypedArray())
-            }
+        ApplicationManager.getApplication().invokeLater {
+            openFilesAfterMoving(movedElements)
         }
     }
 
@@ -378,7 +376,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
                             ) ?: return
                             val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
                             val parameter = KtPsiFactory(project).createParameter("private val $possiblyQuotedName: $type")
-                            createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
+                            val constructorParameterList = createPrimaryConstructorParameterListIfAbsent()
+                            constructorParameterList.addParameterBefore(parameter, constructorParameterList.parameters.firstOrNull())
                         }
                     }
                 }
@@ -482,4 +481,15 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * Note: The [originalDeclaration] is usually not valid anymore at this point because it was moved.
      */
     open fun postDeclarationMoved(originalDeclaration: KtNamedDeclaration, newDeclaration: KtNamedDeclaration) {}
+
+    /**
+     * Called after the move is completed to open the [movedElements] in the editor in their respective new files.
+     * Can be overridden to not open the files or to invoke other operations like rename.
+     * Note: this is invoked in an `invokeLater` so it does not happen immediately after the move is completed.
+     */
+    open fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
+            EditorHelper.openFilesInEditor(movedElements.toTypedArray())
+        }
+    }
 }

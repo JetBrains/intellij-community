@@ -28,11 +28,13 @@ import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
+import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
@@ -43,7 +45,7 @@ private val LOG = logger<MainMenuButton>()
 private const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
 @ApiStatus.Internal
-class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.General.WindowsMenu_20x20, getItemToSelect: () -> Int = { 0 }) {
+class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.General.WindowsMenu_20x20, getItemToSelect: () -> Int) {
 
   internal var expandableMenu: ExpandableMenu? = null
     set(value) {
@@ -277,6 +279,13 @@ private fun createMenuButton(action: AnAction): ActionButton {
                                      ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
       return runCatching { DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) }.getOrNull() ?: super.getDataContext()
+    }
+
+    // Dynamically adjusts the insets of the component based on its height. This approach ensures alignment with the menu
+    override fun getInsets(): Insets? {
+      val ins = super.getInsets()
+      val topBottomInset = this.height / scale(8)
+      return JBUI.insets(topBottomInset,ins.left,  topBottomInset, ins.right)
     }
   }
 

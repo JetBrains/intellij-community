@@ -67,7 +67,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()

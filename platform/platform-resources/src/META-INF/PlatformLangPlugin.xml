@@ -22,6 +22,8 @@
   <xi:include href="/META-INF/CoreImpl.xml"/>
   <xi:include href="/META-INF/Analysis.xml"/>
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
+  <xi:include href="/META-INF/WorkspaceModel.xml"/>
+  <xi:include href="/META-INF/WorkspaceModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
@@ -71,6 +73,10 @@
 
   <xi:include href="intellij.platform.todo.xml"/>
 
+  <xi:include href="/META-INF/intellij.platform.syntax.psi.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
@@ -80,8 +86,11 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
+    <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTableProjectViewProvider"
+                    serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTableProjectViewProviderImpl"/>
+
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkTableBridgeRegistryImpl"/>
     <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>

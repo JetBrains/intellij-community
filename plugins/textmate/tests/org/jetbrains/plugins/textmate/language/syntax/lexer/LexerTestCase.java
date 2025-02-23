@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.textmate.joni.JoniRegexFactory;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
 import org.jetbrains.plugins.textmate.regex.RegexFactory;
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory;
-import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

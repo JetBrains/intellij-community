@@ -2,15 +2,23 @@ package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.getOr
-import com.intellij.platform.eel.impl.utils.exec
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.exec
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle.message
 import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.PYTHON_VERSION_ARG
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,9 +55,20 @@ suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe
     return failure(text)
   }
   return if (output.exitCode != 0) {
-    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, {output.stderr}"))
+    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
   }
   else {
-    Result.success(output.stdout)
+    Result.success(output.stdoutString)
   }
+}
+
+@RequiresBackgroundThread
+fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().operatingSystem) {
+  EelPath.OS.WINDOWS -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
+  EelPath.OS.UNIX -> parent.takeIf { it.name != "bin" } ?: parent.parent
+}
+
+@RequiresBackgroundThread
+fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
+  return VirtualEnvReader(isWindows = getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS).findPythonInPythonRoot(this)
 }

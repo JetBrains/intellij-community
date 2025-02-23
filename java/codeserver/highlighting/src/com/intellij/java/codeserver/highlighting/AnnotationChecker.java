@@ -28,6 +28,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 final class AnnotationChecker {
   private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
@@ -95,8 +97,7 @@ final class AnnotationChecker {
     PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
-        if (IncompleteModelUtil.isIncompleteModel(expression) &&
-            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
+        if (myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
           return;
         }
         myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NON_CONSTANT.create(expression));
@@ -371,13 +372,14 @@ final class AnnotationChecker {
       if (owner instanceof PsiModifierList list) {
         PsiElement parent = list.getParent();
         if (parent instanceof PsiClass psiClass) {
+          PsiClassType type = myVisitor.factory().createType(psiClass);
           switch (LambdaUtil.checkInterfaceFunctional(psiClass)) {
-            case NOT_INTERFACE -> myVisitor.report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(annotation, psiClass));
-            case NO_ABSTRACT_METHOD -> myVisitor.report(JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(annotation, psiClass));
-            case MULTIPLE_ABSTRACT_METHODS -> myVisitor.report(JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(annotation, psiClass));
+            case NOT_INTERFACE -> myVisitor.report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(annotation, type));
+            case NO_ABSTRACT_METHOD -> myVisitor.report(JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(annotation, type));
+            case MULTIPLE_ABSTRACT_METHODS -> myVisitor.report(JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(annotation, type));
           }
           if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
-            myVisitor.report(JavaErrorKinds.LAMBDA_FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
+            myVisitor.report(JavaErrorKinds.FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
           }
         }
       }
@@ -410,7 +412,7 @@ final class AnnotationChecker {
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         String name = attribute.getName();
-        names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+        names.add(requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
       PsiMethod[] annotationMethods = psiClass.getMethods();
@@ -563,7 +565,7 @@ final class AnnotationChecker {
         }
       }
       else if (superMethod == null) {
-        if (IncompleteModelUtil.isIncompleteModel(psiClass)) {
+        if (myVisitor.isIncompleteModel()) {
           if (!IncompleteModelUtil.isHierarchyResolved(psiClass)) {
             return;
           }
@@ -595,7 +597,7 @@ final class AnnotationChecker {
     if (identifier == null && pair.getParent() instanceof PsiAnnotationParameterList list) {
       PsiNameValuePair[] attributes = list.getAttributes();
       if (attributes.length > 1) {
-        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING.create(pair));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NAME_MISSING.create(pair));
         return;
       }
     }
@@ -615,7 +617,7 @@ final class AnnotationChecker {
     }
     PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
-      PsiType expectedType = Objects.requireNonNull(annotationMethod.getReturnType());
+      PsiType expectedType = requireNonNull(annotationMethod.getReturnType());
       checkMemberValueType(value, expectedType, annotationMethod);
     }
     checkDuplicateAttribute(pair);
@@ -628,8 +630,8 @@ final class AnnotationChecker {
       if (attribute == pair) break;
       String name = pair.getName();
       if (Objects.equals(attribute.getName(), name)) {
-        myVisitor.report(
-          JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        break;
       }
     }
   }

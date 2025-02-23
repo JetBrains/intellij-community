@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.core" />
   </component>
 </module>

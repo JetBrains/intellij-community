@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
@@ -50,7 +49,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/projectModel-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/diff-impl",
     "//platform/ide-core",
@@ -107,7 +106,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/projectModel-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/diff-impl",
     "//platform/ide-core",

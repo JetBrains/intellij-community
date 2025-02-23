@@ -2,7 +2,6 @@ package org.jetbrains.jewel.samples.standalone.markdown
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,15 +44,13 @@ public fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) 
 
 @Composable
 private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) -> Unit) {
-    Row(
-        modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
         var showFilePicker by remember { mutableStateOf(false) }
         OutlinedButton(onClick = { showFilePicker = true }, modifier = Modifier.padding(start = 2.dp)) {
             Text("Load file...")
         }
+
+        Spacer(Modifier.width(10.dp))
 
         FilePicker(show = showFilePicker, fileExtensions = listOf("md")) { platformFile ->
             showFilePicker = false

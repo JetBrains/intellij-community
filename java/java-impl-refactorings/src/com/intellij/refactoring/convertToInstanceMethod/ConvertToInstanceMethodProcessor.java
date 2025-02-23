@@ -89,7 +89,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     LOG.assertTrue(myTargetParameter == null || myTargetParameter.getDeclarationScope() == myMethod);
     final Project project = myMethod.getProject();
 
@@ -113,7 +113,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     }
 
     if (myTargetParameter != null) {
-      for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
+      for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef) {
           result.add(new ParameterUsageInfo(ref));
@@ -151,7 +151,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton(myMethod);
@@ -329,7 +329,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     if (myTypeParameterReplacements == null) return;
     final Collection<PsiTypeParameter> typeParameters = myTypeParameterReplacements.keySet();
     for (final PsiTypeParameter parameter : typeParameters) {
-      for (final PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false)) {
+      for (final PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false).asIterable()) {
         if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
           reference.getElement().putCopyableUserData(BIND_TO_TYPE_PARAMETER, myTypeParameterReplacements.get(parameter));
         }

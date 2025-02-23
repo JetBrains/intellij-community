@@ -1,5 +1,11 @@
 // "Create class 'Foo'" "true"
-
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Introduce local variable
+// K2_ACTIONS_LIST: Create annotation 'Foo'
+// K2_ACTIONS_LIST: Create class 'Foo'
+// K2_ACTIONS_LIST: Create enum 'Foo'
+// K2_ACTIONS_LIST: Create interface 'Foo'
+// K2_ACTIONS_LIST: Create function 'Foo'
 fun test() = Foo(2, "2")
 
 class Foo(i: Int, s: String) {

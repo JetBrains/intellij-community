@@ -38,6 +38,11 @@ import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.Icon
 
+@OptIn(KaExperimentalApi::class)
+fun KaSession.calcLabel(symbol: KaDeclarationSymbol): String {
+    return symbol.render(RENDERER)
+}
+
 class KotlinMethodSmartStepTarget(
     lines: Range<Int>,
     highlightElement: PsiElement,
@@ -46,34 +51,6 @@ class KotlinMethodSmartStepTarget(
     val ordinal: Int,
     val methodInfo: CallableMemberInfo
 ) : KotlinSmartStepTarget(label, highlightElement, false, lines), ForceSmartStepIntoSource {
-    companion object {
-        @KaExperimentalApi
-        private val renderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.NONE
-            }
-            keywordsRenderer = keywordsRenderer.with {
-                keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD)
-            }
-            modifiersRenderer = modifiersRenderer.with {
-                modifierListRenderer = NO_MODIFIER_LIST
-            }
-            typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-                functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-            }
-            returnTypeFilter = NO_RETURN_TYPE
-            typeParametersFilter = KaTypeParameterRendererFilter { _, _ -> false }
-            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
-            callableReceiverRenderer = NO_CALLABLE_RECEIVER
-        }
-
-        context(KaSession)
-        @OptIn(KaExperimentalApi::class)
-        fun calcLabel(symbol: KaDeclarationSymbol): String {
-            return symbol.render(renderer)
-        }
-    }
 
     private val declarationPtr = declaration?.fetchNavigationElement()?.createSmartPointer()
 
@@ -84,7 +61,7 @@ class KotlinMethodSmartStepTarget(
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
     override fun getClassName(): String? {
         val declaration = getDeclaration() ?: return null
-        return runDumbAnalyze(declaration, fallback = null) { declaration.getClassName() }
+        return runDumbAnalyze(declaration, fallback = null) { getClassName(declaration) }
     }
 
     override fun needForceSmartStepInto() = methodInfo.isInvoke && methodInfo.isSuspend
@@ -146,6 +123,27 @@ private val NO_MODIFIER_LIST = object : KaModifierListRenderer {
         printer: PrettyPrinter
     ) {}
 
+}
+
+@KaExperimentalApi
+private val RENDERER = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+    annotationRenderer = annotationRenderer.with {
+        annotationFilter = KaRendererAnnotationsFilter.NONE
+    }
+    keywordsRenderer = keywordsRenderer.with {
+        keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD)
+    }
+    modifiersRenderer = modifiersRenderer.with {
+        modifierListRenderer = NO_MODIFIER_LIST
+    }
+    typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+    }
+    returnTypeFilter = NO_RETURN_TYPE
+    typeParametersFilter = KaTypeParameterRendererFilter { _, _ -> false }
+    constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
+    valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
+    callableReceiverRenderer = NO_CALLABLE_RECEIVER
 }
 
 private fun KtDeclaration.fetchNavigationElement(): KtDeclaration =

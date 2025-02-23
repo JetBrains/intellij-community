@@ -50,7 +50,7 @@ internal class ResourceConfigGenerator(
 
     val project = module.project
     val moduleName = module.name
-    val moduleType = getMavenModuleType(project, moduleName)
+    val moduleType = module.getMavenModuleType()
 
     generate(module, moduleType)
 
@@ -58,16 +58,15 @@ internal class ResourceConfigGenerator(
       val otherModuleNames = getModuleNames(project, pomXml).filter { it != moduleName }
 
       val moduleManager = ModuleManager.getInstance(project)
-      otherModuleNames.forEach {
-        val aModule = moduleManager.findModuleByName(it)
-        val aModuleType = getMavenModuleType(project, it)
-        generate(aModule, aModuleType)
+      for (otherModuleName in otherModuleNames) {
+        val otherModule = moduleManager.findModuleByName(otherModuleName) ?: continue
+        val otherModuleType = otherModule.getMavenModuleType()
+        generate(otherModule, otherModuleType)
       }
     }
   }
 
-  private fun generate(module: Module?, moduleType: StandardMavenModuleType) {
-    if (module == null) return
+  private fun generate(module: Module, moduleType: StandardMavenModuleType) {
     val moduleName = module.name
 
     val resourceConfig = MavenModuleResourceConfiguration()
@@ -94,12 +93,18 @@ internal class ResourceConfigGenerator(
     resourceConfig.testOutputDirectory =
       transformer.toRemotePathOrSelf(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources"))
 
-    if (moduleType != StandardMavenModuleType.TEST_ONLY) {
-      addResources(transformer, resourceConfig.resources, mavenProject.resources)
-    }
-
-    if (moduleType != StandardMavenModuleType.MAIN_ONLY) {
-      addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+    when (moduleType) {
+      StandardMavenModuleType.SINGLE_MODULE -> {
+        addResources(transformer, resourceConfig.resources, mavenProject.resources)
+        addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+      }
+      StandardMavenModuleType.MAIN_ONLY -> {
+        addResources(transformer, resourceConfig.resources, mavenProject.resources)
+      }
+      StandardMavenModuleType.TEST_ONLY -> {
+        addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+      }
+      else -> {}
     }
 
     addWebResources(transformer, moduleName, projectConfig, mavenProject)

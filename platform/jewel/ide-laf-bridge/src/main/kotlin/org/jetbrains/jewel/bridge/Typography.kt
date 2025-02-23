@@ -5,7 +5,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.NewUiValue
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.copyWithSize
 import org.jetbrains.jewel.ui.component.minus

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -146,19 +147,20 @@ object CreateKotlinCallableActionTextBuilder {
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
-        val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
+        val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
         if (ktType == null || ktType == builtinTypes.unit) return null
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
     context (KaSession)
     fun renderCandidatesOfParameterTypes(expectedParameters: List<ExpectedParameter>, container: KtElement?): List<ParamCandidate> {
+        val generator = UniqueNameGenerator()
         return expectedParameters.map { expectedParameter ->
             val types = if (container == null) listOf("Any")
             else expectedParameter.expectedTypes.map {
                 renderTypeName(it, container) ?: "Any"
             }
-            ParamCandidate(expectedParameter.semanticNames, types)
+            ParamCandidate(expectedParameter.semanticNames.map { generator.generateUniqueName(it) }, types)
         }
     }
 }

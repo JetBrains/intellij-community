@@ -3,8 +3,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "dom-impl_resources",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -22,7 +22,7 @@ jvm_library(
     "//xml/xml-structure-view-api:structureView",
     "//platform/lang-impl",
     "//platform/indexing-impl",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//xml/openapi:xml",
     "//platform/refactoring",
     "//platform/usageView",

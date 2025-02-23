@@ -1,0 +1,24 @@
+<idea-plugin>
+  <id>org.jetbrains.platform.debugger.streams</id>
+  <name>Platform Stream Debugger</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <description>Provides the core functionality, APIs, and extension points for stream debugger plugin development.</description>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.xdebugger</depends>
+
+  <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <action id="StreamTracerAction"
+            class="com.intellij.debugger.streams.core.action.TraceStreamAction"
+            icon="com.intellij.debugger.streams.core.icons.DebuggerStreamsCoreIcons.Stream_debugger">
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    </action>
+  </actions>
+</idea-plugin>

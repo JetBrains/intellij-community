@@ -4,11 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
   ]
 )
 
@@ -45,7 +45,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/core-ui",
     "//platform/execution-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
     "//platform/refactoring",
@@ -92,7 +92,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/core-ui",
     "//platform/execution-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
     "//platform/refactoring",

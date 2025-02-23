@@ -2,6 +2,7 @@
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
+import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -100,6 +102,10 @@ open class IdeStarter : ModernApplicationStarter() {
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
       PerformanceWatcher.getInstance().startEdtSampling()
+
+      if (!Registry.`is`("ide.enable.edt.lock.load.monitor")) {
+        app.serviceAsync<EdtLockLoadMonitorService>().initialize()
+      }
 
       launch { reportPluginErrors() }
 
@@ -272,7 +278,7 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    startSystemHealthMonitor()
+    SystemHealthMonitor.start()
   }
 
   launch {

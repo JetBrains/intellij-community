@@ -37,7 +37,13 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
 
-    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.pirates.SoftwareAccessibilitySurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
+
+    <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
+    <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
+    <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
+    <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
   </extensions>
 
   <applicationListeners>
@@ -60,8 +66,9 @@
 
     <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
     <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
-
-    <action class="com.intellij.platform.feedback.pirates.ShowSoftwareAccessibilitySurveyAction" internal="true"
-            text="Show Software Accessibility Survey"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
+            text="Show CSAT Feedback Dialog"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
+            text="Show Next Date for CSAT Feedback Dialog"/>
   </actions>
 </idea-plugin>

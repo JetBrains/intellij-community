@@ -46,8 +46,7 @@ internal class AddNamesToCallArgumentsIntention :
         // Note: `KtCallElement.valueArgumentList` only includes arguments inside parentheses; it doesn't include a trailing lambda.
         element.valueArgumentList?.arguments?.any { !it.isNamed() } ?: false
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallElement): Context? {
+    override fun KaSession.prepareContext(element: KtCallElement): Context? {
         val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(element, null)
         return associateArgumentNamesStartingAt?.let { Context(it) }
     }

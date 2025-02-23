@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.*
@@ -66,7 +66,7 @@ private class StubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun equals(other: Any?): Boolean =
@@ -84,7 +84,7 @@ private class LightStubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun createPsi(stub: Stub): Psi? =
@@ -107,6 +107,8 @@ private class LanguageStubDescriptorAdapter(
 
   override val fileElementSerializer: IStubFileElementType<*>
     get() = fileElementType
+
+  override fun toString(): String = "LanguageStubDescriptorAdapter(language=$language)"
 }
 
 private class LanguageStubDefinitionAdapter(
@@ -121,6 +123,8 @@ private class LanguageStubDefinitionAdapter(
 
   override fun shouldBuildStubFor(file: VirtualFile): Boolean =
     fileElementType.shouldBuildStubFor(file)
+
+  override fun toString(): String = "LanguageStubDefinitionAdapter(language=${fileElementType.language})"
 }
 
 private class LightLanguageStubDefinitionAdapter(
@@ -138,6 +142,8 @@ private class LightLanguageStubDefinitionAdapter(
 
   override fun parseContentsLight(chameleon: ASTNode): FlyweightCapableTreeStructure<LighterASTNode> =
     fileElementType.parseContentsLight(chameleon)
+
+  override fun toString(): String = "LightLanguageStubDefinitionAdapter(language=${fileElementType.language})"
 }
 
 @ApiStatus.Internal

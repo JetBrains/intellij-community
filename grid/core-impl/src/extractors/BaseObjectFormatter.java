@@ -2,10 +2,10 @@ package com.intellij.database.extractors;
 
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.JdbcColumnDescriptor;
-import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.ReservedCellValue;
 import com.intellij.database.run.ui.grid.editors.FormatsCache;
 import com.intellij.database.run.ui.grid.editors.Formatter;
+import com.intellij.database.util.LobInfoHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
@@ -202,7 +202,7 @@ public class BaseObjectFormatter implements ObjectFormatter {
     }
     StringBuilder sb = new StringBuilder();
     sb.append("{");
-    int len = Math.min(o.length, config.getMode() == ObjectFormatterMode.DISPLAY ? LobInfo.MAX_ARRAY_SIZE : o.length);
+    int len = Math.min(o.length, config.getMode() == ObjectFormatterMode.DISPLAY ? LobInfoHelper.MAX_ARRAY_SIZE : o.length);
     DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig itemConfig =
       new DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig(
         null, false, null, config.getSettings()

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
@@ -331,7 +330,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
           name = newName;
         }
         if (!name.equals(oldName)) {
-          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true)) {
+          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true).asIterable()) {
             reference.handleElementRename(name);
           }
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(scope.getProject());
@@ -848,7 +847,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (declaration == null || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();
     if (modifiers != null && modifiers.getAnnotations().length != 0) return;
-    boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
+    boolean effectivelyFinal = ControlFlowUtil.isEffectivelyFinal(variable, context);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
 
     for (PsiReferenceExpression reference : references) {

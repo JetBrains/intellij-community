@@ -33,7 +33,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
@@ -59,11 +59,11 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
       final List<UsageInfo> result = new ArrayList<>();
-      for (PsiReference ref : ReferencesSearch.search(var)) {
+      for (PsiReference ref : ReferencesSearch.search(var).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element.getLanguage() != GroovyLanguage.INSTANCE) {
           result.add(new OtherLanguageUsageInfo(ref));

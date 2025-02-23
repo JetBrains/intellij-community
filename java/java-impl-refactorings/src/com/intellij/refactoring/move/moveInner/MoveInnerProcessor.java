@@ -84,7 +84,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     LOG.assertTrue(myTargetContainer != null);
 
     Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass, myRefactoringScope).findAll();
@@ -191,7 +191,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
 
       // replace references in a new class to old inner class with references to itself
-      for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true)) {
+      for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true).asIterable()) {
         PsiElement element = ref.getElement();
         if (element.getParent() instanceof PsiJavaCodeReferenceElement parentRef) {
           PsiElement parentRefElement = parentRef.resolve();
@@ -348,7 +348,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {

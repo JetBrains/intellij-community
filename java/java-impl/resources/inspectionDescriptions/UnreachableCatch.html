@@ -1,0 +1,39 @@
+<html>
+<body>
+Reports catch sections which are never executed, even if allowed by the Java Language Specification.
+<p>
+  While unreachable catch sections are normally disallowed by Java compiler and reported as compilation errors, 
+  the analysis mandated by the Java language is not complete for some cases.
+  This inspection provides enhanced analysis and reports some unreachable catch sections which are not reported by the compiler.
+  Such sections are redundant and could be safely removed.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  void method() {
+    try { 
+      throw new FileNotFoundException(); 
+    }
+    catch (FileNotFoundException e) { 
+      
+    }
+    catch (IOException e) {
+      // this catch is allowed by specification
+      // but never executed
+    }
+  }
+</code></pre>
+<p>The quick-fix is provided, which removes the redundant catch section:</p>
+<pre><code>
+  void method() {
+    try { 
+      throw new FileNotFoundException(); 
+    }
+    catch (FileNotFoundException e) { 
+      
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2025.1</small></p>
+</body>
+</html>

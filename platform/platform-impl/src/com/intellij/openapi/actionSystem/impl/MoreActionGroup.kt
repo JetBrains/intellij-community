@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.icons.AllIcons
@@ -11,7 +11,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 open class MoreActionGroup : DefaultActionGroup() {
   init {
     templatePresentation.isPopupGroup = true
-    templatePresentation.setText({ ActionsBundle.groupText("MoreActionGroup") })
+    @Suppress("UnresolvedPluginConfigReference") // "fake" group
+    templatePresentation.setText(ActionsBundle.groupText("MoreActionGroup"))
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     templatePresentation.isHideGroupIfEmpty = true
   }

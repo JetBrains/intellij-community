@@ -5,7 +5,6 @@ import com.jetbrains.rhizomedb.impl.entity
 import com.jetbrains.rhizomedb.impl.generateSeed
 import fleet.util.openmap.Key
 import fleet.util.openmap.MutableOpenMap
-import kotlin.reflect.KClass
 
 /**
  * Asserts that current thread-bound [DbContext] contains mutable db, constructs [ChangeScope] for it, and runs body with it
@@ -113,6 +112,9 @@ interface ChangeScope {
       }
     }
 
+  fun register(vararg entityTypes: EntityType<*>) {
+    entityTypes.forEach { register(it) }
+  }
 
   /**
    * Sets a value to the attribute of a given entity.

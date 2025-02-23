@@ -13,9 +13,9 @@ import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.CompareSessionsStorage
 import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.SessionsStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -124,11 +124,20 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     comparisonStorage: CompareSessionsStorage,
     workspaces: List<EvaluationWorkspace>
   ): List<ReportInfo> {
+    val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }
+
+    val sessions = filteredSessionFiles
+      .flatMap { it.value }
+      .map { sessionStorages[evaluationTitles.indexOf(it.evaluationType)].getSessions(it.path) }
+      .flatMap { it.sessions }
+
+    val numberOfSessions = sessions.sumOf { it.lookups.size }
+
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
+      title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions))
     }.toMap()
 
-    for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
+    for (sessionFile in filteredSessionFiles) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
       var sessionsInfo: FileSessionsInfo? = null
       for (file in sessionFile.value) {
@@ -141,7 +150,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessions = comparisonStorage.get(file.evaluationType)
         )
         val evaluator = title2evaluator.getValue(file.evaluationType)
-        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions)
+        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions, numberOfSessions)
 
         val sessionIndividualEvaluationMap = metricsEvaluation
           .flatMap { it.individualScores?.entries ?: emptySet() }
@@ -171,7 +180,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     for (errorsStorage in errorStorages) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
     }
-    val globalMetricInfos = title2evaluator.values.flatMap(MetricsEvaluator::globalMetricInfos)
+    val globalMetricInfos = title2evaluator.values.flatMap { it.globalMetricInfos(numberOfSessions) }
 
     return reportGenerators.map {
       ReportInfo(it.type, it.generateGlobalReport(globalMetricInfos))

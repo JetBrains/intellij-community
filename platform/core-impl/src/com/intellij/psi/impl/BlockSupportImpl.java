@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -63,10 +63,11 @@ public final class BlockSupportImpl extends BlockSupport {
     return reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText).log;
   }
 
-  static final class ReparseResult {
-    final @NotNull DiffLog log;
-    final @NotNull ASTNode oldRoot;
-    final @NotNull ASTNode newRoot;
+  @ApiStatus.Internal
+  public static final class ReparseResult {
+    public final @NotNull DiffLog log;
+    public final @NotNull ASTNode oldRoot;
+    public final @NotNull ASTNode newRoot;
 
     ReparseResult(@NotNull DiffLog log, @NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
       this.log = log;
@@ -77,12 +78,14 @@ public final class BlockSupportImpl extends BlockSupport {
 
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
-  static @NotNull ReparseResult reparse(@NotNull PsiFile file,
-                                        @NotNull FileASTNode oldFileNode,
-                                        @NotNull TextRange changedPsiRange,
-                                        @NotNull CharSequence newFileText,
-                                        @NotNull ProgressIndicator indicator,
-                                        @NotNull CharSequence lastCommittedText) {
+  @ApiStatus.Internal
+  public static @NotNull ReparseResult reparse(
+    @NotNull PsiFile file,
+    @NotNull FileASTNode oldFileNode,
+    @NotNull TextRange changedPsiRange,
+    @NotNull CharSequence newFileText,
+    @NotNull ProgressIndicator indicator,
+    @NotNull CharSequence lastCommittedText) {
     PsiFileImpl fileImpl = (PsiFileImpl)file;
 
     Couple<ASTNode> rawReparseResult = findReparseableNodeAndReparseIt(fileImpl, oldFileNode, changedPsiRange, newFileText);

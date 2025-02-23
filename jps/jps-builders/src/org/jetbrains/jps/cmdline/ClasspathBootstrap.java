@@ -16,6 +16,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.HashMapZipFile;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import kotlin.metadata.jvm.JvmMetadataUtil;
@@ -24,6 +25,7 @@ import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -36,7 +38,8 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +83,8 @@ public final class ClasspathBootstrap {
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-  private static final String NETTY_JPS_VERSION = "4.1.115.Final";
+  @VisibleForTesting
+  public static final String NETTY_JPS_VERSION = "4.1.117.Final";
   private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
   private static final String[] NETTY_ARTIFACT_NAMES = {
     "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
@@ -144,6 +148,7 @@ public final class ClasspathBootstrap {
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
+    addToClassPath(cp, HashMapZipFile.class); // intellij.platform.util.zip
 
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing

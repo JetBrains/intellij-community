@@ -24,7 +24,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
   /**
    * @deprecated does nothing, all calls must be removed
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void fireElementChanged() {
   }
 

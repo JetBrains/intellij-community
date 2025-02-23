@@ -98,7 +98,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     checkExistingMethods(conflicts, true);
@@ -122,7 +122,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
       if (!getters.isEmpty() || !setters.isEmpty()) {
         final PsiField field = fieldDescriptor.getField();
-        for (PsiReference reference : ReferencesSearch.search(field)) {
+        for (PsiReference reference : ReferencesSearch.search(field).asIterable()) {
           final PsiElement place = reference.getElement();
           if (place instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
@@ -198,7 +198,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         while (containingClass != null && existing == null) {
           existing = containingClass.findMethodBySignature(prototype, true);
           if (existing != null) {
-            for (PsiReference reference : ReferencesSearch.search(existing)) {
+            for (PsiReference reference : ReferencesSearch.search(existing).asIterable()) {
               final PsiElement place = reference.getElement();
               if (place instanceof PsiReferenceExpression) {
                 final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
@@ -225,7 +225,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : getFieldReferences(fieldDescriptor.getField())) {
@@ -245,7 +245,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected @Unmodifiable Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
-    return ReferencesSearch.search(field);
+    return ReferencesSearch.search(field).asIterable();
   }
 
   @Override

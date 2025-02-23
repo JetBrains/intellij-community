@@ -6,16 +6,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlElementContentGroup;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
+import static com.intellij.psi.xml.XmlTokenType.XML_BAR;
+import static com.intellij.psi.xml.XmlTokenType.XML_NAME;
+
 /**
  * @author Dmitry Avdeev
  */
-public final class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlElementContentGroup,
-                                                                           XmlElementType {
+public final class XmlElementContentGroupImpl extends XmlElementImpl implements XmlElementContentGroup {
   private final NotNullLazyValue<XmlContentParticle[]> myParticles = NotNullLazyValue.lazy(() -> {
     return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), astNode -> {
       PsiElement element = astNode.getPsi();

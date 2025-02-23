@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -8,12 +10,17 @@ import com.intellij.usages.Usage
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
-import org.jetbrains.kotlin.idea.perf.suite.*
-import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
+import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
+import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
+import org.jetbrains.kotlin.idea.perf.suite.suite
+import org.jetbrains.kotlin.idea.perf.util.OutputConfig
+import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.testFramework.Parameter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.runner.RunWith
 

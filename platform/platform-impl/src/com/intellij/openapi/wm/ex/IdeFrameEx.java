@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 
 @ApiStatus.Internal
 public interface IdeFrameEx extends IdeFrame {

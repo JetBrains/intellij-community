@@ -988,13 +988,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         changeLanguageVersion("1.7")
     }
 
-    private fun addInlineClasses() {
+    private fun addLanguageFeature(feature: LanguageFeature, state: LanguageFeature.State = LanguageFeature.State.ENABLED) {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
             runWriteAction {
                 KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                    myTestFixture.module, feature, state, false
                 )
             }
 
@@ -1004,22 +1004,22 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     fun testDontTouchSameFreeCompilerArgsInKotlinOptionsKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testDontTouchSameFreeCompilerArgsInKotlinOptionsGroovy() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testDontTouchSameFreeCompilerArgsInCompilerOptionsKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testDontTouchSameFreeCompilerArgsInCompilerOptionsGroovy() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
@@ -1094,29 +1094,29 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     fun testChangeFeatureSupport() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     // compilerOptions + same option with another value
     @Test
     fun testChangeFeatureSupportCompilerOptionsKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     @TargetVersions("8.2+")
     fun testChangeFeatureSupportCompilerOptionsAssignmentSyntaxKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testChangeFeatureSupportCompilerOptions() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testChangeFeatureSupportCompilerOptionsAssignmentSyntax() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
@@ -1183,18 +1183,33 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     fun testEnableFeatureSupportToExistentArgumentsKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
     fun testEnableFeatureSupportToExistentArgumentsCompilerOptions() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
 
     @Test
     fun testEnableFeatureSupportToExistentArgumentsCompilerOptionsKts() {
-        addInlineClasses()
+        addLanguageFeature(LanguageFeature.InlineClasses)
+    }
+
+    @Test
+    fun testTurningAddToAddAllInFreeCompilerArgs() {
+        addLanguageFeature(LanguageFeature.AdditionalBuiltInsMembers)
+    }
+
+    @Test
+    fun testAddAllToAddAllInFreeCompilerArgs() {
+        addLanguageFeature(LanguageFeature.ProhibitAllMultipleDefaultsInheritedFromSupertypes)
+    }
+
+    @Test
+    fun testAddToAddAllInFreeCompilerArgsWhenChangingSomeOption() {
+        addLanguageFeature(LanguageFeature.MangleClassMembersReturningInlineClasses, state = LanguageFeature.State.DISABLED)
     }
 
     @Test

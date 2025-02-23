@@ -4,7 +4,6 @@ import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString
-import java.util.*
 
 class TextMateLexerState(
   val syntaxRule: SyntaxNodeDescriptor,
@@ -17,7 +16,15 @@ class TextMateLexerState(
   line: TextMateString?,
 ) {
 
-  private val hashcode: Int = Objects.hash(syntaxRule, matchData, priorityMatch, stringId())
+  private val hashcode: Int = run {
+    var result = 1
+    result = 31 * result + syntaxRule.hashCode()
+    result = 31 * result + matchData.hashCode()
+    result = 31 * result + priorityMatch.hashCode()
+    result = 31 * result + stringId().hashCode()
+    result
+  }
+
   val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteOffset().end == line.bytes.size
 
   val string: TextMateString? = if (matchData.matched) line else null
@@ -31,7 +38,7 @@ class TextMateLexerState(
 
   override fun equals(o: Any?): Boolean {
     if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
+    if (o == null) return false
     val state = o as TextMateLexerState
     return syntaxRule == state.syntaxRule &&
            matchData == state.matchData && priorityMatch == state.priorityMatch && stringId() === state.stringId()

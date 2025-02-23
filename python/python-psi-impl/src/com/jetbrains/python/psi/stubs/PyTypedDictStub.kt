@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.stubs
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub
-import java.util.Optional
 
 interface PyTypedDictStub : CustomTargetExpressionStub {
 

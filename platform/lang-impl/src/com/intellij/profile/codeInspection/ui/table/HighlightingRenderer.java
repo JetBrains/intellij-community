@@ -10,6 +10,7 @@ import com.intellij.profile.codeInspection.ui.HighlightingChooser;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -17,13 +18,12 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
-
+  @Unmodifiable
   private final List<? extends Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
 
-  public static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
+  static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
 
-
-  public HighlightingRenderer(@NotNull List<? extends Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
+  HighlightingRenderer(@NotNull @Unmodifiable List<? extends Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
     super(editorAttributesKey.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
     myEditorAttributesKey = editorAttributesKey;
   }

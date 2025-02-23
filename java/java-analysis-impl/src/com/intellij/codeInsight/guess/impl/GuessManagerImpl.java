@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -339,7 +339,7 @@ public final class GuessManagerImpl extends GuessManager {
     SearchScope searchScope = new LocalSearchScope(scopeFile);
 
     if (BitUtil.isSet(flags, CHECK_USAGE) || BitUtil.isSet(flags, CHECK_DOWN)) {
-      for (PsiReference varRef : ReferencesSearch.search(var, searchScope, false)) {
+      for (PsiReference varRef : ReferencesSearch.search(var, searchScope, false).asIterable()) {
         PsiElement ref = varRef.getElement();
 
         if (BitUtil.isSet(flags, CHECK_USAGE)) {
@@ -374,7 +374,7 @@ public final class GuessManagerImpl extends GuessManager {
         PsiParameter[] parameters = list.getParameters();
         int argIndex = ArrayUtil.indexOf(parameters, var);
 
-        for (PsiReference methodRef : ReferencesSearch.search(method, searchScope, false)) {
+        for (PsiReference methodRef : ReferencesSearch.search(method, searchScope, false).asIterable()) {
           if (methodRef.getElement().getParent() instanceof PsiMethodCallExpression methodCall) {
             PsiExpression[] args = methodCall.getArgumentList().getExpressions();
             if (args.length <= argIndex) continue;

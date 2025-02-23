@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.trace.TraceHandler
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.Variable
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
-import com.intellij.debugger.streams.wrapper.StreamCall
+import com.intellij.debugger.streams.core.trace.TraceHandler
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.core.wrapper.StreamCall
 
 abstract class CollectionHandlerBase(
     order: Int, private val dsl: Dsl,

@@ -3,11 +3,8 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.*
-import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -35,11 +32,8 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-    override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
-      .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
     override var addSampleCode by addSampleCodeProperty
-    override var generateOnboardingTips by generateOnboardingTipsProperty
 
     private fun setupSampleCodeUI(builder: Panel) {
       builder.row {
@@ -50,23 +44,14 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
     }
 
-    private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
-      builder.indent {
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-            .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
-            .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
-        }
-      }.enabledIf(addSampleCodeProperty)
-    }
+    @Deprecated("The onboarding tips generated unconditionally")
+    protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) = Unit
 
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupGradleDslUI(builder)
       setupParentsUI(builder)
       setupSampleCodeUI(builder)
-      setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -94,10 +79,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       addEmptyDirectoryAsset("src/test/resources")
 
       if (parent.addSampleCode) {
-        if (parent.generateOnboardingTips) {
-          prepareJavaSampleOnboardingTips(project)
-        }
-        withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
       }
 
       addOrConfigureSettingsScript {

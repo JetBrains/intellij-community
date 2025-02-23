@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Comparing;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiPredicate;
 
@@ -540,29 +538,6 @@ public final class ArrayUtil {
       }
     }
 
-    return true;
-  }
-
-  /**
-   * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
-    //noinspection ArrayEquality
-    if (a1 == a2) {
-      return true;
-    }
-    int length = a2.length;
-    if (a1.length != length) {
-      return false;
-    }
-
-    for (int i = 0; i < length; i++) {
-      if (comparator.compare(a1[i], a2[i]) != 0) {
-        return false;
-      }
-    }
     return true;
   }
 

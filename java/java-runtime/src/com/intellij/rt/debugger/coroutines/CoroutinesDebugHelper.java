@@ -146,10 +146,14 @@ public final class CoroutinesDebugHelper {
 
   public static Object[] dumpCoroutinesInfoAsJsonAndReferences() throws ReflectiveOperationException {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> debugProbesImplClass = classLoader.loadClass("kotlinx.coroutines.debug.internal.DebugProbesImpl");
-    Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
-    Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
-    return infos;
+    try {
+      Class<?> debugProbesImplClass = classLoader.loadClass("kotlinx.coroutines.debug.internal.DebugProbesImpl");
+      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
+      Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
+      return infos;
+    } catch (Throwable e) {
+      return null;
+    }
   }
 
   /**

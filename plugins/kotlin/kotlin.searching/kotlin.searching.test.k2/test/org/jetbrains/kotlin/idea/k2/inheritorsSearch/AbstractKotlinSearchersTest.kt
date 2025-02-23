@@ -42,7 +42,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchClass(ktClass).toList()
+                return searchClass(ktClass).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -62,7 +62,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchCallable(ktFunction).toList()
+                return searchCallable(ktFunction).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -79,7 +79,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchJavaClass(psiClass).toList()
+                return searchJavaClass(psiClass).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -95,7 +95,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchJavaMethod(psiMethod).toList()
+                return searchJavaMethod(psiMethod).asIterable().toList()
             }
         })
         val actual = render(result)

@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.conda
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.jetbrains.python.tools.PythonType
+import com.intellij.python.community.testFramework.testEnv.conda.TypeConda
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -34,7 +34,7 @@ class LocalCondaRule : ExternalResource() {
 
   override fun before() {
     super.before()
-    val (condaPathEnv, autoCloseable) = runBlocking { PythonType.Conda.getTestEnvironment().getOrElse { throw AssumptionViolatedException("No conda found, run gradle script to install test env") } }
+    val (_, autoCloseable, condaPathEnv) = runBlocking { TypeConda.createSdkClosableEnv().getOrElse { throw AssumptionViolatedException("No conda found, run gradle script to install test env") } }
 
     condaPath = Path.of(condaPathEnv.fullCondaPathOnTarget)
     if (!condaPath.isExecutable()) {

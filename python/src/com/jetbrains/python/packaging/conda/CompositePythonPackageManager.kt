@@ -3,95 +3,101 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 
-class CompositePythonPackageManager(
+internal class CompositePythonPackageManager(
   project: Project,
   sdk: Sdk,
   private val managers: List<PythonPackageManager>,
 ) : PythonPackageManager(project, sdk) {
+
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-  override var repositoryManager: PythonRepositoryManager = managers.first().repositoryManager
 
-  private fun isInRepository(repositoryManager: PythonRepositoryManager, pkgName: String) =
-    repositoryManager.allPackages().contains(pkgName)
+  override var repositoryManager: PythonRepositoryManager =
+    CompositePythonRepositoryManager(project, sdk, managers.map { it.repositoryManager })
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
-    val exceptionList = mutableListOf<Throwable>()
-    for (manager in managers) {
-      repositoryManager = manager.repositoryManager
-      installedPackages = manager.installedPackages
+  private val managerNames = managers.joinToString { it.javaClass.simpleName }
 
-      if (!isInRepository(repositoryManager, specification.name)) continue
-      val executionResult = manager.installPackage(specification, options)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
-    }
-    return Result.failure(exceptionList.last())
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+    return processPackageOperation(
+      errorMessageKey = "python.packaging.composite.install.package.error",
+      operation = { it.installPackage(specification, options) },
+      name = specification.name
+    )
   }
 
-
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
-    val exceptionList = mutableListOf<Throwable>()
-
-    for (manager in managers) {
-      repositoryManager = manager.repositoryManager
-      installedPackages = manager.installedPackages
-
-      if (!isInRepository(repositoryManager, specification.name)) continue
-      val executionResult = manager.updatePackage(specification)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
-    }
-
-    return Result.failure(exceptionList.last())
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
+    return processPackageOperation(
+      errorMessageKey = "python.packaging.composite.update.package.error",
+      operation = { it.updatePackage(specification) },
+      name = specification.name
+    )
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
-    val exceptionList = mutableListOf<Throwable>()
-
-    for (manager in managers) {
-      repositoryManager = manager.repositoryManager
-      installedPackages = manager.installedPackages
-
-      if (!isInRepository(repositoryManager, pkg.name)) continue
-
-      val executionResult = manager.uninstallPackage(pkg)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
-    }
-
-    return Result.failure(exceptionList.last())
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
+    return processPackageOperation(
+      errorMessageKey = "python.packaging.composite.uninstall.package.error",
+      operation = { it.uninstallPackage(pkg) },
+      name = pkg.name
+    )
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    val exceptionList = mutableListOf<Throwable>()
+    val results = mutableListOf<PythonPackage>()
+    val exceptions = mutableListOf<Throwable>()
 
     for (manager in managers) {
-      repositoryManager = manager.repositoryManager
-      installedPackages = manager.installedPackages
-
-      val executionResult = manager.reloadPackages()
-      val executionOutcome = executionResult.getOrElse {
-        exceptionList.add(it)
-        emptyList()
-      }
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome)
-      }
+      manager.reloadPackages()
+        .onSuccess { results.addAll(it) }
+        .onFailure { exceptions.add(it) }
     }
-    return Result.failure(exceptionList.last())
+
+    return if (results.isNotEmpty()) {
+      Result.success(results)
+    }
+    else {
+      Result.failure(createCompositeException(
+        exceptions,
+        PyBundle.message("python.packaging.composite.reload.packages.error", managerNames)
+      ))
+    }
+  }
+
+  private suspend fun processPackageOperation(
+    errorMessageKey: String,
+    operation: suspend (PythonPackageManager) -> Result<List<PythonPackage>>,
+    name: String,
+  ): Result<Unit> {
+    val exceptions = mutableListOf<Throwable>()
+    for (manager in managers) {
+      operation(manager)
+        .onSuccess { return Result.success(Unit) }
+        .onFailure { exceptions.add(it) }
+    }
+
+    return Result.failure(createCompositeException(
+      exceptions,
+      PyBundle.message(errorMessageKey, name, managerNames)
+    ))
+  }
+
+  fun createCompositeException(
+    exceptions: List<Throwable>,
+    defaultMessage: String
+  ): RuntimeException {
+    if (exceptions.isEmpty()) {
+      return RuntimeException(defaultMessage)
+    }
+
+    val concatenatedMessages = exceptions.joinToString(separator = "; ") { exception ->
+      exception.message ?: exception.toString()
+    }
+
+    return RuntimeException(concatenatedMessages)
   }
 }

@@ -13,7 +13,6 @@ c:org.jdom.Attribute
 - <init>(java.lang.String,java.lang.String,org.jdom.AttributeType,org.jdom.Namespace):V
 - <init>(java.lang.String,java.lang.String,org.jdom.Namespace):V
 - clone():org.jdom.Attribute
-- p:clone():org.jdom.CloneBase
 - detach():org.jdom.Attribute
 - getAttributeType():org.jdom.AttributeType
 - getBooleanValue():Z
@@ -77,7 +76,6 @@ a:org.jdom.Content
 - pf:ctype:org.jdom.Content$CType
 - p:parent:org.jdom.Parent
 - p:<init>(org.jdom.Content$CType):V
-- p:clone():org.jdom.CloneBase
 - clone():org.jdom.Content
 - detach():org.jdom.Content
 - f:getCType():org.jdom.Content$CType
@@ -612,6 +610,8 @@ org.jdom.output.EscapeStrategy
 - a:shouldEscape(C):Z
 f:org.jdom.output.Format
 - java.lang.Cloneable
+- expandEmptyElements:Z
+- mode:org.jdom.output.Format$TextMode
 - clone():org.jdom.output.Format
 - s:compact(java.lang.String):java.lang.String
 - s:getCompactFormat():org.jdom.output.Format

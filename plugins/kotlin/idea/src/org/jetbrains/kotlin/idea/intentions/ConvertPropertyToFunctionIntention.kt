@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -125,7 +125,7 @@ class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
                         } else if (callable is PsiMethod) callable.checkDeclarationConflict(propertyName, conflicts, callables)
 
                         val usages = ReferencesSearch.search(callable)
-                        for (usage in usages) {
+                        for (usage in usages.asIterable()) {
                             if (usage is KtReference) {
                                 if (usage is KtSimpleNameReference) {
                                     val expression = usage.expression

@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/analysis-impl",
@@ -34,7 +34,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//plugins/performanceTesting/core:performanceTesting",
     "//plugins/performanceTesting/core:performanceTesting_test_lib",

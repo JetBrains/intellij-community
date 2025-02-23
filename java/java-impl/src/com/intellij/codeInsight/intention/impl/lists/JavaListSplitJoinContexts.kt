@@ -7,9 +7,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.actions.lists.CommaListSplitJoinContext
 import com.intellij.openapi.editor.actions.lists.JoinOrSplit
 import com.intellij.openapi.editor.actions.lists.ListWithElements
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 
 

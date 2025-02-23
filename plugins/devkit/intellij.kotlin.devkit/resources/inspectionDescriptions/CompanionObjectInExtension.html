@@ -19,7 +19,7 @@ Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains
   Here <code>KotlinDocumentationProvider</code> is an extension registered in <code>plugin.xml</code>:
 </p>
 <pre><code lang="xml">
-  &lt;lang.documentationProvider language="JAVA"
+  &lt;lang.documentationProvider language="kotlin"
                               implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"
                               order="first"/&gt;
 </code></pre>
@@ -28,12 +28,12 @@ Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains
 </p>
 <p>
   Kotlin companion objects in extension point implementation can only contain a logger and simple constants.
-  Other declarations may cause excessive classloading or early initialization of heavy resources (e.g. TokenSet, Regex, etc.)
+  Other declarations may cause excessive classloading or early initialization of heavy resources (e.g., <code>TokenSet</code>, Regex, etc.)
   when the extension class is loaded.
-  Note, that even declarations marked with <code>@JvmStatic</code> still produce an extra class for the companion object, potentially causing expensive computations.
+  Note that even declarations marked with <code>@JvmStatic</code> still produce an extra class for the companion object, potentially causing expensive computations.
 </p>
 <p>
-  Instead of being stored in companion object, these declarations must be top-level or stored in an object.
+  Instead of being stored in the companion object, these declarations must be top-level or stored in an object.
 </p>
 <h3>FAQ</h3>
 <h4>How to rewrite run ConfigurationType?</h4>

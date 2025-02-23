@@ -43,11 +43,13 @@ import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.highlighter.clearSavedKaDiagnosticsForUnresolvedReference
+import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
 import org.jetbrains.kotlin.idea.highlighter.saveKaDiagnosticForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.*
 
@@ -208,7 +210,9 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         val isWarning = diagnostic.severity == KaSeverity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
-        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
+        val quickFixService = KotlinQuickFixService.getInstance()
+        val quickFixesForDiagnostic = with(quickFixService) { getQuickFixesFor(diagnostic) }
+        val fixes = quickFixesForDiagnostic.takeIf { it.isNotEmpty() }
             ?: if (isWarning) listOf(CompilerWarningIntentionAction(factoryName)) else emptyList()
         val problemGroup = if (isWarning) {
             KotlinSuppressableWarningProblemGroup(factoryName)
@@ -237,13 +241,18 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             diagnostic is KaFirDiagnostic.UnresolvedImport ||
             diagnostic is KaFirDiagnostic.UnresolvedReference ||
             diagnostic is KaFirDiagnostic.UnresolvedReferenceWrongReceiver ||
-            diagnostic is KaFirDiagnostic.InvisibleReference ||
-            diagnostic is KaFirDiagnostic.DelegateSpecialFunctionMissing ||
-            diagnostic is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable
+            diagnostic is KaFirDiagnostic.InvisibleReference
         ) {
             psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
             
-            psiElement.reference?.let { ref ->
+            /*
+            Two points here:
+            1. It's enough to register only the main reference here, because later on we rely on the underlying PSI element anyway.
+            2. If the diagnostic points to a binary expression, we use the operation expression to get the reference (see KT-75331).
+            */
+            val mainReference = (psiElement.operationReferenceForBinaryExpressionOrThis as? KtElement)?.mainReference
+
+            mainReference?.let { ref ->
                 UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, builder)
             }
         }

@@ -1,11 +1,13 @@
 package com.intellij.database.connection.throwable.info;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SimpleThrowableInfo implements ThrowableInfo {
+@ApiStatus.Internal
+public class SimpleThrowableInfo implements ThrowableInfo {
   private final @Nls String myMessage;
   private final Throwable myOriginalThrowable;
 

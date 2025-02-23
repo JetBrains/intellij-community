@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -46,6 +46,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -393,7 +394,12 @@ public final class DebuggerUIUtil {
   }
 
   public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
-    node.calculateEvaluationExpression().onSuccess(expression -> {
+    addToWatches(watchesView, node.getValueContainer());
+  }
+
+  @ApiStatus.Internal
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValue value) {
+    value.calculateEvaluationExpression().onSuccess(expression -> {
       if (expression != null) {
         invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
       }

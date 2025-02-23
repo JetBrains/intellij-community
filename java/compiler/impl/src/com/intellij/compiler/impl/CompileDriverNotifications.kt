@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl
 
 import com.intellij.notification.Notification
@@ -25,7 +25,7 @@ class CompileDriverNotifications(
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<CompileDriverNotifications>()
+    fun getInstance(project: Project): CompileDriverNotifications = project.service<CompileDriverNotifications>()
   }
 
   override fun dispose() {
@@ -45,13 +45,15 @@ class CompileDriverNotifications(
       .setImportant(true)
 
     fun withExpiringAction(@NotificationContent title : String,
-                           handler: () -> Unit) = apply {
-      baseNotification.addAction(NotificationAction.createSimpleExpiring(title, handler))
+                           handler: () -> Unit): LightNotification {
+      return apply {
+        baseNotification.addAction(NotificationAction.createSimpleExpiring(title, handler))
+      }
     }
 
     @JvmOverloads
-    fun withOpenSettingsAction(moduleNameToSelect: String? = null, tabNameToSelect: String? = null) =
-      withExpiringAction(JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog")) {
+    fun withOpenSettingsAction(moduleNameToSelect: String? = null, tabNameToSelect: String? = null): LightNotification {
+      return withExpiringAction(JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog")) {
         val service = ProjectSettingsService.getInstance(project)
         if (moduleNameToSelect != null) {
           service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect)
@@ -60,6 +62,7 @@ class CompileDriverNotifications(
           service.openProjectSettings()
         }
       }
+    }
 
     fun withContent(@NotificationContent content: String): LightNotification = apply {
       baseNotification.setContent(content)

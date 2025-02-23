@@ -99,7 +99,7 @@ interface SearchWordQueryBuilder {
    * @return query which returns results of applying the `mapper` to each occurrence
    */
   @Contract(value = "_ -> new", pure = true)
-  fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<@JvmWildcard T>): Query<out T>
+  fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<out T>): Query<out T>
 
   /**
    * @return query which generates occurrences by traversing the tree up starting from the bottom-most element with occurrence

@@ -4,7 +4,6 @@ package com.siyeh.ig.fixes.bugs;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.bugs.ClassNewInstanceInspection;
 

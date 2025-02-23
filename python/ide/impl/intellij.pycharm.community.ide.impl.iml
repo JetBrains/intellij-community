@@ -35,5 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

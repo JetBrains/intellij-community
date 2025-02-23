@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -136,7 +136,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
               final PsiElement implementationClass = implementationReference.resolve();
               if (implementationClass instanceof PsiClass psiClass) {
                 RefElement refTargetElement = null;
-                PsiElement targetElement = JavaServiceUtil.findServiceProviderMethod(psiClass);
+                PsiElement targetElement = JavaServiceProviderUtil.findServiceProviderMethod(psiClass);
 
                 if (targetElement == null) {
                   final RefElement refElement = getRefManager().getReference(psiClass);

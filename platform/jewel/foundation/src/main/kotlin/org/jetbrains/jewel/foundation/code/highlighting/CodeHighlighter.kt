@@ -24,7 +24,7 @@ public interface CodeHighlighter {
      *
      * @see [NoOpCodeHighlighter]
      */
-    public fun highlight(code: String, mimeType: MimeType): Flow<AnnotatedString>
+    public fun highlight(code: String, mimeType: MimeType?): Flow<AnnotatedString>
 }
 
 public val LocalCodeHighlighter: ProvidableCompositionLocal<CodeHighlighter> = staticCompositionLocalOf {

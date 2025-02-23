@@ -11,7 +11,6 @@ import fleet.tracing.span
 import fleet.tracing.spannedScope
 import fleet.util.async.catching
 import fleet.util.async.use
-import fleet.util.cast
 import fleet.util.causeOfType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

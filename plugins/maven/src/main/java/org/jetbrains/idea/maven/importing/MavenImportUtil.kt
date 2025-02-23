@@ -31,6 +31,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -337,8 +338,8 @@ object MavenImportUtil {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
-  internal fun isMainOrTestModule(project: Project, moduleName: String): Boolean {
-    val type = getMavenModuleType(project, moduleName)
+  internal fun isMainOrTestModule(module: Module): Boolean {
+    val type = module.getMavenModuleType()
     return type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY
   }
 
@@ -350,10 +351,15 @@ object MavenImportUtil {
     return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
   }
 
-  internal fun getMavenModuleType(project: Project, moduleName: @NlsSafe String): StandardMavenModuleType {
-    val storage = project.workspaceModel.currentSnapshot
+  internal fun Module.getMavenModuleType(): StandardMavenModuleType {
     val default = StandardMavenModuleType.SINGLE_MODULE
-    val moduleTypeString = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.externalSystemModuleType ?: return default
+    val moduleEntity = findModuleEntity() ?: return default
+    return moduleEntity.getMavenModuleType()
+  }
+
+  private fun ModuleEntity.getMavenModuleType(): StandardMavenModuleType {
+    val default = StandardMavenModuleType.SINGLE_MODULE
+    val moduleTypeString = exModuleOptions?.externalSystemModuleType ?: return default
     return try {
       enumValueOf<StandardMavenModuleType>(moduleTypeString)
     }

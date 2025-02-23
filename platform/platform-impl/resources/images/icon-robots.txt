@@ -1,3 +1,4 @@
 skip: gradientBackground*
 skip: questionSign.png
 skip: Expiration.png
+skip: mraPanelPromoBanner*

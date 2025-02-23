@@ -1734,6 +1734,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
             }
 
+            @TestMetadata("checkCastOtherClassloader.kt")
+            public void testCheckCastOtherClassloader() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/checkCastOtherClassloader.kt");
+            }
+
             @TestMetadata("classFromAnotherPackage.kt")
             public void testClassFromAnotherPackage() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
@@ -2407,6 +2412,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("withSerializationPlugin.kt")
             public void testWithSerializationPlugin() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
+            }
+
+            @TestMetadata("withSerializationPlugin_ver_1.7.1.kt")
+            public void testWithSerializationPlugin_ver_1_7_1() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin_ver_1.7.1.kt");
             }
 
             @TestMetadata(".kt.kt")

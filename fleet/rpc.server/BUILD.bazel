@@ -13,6 +13,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "//fleet/util/core:fleet-util-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

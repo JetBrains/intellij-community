@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlin.coroutines.cancellation.CancellationException
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 

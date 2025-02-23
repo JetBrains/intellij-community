@@ -114,7 +114,7 @@ public final class GithubServerPath implements ServerPath {
   }
 
   public @NotNull String getApiHost() {
-    if (isGithubDotCom()) {
+    if (isGithubDotCom() || isGheDataResidency()) {
       return API_PREFIX + myHost;
     }
     else {

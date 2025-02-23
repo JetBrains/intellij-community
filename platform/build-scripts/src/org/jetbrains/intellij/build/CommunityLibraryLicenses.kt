@@ -178,6 +178,8 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt")
       .additionalLibraryNames(
         "commonmark.ext.autolink",
+        "commonmark.ext.gfm.tables",
+        "commonmark.ext.gfm.strikethrough",
         "org.commonmark.commonmark"
       )
       .copyrightText("Copyright (c) 2015, Atlassian Pty Ltd")
@@ -301,6 +303,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
+
+    LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
+      .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
 
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),
@@ -776,6 +781,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-json-io", url = "https://github.com/Kotlin/kotlinx.serialization")
+      .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-protobuf", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -783,9 +792,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-cbor", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
-
-    LibraryLicense("Kotlin POKO Compiler", libraryName = "poko-compiler-plugin", url = "https://github.com/drewhamilton/Poko")
-      .apache("https://github.com/drewhamilton/Poko/blob/main/LICENSE"),
 
     LibraryLicense("Kotlin reflection library", libraryName = "kotlin-reflect", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
@@ -798,6 +804,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("kotlinx-datetime-jvm", libraryName = "kotlinx-datetime-jvm", url = "https://github.com/Kotlin/kotlinx-datetime")
       .apache("https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("kotlinx-document-store-mvstore", libraryName = "kotlinx-document-store-mvstore", url = "https://github.com/lamba92/kotlin.document.store")
+      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE"),
 
     LibraryLicense("kotlinx.html", libraryName = "kotlinx-html-jvm", url = "https://github.com/Kotlin/kotlinx.html")
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE")
@@ -1345,6 +1354,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-all-model-experimental"),
     jetbrainsLibrary("find-classes-model"),
     jetbrainsLibrary("find-classes-model-experimental"),
+    jetbrainsLibrary("find-ec-model-experimental"),
     jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("find-file-model-experimental"),
     jetbrainsLibrary("git-learning-project"),
@@ -1390,6 +1400,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-compiler-tests"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
+    // TODO: KTIJ-32993
+    jetbrainsLibrary("kotlinc.kotlin-ide-dist"),
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-objcexport-header-generator"),

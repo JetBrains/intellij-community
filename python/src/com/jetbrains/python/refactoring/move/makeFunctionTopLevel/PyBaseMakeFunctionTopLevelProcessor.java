@@ -75,7 +75,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @Override
-  public final UsageInfo @NotNull [] findUsages() {
+  protected final UsageInfo @NotNull [] findUsages() {
     return PyPsiIndexUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
   }
 

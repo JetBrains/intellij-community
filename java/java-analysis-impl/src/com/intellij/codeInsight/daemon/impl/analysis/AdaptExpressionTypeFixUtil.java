@@ -251,7 +251,7 @@ final class AdaptExpressionTypeFixUtil {
     }
     if (expectedType instanceof PsiArrayType arrayType) {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
-      if (erasedValueType != null &&
+      if (erasedValueType != null && !PsiTypes.nullType().equals(erasedValueType) &&
           TypeConversionUtil.isAssignable(arrayType.getComponentType(), erasedValueType)) {
         info.accept(QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression));
       }

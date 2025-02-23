@@ -253,7 +253,9 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+    });
     return result;
   }
 

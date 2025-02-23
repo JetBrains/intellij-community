@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.IntUnaryOperator;
 
 /** An int list where most values are in the range 0..2^16 */
-final class MostlyUShortIntList implements IntUnaryOperator {
+@ApiStatus.Internal
+public final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private char[] myData; // use char as an unsigned short
   private int mySize;

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import com.intellij.ide.projectWizard.generators.withJavaSampleCodeAsset as withJavaSampleCodeAssetImpl
 import com.intellij.ide.projectWizard.generators.prepareJavaSampleOnboardingTips as prepareJavaSampleOnboardingTipsImpl
 
-@Suppress("unused")
 @Deprecated("Use AssetsJava util instead")
 abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
 

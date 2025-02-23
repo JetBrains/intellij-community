@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.intermediaryVariable;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
@@ -222,7 +221,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     if (expression instanceof PsiReferenceExpression) {
       PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
       return variable != null && (variable.hasModifierProperty(PsiModifier.FINAL) ||
-                                  HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null));
+                                  ControlFlowUtil.isEffectivelyFinal(variable, scope));
     }
     if (expression instanceof PsiUnaryExpression) {
       return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"

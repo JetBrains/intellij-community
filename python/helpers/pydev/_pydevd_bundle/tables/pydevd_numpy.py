@@ -1,7 +1,6 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
 import io
-import base64
+import numpy as np
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
@@ -14,11 +13,6 @@ CSV_FORMAT_SEPARATOR = '~'
 is_pd = False
 try:
     import pandas as pd
-
-    version = pd.__version__
-    majorVersion = int(version[0])
-    pd.set_option('display.max_colwidth', None)
-    is_pd = majorVersion >= 1
     is_pd = True
 except:
     pass
@@ -50,7 +44,10 @@ def get_head(table):
 def get_column_types(table):
     # type: (np.ndarray) -> str
     table = __create_table(table[:1])
-    cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    try:
+        cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    except AttributeError:
+        cols_types = table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
@@ -83,37 +80,17 @@ def display_data_html(table, start_index=None, end_index=None):
 def display_data_csv(table, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data, format):
-        print(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format))
+        print(repr(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format)))
 
     __compute_data(table, ipython_display)
 
 
-def get_bytes(arr):
-    # type: (np.ndarray) -> str
-    try:
-        from PIL import Image
-
-        if not (np.issubdtype(arr.dtype, np.floating) or np.issubdtype(arr.dtype, np.integer)):
-            raise ValueError("Error: Only numeric array types are supported.")
-
-        if arr.ndim == 1:
-            arr = np.expand_dims(arr, axis=0)
-
-        arr_min, arr_max = np.min(arr), np.max(arr)
-        if arr_min == arr_max:  # handle constant values
-            arr = np.full_like(arr, 127, dtype=np.uint8)
-        else:
-            arr = ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
-
-        mode = 'L' if arr.ndim == 2 else 'RGB'
-        bytes_buffer = io.BytesIO()
-        image = Image.fromarray(arr, mode=mode)
-        image.save(bytes_buffer, format="PNG")
-        return base64.b64encode(bytes_buffer.getvalue()).decode("utf-8")
-    except ImportError:
-        return "Error: Pillow library is not installed."
-    except Exception as e:
-        return "Error: {}".format(e)
+def remove_nones_values(array_part, na_rep):
+    if np.issubdtype(array_part.dtype, np.number):
+        array_part_without_nones = np.where(array_part == None, np.nan, array_part)
+    else:
+        array_part_without_nones = np.where(array_part == None, na_rep, array_part)
+    return array_part_without_nones
 
 
 class _NpTable:
@@ -215,7 +192,13 @@ class _NpTable:
 
     def to_csv(self, na_rep="None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
         csv_stream = io.StringIO()
-        np_array_without_nones = np.where(self.array == None, np.nan, self.array)
+        if self.array.dtype.names is not None:
+            np_array_without_nones = []
+            for field in self.array.dtype.names:
+                np_array_without_nones.append(remove_nones_values(self.array[str(field)], na_rep))
+            np_array_without_nones = np.column_stack(np_array_without_nones)
+        else:
+            np_array_without_nones = remove_nones_values(self.array, na_rep)
         if float_format is None or float_format == 'null':
             float_format = "%s"
 
@@ -369,11 +352,9 @@ def __compute_data(arr, fun, format=None):
 
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH, None
     try:
         import pandas as pd
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
             return None, MAX_COLWIDTH, None
     except Exception:

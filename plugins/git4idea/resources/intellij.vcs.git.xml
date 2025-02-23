@@ -4,7 +4,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
-    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -24,7 +23,9 @@
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" searchable="false"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
+    <action id="Git.CreateNewBranch"
+            class="git4idea.actions.GitCreateNewBranchAction"
+            icon="AllIcons.General.Add"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
     <action id="Git.PushUpToCommit" class="git4idea.actions.GitPushUpToCommitAction"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
@@ -205,7 +206,7 @@
 
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
-      <action class="git4idea.actions.branch.GitNewBranchAction"/>
+      <reference ref="Git.CreateNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
@@ -304,7 +305,9 @@
       <reference ref="Git.PushUpToCommit"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
-      <reference ref="Git.CreateNewBranch"/>
+      <action id="Git.CreateNewBranch.FromCommit"
+              class="git4idea.log.action.GitCreateNewBranchFromCommitAction"
+              use-shortcut-of="Git.CreateNewBranch"/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
@@ -421,7 +424,6 @@
       <reference ref="ChangesView.CreatePatchToClipboard"/>
       <separator/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <reference ref="LocalHistory"/>
     </group>
     <group id="Git.Stage.Local.File.Menu" popup="false">
       <reference ref="Git.Stage.Show.Staged"/>
@@ -483,7 +485,6 @@
       </group>
       <reference ref="Git.Init"/>
       <separator/>
-      <reference ref="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
@@ -533,8 +534,6 @@
     <advancedSetting id="git.commit.do.not.run.commit.hooks" default="false"  groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
-    <registryKey key="git.execute.with.mediator" defaultValue="true"
-                 description="Use wrapper executable on Windows to support soft Git process cancellation."/>
     <registryKey key="git.blocking.read" defaultValue="true"
                  description="Use blocking mode for git process output reader."/>
     <registryKey key="git.allow.stderr.to.stdout.mixing" defaultValue="false"
@@ -627,10 +626,12 @@
     <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry" defaultValue="true"
                  restartRequired="true"
                  description="Enable embedded pinentry application for unlock GPG private key while Git perform commit signing. For remote dev (unix backend) and WSL."/>
-    <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal" defaultValue="false"
+    <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal" defaultValue="true"
                  description="GPG Agent configuration notification proposal (see git.commit.gpg.signing.enable.embedded.pinentry)"/>
     <registryKey key="git.read.branches.from.disk" defaultValue="false"
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
+    <registryKey key="git.branch.dashboard.filter.branch.and.root" defaultValue="true"
+                 description="When repository grouping is enabled, both branches and root are filtered simultaneously"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -740,6 +741,7 @@
     <!--END Git exclude lang-->
 
     <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
+    <vcsSharedChecker implementation="git4idea.ignore.GitIgnoreInStoreDirSharedChecker"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
     <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
 
@@ -864,6 +866,7 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
+    <gitCommitModeProvider implementation="git4idea.commit.GitStagingAreaCommitModeProvider" order="first"/>
   </extensions>
 
   <extensionPoints>
@@ -884,6 +887,9 @@
                     qualifiedName="Git4Idea.gitPushNotificationCustomizer"
                     dynamic="true"
                     area="IDEA_PROJECT"/>
+    <extensionPoint interface="git4idea.commit.GitCommitModeProvider"
+                    qualifiedName="Git4Idea.gitCommitModeProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

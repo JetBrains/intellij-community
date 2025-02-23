@@ -2,12 +2,11 @@ package com.intellij.database.editor;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Gregory.Shrago
-*/
-class DatabaseTableEditorLocation implements FileEditorLocation {
+@ApiStatus.Internal
+public final class DatabaseTableEditorLocation implements FileEditorLocation {
   private final FileEditor myEditor;
   public final int myRow;
   public final int myColumn;

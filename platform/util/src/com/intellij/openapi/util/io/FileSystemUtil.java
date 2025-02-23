@@ -27,9 +27,6 @@ import java.util.Locale;
 public final class FileSystemUtil {
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  @ApiStatus.Internal
-  public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
-
   private FileSystemUtil() { }
 
   /** Please use NIO API instead ({@link Files}, etc.) */
@@ -113,15 +110,14 @@ public final class FileSystemUtil {
 
   /**
    * Detects case-sensitivity of the directory containing {@code anyChild} (or {@code anyChild} itself, if it happens to be
-   * a java.io.File system root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
+   * a filesystem root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
    * via different names.
    */
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
     if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
-
-    // when native queries failed, fallback to the Java java.io.File IO:
+    // native queries failed, fallback to the Java I/O:
     return readParentCaseSensitivityByJavaIO(anyChild);
   }
 
@@ -150,7 +146,7 @@ public final class FileSystemUtil {
     String name = anyChild.getName();
     String altName = toggleCase(name);
     if (altName.equals(name)) {
-      // we have a bad case of "123" file
+      // we have a bad case of non-alphabetic file name
       name = findCaseToggleableChild(parent);
       if (name == null) {
         if (LOG.isDebugEnabled()) {
@@ -167,7 +163,7 @@ public final class FileSystemUtil {
             if (LOG.isTraceEnabled()) LOG.trace("readParentCaseSensitivityByJavaIO(" + anyChild + "): " + Arrays.toString(list));
           }
         }
-        // we can't find any java.io.File with a case-toggleable name
+        // we can't find any file with a case-toggleable name
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
       altName = toggleCase(name);
@@ -178,10 +174,11 @@ public final class FileSystemUtil {
 
     try {
       if (newAttributes == null) {
-        // couldn't java.io.File this java.io.File by other-cased name, so deduce FS is sensitive
+        // couldn't find this file by other-cased name, so deduce FS is sensitive
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
-      // if changed-case java.io.File is found, there is a slim chance that the FS is still case-sensitive, but there are two files with different case
+      // if a changed-case file is found, there is a slim chance that the FS is still case-sensitive,
+      // but there are two files with a different case
       java.io.File altCanonicalFile = new java.io.File(altPath).getCanonicalFile();
       String altCanonicalName = altCanonicalFile.getName();
       if (altCanonicalName.equals(name) || altCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
@@ -194,7 +191,7 @@ public final class FileSystemUtil {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
 
-    // it's a different java.io.File indeed; tough luck
+    // it's a different file indeed; tough luck
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
@@ -231,8 +228,8 @@ public final class FileSystemUtil {
     return !toggleCase(name).equals(name);
   }
 
-  // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
-  // or null if there are none (e.g., there's only one child "123.456").
+  // returns a child whose name can be used for querying by different-case names (e.g. "child.txt" vs. "CHILD.TXT")
+  // or `null` if there are none (e.g., there's only one child "123.456")
   private static @Nullable String findCaseToggleableChild(java.io.File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
@@ -301,6 +298,7 @@ public final class FileSystemUtil {
     return FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private interface NtOsKrnl extends StdCallLibrary, WinNT {
     NtOsKrnl INSTANCE = Native.load("NtDll", NtOsKrnl.class, W32APIOptions.UNICODE_OPTIONS);
 
@@ -435,8 +433,8 @@ public final class FileSystemUtil {
             if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");
           }
           else {
-            // Ext4/F2FS inodes on file systems with "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
-            // see e.g. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
+            // Ext4/F2FS inodes on file systems with the "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
+            // (like https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7)
             return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }

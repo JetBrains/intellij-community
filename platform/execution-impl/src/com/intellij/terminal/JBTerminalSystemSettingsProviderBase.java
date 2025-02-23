@@ -24,6 +24,7 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +141,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
-    String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
+    @Language("devkit-action-id") String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
     String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
     return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
       if (listener != null) {
@@ -150,7 +151,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     });
   }
 
-  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId, @NotNull String failoverActionId) {
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@Language("devkit-action-id") @NotNull String actionId, @NotNull String failoverActionId) {
     List<KeyStroke> strokes = getKeyStrokesByActionId(actionId);
     if (strokes.isEmpty() && ActionManager.getInstance().getAction(actionId) == null) {
       strokes = getKeyStrokesByActionId(failoverActionId);

@@ -8,7 +8,7 @@ data class WebSymbolQualifiedName(
   val kind: @NlsSafe SymbolKind,
   val name: @NlsSafe String,
 ) {
-  val qualifiedKind = WebSymbolQualifiedKind(namespace, kind)
+  val qualifiedKind: WebSymbolQualifiedKind = WebSymbolQualifiedKind(namespace, kind)
 
   fun matches(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     qualifiedKind.kind == kind && qualifiedKind.namespace == namespace

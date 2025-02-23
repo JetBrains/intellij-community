@@ -1,5 +1,6 @@
 // "Change type of 'z' to 'T & Any'" "true"
 // ERROR: Type mismatch: inferred type is T but T & Any was expected
+// K2_AFTER_ERROR: Initializer type mismatch: expected 'T (of fun <T> bar) & Any', actual 'T (of fun <T> bar)'.
 // LANGUAGE_VERSION: 1.8
 package a
 

@@ -68,7 +68,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -232,7 +231,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   private fun markRootDirty(root: VirtualFile) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
-    VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root)
+    VcsDirtyScopeManager.getInstance(myProject).rootDirty(root)
   }
 
   override fun getPostCommitChangeConverter(): PostCommitChangeConverter {

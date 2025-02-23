@@ -27,6 +27,19 @@ _BINARY_OP_MAP = {
 def _is_binary_opname(opname):
     return opname in _BINARY_OPS
 
+_UNARY_OPS = set([opname for opname in dis.opname if opname.startswith('UNARY_')
+                  and opname != 'UNARY_NOT'])
+
+def _is_unary_opname(opname):
+    return opname in _UNARY_OPS
+
+
+_UNARY_OP_MAP = {
+    'UNARY_POSITIVE': '__pos__',
+    'UNARY_NEGATIVE': '__neg__',
+    'UNARY_INVERT': '__invert__',
+}
+
 
 _LOAD_OPS = {
     'LOAD_NAME',
@@ -78,6 +91,25 @@ def get_stepping_variants(code):
                 instruction.arg,
                 _BINARY_OP_MAP[
                     instruction.argrepr if instruction.argrepr else instruction.opname],
+                instruction.offset,
+                instruction.positions.lineno
+            )
+        elif _is_unary_opname(instruction.opname):
+            yield Instruction(
+                instruction.opname,
+                instruction.opcode,
+                instruction.arg,
+                _UNARY_OP_MAP[instruction.opname],
+                instruction.offset,
+                instruction.positions.lineno
+            )
+        elif instruction.opname == 'CALL_INTRINSIC_1' and instruction.arg == 5:
+            # INTRINSIC_UNARY_POSITIVE from Python 3.12
+            yield Instruction(
+                instruction.opname,
+                instruction.opcode,
+                instruction.arg,
+                '__pos__',
                 instruction.offset,
                 instruction.positions.lineno
             )

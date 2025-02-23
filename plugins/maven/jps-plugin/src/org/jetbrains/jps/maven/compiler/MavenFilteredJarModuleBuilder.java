@@ -21,6 +21,7 @@ import org.jetbrains.jps.maven.MavenJpsBundle;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.MavenFilteredJarConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenResourcesTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,9 +106,14 @@ public final class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static @NotNull List<MavenFilteredJarConfiguration> getJarsConfig(CompileContext context, ModuleChunk chunk) {
-    return chunk.getTargets().stream().flatMap(target -> getJarConfigurations(context, target).stream()).collect(
+  public static @NotNull List<MavenFilteredJarConfiguration> getJarsConfig(CompileContext context, ModuleChunk chunk) {
+    return chunk.getTargets().stream()
+      .flatMap(target -> getJarConfigurations(context, target.getModule().getName(), target.isTests()).stream()).collect(
       Collectors.toList());
+  }
+
+  static List<MavenFilteredJarConfiguration> getJarsConfig(@NotNull CompileContext context, @NotNull MavenResourcesTarget target) {
+    return getJarConfigurations(context, target.getModule().getName(), target.isTests());
   }
 
   @Override
@@ -127,11 +133,13 @@ public final class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
     return ExitCode.OK;
   }
 
-  private static @NotNull List<MavenFilteredJarConfiguration> getJarConfigurations(CompileContext context, ModuleBuildTarget target) {
+  private static @NotNull List<MavenFilteredJarConfiguration> getJarConfigurations(CompileContext context,
+                                                                                   String moduleName,
+                                                                                   boolean isTests) {
     MavenProjectConfiguration projectConfig = getOrLoadConfiguration(context);
     if (projectConfig == null) return Collections.emptyList();
     return filter(projectConfig.jarsConfiguration.values(),
-                  it -> it.moduleName.equals(target.getModule().getName()) && it.isTest == target.isTests());
+                  it -> it.moduleName.equals(moduleName) && it.isTest == isTests);
   }
 
   private static @Nullable MavenProjectConfiguration getOrLoadConfiguration(CompileContext context) {

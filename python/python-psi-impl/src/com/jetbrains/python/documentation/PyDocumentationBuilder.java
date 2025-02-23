@@ -29,10 +29,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -43,7 +40,7 @@ import java.util.regex.Pattern;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyDocumentationBuilder {
+public final class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
   private final HtmlBuilder myProlog;      // definition header (link to class or module)
@@ -805,7 +802,8 @@ public class PyDocumentationBuilder {
     ATTRIBUTE, PARAMETER, RETURN, RAISE, KEYWORD_ARGUMENT
   }
 
-  static final class DocstringFormatterRequest {
+  @ApiStatus.Internal
+  public static final class DocstringFormatterRequest {
     private final @NotNull @NlsSafe String body;
     private final @NotNull List<FormatterDocFragment> fragments;
 

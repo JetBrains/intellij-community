@@ -16,6 +16,22 @@ configurations {
     }
 }
 
+detekt {
+    autoCorrect = true
+}
+
+dependencies {
+    detektPlugins(project(":detekt-plugin"))
+}
+
+tasks {
+    named("detekt") {
+        if (!project.name.startsWith("detekt-plugin")) {
+            dependsOn(":detekt-plugin:build")
+        }
+    }
+}
+
 ktfmt {
     maxWidth = 120
     blockIndent = 4

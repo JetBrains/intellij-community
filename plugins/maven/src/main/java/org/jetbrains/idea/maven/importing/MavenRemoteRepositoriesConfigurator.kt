@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
 import java.nio.file.Path
 
 @ApiStatus.Internal

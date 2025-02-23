@@ -13,8 +13,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.impl.FrameBoundsConverter
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -41,12 +39,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.JFrame
-import javax.swing.WindowConstants
 import kotlin.coroutines.coroutineContext
-
-@Volatile
-private var PROJECT_FRAME: JFrame? = null
 
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
@@ -200,59 +193,6 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
   }
 }
 
-@Suppress("unused")
-private suspend fun showLastProjectFrameIfAvailable(initUiDeferred: Job): Boolean {
-  lateinit var backgroundColor: Color
-  var extendedState = 0
-  val savedBounds: Rectangle = span("splash as project frame initialization") {
-    val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
-    val buffer = try {
-      withContext(Dispatchers.IO) {
-        Files.newByteChannel(infoFile).use { channel ->
-          val buffer = ByteBuffer.allocate(channel.size().toInt())
-          do {
-            channel.read(buffer)
-          }
-          while (buffer.hasRemaining())
-          buffer.flip()
-          if (buffer.getShort().toInt() != 0) {
-            return@withContext null
-          }
-
-          buffer
-        }
-      } ?: return@span null
-    }
-    catch (ignore: NoSuchFileException) {
-      return@span null
-    }
-
-    val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
-
-    @Suppress("UseJBColor")
-    backgroundColor = Color(buffer.getInt(), true)
-
-    @Suppress("UNUSED_VARIABLE")
-    val isFullScreen = buffer.get().toInt() == 1
-    extendedState = buffer.getInt()
-    savedBounds
-  } ?: return false
-
-  initUiDeferred.join()
-  span("splash as project frame creation") {
-    withContext(RawSwingDispatcher) {
-      PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
-    }
-  }
-  return true
-}
-
-internal fun getAndUnsetSplashProjectFrame(): JFrame? {
-  val frame = PROJECT_FRAME
-  PROJECT_FRAME = null
-  return frame
-}
-
 fun hideSplashBeforeShow(window: Window) {
   if (splashJob.get().isCompleted) {
     return
@@ -270,29 +210,6 @@ internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
 
 fun hideSplash() {
   splashJob.get().cancel("hideSplash")
-}
-
-private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extendedState: Int): IdeFrameImpl {
-  val frame = IdeFrameImpl()
-  frame.isAutoRequestFocus = false
-  frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
-  val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
-  // this functionality under the flag - fully correct behavior is unnecessary here (that's default is not applied if null)
-  if (devicePair != null) {
-    frame.bounds = devicePair.first
-  }
-  frame.extendedState = extendedState
-  frame.minimumSize = Dimension(340, frame.minimumSize.getHeight().toInt())
-  frame.background = backgroundColor
-  frame.contentPane.background = backgroundColor
-  if (SystemInfoRt.isMac) {
-    frame.iconImage = null
-  }
-  StartUpMeasurer.addInstantEvent("frame shown")
-  val activity = StartUpMeasurer.startActivity("frame set visible")
-  frame.isVisible = true
-  activity.end()
-  return frame
 }
 
 @RequiresEdt

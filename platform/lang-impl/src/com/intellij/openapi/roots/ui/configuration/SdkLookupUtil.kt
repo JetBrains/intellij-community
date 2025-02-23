@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
@@ -53,11 +54,13 @@ fun lookupAndSetupSdkBlocking(project: Project, indicator: ProgressIndicator, sd
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use lookupSdkBlocking instead", ReplaceWith("lookupSdkBlocking(configure)"))
 fun lookupSdk(configure: (SdkLookupBuilder) -> SdkLookupBuilder): Sdk? {
   return lookupSdkBlocking(configure)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use lookupAndSetupSdk instead", ReplaceWith("lookupAndSetupSdkBlocking(project, indicator, sdkType, applySdk)"))
 fun findAndSetupSdk(project: Project, indicator: ProgressIndicator, sdkType: SdkType, applySdk: (Sdk) -> Unit) {
   lookupAndSetupSdkBlocking(project, indicator, sdkType, applySdk)

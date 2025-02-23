@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -17,6 +18,9 @@ import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.newEditor.AbstractEditor;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.options.newEditor.SingleSettingEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -116,6 +120,7 @@ public class ContentEntryTreeEditor {
     treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
     myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
       sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      // fix SelectInProjectViewAction if the virtual files are moved into BGT_DATA_PROVIDER
       sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
     });
     myComponent.setVisible(false);
@@ -286,7 +291,7 @@ public class ContentEntryTreeEditor {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -295,6 +300,14 @@ public class ContentEntryTreeEditor {
       VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (project == null || ProjectView.getInstance(project) == null) {
         e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null && !ModalityState.current().accepts(ModalityState.nonModal())) {
+        e.getPresentation().setEnabledAndVisible(false); // we can't reliably close the dialog
         return;
       }
 
@@ -314,22 +327,42 @@ public class ContentEntryTreeEditor {
     }
 
     private static void closeSettingsWindow(@Nullable Component component) {
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      if (dialogWrapper == null) return;
+
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null) return;
+
+      if (singleConfigurable.isModified()) {
+        boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
+                                                     ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
+          .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
+          .noText(CommonBundle.getCancelButtonText())
+          .ask(component);
+        if (!proceed) return;
+      }
+      dialogWrapper.doCancelAction();
+    }
+
+    private static @Nullable DialogWrapper getDialogWrapperFor(@Nullable Component component) {
       Window window = UIUtil.getWindow(component);
       if (window instanceof DialogWrapperDialog wrapper) {
-        DialogWrapper dialogWrapper = wrapper.getDialogWrapper();
-        if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
-          Configurable configurable = settingsDialog.getConfigurable();
-          if (configurable.isModified()) {
-            boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
-                                                         ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
-              .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
-              .noText(CommonBundle.getCancelButtonText())
-              .ask(component);
-            if (!proceed) return;
-          }
-          dialogWrapper.doCancelAction();
+        return wrapper.getDialogWrapper();
+      }
+      return null;
+    }
+
+    private static @Nullable Configurable getSingleConfigurable(@Nullable DialogWrapper dialogWrapper) {
+      if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
+        return settingsDialog.getConfigurable();
+      }
+      if (dialogWrapper instanceof SettingsDialog settingsDialog) {
+        AbstractEditor editor = settingsDialog.getEditor();
+        if (editor instanceof SingleSettingEditor settingEditor) {
+          return settingEditor.getConfigurable();
         }
       }
+      return null;
     }
   }
 
@@ -340,7 +373,7 @@ public class ContentEntryTreeEditor {
   protected void setupExcludedAction() {
     ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
     myEditingActionsGroup.add(toggleExcludedAction);
-    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)), myTree);
+    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)),
+                                                   myTree);
   }
-
 }

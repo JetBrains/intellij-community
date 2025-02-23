@@ -105,7 +105,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       findParameterUsages(parameter, allElementsToDelete, usages);
     }
     else if (element instanceof PsiLocalVariable) {
-      for (PsiReference reference : ReferencesSearch.search(element)) {
+      for (PsiReference reference : ReferencesSearch.search(element).asIterable()) {
         PsiReferenceExpression referencedElement = (PsiReferenceExpression)reference.getElement();
         PsiElement statementOrExprInList = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
         if (statementOrExprInList instanceof PsiExpressionListStatement) {
@@ -532,7 +532,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiParameter parameter && element.getParent() instanceof PsiParameterList parameterList) {
       PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (method != null) {
-        PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+        PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
         if (contract != null) {
           ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, parameter);
           try {
@@ -983,7 +983,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       assert header != null;
       int index = ArrayUtil.indexOf(header.getRecordComponents(), component);
       if (index < 0) return isInsideDeleted;
-      ReferencesSearch.search(constructor).forEach(ref -> {
+      ReferencesSearch.search(constructor).asIterable().forEach(ref -> {
         PsiElement element = ref.getElement();
         if (!isInsideDeleted.test(element)) {
           JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
@@ -993,7 +993,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
       });
     }
-    ReferencesSearch.search(component).forEach(ref -> {
+    ReferencesSearch.search(component).asIterable().forEach(ref -> {
       PsiElement element = ref.getElement();
       if (!isInsideDeleted.test(element)) {
         boolean javadoc = element instanceof PsiDocParamRef;

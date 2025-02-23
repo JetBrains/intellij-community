@@ -37,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "@lib//:kotlinc-kotlin-compiler-fe10",
@@ -45,6 +45,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//platform/util/jdom",
+    "//plugins/kotlin/code-insight/inspections-k1:kotlin-code-insight-inspections-k1",
   ]
 )
 

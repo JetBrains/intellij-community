@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -121,10 +121,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         buildTargetPopupWithMultiSelect(
             items = sortedImplementableMembers,
             presentationProvider = {
-                val targetClass = it.getTargetClass()
-                TargetPresentation.builder(classRenderer.getElementText(targetClass)!!)
-                    .icon(targetClass.getIcon(0))
-                    .presentation()
+                runReadAction {
+                    val targetClass = it.getTargetClass()
+                    TargetPresentation.builder(classRenderer.getElementText(targetClass)!!)
+                        .icon(targetClass.getIcon(0))
+                        .presentation()
+                }
             }) { true }
             .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title"))
             .setItemsChosenCallback {
@@ -171,7 +173,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 .filterIsInstance<KtEnumEntry>()
                 .mapNotNull(::createImplementableMember)
         } else {
-            DirectKotlinClassInheritorsSearch.search(baseClass).asSequence().mapNotNull(::createImplementableMember)
+            DirectKotlinClassInheritorsSearch.search(baseClass).asIterable().asSequence().mapNotNull(::createImplementableMember)
         }
     }
 

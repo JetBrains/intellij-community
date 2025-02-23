@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,11 +8,16 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.impl.MethodNotFoundException;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +43,9 @@ public final class BatchEvaluator {
 
     EvaluationContext evaluationContext = command.getEvaluationContext();
     SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
-    if (!Registry.is("debugger.batch.evaluation.force") && !Registry.is("debugger.batch.evaluation")) {
+    if (!(command.getValue() instanceof ObjectReference) || // skip for primitive values
+        (!Registry.is("debugger.batch.evaluation.force") &&
+        !Registry.is("debugger.batch.evaluation"))) {
       suspendContext.getManagerThread().invokeCommand(command);
     }
     else {
@@ -53,12 +60,13 @@ public final class BatchEvaluator {
     }
   }
 
-  public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
-    BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
+  public static BatchEvaluator getBatchEvaluator(EvaluationContext evaluationContext) {
+    VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getVirtualMachineProxy();
+    BatchEvaluator batchEvaluator = virtualMachineProxy.getUserData(BATCH_EVALUATOR_KEY);
 
     if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator();
-      debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
+      virtualMachineProxy.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }
     return batchEvaluator;
   }
@@ -67,6 +75,11 @@ public final class BatchEvaluator {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
+
+      if (ContainerUtil.exists(values, v -> !(v instanceof ObjectReference))) {
+        LOG.error("Batch toString evaluation can only be used for object references");
+        return false;
+      }
 
       String helperMethodName;
 
@@ -122,6 +135,25 @@ public final class BatchEvaluator {
     }
     catch (ObjectCollectedException e) {
       LOG.error(e);
+    }
+    catch (MethodNotFoundException e) {
+      if (IntelliJProjectUtil.isIntelliJPlatformProject(evaluationContext.getProject())) {
+        String runProfileName = null;
+        DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
+        XDebugSession session = debugProcess.getSession().getXDebugSession();
+        if (session != null) {
+          RunProfile runProfile = session.getRunProfile();
+          if (runProfile != null) {
+            runProfileName = runProfile.getName();
+          }
+        }
+        if (runProfileName != null) {
+          LOG.error("Unable to find helper method", e, "Run configuration: " + runProfileName);
+        }
+      }
+      else {
+        LOG.error(e);
+      }
     }
     catch (EvaluateException e) {
       ObjectReference exceptionFromTargetVM = e.getExceptionFromTargetVM();

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.openapi.actionSystem.DataKey
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO

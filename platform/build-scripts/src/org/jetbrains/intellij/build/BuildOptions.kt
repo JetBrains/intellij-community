@@ -495,6 +495,11 @@ data class BuildOptions(
   var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, false)
 
   /**
+   * By default, the current Git revision is stored as a custom property in the product-info.json file. Set this property to `false` to disable this. 
+   */
+  var storeGitRevision: Boolean = getBooleanProperty("intellij.build.store.git.revision", true)
+
+  /**
    * Specifies an additional list of compatible plugin names which should not be built, see [ProductModulesLayout.compatiblePluginsToIgnore]
    */
   var compatiblePluginsToIgnore: Set<String> = getSetProperty("intellij.build.compatible.plugins.to.ignore")

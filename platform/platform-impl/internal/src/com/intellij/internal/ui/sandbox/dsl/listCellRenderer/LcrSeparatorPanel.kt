@@ -35,7 +35,7 @@ internal class LcrSeparatorPanel : UISandboxPanel {
         panel {
           group("New API") {
             row {
-              jbList(items, newApiRenderer())
+              jbList(null, items, newApiRenderer())
                 .comment("See also tooltips")
             }
             row {
@@ -57,7 +57,7 @@ internal class LcrSeparatorPanel : UISandboxPanel {
         panel {
           group("Old API") {
             row {
-              jbList(items, MyGroupedItemsListRenderer())
+              jbList(null, items, MyGroupedItemsListRenderer())
             }
             row {
               comboBox(items, MyGroupedComboBoxRenderer())
@@ -92,8 +92,7 @@ internal class LcrSeparatorPanel : UISandboxPanel {
   }
 
   private class MyGroupedItemsListRenderer :
-    GroupedItemsListRenderer<String>(MyListItemDescriptor(separators)) {
-  }
+    GroupedItemsListRenderer<String>(MyListItemDescriptor(separators))
 
   private class MyListItemDescriptor(private val separators: Map<String, String>) : ListItemDescriptor<String> {
     override fun getTextFor(value: String?): String? {

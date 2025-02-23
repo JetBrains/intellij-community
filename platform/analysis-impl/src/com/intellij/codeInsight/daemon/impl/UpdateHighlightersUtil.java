@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -169,7 +169,7 @@ public final class UpdateHighlightersUtil {
     }
     if (psiFile != null) {
       DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
-      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
+      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
         setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session)
       );
     }
@@ -187,7 +187,7 @@ public final class UpdateHighlightersUtil {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, infosToRemove -> {
-      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), session.getCodeInsightContext(), info -> {
         if (info.getGroup() == group) {
           int hiEnd = info.getEndOffset();
           boolean willBeRemoved = range.contains(info)
@@ -216,7 +216,7 @@ public final class UpdateHighlightersUtil {
 
         if (range.contains(info) && !isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
           createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache,
-                                      severityRegistrar);
+                                      severityRegistrar, session);
           changed[0] = true;
         }
         return true;
@@ -228,28 +228,6 @@ public final class UpdateHighlightersUtil {
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
     }
-  }
-
-  static boolean shouldRemoveHighlighter(@NotNull RangeHighlighterEx highlighter, @NotNull HighlightingSession session) {
-    return !session.isEssentialHighlightingOnly()
-           || shouldRemoveInfoEvenInEssentialMode(highlighter);
-  }
-
-  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighterEx highlighter) {
-    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-    if (info == null) return true;
-    int group = info.getGroup();
-    if (group != Pass.LOCAL_INSPECTIONS
-        && group != Pass.EXTERNAL_TOOLS
-        && group != Pass.UPDATE_ALL
-        && group != GeneralHighlightingPass.POST_UPDATE_ALL
-    ) {
-      return true;
-    }
-
-    // update highlight if it's a symbol type (field/statics/etc), otherwise don't touch it (could have been e.g., unused symbol highlight)
-    return group == Pass.UPDATE_ALL && (
-      info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY || info.getSeverity() == HighlightSeverity.ERROR);
   }
 
   static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
@@ -265,13 +243,15 @@ public final class UpdateHighlightersUtil {
     return false;
   }
 
-  static boolean isCovered(@NotNull HighlightInfo warning, @NotNull SeverityRegistrar severityRegistrar, @NotNull HighlightInfo candidate) {
+  private static boolean isCovered(@NotNull HighlightInfo warning,
+                                   @NotNull SeverityRegistrar severityRegistrar,
+                                   @NotNull HighlightInfo candidate) {
     if (!isCoveredByOffsets(warning, candidate)) return false;
     if (candidate.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY) return false; // syntax should not interfere with warnings
     return isSevere(candidate, severityRegistrar);
   }
 
-  static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+  private static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     HighlightSeverity severity = info.getSeverity();
     return severityRegistrar.compare(HighlightSeverity.ERROR, severity) <= 0 || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
   }
@@ -284,7 +264,8 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlighterRecycler infosToRemove,
                                                   @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                  @NotNull SeverityRegistrar severityRegistrar) {
+                                                  @NotNull SeverityRegistrar severityRegistrar,
+                                                  @NotNull HighlightingSession highlightingSession) {
     long finalInfoRange = BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(info, document);
     if (finalInfoRange == -1) {
       return;
@@ -296,6 +277,9 @@ public final class UpdateHighlightersUtil {
 
     int layer = getLayer(info, severityRegistrar);
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
+
+    CodeInsightContext context = highlightingSession.getCodeInsightContext();
+    Project project = highlightingSession.getProject();
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
@@ -315,6 +299,8 @@ public final class UpdateHighlightersUtil {
       finalHighlighter.setErrorStripeTooltip(info);
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
+
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, project, context);
 
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
@@ -488,7 +474,7 @@ public final class UpdateHighlightersUtil {
   }
 
   /**
-   * Do not use. This method might break highlighting, left for binary compatibility only
+   * @deprecated Do not use. This method might break highlighting, left for binary compatibility only
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal

@@ -5,7 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -17,12 +17,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -78,11 +78,11 @@ fun TestFixture<Project>.moduleFixture(
 ): TestFixture<Module> = testFixture(name ?: "unnamed module") { context ->
   val project = this@moduleFixture.init()
   val manager = ModuleManager.getInstance(project)
-  val module = writeAction {
+  val module = edtWriteAction {
     manager.newNonPersistentModule(name ?: context.uniqueId, "")
   }
   initialized(module) {
-    writeAction {
+    edtWriteAction {
       manager.disposeModule(module)
     }
   }
@@ -101,7 +101,7 @@ fun TestFixture<Project>.moduleFixture(
   val project = this@moduleFixture.init()
   val path = pathFixture.init()
   val manager = ModuleManager.getInstance(project)
-  val module = writeAction {
+  val module = edtWriteAction {
     manager.newModule(path, "")
   }
   if (addPathToSourceRoot) {
@@ -109,15 +109,15 @@ fun TestFixture<Project>.moduleFixture(
       VirtualFileManager.getInstance().findFileByNioPath(path)!!
     }
 
-    writeAction {
-      module.rootManager.modifiableModel.apply {
+    edtWriteAction {
+      ModuleRootManager.getInstance(module).modifiableModel.apply {
         addContentEntry(pathVfs).addSourceFolder(pathVfs, false)
         commit()
       }
     }
   }
   initialized(module) {
-    writeAction {
+    edtWriteAction {
       manager.disposeModule(module)
     }
   }
@@ -144,7 +144,7 @@ fun TestFixture<Module>.sourceRootFixture(isTestSource: Boolean = false, pathFix
       PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
     }
     initialized(directory) {
-      writeAction {
+      edtWriteAction {
         directory.delete()
       }
     }
@@ -155,15 +155,29 @@ fun TestFixture<PsiDirectory>.psiFileFixture(
   name: String,
   content: String,
 ): TestFixture<PsiFile> = testFixture { _ ->
-  val sor = this@psiFileFixture.init()
-  val file = writeAction {
-    sor.createFile(name).also {
-      it.virtualFile.setBinaryContent(content.toByteArray())
+  val project = this@psiFileFixture.init().project
+  val virtualFile = virtualFileFixture(name, content).init()
+  val file = readAction {
+    PsiManager.getInstance(project).findFile(virtualFile) ?: error("Fail to find file $virtualFile")
+  }
+  initialized(file) {/*nothing*/}
+}
+
+@TestOnly
+fun TestFixture<PsiDirectory>.virtualFileFixture(
+  name: String,
+  content: String,
+): TestFixture<VirtualFile> = testFixture { _ ->
+  val dirFixture = this@virtualFileFixture
+  val dir = dirFixture.init()
+  val file = edtWriteAction {
+    dir.virtualFile.createChildData(dirFixture, name).also {
+      it.setBinaryContent(content.toByteArray())
     }
   }
   initialized(file) {
-    writeAction {
-      file.delete()
+    edtWriteAction {
+      file.delete(dirFixture)
     }
   }
 }
@@ -195,23 +209,11 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
 }
 
 @TestOnly
-fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T): TestFixture<T> = testFixture {
+fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExtension: suspend () -> T): TestFixture<T> = testFixture {
+  val extension = createExtension()
   val disposable = Disposer.newDisposable()
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
-  }
-}
-
-/**
- * Ensures [registryValue] has [value] state during the lifetime of the fixture.
- * After the fixture is disposed, the previous value is restored.
- */
-@TestOnly
-fun registryValueFixture(registryValue: RegistryValue, value: Boolean): TestFixture<Unit> = testFixture {
-  val prevValue = registryValue.asBoolean()
-  registryValue.setValue(value)
-  initialized(Unit) {
-    registryValue.setValue(prevValue)
   }
 }

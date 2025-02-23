@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.ml.features.imports
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -67,7 +67,7 @@ private class ExperimentalMLRanker(
         }.joinToString("\n")
       }
 
-      writeAction {
+      edtWriteAction {
         displayResult(RateableRankingResult(this@ExperimentalMLRanker.contextFeatures, contextAnalysis, importCandidatesFeatures, initialCandidatesOrder, relevanceCandidateOrder, timestampStarted))
       }
     }

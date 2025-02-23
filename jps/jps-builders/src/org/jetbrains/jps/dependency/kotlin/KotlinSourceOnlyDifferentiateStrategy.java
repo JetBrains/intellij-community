@@ -18,7 +18,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
 
   @Override
-  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
+  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
     Delta delta = context.getDelta();
     if (!delta.isSourceOnly()) {
       return true;
@@ -26,12 +26,12 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     Graph graph = context.getGraph();
     Set<NodeSource> baseSources = delta.getBaseSources();
-    Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
+    Utils present = new Utils(context.getGraph(), DifferentiateParameters.affectableInCurrentChunk(context.getParams()));
     Set<Usage> affectedUsages = new HashSet<>();
     Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
-    for (JvmClass cls : Utils.uniqueBy(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
+    for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
       if (!cls.isPrivate()) {
         for (ReferenceID id : present.withAllSubclasses(cls.getReferenceID())) {
           if (id instanceof JvmNodeReferenceID) {
@@ -76,7 +76,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     // sealed classes check should be done on both base and affected sources
-    for (JvmClass cls : Utils.uniqueBy(flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
+    for (JvmClass cls : flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class)))) {
       appendSealedClasses(cls, present, affectedSealedClasses);
     }
 

@@ -36,7 +36,7 @@ final class TypeChecker {
             return;
           }
         }
-        if (IncompleteModelUtil.isIncompleteModel(myVisitor.file())) return;
+        if (myVisitor.isIncompleteModel()) return;
         myVisitor.report(JavaErrorKinds.TYPE_UNKNOWN_CLASS.create(typeElement));
       }
     }
@@ -184,11 +184,9 @@ final class TypeChecker {
   void checkMustBeThrowable(@NotNull PsiElement context, PsiType type) {
     PsiElementFactory factory = myVisitor.factory();
     PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
-    if (type != null && !TypeConversionUtil.isAssignable(throwable, type)) {
-      if (!(IncompleteModelUtil.isIncompleteModel(context) &&
-            IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context))) {
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
-      }
+    if (type != null && !TypeConversionUtil.isAssignable(throwable, type) &&
+        !(myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context))) {
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
     }
   }
 }

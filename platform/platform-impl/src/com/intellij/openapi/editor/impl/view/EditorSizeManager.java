@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
+import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.*;
@@ -43,7 +44,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private final EditorView myView;
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
-  private final InlayModelImpl myInlayModel;
+  private final InlayModelEx myInlayModel;
   private final FoldingModelImpl myFoldingModel;
   private final CaretModel myCaretModel;
   private final SoftWrapModelImpl mySoftWrapModel;

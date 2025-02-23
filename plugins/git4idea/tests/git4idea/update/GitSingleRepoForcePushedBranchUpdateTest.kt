@@ -8,7 +8,6 @@ import git4idea.actions.branch.GitForcePushedBranchUpdateExecutor
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import kotlinx.coroutines.*
 import java.nio.file.Path
 
 class GitSingleRepoForcePushedBranchUpdateTest : GitForcePushedBranchUpdateBaseTest() {

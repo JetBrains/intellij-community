@@ -21,7 +21,6 @@ import org.jetbrains.concurrency.toPromise
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {

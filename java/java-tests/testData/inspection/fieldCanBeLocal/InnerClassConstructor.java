@@ -1,4 +1,4 @@
-<error descr="Class 'Outer' is public, should be declared in a file named 'Outer.java'">public class Outer</error> {
+class Outer {
   private int value = 0;
 
   public class Inner {

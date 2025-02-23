@@ -37,7 +37,7 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
         KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         onTheFly,
-        IntentionWrapper(ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true))
+        IntentionWrapper(ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true).asIntention())
     )
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
@@ -45,8 +45,7 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
         return element.getter != null && !element.hasDelegate()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         val getter = element.getter ?: return null
         if (doesOverrideVar(element)) return null
         if (!isBackingFieldRequired(element)) return null

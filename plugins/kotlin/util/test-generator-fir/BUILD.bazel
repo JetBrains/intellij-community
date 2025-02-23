@@ -33,7 +33,6 @@ jvm_library(
     "//plugins/kotlin/maven/tests:kotlin-maven-tests_test_lib",
     "//plugins/kotlin/project-wizard/cli:kotlin-project-wizard-cli",
     "//plugins/kotlin/project-wizard/tests:kotlin-project-wizard-tests_test_lib",
-    "//plugins/kotlin/j2k/k1.new/tests:kotlin-j2k-k1-new-tests_test_lib",
     "//plugins/kotlin/j2k/k2/tests:kotlin-j2k-k2-tests_test_lib",
     "//plugins/kotlin/uast/uast-kotlin-fir/tests:kotlin-uast-uast-kotlin-k2-tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",

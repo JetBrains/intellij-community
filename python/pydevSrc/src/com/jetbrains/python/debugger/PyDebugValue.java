@@ -34,17 +34,17 @@ public class PyDebugValue extends XNamedValue {
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
   private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.<String, String>builder()
-    .put("ndarray", ARRAY)
-    .put("recarray", ARRAY)
-    .put("EagerTensor", ARRAY)
-    .put("ResourceVariable", ARRAY)
-    .put("SparseTensor", ARRAY)
-    .put("Tensor", ARRAY)
-    .put(DATA_FRAME, DATA_FRAME)
-    .put(SERIES, SERIES)
-    .put("GeoDataFrame", DATA_FRAME)
-    .put("GeoSeries", SERIES)
-    .put("Dataset", DATA_FRAME)
+    .put(NodeTypes.NDARRAY_NODE_TYPE, ARRAY)
+    .put(NodeTypes.RECARRAY_NODE_TYPE, ARRAY)
+    .put(NodeTypes.EAGER_TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.RESOURCE_VARIABLE_NODE_TYPE, ARRAY)
+    .put(NodeTypes.SPARSE_TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.DATA_FRAME_NODE_TYPE, DATA_FRAME)
+    .put(NodeTypes.SERIES_NODE_TYPE, SERIES)
+    .put(NodeTypes.GEO_DATA_FRAME_NODE_TYPE, DATA_FRAME)
+    .put(NodeTypes.GEO_SERIES_NODE_TYPE, SERIES)
+    .put(NodeTypes.DATASET_NODE_TYPE, DATA_FRAME)
     .build();
   private static final int MAX_ITEMS_TO_HANDLE = 100;
   public static final int MAX_VALUE = 256;
@@ -234,21 +234,28 @@ public class PyDebugValue extends XNamedValue {
     }
     else {
       myParent.buildExpression(result);
-      if (("dict".equals(myParent.getType()) || "list".equals(myParent.getType()) || "tuple".equals(myParent.getType())
-           || "NestedOrderedDict".equals(myParent.getType()) || "DatasetDict".equals(myParent.getType())
+      if ((NodeTypes.DICT_NODE_TYPE.equals(myParent.getType()) ||
+           NodeTypes.LIST_NODE_TYPE.equals(myParent.getType()) ||
+           NodeTypes.TUPLE_NODE_TYPE.equals(myParent.getType())
+           ||
+           NodeTypes.NESTED_ORDERED_DICT_NODE_TYPE.equals(myParent.getType()) ||
+           NodeTypes.DATASET_DICT_NODE_TYPE.equals(myParent.getType())
           ) && !isLen(myName)) {
         result.append('[').append(removeLeadingZeros(removeId(myName))).append(']');
       }
-      else if (("set".equals(myParent.getType())) && !isLen(myName)) {
+      else if ((NodeTypes.SET_NODE_TYPE.equals(myParent.getType())) && !isLen(myName)) {
         //set doesn't support indexing
       }
       else if (isLen(myName)) {
         result.append('.').append(myName).append("()");
       }
-      else if (("ndarray".equals(myParent.getType()) || "matrix".equals(myParent.getType())) && myName.equals("array")) {
+      else if ((NodeTypes.NDARRAY_NODE_TYPE.equals(myParent.getType()) || NodeTypes.MATRIX_NODE_TYPE.equals(myParent.getType())) &&
+               myName.equals(NodeTypes.ARRAY_NODE_TYPE)) {
         // return the string representation of an ndarray
       }
-      else if ("array".equals(myParent.getName()) && myParent.myParent != null && "ndarray".equals(myParent.myParent.getType())) {
+      else if (NodeTypes.ARRAY_NODE_TYPE.equals(myParent.getName()) &&
+               myParent.myParent != null &&
+               NodeTypes.NDARRAY_NODE_TYPE.equals(myParent.myParent.getType())) {
         result.append("[").append(removeLeadingZeros(myName)).append("]");
       }
       else {
@@ -323,7 +330,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private void setElementPresentation(@NotNull XValueNode node, @NotNull String value) {
-    if (myParent != null && "set".equals(myParent.getType())) {
+    if (myParent != null && NodeTypes.SET_NODE_TYPE.equals(myParent.getType())) {
       // hide object id and '=' when showing set elements
       node.setPresentation(getValueIcon(), new XRegularValuePresentation(value, getTypeString()) {
         @Override
@@ -519,7 +526,7 @@ public class PyDebugValue extends XNamedValue {
     if (!myContainer) {
       return AllIcons.Debugger.Db_primitive;
     }
-    else if ("list".equals(myType) || "tuple".equals(myType)) {
+    else if (NodeTypes.LIST_NODE_TYPE.equals(myType) || NodeTypes.TUPLE_NODE_TYPE.equals(myType)) {
       return AllIcons.Debugger.Db_array;
     }
     else {

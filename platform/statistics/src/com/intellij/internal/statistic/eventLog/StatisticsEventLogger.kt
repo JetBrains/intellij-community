@@ -11,12 +11,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
@@ -189,7 +189,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
    * Remove once CLion Nova is deployed 100%
    */
   private fun detectClionNova(): Boolean {
-    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler"
+    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
   }
 }
 

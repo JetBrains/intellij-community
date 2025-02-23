@@ -19,6 +19,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+    "//plugins/properties/properties-psi-api:psi",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//java/openapi:java",
@@ -31,6 +32,10 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "@lib//:kotlin-test",
     "//plugins/devkit/devkit-core:core",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
   ],
   runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
 )

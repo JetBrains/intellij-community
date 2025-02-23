@@ -289,7 +289,7 @@ public final class FileBasedIndexScanUtil {
       Document document = fileDocumentManager.getCachedDocument(file);
       boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
       try {
-        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile) == FileIndexingState.UP_TO_DATE) {
+        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile).isUpToDate()) {
           try {
             return index.getIndexedFileData(fileId);
           }

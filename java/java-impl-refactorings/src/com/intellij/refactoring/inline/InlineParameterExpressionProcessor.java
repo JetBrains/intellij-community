@@ -77,7 +77,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
     final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
@@ -131,7 +131,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     });
 
     if (!myCreateLocal) {
-      for (PsiReference ref : ReferencesSearch.search(myParameter).findAll()) {
+      for (PsiReference ref : ReferencesSearch.search(myParameter).asIterable()) {
         result.add(new UsageInfo(ref));
       }
     }
@@ -180,7 +180,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, myMethod, myParameter);
     final UsageInfo[] usages = refUsages.get();
@@ -205,7 +205,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
     for (PsiVariable var : vars) {
-      for (PsiReference ref : ReferencesSearch.search(var)) {
+      for (PsiReference ref : ReferencesSearch.search(var).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiExpression exp && isAccessedForWriting(exp)) {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.parameter.initializer.depends.on.inaccessible.value"));

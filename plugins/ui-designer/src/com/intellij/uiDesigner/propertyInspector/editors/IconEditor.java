@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.ide.util.TreeFileChooser;
@@ -22,8 +22,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
-public class IconEditor extends PropertyEditor<IconDescriptor> {
+public final class IconEditor extends PropertyEditor<IconDescriptor> {
   private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private IconDescriptor myValue;
   private RadComponent myComponent;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.net.URL
@@ -53,7 +53,7 @@ envs {
   // I don't think that it's desired behaviour to install pythons for tests user-wide what will be done
   // if we don't force these options (also there may be conflicts with existing installations)
   zipRepository = URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY",
-    "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
+                                                   "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
   shouldUseZipsFromRepository = isWindows
 }
 
@@ -83,8 +83,10 @@ tasks.register<Delete>("clean") {
 }
 
 tasks.register("build") {
-  dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean", "copy_buildserver_win_fix")
+  dependsOn(tasks.matching { it.name.startsWith("setup_") || it.name == "updateConda" }, "clean", "copy_buildserver_win_fix")
 }
+
+
 
 fun createPython(
   id: String,
@@ -99,9 +101,19 @@ fun createPython(
   envs {
     when (type) {
       PythonType.PYTHON -> python(id, pythonVersionMapping[version], packages)
-      PythonType.CONDA -> conda(id, version, packages)
+      PythonType.CONDA -> {
+        conda(id, version, packages)
+        tasks.register<Exec>("updateConda") {
+          val cmd = pythonHome.resolve("condabin").resolve(if (isWindows) "conda.bat" else "conda").toPath().toString()
+          // Update manifests as old soon might become unusable
+          commandLine(cmd, "update", "conda", "-y")
+          commandLine(cmd, "update", "--all", "-y")
+        }
+      }
     }
   }
+
+
 
   project.tasks.create("populate_tags_$id") {
     dependsOn(tasks.matching { it.name.matches("Bootstrap_[A-Z]*_'$id'.*".toRegex()) })
@@ -139,8 +151,8 @@ fun createPython(
 }
 
 createPython("py312_django_latest", "3.12",
-  listOf("django", "behave-django", "behave", "pytest", "untangle", "djangorestframework"),
-  listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
+             listOf("django", "behave-django", "behave", "pytest", "untangle", "djangorestframework"),
+             listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
 val qtTags = mutableListOf<String>()
 val qtPackages = mutableListOf<String>()
@@ -150,32 +162,32 @@ if (isUnix && !isMacOs) { //qt is for Linux only
 }
 
 createPython("py27", "2.7",
-  listOf(),
-  listOf("python2.7"))
+             listOf(),
+             listOf("python2.7"))
 
 createPython("py38", "3.8",
-  listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
-    "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
-  listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
-    "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas") + qtTags)
+             listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+                    "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
+             listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
+                    "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas") + qtTags)
 
 createPython("python3.9", "3.9",
-  listOf("pytest", "pytest-xdist"),
-  listOf("python3.9", "python3", "pytest", "xdist", "packaging"))
+             listOf("pytest", "pytest-xdist"),
+             listOf("python3.9", "python3", "pytest", "xdist", "packaging"))
 
 createPython("python3.10", "3.10",
-  listOf("untangle"), listOf("python3.10", "untangle"))
+             listOf("untangle"), listOf("python3.10", "untangle"))
 
 createPython("python3.11", "3.11",
-  listOf("black == 23.1.0", "joblib", "tensorflow", "poetry"),
-  listOf("python3.11", "black", "poetry", "joblib", "tensorflow"))
+             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry", "uv"),
+             listOf("python3.11", "black", "poetry", "uv", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-  listOf("teamcity-messages", "Twisted", "pytest", "poetry", "black>=23.11.0")
-    // TODO: maybe switch to optional dependency Twisted[windows-platform]
-    // https://docs.twisted.org/en/stable/installation/howto/optional.html
-    + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-  listOf("python3", "poetry", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
+             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "hatch", "black>=23.11.0")
+             // TODO: maybe switch to optional dependency Twisted[windows-platform]
+             // https://docs.twisted.org/en/stable/installation/howto/optional.html
+             + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
+             listOf("python3", "poetry", "uv", "hatch", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
-createPython("conda", "Miniconda3-py312_24.5.0-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)

@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
@@ -37,8 +34,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
 public final class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
@@ -56,9 +54,13 @@ public final class EditorHyperlinkSupport {
    * If your editor has a project inside, better use {@link #get(Editor)}
    */
   public EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project) {
+    this(editor, project, false);
+  }
+
+  private EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project, boolean trackChangesManually) {
     myEditor = (EditorEx)editor;
     myProject = project;
-    myFilterRunner = new AsyncFilterRunner(this, myEditor);
+    myFilterRunner = new AsyncFilterRunner(this, myEditor, trackChangesManually);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
       private MouseEvent myInitialMouseEvent;
@@ -102,11 +104,16 @@ public final class EditorHyperlinkSupport {
   }
 
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor) {
+    return get(editor, false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor, boolean trackDocumentChangesManually) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
       Project project = editor.getProject();
       assert project != null;
-      instance = new EditorHyperlinkSupport(editor, project);
+      instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
       editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
     }
     return instance;
@@ -144,6 +151,13 @@ public final class EditorHyperlinkSupport {
     return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public List<Inlay<?>> collectAllInlays() {
+    return getInlays(0, myEditor.getDocument().getTextLength());
+  }
+
+  @TestOnly
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
@@ -343,19 +357,29 @@ public final class EditorHyperlinkSupport {
   }
 
   @ApiStatus.Internal
-  public void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
+  public void highlightHyperlinks(@NotNull Filter.Result result) {
+    highlightHyperlinks(result, item -> TextRange.create(item.getHighlightStartOffset(), item.getHighlightEndOffset()));
+  }
+
+  @ApiStatus.Internal
+  public void highlightHyperlinks(@NotNull Filter.Result result,
+                                  @NotNull Function<Filter.ResultItem, @Nullable TextRange> highlightingRangeAccessor) {
     int length = myEditor.getDocument().getTextLength();
-    List<InlayProvider> inlayProviders = new SmartList<>();
+    List<Pair<InlayProvider, Integer>> inlayProviderPairs = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
-      int start = resultItem.getHighlightStartOffset() + offsetDelta;
-      int end = resultItem.getHighlightEndOffset() + offsetDelta;
+      TextRange textRange = highlightingRangeAccessor.apply(resultItem);
+      if (textRange == null) {
+        continue;
+      }
+      int start = textRange.getStartOffset();
+      int end = textRange.getEndOffset();
       if (start < 0 || end < start || end > length) {
         continue;
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
       if (resultItem instanceof InlayProvider inlayProvider) {
-        inlayProviders.add(inlayProvider);
+        inlayProviderPairs.add(Pair.create(inlayProvider, end));
       }
       else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
@@ -366,10 +390,10 @@ public final class EditorHyperlinkSupport {
       }
     }
     // add inlays in a batch if needed
-    if (!inlayProviders.isEmpty()) {
-      myEditor.getInlayModel().execute(inlayProviders.size() > 100, () -> {
-        for (InlayProvider inlayProvider : inlayProviders) {
-          addInlay(((Filter.ResultItem)inlayProvider).getHighlightEndOffset() + offsetDelta, inlayProvider);
+    if (!inlayProviderPairs.isEmpty()) {
+      myEditor.getInlayModel().execute(inlayProviderPairs.size() > 100, () -> {
+        for (Pair<InlayProvider, Integer> inlayProviderPair : inlayProviderPairs) {
+          addInlay(inlayProviderPair.second, inlayProviderPair.first);
         }
       });
     }

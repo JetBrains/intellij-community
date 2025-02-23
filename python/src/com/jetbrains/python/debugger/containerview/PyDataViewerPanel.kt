@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
@@ -40,7 +39,7 @@ import javax.swing.JPanel
 open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) :
   JPanel(BorderLayout()), Disposable {
 
-  protected val tablePanel = JPanel(BorderLayout())
+  protected val tablePanel: JPanel = JPanel(BorderLayout())
 
   protected var table: AbstractDataViewTable? = null
 
@@ -133,7 +132,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     setupChangeListener()
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   private fun isVariablePresentInStack(): Boolean {
     val values = frameAccessor.loadFrame(null) ?: return true
@@ -261,10 +260,10 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   }
 
   @Throws(PyDebuggerException::class)
-  protected open fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy) = Unit
+  protected open fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy): Unit = Unit
 
   // Chunk currently could be null when we are trying to view, for example,  pandas dataframe.
-  protected open fun updateTabNameAndSliceField(chunk: ArrayChunk?, originalDebugValue: PyDebugValue, modifier: Boolean) {
+  protected fun updateTabNameAndSliceField(chunk: ArrayChunk?, originalDebugValue: PyDebugValue, modifier: Boolean) {
     // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
     val debugValue = chunk?.value
     val realName = if (debugValue == null || debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation

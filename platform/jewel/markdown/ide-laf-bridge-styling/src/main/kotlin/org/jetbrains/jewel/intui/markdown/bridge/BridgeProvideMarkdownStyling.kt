@@ -1,3 +1,5 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.intui.markdown.bridge
 
 import androidx.compose.runtime.Composable
@@ -50,7 +52,7 @@ public fun ProvideMarkdownStyling(
     project: Project,
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownMode: MarkdownMode = remember { MarkdownMode.Standalone },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
@@ -40,7 +40,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
   public Options PACKAGE_SETTINGS = new Options();
   public Options MODULE_SETTINGS = new Options();
   public Options TOP_LEVEL_CLASS_SETTINGS = new Options("@param");
-  public Options INNER_CLASS_SETTINGS = new Options();
+  public Options INNER_CLASS_SETTINGS = new Options("@param");
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
 
@@ -73,7 +73,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
                                     List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
           .prefix("FIELD_SETTINGS"),
         INNER_CLASS_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
-                                          List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
+                                          List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of("@param"))
           .prefix("INNER_CLASS_SETTINGS")
       )
     );
@@ -158,7 +158,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     };
   }
 
-  private void checkFile(PsiJavaFile file, ProblemsHolder delegate, boolean isOnTheFly) {
+  private void checkFile(PsiJavaFile file, ProblemsHolder holder, boolean isOnTheFly) {
     PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory());
     if (pkg == null) return;
 
@@ -169,15 +169,15 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     if (!isJavadocRequired(PACKAGE_SETTINGS, pkg)) return;
 
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), PACKAGE_SETTINGS, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), PACKAGE_SETTINGS, docComment.getFirstChild(), holder);
     }
     else {
       PsiElement toHighlight = notNull(file.getPackageStatement(), file);
-      reportMissingJavadoc(toHighlight, delegate, isOnTheFly);
+      reportMissingJavadoc(toHighlight, holder, isOnTheFly);
     }
   }
 
-  private void checkModule(PsiJavaModule module, ProblemsHolder delegate, boolean isOnTheFly) {
+  private void checkModule(PsiJavaModule module, ProblemsHolder holder, boolean isOnTheFly) {
     PsiDocComment docComment = module.getDocComment();
     if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(module, docComment)) {
       return;
@@ -185,14 +185,14 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     if (!isJavadocRequired(MODULE_SETTINGS, module)) return;
 
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), MODULE_SETTINGS, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), MODULE_SETTINGS, docComment.getFirstChild(), holder);
     }
     else {
-      reportMissingJavadoc(module.getNameIdentifier(), delegate, isOnTheFly);
+      reportMissingJavadoc(module.getNameIdentifier(), holder, isOnTheFly);
     }
   }
 
-  private void checkClass(PsiClass aClass, ProblemsHolder delegate, boolean isOnTheFly) {
+  private void checkClass(PsiClass aClass, ProblemsHolder holder, boolean isOnTheFly) {
     if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiSyntheticClass || aClass instanceof PsiTypeParameter) {
       return;
     }
@@ -206,19 +206,21 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
 
-      checkRequiredTags(tags, options, docComment.getFirstChild(), delegate);
+      PsiElement toHighlight = docComment.getFirstChild();
+      checkRequiredTags(tags, options, toHighlight, holder);
 
       if (options.isTagRequired("param")) {
-        checkMissingTypeParamTags(aClass, tags, docComment.getFirstChild(), delegate);
+        checkMissingTypeParamTags(aClass, tags, toHighlight, holder);
+        checkMissingParamTags(aClass, tags, toHighlight, holder);
       }
     }
     else {
       PsiElement toHighlight = notNull(aClass.getNameIdentifier(), aClass);
-      reportMissingJavadoc(toHighlight, delegate, isOnTheFly);
+      reportMissingJavadoc(toHighlight, holder, isOnTheFly);
     }
   }
 
-  private void checkField(PsiField field, ProblemsHolder delegate, boolean isOnTheFly) {
+  private void checkField(PsiField field, ProblemsHolder holder, boolean isOnTheFly) {
     if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(field)) {
       return;
     }
@@ -226,14 +228,14 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
 
     PsiDocComment docComment = field.getDocComment();
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), FIELD_SETTINGS, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), FIELD_SETTINGS, docComment.getFirstChild(), holder);
     }
     else {
-      reportMissingJavadoc(field.getNameIdentifier(), delegate, isOnTheFly);
+      reportMissingJavadoc(field.getNameIdentifier(), holder, isOnTheFly);
     }
   }
 
-  private void checkMethod(PsiMethod method, ProblemsHolder delegate, boolean isOnTheFly) {
+  private void checkMethod(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
     if (method instanceof SyntheticElement) {
       return;
     }
@@ -250,34 +252,34 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
       if (!isInherited(docComment, method)) {
         PsiDocTag[] tags = docComment.getTags();
 
+        PsiElement toHighlight = docComment.getFirstChild();
         if (METHOD_SETTINGS.isTagRequired("return")) {
-          checkMissingReturnTag(tags, method, docComment.getFirstChild(), delegate);
+          checkMissingReturnTag(method, tags, toHighlight, holder);
         }
         if (METHOD_SETTINGS.isTagRequired("param")) {
-          checkMissingParamTags(tags, method, docComment.getFirstChild(), delegate);
-          checkMissingTypeParamTags(method, tags, docComment.getFirstChild(), delegate);
+          checkMissingParamTags(method, tags, toHighlight, holder);
+          checkMissingTypeParamTags(method, tags, toHighlight, holder);
         }
         if (METHOD_SETTINGS.isTagRequired("throws")) {
-          checkMissingThrowsTags(tags, method, docComment.getFirstChild(), delegate);
+          checkMissingThrowsTags(method, tags, toHighlight, holder);
         }
       }
     }
     else {
       PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null && isJavadocRequired(method)) {
-          reportMissingJavadoc(nameIdentifier, delegate, isOnTheFly);
+          reportMissingJavadoc(nameIdentifier, holder, isOnTheFly);
       }
     }
   }
-
 
   static boolean isDeprecated(PsiDocCommentOwner element) {
     return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
   }
 
-  public static boolean isInherited(PsiDocComment docComment, PsiMethod psiMethod) {
+  static boolean isInherited(PsiDocComment docComment, PsiMethod psiMethod) {
     for (PsiElement descriptionElement : docComment.getDescriptionElements()) {
-      if (descriptionElement instanceof PsiInlineDocTag && "inheritDoc".equals(((PsiInlineDocTag)descriptionElement).getName())) {
+      if (descriptionElement instanceof PsiInlineDocTag tag && "inheritDoc".equals(tag.getName())) {
         return true;
       }
     }
@@ -292,8 +294,8 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     return false;
   }
 
-  public static boolean isJavadocRequired(PsiMethod method){
-    return EP_NAME.getExtensionList().stream().noneMatch(condition -> condition.value(method));
+  private static boolean isJavadocRequired(PsiMethod method){
+    return !ContainerUtil.exists(EP_NAME.getExtensionList(), condition -> condition.value(method));
   }
 
   private static boolean isJavadocRequired(@NotNull Options options, @NotNull PsiModifierListOwner element) {
@@ -338,23 +340,23 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
-  static void checkMissingReturnTag(PsiDocTag @NotNull [] tags,
-                                    @NotNull PsiMethod psiMethod,
-                                    @NotNull PsiElement toHighlight,
-                                    @NotNull ProblemsHolder holder) {
+  private static void checkMissingReturnTag(@NotNull PsiMethod psiMethod,
+                                            PsiDocTag @NotNull [] tags,
+                                            @NotNull PsiElement toHighlight,
+                                            @NotNull ProblemsHolder holder) {
     if (!psiMethod.isConstructor() && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
       boolean hasReturnTag = ContainerUtil.exists(tags, tag -> "return".equals(tag.getName()));
       if (!hasReturnTag) {
-        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + "return" + "</code>");
+        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@return</code>");
         problem(holder, toHighlight, message, new JavaDocFixes.AddMissingTagFix("return", ""));
       }
     }
   }
 
-  static void checkMissingThrowsTags(PsiDocTag @NotNull [] tags,
-                                     @NotNull PsiMethod psiMethod,
-                                     @NotNull PsiElement toHighlight,
-                                     @NotNull ProblemsHolder holder) {
+  private static void checkMissingThrowsTags(@NotNull PsiMethod psiMethod,
+                                             PsiDocTag @NotNull [] tags,
+                                             @NotNull PsiElement toHighlight,
+                                             @NotNull ProblemsHolder holder) {
     PsiClassType[] thrownTypes = psiMethod.getThrowsList().getReferencedTypes();
     if (thrownTypes.length <= 0) return;
 
@@ -374,14 +376,11 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
           PsiElement firstChild = value.getFirstChild();
           if (firstChild != null) {
             PsiElement psiElement = firstChild.getFirstChild();
-            if ((psiElement instanceof PsiJavaCodeReferenceElement)) {
-              PsiElement target = ((PsiJavaCodeReferenceElement)psiElement).resolve();
-              if (target instanceof PsiClass) {
-                for (Iterator<PsiClassType> it = declaredExceptions.keySet().iterator(); it.hasNext(); ) {
-                  PsiClass psiClass = declaredExceptions.get(it.next());
-                  if (InheritanceUtil.isInheritorOrSelf((PsiClass)target, psiClass, true)) {
-                    it.remove();
-                  }
+            if ((psiElement instanceof PsiJavaCodeReferenceElement ref) && ref.resolve() instanceof PsiClass aClass) {
+              for (Iterator<PsiClassType> it = declaredExceptions.keySet().iterator(); it.hasNext(); ) {
+                PsiClass psiClass = declaredExceptions.get(it.next());
+                if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
+                  it.remove();
                 }
               }
             }
@@ -398,10 +397,26 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     }
   }
 
-  static void checkMissingParamTags(PsiDocTag @NotNull [] tags,
-                                    @NotNull PsiMethod psiMethod,
-                                    @NotNull PsiElement toHighlight,
-                                    @NotNull ProblemsHolder holder) {
+  private static void checkMissingParamTags(@NotNull PsiClass aClass,
+                                            PsiDocTag @NotNull [] tags,
+                                            @NotNull PsiElement toHighlight,
+                                            @NotNull ProblemsHolder holder) {
+    if (!aClass.isRecord()) return;
+    List<PsiNamedElement> absentParameters = null;
+
+    for (PsiRecordComponent param : aClass.getRecordComponents()) {
+      if (!hasTagForParameter(tags, param)) {
+        (absentParameters = list(absentParameters)).add(param);
+      }
+    }
+
+    reportMissingParamTags(absentParameters, toHighlight, holder);
+  }
+
+  private static void checkMissingParamTags(@NotNull PsiMethod psiMethod,
+                                            PsiDocTag @NotNull [] tags,
+                                            @NotNull PsiElement toHighlight,
+                                            @NotNull ProblemsHolder holder) {
     List<PsiNamedElement> absentParameters = null;
 
     for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
@@ -410,35 +425,43 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
       }
     }
 
+    reportMissingParamTags(absentParameters, toHighlight, holder);
+  }
+
+  private static void reportMissingParamTags(List<PsiNamedElement> absentParameters,
+                                             @NotNull PsiElement toHighlight,
+                                             @NotNull ProblemsHolder holder) {
     if (absentParameters != null) {
       for (PsiNamedElement parameter : absentParameters) {
         String name = parameter.getName();
         if (name != null) {
-          String tagText = "<code>" + name + "</code>";
-          String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
+          String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>" + name + "</code>");
           problem(holder, toHighlight, message, new JavaDocFixes.AddMissingParamTagFix(name));
         }
       }
     }
   }
 
-  static void reportMissingJavadoc(@NotNull PsiElement toHighlight, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  private static void reportMissingJavadoc(@NotNull PsiElement toHighlight, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     String message = JavaBundle.message("inspection.javadoc.problem.descriptor");
     LocalQuickFix fix = isOnTheFly ? IntentionWrapper.wrapToQuickFix(new AddJavadocIntention(), holder.getFile()) : null;
     problem(holder, toHighlight, message, fix);
   }
 
-  public static void problem(@NotNull ProblemsHolder holder, @NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix) {
+  private static void problem(@NotNull ProblemsHolder holder,
+                              @NotNull PsiElement toHighlight,
+                              @NotNull @Nls String message,
+                              @Nullable LocalQuickFix fix) {
     final LocalQuickFix[] fixes = fix != null ? new LocalQuickFix[] { fix } : null;
     holder.registerProblem(toHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   private static final String[] TAGS_TO_CHECK = {"author", "version", "since"};
 
-  static void checkRequiredTags(PsiDocTag @NotNull [] tags,
-                                @NotNull Options options,
-                                @NotNull PsiElement toHighlight,
-                                @NotNull ProblemsHolder holder) {
+  private static void checkRequiredTags(PsiDocTag @NotNull [] tags,
+                                        @NotNull Options options,
+                                        @NotNull PsiElement toHighlight,
+                                        @NotNull ProblemsHolder holder) {
     boolean[] isTagRequired = new boolean[TAGS_TO_CHECK.length];
     boolean[] isTagPresent = new boolean[TAGS_TO_CHECK.length];
     boolean someTagsAreRequired = false;
@@ -464,26 +487,24 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   private static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner owner,
-                                        PsiDocTag @NotNull [] tags,
-                                        @NotNull PsiElement toHighlight,
-                                        @NotNull ProblemsHolder holder) {
-    if (owner.hasTypeParameters()) {
-      List<PsiTypeParameter> absentParameters = null;
+                                                PsiDocTag @NotNull [] tags,
+                                                @NotNull PsiElement toHighlight,
+                                                @NotNull ProblemsHolder holder) {
+    if (!owner.hasTypeParameters()) return;
+    List<PsiTypeParameter> absentParameters = null;
 
-      for (PsiTypeParameter typeParameter : owner.getTypeParameters()) {
-        if (!hasTagForParameter(tags, typeParameter)) {
-          (absentParameters = list(absentParameters)).add(typeParameter);
-        }
+    for (PsiTypeParameter typeParameter : owner.getTypeParameters()) {
+      if (!hasTagForParameter(tags, typeParameter)) {
+        (absentParameters = list(absentParameters)).add(typeParameter);
       }
+    }
 
-      if (absentParameters != null) {
-        for (PsiTypeParameter typeParameter : absentParameters) {
-          String name = typeParameter.getName();
-          if (name != null) {
-            String tagText = "<code>&lt;" + name + "&gt;</code>";
-            String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
-            problem(holder, toHighlight, message, new JavaDocFixes.AddMissingTagFix("param", "<" + name + ">"));
-          }
+    if (absentParameters != null) {
+      for (PsiTypeParameter typeParameter : absentParameters) {
+        String name = typeParameter.getName();
+        if (name != null) {
+          String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>&lt;" + name + "&gt;</code>");
+          problem(holder, toHighlight, message, new JavaDocFixes.AddMissingTagFix("param", "<" + name + ">"));
         }
       }
     }
@@ -491,13 +512,10 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
 
   public static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
     for (PsiDocTag tag : tags) {
-      if ("param".equals(tag.getName())) {
-        PsiDocTagValue value = tag.getValueElement();
-        if (value instanceof PsiDocParamRef) {
-          PsiReference psiReference = value.getReference();
-          if (psiReference != null && psiReference.isReferenceTo(param)) {
-            return true;
-          }
+      if ("param".equals(tag.getName()) && tag.getValueElement() instanceof PsiDocParamRef ref) {
+        PsiReference psiReference = ref.getReference();
+        if (psiReference != null && psiReference.isReferenceTo(param)) {
+          return true;
         }
       }
     }
@@ -508,5 +526,4 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
   private static <T> List<T> list(List<T> list) {
     return list != null ? list : new SmartList<>();
   }
-
 }

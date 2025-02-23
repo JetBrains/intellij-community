@@ -30,7 +30,7 @@ abstract class JupyterAbstractAboveCellToolbar(
 
   init {
     val borderColor = when (NewUiValue.isEnabled()) {
-      true -> JBColor.LIGHT_GRAY
+      true -> JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
       else -> JBColor.GRAY
     }
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, getArcSize(), TOOLBAR_BORDER_THICKNESS),

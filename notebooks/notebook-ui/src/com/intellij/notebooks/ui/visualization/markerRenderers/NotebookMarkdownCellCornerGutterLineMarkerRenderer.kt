@@ -5,9 +5,13 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.geom.Line2D
 
 /**
  * Draws upper and lower left corners of the markdown cell border, see PY-74106 Improve the appearance of empty Markdown cells
@@ -25,7 +29,7 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
   inlayId: Long
 ) : NotebookLineMarkerRenderer(inlayId) {
 
-  enum class Position { TOP, BOTTOM }
+  enum class Position { BOTTOM, MIDDLE, TOP }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
@@ -45,9 +49,9 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
           editor, g, r, topPosition, bottomRectHeight, Position.TOP
         )
       }
-      Position.BOTTOM -> {
+      Position.MIDDLE, Position.BOTTOM -> {
         paintNotebookCellBorderGutter(
-          editor, g, r, inlayBounds.y, inlayBounds.height, Position.BOTTOM
+          editor, g, r, inlayBounds.y, inlayBounds.height, position
         )
       }
     }
@@ -61,24 +65,38 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
     height: Int,
     position: Position,
   ) {
+    val g2d = g as Graphics2D
     val appearance = editor.notebookAppearance
     val borderWidth = appearance.getLeftBorderWidth()
-    val leftBorderX = r.width - borderWidth
-    val rightBorderX = r.x + r.width
-    val topY = top
-    val bottomY = top + height
+    val leftBorderX = (r.width - borderWidth).toFloat()
+    val rightBorderX = (r.x + r.width).toFloat()
+    val topY = top.toFloat() + 0.5f
+    val bottomY = (top + height).toFloat() + 0.5f
 
-    g.color = color
+    val originalStroke = g2d.stroke
+    val originalHints = g2d.renderingHints
+
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+
+    g2d.color = color
+    g2d.stroke = BasicStroke(1.0f)
 
     when (position) {
       Position.TOP -> {
-        g.drawLine(leftBorderX, topY, rightBorderX, topY)
-        g.drawLine(leftBorderX, topY, leftBorderX, bottomY)
+        g2d.draw(Line2D.Float(leftBorderX, topY, rightBorderX, topY))
+        g2d.draw(Line2D.Float(leftBorderX, topY, leftBorderX, bottomY))
+      }
+      Position.MIDDLE -> {
+        g2d.draw(Line2D.Float(leftBorderX, topY, leftBorderX, bottomY - 1))
       }
       Position.BOTTOM -> {
-        g.drawLine(leftBorderX, bottomY - 1, rightBorderX, bottomY - 1)
-        g.drawLine(leftBorderX, topY, leftBorderX, bottomY - 1)
+        g2d.draw(Line2D.Float(leftBorderX, bottomY - 1, rightBorderX, bottomY - 1))
+        g2d.draw(Line2D.Float(leftBorderX, topY, leftBorderX, bottomY - 1))
       }
     }
+
+    g2d.stroke = originalStroke
+    g2d.setRenderingHints(originalHints)
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
@@ -11,21 +10,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.stream.Stream;
 
 public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
   private static final JavaModuleNameIndex ourInstance = new JavaModuleNameIndex();
@@ -68,7 +57,7 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     for (PsiJavaModule module : modules) {
       VirtualFile root = index.getClassRootForFile(module.getContainingFile().getVirtualFile());
       if (root != null) {
-        List<VirtualFile> files = descriptorFiles(root, false, false);
+        List<VirtualFile> files = descriptorFiles(root);
         VirtualFile main = ContainerUtil.getFirstItem(files);
         if (main != null && !(root.equals(main.getParent()) || version(main.getParent()) >= 9)) {
           filter.add(main);
@@ -91,25 +80,14 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     return true;
   }
 
-  public static @Nullable VirtualFile descriptorFile(@NotNull VirtualFile root) {
-    VirtualFile result = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-    if (result == null) {
-      result = ContainerUtil.getFirstItem(descriptorFiles(root, true, true));
-    }
-    return result;
-  }
-
-  private static List<VirtualFile> descriptorFiles(VirtualFile root, boolean checkAttribute, boolean filter) {
+  private static List<VirtualFile> descriptorFiles(VirtualFile root) {
     List<VirtualFile> results = new SmartList<>();
 
     ContainerUtil.addIfNotNull(results, root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE));
 
     VirtualFile versionsDir = root.findFileByRelativePath("META-INF/versions");
-    if (versionsDir != null && (!checkAttribute || isMultiReleaseJar(root))) {
+    if (versionsDir != null) {
       VirtualFile[] versions = versionsDir.getChildren();
-      if (filter) {
-        versions = Stream.of(versions).filter(d -> version(d) >= 9).toArray(VirtualFile[]::new);
-      }
       Arrays.sort(versions, JavaModuleNameIndex::compareVersions);
       for (VirtualFile version : versions) {
         ContainerUtil.addIfNotNull(results, version.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE));
@@ -117,26 +95,6 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     }
 
     return results;
-  }
-
-  private static final Key<CachedValue<Boolean>> MULTI_RELEASE_KEY = Key.create("jar.multi.release.key");
-
-  private static boolean isMultiReleaseJar(VirtualFile root) {
-    VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-    if (manifest == null) return false;
-
-    CachedValue<Boolean> value = manifest.getUserData(MULTI_RELEASE_KEY);
-    if (value == null) {
-      manifest.putUserData(MULTI_RELEASE_KEY, value = new CachedValueImpl<>(() -> {
-        Boolean result = Boolean.FALSE;
-        try (InputStream stream = manifest.getInputStream()) {
-          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(Attributes.Name.MULTI_RELEASE));
-        }
-        catch (IOException ignored) { }
-        return CachedValueProvider.Result.create(result, manifest);
-      }));
-    }
-    return value.getValue();
   }
 
   private static int version(VirtualFile dir) {

@@ -1,21 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
+import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.CaseSensitivityAttribute
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
-import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
-import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import com.intellij.util.io.sanitizeFileName
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
@@ -23,14 +18,14 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.attribute.*
-import java.nio.file.attribute.PosixFilePermission.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.name
 
 /**
  * A special wrapper for [com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider]
@@ -177,20 +172,9 @@ class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
-
             val originalPath = dir.resolve(sanitizeFileName(ijentPath.fileName.toString()))
 
-            val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
-            val dosAttributes =
-              if (cachedAttrs != null)
-                IjentNioPosixFileAttributesWithDosAdapter(
-                  ijentPath.fileSystem.ijentFs.user as EelUserPosixInfo,
-                  cachedAttrs,
-                  nameStartsWithDot = ijentPath.fileName.startsWith("."),
-                )
-              else null
-
-            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), dosAttributes)
+            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
           }
 
           override fun remove() {
@@ -292,28 +276,7 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.getFileAttributeView(path.toIjentPath(), type, *options)
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
-    // There's some contract violation at least in com.intellij.openapi.util.io.FileAttributes.fromNio:
-    // the function always assumes that the returned object is DosFileAttributes on Windows,
-    // and that's always true with the default WindowsFileSystemProvider.
-
-    val actualType =
-      if (DosFileAttributes::class.java.isAssignableFrom(type)) PosixFileAttributes::class.java
-      else type
-
-    val ijentNioPath = path.toIjentPath()
-    val resultAttrs = when (val actualAttrs = ijentFsProvider.readAttributes(ijentNioPath, actualType, *options)) {
-      is DosFileAttributes -> actualAttrs  // TODO How can it be possible? It's certainly known that the remote OS is GNU/Linux.
-
-      is PosixFileAttributes ->
-        IjentNioPosixFileAttributesWithDosAdapter(
-          ijentNioPath.fileSystem.ijentFs.user as EelUserPosixInfo,
-          actualAttrs, path.name.startsWith("."),
-        )
-
-      else -> actualAttrs
-    }
-
-    return type.cast(resultAttrs)
+    return ijentFsProvider.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
   }
 
   override fun readAttributes(path: Path, attributes: String?, vararg options: LinkOption?): MutableMap<String, Any> =
@@ -340,45 +303,5 @@ class IjentWslNioFileSystemProvider(
     }
 
     private val LOG = logger<IjentWslNioFileSystemProvider>()
-  }
-}
-
-@VisibleForTesting
-class IjentNioPosixFileAttributesWithDosAdapter(
-  private val userInfo: EelUserPosixInfo,
-  private val fileInfo: PosixFileAttributes,
-  private val nameStartsWithDot: Boolean,
-) : CaseSensitivityAttribute, PosixFileAttributes by fileInfo, DosFileAttributes {
-  /**
-   * Returns `false` if the corresponding file or directory can be modified.
-   * Note that returning `true` does not mean that the corresponding file can be read or the directory can be listed.
-   */
-  override fun isReadOnly(): Boolean = fileInfo.run {
-    val owner = owner()
-    val group = group()
-    return when {
-      userInfo.uid == 0 && owner is EelPosixUserPrincipal && owner.uid != 0 ->
-        // on unix, root can read everything except the files that they forbid for themselves
-        isDirectory
-
-      owner is EelPosixUserPrincipal && owner.uid == userInfo.uid ->
-        OWNER_WRITE !in permissions() || (isDirectory && OWNER_EXECUTE !in permissions())
-
-      group is EelPosixGroupPrincipal && group.gid == userInfo.gid ->
-        GROUP_WRITE !in permissions() || (isDirectory && GROUP_EXECUTE !in permissions())
-
-      else ->
-        OTHERS_WRITE !in permissions() || (isDirectory && OTHERS_EXECUTE !in permissions())
-    }
-  }
-
-  override fun isHidden(): Boolean = nameStartsWithDot
-
-  override fun isArchive(): Boolean = false
-
-  override fun isSystem(): Boolean = false
-
-  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity {
-    if (fileInfo is CaseSensitivityAttribute) return fileInfo.caseSensitivity else return FileAttributes.CaseSensitivity.UNKNOWN
   }
 }

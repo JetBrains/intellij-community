@@ -26,7 +26,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.jetbrains.python.sdk.PythonSdkUtilKtKt.tryResolvePath;
+import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 

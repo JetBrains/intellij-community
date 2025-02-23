@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -277,7 +278,8 @@ object InlayHintsUtils {
 
   private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
 
-  internal fun getTextMetricStorage(editor: Editor): InlayTextMetricsStorage {
+  @ApiStatus.Internal
+  fun getTextMetricStorage(editor: Editor): InlayTextMetricsStorage {
     val storage = editor.getUserData(TEXT_METRICS_STORAGE)
     if (storage == null) {
       val newStorage = InlayTextMetricsStorage(editor)
@@ -287,11 +289,19 @@ object InlayHintsUtils {
     return storage
   }
 
-  fun computeCodeVisionUnderReadAction(computable: () -> CodeVisionState): CodeVisionState {
+  @JvmOverloads
+  fun computeCodeVisionUnderReadAction(expectsIndicator: Boolean = false, computable: () -> CodeVisionState): CodeVisionState {
     try {
       if (!EDT.isCurrentThreadEdt()) {
         return ReadAction.computeCancellable<CodeVisionState, Throwable> {
-          return@computeCancellable computable.invoke()
+          if (expectsIndicator) {
+            blockingContextToIndicator {
+              computable.invoke()
+            }
+          }
+          else {
+            computable.invoke()
+          }
         }
       }
       else {

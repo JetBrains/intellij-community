@@ -50,6 +50,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/refactoring",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":dotenv_resources"]
 )

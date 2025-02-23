@@ -20,8 +20,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertEmpty
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertSize
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager

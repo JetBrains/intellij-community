@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import one.util.streamex.StreamEx
 

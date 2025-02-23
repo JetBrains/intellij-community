@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.injection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -294,7 +294,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         if (isAnalyzeOff(host.project)) return null
 
         val searchScope = LocalSearchScope(arrayOf(ktProperty.containingFile), "", true)
-        return ReferencesSearch.search(ktProperty, searchScope).asSequence().mapNotNull { psiReference ->
+        return ReferencesSearch.search(ktProperty, searchScope).asIterable().asSequence().mapNotNull { psiReference ->
             val element = psiReference.element as? KtElement ?: return@mapNotNull null
             findInjectionInfo(element, false)
         }.firstOrNull()

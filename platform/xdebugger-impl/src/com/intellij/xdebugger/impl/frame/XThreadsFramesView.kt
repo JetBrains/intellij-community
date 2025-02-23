@@ -9,6 +9,7 @@ import com.intellij.ide.ui.text.parts.RegularTextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -26,6 +27,7 @@ import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -65,6 +67,8 @@ import javax.swing.event.ListDataListener
 import javax.swing.text.StyleConstants
 import kotlin.time.toKotlinDuration
 
+private val logger = Logger.getInstance(XThreadsFramesView::class.java)
+
 @Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myPauseDisposables = SequentialDisposables(this)
@@ -76,6 +80,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private val myCurrentThreadDescriptionComponent = StyledTextPane().apply {
     Disposer.register(this@XThreadsFramesView, this)
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -164,7 +169,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       false,
       SPLITTER_PROPORTION_KEY,
       SPLITTER_PROPORTION_DEFAULT_VALUE,
-      debugTab, debugTab.project), OccurenceNavigator by myFramesList {}
+      debugTab, debugTab.project), OccurenceNavigator by myFramesList {
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return super.getActionUpdateThread()
+      }
+    }
 
     val minimumDimension = Dimension(JBUI.scale(26), 0)
     val threadsScrollPane = myThreadsList.withSpeedSearch().toScrollPane()
@@ -198,7 +207,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
             myThreadsList.model.removeListDataListener(requester)
             threadsScrollPane.viewport.removeChangeListener(requester)
             stackInfoDescriptionRequester = null
-            myCurrentThreadDescriptionComponent.clear()
+            myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+            myCurrentThreadDescriptionComponent.revalidate()
+            myCurrentThreadDescriptionComponent.repaint()
           }
         })
         requester
@@ -229,17 +240,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
 
     myThreadsList.addMouseListener(object : MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      // not mousePressed here, otherwise click in an unfocused frames list transfers focus to the new opened editor
       override fun mouseReleased(e: MouseEvent) {
-        if (!myListenersEnabled) return
-
-        val i = myThreadsList.locationToIndex(e.point)
-        if (i == -1 || !myThreadsList.isSelectedIndex(i)) return
-
-        val session = getSession(e) ?: return
-        val stack = myThreadsList.selectedValue?.stack ?: return
-
-        stack.setActive(session)
+        processMouseEvent(e) { session, stack, _ ->
+          stack.setActive(session)
+        }
       }
     })
 
@@ -262,20 +267,27 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
 
     myFramesList.addMouseListener(object : MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      // not mousePressed here, otherwise click in an unfocused frames list transfers focus to the new opened editor
       override fun mouseReleased(e: MouseEvent) {
-        if (!myListenersEnabled) return
-
-        val i = myFramesList.locationToIndex(e.point)
-        if (i == -1 || !myFramesList.isSelectedIndex(i)) return
-
-        val session = getSession(e) ?: return
-        val stack = myThreadsList.selectedValue?.stack ?: return
-        val frame = myFramesList.selectedValue as? XStackFrame ?: return
-
-        session.setCurrentStackFrame(stack, frame)
+        processMouseEvent(e) { session, stack, frame ->
+          frame ?: return@processMouseEvent
+          session.setCurrentStackFrame(stack, frame)
+        }
       }
     })
+  }
+
+  private inline fun processMouseEvent(e: MouseEvent, action: (XDebugSession, XExecutionStack, XStackFrame?) -> Unit) {
+    if (!myListenersEnabled) return
+
+    val i = myFramesList.locationToIndex(e.point)
+    if (i == -1 || !myFramesList.isSelectedIndex(i)) return
+
+    val session = getSession(e) ?: return
+    val stack = myThreadsList.selectedValue?.stack ?: return
+    val frame = myFramesList.selectedValue as? XStackFrame
+
+    action(session, stack, frame)
   }
 
   private fun setActiveThreadDescription(@Nls text: String) {
@@ -353,7 +365,14 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     setActiveThreadDescription(IdeBundle.message("progress.text.loading"))
     stackInfoDescriptionRequester?.requestDescription(this) { description, exception ->
-      description?.let { setActiveThreadDescription(it.longDescription) }
+      if (exception != null) {
+        logger.error(exception)
+      }
+
+      @Nls
+      val longDescription = description?.longDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
+
+      setActiveThreadDescription(longDescription)
     }
 
     val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
@@ -378,7 +397,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
     stackInfoDescriptionRequester?.clear()
-    myCurrentThreadDescriptionComponent.clear()
+    myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+    myCurrentThreadDescriptionComponent.revalidate()
+    myCurrentThreadDescriptionComponent.repaint()
   }
 
   override fun dispose() {}
@@ -673,9 +694,7 @@ internal class StackInfoDescriptionRequester(
       if (exception != null) {
         logger.error(exception)
       }
-      if (result != null) {
-        stackInfo.description = result.shortDescription
-      }
+      stackInfo.description = result?.shortDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
     }
   }
 

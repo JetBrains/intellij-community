@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package io.bazel.kotlin.plugin.jdeps
 
 import com.google.devtools.build.lib.view.proto.Deps
 import org.jetbrains.bazel.jvm.kotlin.JarOwner
 import org.jetbrains.bazel.jvm.kotlin.JarOwner.Companion.INJECTING_RULE_KIND
 import org.jetbrains.bazel.jvm.kotlin.JarOwner.Companion.TARGET_LABEL
+import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -105,8 +106,11 @@ private fun doWriteJdeps(
   deps.sortBy { it.path }
   rootBuilder.addAllDependency(deps)
   // build and write out deps.proto
-  val jdepsOutput = configuration.getNotNull(JdepsGenConfigurationKeys.OUTPUT_JDEPS)
-  Files.write(Path.of(jdepsOutput), rootBuilder.build().toByteArray())
+  val jdepsOutput = Path.of(configuration.getNotNull(JdepsGenConfigurationKeys.OUTPUT_JDEPS))
+  val data = rootBuilder.build().toByteArray()
+  writeFileUsingTempFile(jdepsOutput) {
+    Files.write(it, data)
+  }
 }
 
 private fun doStrictDeps(

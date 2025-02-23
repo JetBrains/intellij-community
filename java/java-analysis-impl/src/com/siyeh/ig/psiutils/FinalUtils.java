@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
@@ -23,7 +21,7 @@ public final class FinalUtils {
       // parameters have an implicit initializer
       return !VariableAccessUtils.variableIsAssigned(variable);
     }
-    if (variable instanceof PsiField && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
+    if (variable instanceof PsiField && !ControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
       return false;
     }
     return checkIfElementViolatesFinality(variable);
@@ -57,19 +55,19 @@ public final class FinalUtils {
                                                             Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!(e instanceof PsiReferenceExpression ref)) return true;
     if (!ref.isReferenceTo(variable)) return true;
-    HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
-      .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
-    if (highlightInfo != null) return false;
+    if (!ControlFlowUtil.isInitializedBeforeUsage(
+      ref, variable, uninitializedVarProblems, true)) {
+      return false;
+    }
     if (!PsiUtil.isAccessedForWriting(ref)) return true;
     if (!LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(ref)) return false;
     if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
     if (variable instanceof PsiField) {
       if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
-      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
+      PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, ref);
       if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
     }
-    HighlightInfo.Builder random =
-      HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems);
-    return random == null;
+    return ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, ref, finalVarProblems) == 
+           ControlFlowUtil.DoubleInitializationProblem.NO_PROBLEM;
   }
 }

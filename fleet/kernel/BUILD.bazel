@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -27,6 +26,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//fleet/preferences",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:fastutil-min",
   ],
   exports = [

@@ -16,7 +16,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/java-frontback-impl:frontback-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",

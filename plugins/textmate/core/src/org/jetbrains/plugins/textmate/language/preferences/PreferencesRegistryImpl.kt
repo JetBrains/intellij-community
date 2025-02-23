@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.preferences
 
-import fleet.fastutil.ints.IntOpenHashSet
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
@@ -8,10 +7,10 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 
 class PreferencesRegistryImpl(private val weigher: TextMateSelectorWeigher) : PreferencesRegistry {
   private val myPreferences: MutableSet<Preferences> = mutableSetOf()
-  private val myLeftHighlightingBraces = IntOpenHashSet()
-  private val myRightHighlightingBraces = IntOpenHashSet()
-  private val myLeftSmartTypingBraces = IntOpenHashSet()
-  private val myRightSmartTypingBraces = IntOpenHashSet()
+  private val myLeftHighlightingBraces = mutableSetOf<Int>()
+  private val myRightHighlightingBraces = mutableSetOf<Int>()
+  private val myLeftSmartTypingBraces = mutableSetOf<Int>()
+  private val myRightSmartTypingBraces = mutableSetOf<Int>()
 
   init {
     fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -795,7 +795,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     if (changeInfo.isVisibilityChanged()) {
       PsiModifierList modifierList = method.getModifierList();
       final String targetVisibility;
-      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateVisibility) {
+      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).isPropagateVisibility()) {
         targetVisibility = changeInfo.getNewVisibility();
       }
       else {
@@ -1393,7 +1393,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
         final PsiMethodCallExpression superCall = getSuperCall(method, body);
         for (int i = 0; i < toRemove.length; i++) {
           if (toRemove[i]) {
-            for (PsiReference ref : ReferencesSearch.search(parameters[i], searchScope)) {
+            for (PsiReference ref : ReferencesSearch.search(parameters[i], searchScope).asIterable()) {
               if (superCall == null || !passUnchangedParameterToSuperCall(superCall, i, ref)) {
                 String paramName = StringUtil.capitalize(RefactoringUIUtil.getDescription(parameters[i], true));
                 conflictDescriptions.putValue(parameters[i], JavaRefactoringBundle.message("parameter.used.in.method.body.warning", paramName));
@@ -1428,14 +1428,14 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
         //getter
         PsiMethod explicitGetter = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
         if (explicitGetter != null) {
-          for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, explicitGetter.getUseScope(), false)) {
+          for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, explicitGetter.getUseScope(), false).asIterable()) {
             PsiElement paramRef = psiReference.getElement();
             conflictDescriptions.putValue(paramRef, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", component.getName()));
           }
         }
       }
       //deconstruction. can be slow, because it is necessary to check a type of psiReference
-      for (PsiReference classReference : ReferencesSearch.search(aClass, aClass.getUseScope())) {
+      for (PsiReference classReference : ReferencesSearch.search(aClass, aClass.getUseScope()).asIterable()) {
         PsiElement element = classReference.getElement();
         PsiElement parent = element.getParent();
         if (!(parent instanceof PsiTypeElement)) {
@@ -1539,7 +1539,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
       VisibilityUtil.setVisibility(modifierList, visibility);
 
       searchForHierarchyConflicts(method, conflictDescriptions, visibility);
-      boolean propagateVisibility = myChangeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility;
+      boolean propagateVisibility = myChangeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)myChangeInfo).isPropagateVisibility();
 
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();

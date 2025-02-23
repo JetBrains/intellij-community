@@ -18,13 +18,14 @@ package com.siyeh.ig.dataflow;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class ScopeUtils {
-
+@ApiStatus.Internal
+public final class ScopeUtils {
   private ScopeUtils() {}
 
   public static @Nullable PsiElement findTighterDeclarationLocation(@NotNull PsiElement sibling, @NotNull PsiVariable variable,

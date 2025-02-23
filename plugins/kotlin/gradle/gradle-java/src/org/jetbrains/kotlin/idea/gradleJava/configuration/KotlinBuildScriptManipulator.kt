@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.capitalize
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -645,14 +646,19 @@ class KotlinBuildScriptManipulator(
             "listOf(\"$featureArgumentString\")",
             forTests
         ) { _, preserveAssignmentWhenReplacing ->
-            val prefix: String
+            val prefix: String // prefix is used only when adding a new value
             val postfix: String
             if (preserveAssignmentWhenReplacing) {
                 prefix = "$parameterName = listOf("
                 postfix = ")"
             } else {
-                prefix = "$parameterName.addAll(listOf(" // prefix is used only when adding a new value
-                postfix = "))"
+                prefix = "$parameterName.addAll("
+                // We check `text` instead of PSI (or with regex) here because `replaceLanguageFeature()` operates with `text` too
+                postfix = if (text.endsWith("))")) { // It may be in the case `addAll(listOf(<...>))`
+                    "))"
+                } else {
+                    ")"
+                }
             }
             val newText = text.replaceLanguageFeature(
                 feature,
@@ -661,7 +667,18 @@ class KotlinBuildScriptManipulator(
                 prefix,
                 postfix
             )
-            replace(psiFactory.createExpression(newText))
+            val replacedExpression = replace(psiFactory.createExpression(newText))
+
+            // If we had a `.add(...)` call with a single argument, replace it with `.addAll(...)` for multiple arguments
+            (replacedExpression as? KtExpression)?.replaceCallee(from = "add", to = "addAll")
+            replacedExpression
+        }
+    }
+
+    private fun KtExpression.replaceCallee(from: String, to: String) {
+        val calleeExpression = this.getPossiblyQualifiedCallExpression()?.calleeExpression
+        if (calleeExpression?.text == from) {
+            calleeExpression.replace(psiFactory.createExpression(to))
         }
     }
 

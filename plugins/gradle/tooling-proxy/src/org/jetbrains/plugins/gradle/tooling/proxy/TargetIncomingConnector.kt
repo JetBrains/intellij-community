@@ -20,6 +20,7 @@ import java.net.InetSocketAddress
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import kotlin.time.Duration.Companion.milliseconds
 
 class TargetIncomingConnector : IncomingConnector {
   private val addressFactory: InetAddressFactory = InetAddressFactory()
@@ -30,6 +31,9 @@ class TargetIncomingConnector : IncomingConnector {
     try {
       val bindingPort = getBindingPort()
       serverSocketChannel = ServerSocketChannel.open()
+      // this is necessary to be able to establish the connection with a Daemon
+      // see https://github.com/gradle/gradle/pull/30917 for more details
+      serverSocketChannel.configureBlocking(false);
       val bindingAddress = getBindingAddress(allowRemote)
       serverSocketChannel.bind(InetSocketAddress(bindingAddress, bindingPort))
     }
@@ -78,6 +82,10 @@ class TargetIncomingConnector : IncomingConnector {
       try {
         while (true) {
           val socket = serverSocket.accept()
+          if (socket == null) {
+            Thread.sleep(100)
+            continue
+          }
           val remoteSocketAddress = socket.socket().remoteSocketAddress as InetSocketAddress
           val remoteInetAddress = remoteSocketAddress.address
           if (!allowRemote && !addressFactory.isCommunicationAddress(remoteInetAddress)) {
@@ -87,6 +95,7 @@ class TargetIncomingConnector : IncomingConnector {
           else {
             logger.debug("Accepted connection from {} to {}.", socket.socket().remoteSocketAddress, socket.socket().localSocketAddress)
             try {
+              socket.configureBlocking(false)
               action.execute(SocketConnectCompletion(socket))
             }
             catch (t: Throwable) {

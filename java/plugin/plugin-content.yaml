@@ -37,6 +37,7 @@
   - name: intellij.platform.uast
   - name: intellij.platform.uast.ide
   - name: intellij.java.uast.ide
+  - name: intellij.java.codeserver.core
   - name: intellij.java.codeserver.highlighting
   - name: intellij.java.compiler.impl
   - name: intellij.java.debugger.impl
@@ -75,6 +76,7 @@
   - name: intellij.java.performancePlugin
   - name: intellij.java.compiler.charts
   - name: intellij.java.terminal
+  - name: intellij.java.debugger.impl.backend
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
@@ -127,6 +129,9 @@
 - name: lib/maven-resolver-connector-basic.jar
 - name: lib/maven-resolver-transport-file.jar
 - name: lib/maven-resolver-transport-http.jar
+- name: lib/modules/intellij.java.debugger.impl.frontend.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.frontend
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer

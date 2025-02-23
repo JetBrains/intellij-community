@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.python.community.impl.venv` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "community-impl-venv_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-impl-venv",
+  module_name = "intellij.python.community.impl.venv",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/python-exec-service:community-execService",
+    "@lib//:kotlinx-coroutines-core",
+    "//python/python-sdk:sdk",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+  ],
+  runtime_deps = [":community-impl-venv_resources"]
+)
+
+jvm_library(
+  name = "community-impl-venv_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":community-impl-venv"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service:community-execService_test_lib",
+    "@lib//:kotlinx-coroutines-core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "//platform/ide-core-impl",
+    "//platform/execution",
+  ],
+  runtime_deps = [":community-impl-venv_resources"]
+)
+
+jvm_test(
+  name = "community-impl-venv_test",
+  runtime_deps = [":community-impl-venv_test_lib"]
+)
+### auto-generated section `build intellij.python.community.impl.venv` end

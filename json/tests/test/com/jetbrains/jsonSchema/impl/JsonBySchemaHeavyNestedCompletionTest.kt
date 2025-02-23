@@ -358,7 +358,7 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
     }
   }
 
-  override fun getTestDataPath(): String = PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion/temp"
+  override fun getTestDataPath(): String = PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/completion/temp"
   override fun getBasePath(): String = throw IllegalStateException("Use getTestDataPath instead")
 
   private val workingFolder get() = File(testDataPath)

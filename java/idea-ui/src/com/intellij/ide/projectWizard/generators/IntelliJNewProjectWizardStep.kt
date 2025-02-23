@@ -5,14 +5,11 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleFileLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
-import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
@@ -20,7 +17,6 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDING_TIPS_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -41,7 +37,6 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
-import com.intellij.ui.UIBundle.message
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import java.nio.file.Paths
@@ -58,8 +53,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   final override val addSampleCodeProperty = propertyGraph.property(true)
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-  final override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
-    .bindBooleanStorage(GENERATE_ONBOARDING_TIPS_NAME)
 
   final override var sdk by sdkProperty
   final override var sdkDownloadTask by sdkDownloadTaskProperty
@@ -67,7 +60,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override var contentRoot by contentRootProperty
   final override var moduleFileLocation by moduleFileLocationProperty
   final override var addSampleCode by addSampleCodeProperty
-  final override var generateOnboardingTips by generateOnboardingTipsProperty
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
@@ -116,16 +108,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
-    builder.indent {
-      row {
-        checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-          .bindSelected(generateOnboardingTipsProperty)
-          .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
-          .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
-      }
-    }.enabledIf(addSampleCodeProperty)
-  }
+  @Deprecated("The onboarding tips generated unconditionally")
+  protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) = Unit
 
   protected fun setupModuleNameUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.name")) {
@@ -141,7 +125,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   protected fun setupModuleContentRootUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.content.root")) {
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        .withTitle(message("label.project.wizard.new.project.content.root.title"))
+        .withTitle(UIBundle.message("label.project.wizard.new.project.content.root.title"))
         .withPathToTextConvertor(::getPresentablePath)
         .withTextToPathConvertor(::getCanonicalPath)
       textFieldWithBrowseButton(fileChooserDescriptor, context.project)
@@ -156,7 +140,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   protected fun setupModuleFileLocationUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        .withTitle(message("label.project.wizard.new.project.module.file.location.title"))
+        .withTitle(UIBundle.message("label.project.wizard.new.project.module.file.location.title"))
         .withPathToTextConvertor(::getPresentablePath)
         .withTextToPathConvertor(::getCanonicalPath)
       textFieldWithBrowseButton(fileChooserDescriptor, context.project)

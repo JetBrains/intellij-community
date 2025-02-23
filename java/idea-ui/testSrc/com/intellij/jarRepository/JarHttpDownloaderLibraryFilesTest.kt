@@ -25,7 +25,7 @@ class JarHttpDownloaderLibraryFilesTest {
   @JvmField
   @RegisterExtension
   internal val serverExtension = TestHttpServerExtension()
-  private val server: ApplicationEngine get() = serverExtension.server
+  private val server: ApplicationEngine get() = serverExtension.server.engine
 
   @JvmField
   @RegisterExtension
@@ -57,8 +57,8 @@ class JarHttpDownloaderLibraryFilesTest {
   fun downloadLibraryFilesAsync_finish_all_files() {
     val response = "data"
 
-    server.createContext("/a/fail.data", HttpStatusCode.NotFound, response = response)
-    server.createContext("/a/delay.data", HttpStatusCode.OK, response = response, delayMs = 500)
+    serverExtension.server.application.createContext("/a/fail.data", HttpStatusCode.NotFound, response = response)
+    serverExtension.server.application.createContext("/a/delay.data", HttpStatusCode.OK, response = response, delayMs = 500)
 
     runBlocking(Dispatchers.IO) {
       val failure = assertFailsWith<IllegalStateException> {
@@ -97,7 +97,7 @@ class JarHttpDownloaderLibraryFilesTest {
 
   @Test
   fun downloadLibraryFilesAsync_smoke() {
-    server.createContext("/a/ok.data", HttpStatusCode.OK, response = "data")
+    serverExtension.server.application.createContext("/a/ok.data", HttpStatusCode.OK, response = "data")
 
     runBlocking {
       val files = JarHttpDownloader.downloadLibraryFilesAsync(

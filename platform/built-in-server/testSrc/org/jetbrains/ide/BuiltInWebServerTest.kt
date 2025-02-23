@@ -20,7 +20,6 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
-import org.jetbrains.builtInWebServer.acquireToken
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule

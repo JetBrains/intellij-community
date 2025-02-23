@@ -46,7 +46,7 @@ import java.util.Map;
  *
  * @deprecated please use Kotlin coroutines to run processes in background
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PySdkUtil {
   private static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 
@@ -212,7 +212,7 @@ public final class PySdkUtil {
    * @deprecated doesn't support targets
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
     if (reader.getActivate() != null) {

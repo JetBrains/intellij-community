@@ -85,5 +85,14 @@ def get_stepping_variants(code):
                 instruction.offset,
                 curr_line
             )
+        elif _is_unary_opname(instruction.opname):
+            yield Instruction(
+                instruction.opname,
+                instruction.opcode,
+                instruction.arg,
+                _UNARY_OP_MAP[instruction.opname],
+                instruction.offset,
+                curr_line
+            )
         else:
             stk.append(instruction)

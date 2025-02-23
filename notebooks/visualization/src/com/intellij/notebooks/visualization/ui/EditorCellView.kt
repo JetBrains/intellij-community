@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCellHighlighterRenderer
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellBackgroundLineMarkerRenderer
@@ -85,9 +86,10 @@ class EditorCellView(
       field = value
       updateFolding()
       updateRunButtonVisibility()
+      updateDraggableBarVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
-      myEditorCellFrameManager?.updateCellFrameShow(mouseOver || value)
+      myEditorCellFrameManager?.updateCellFrameShow(value, mouseOver)
     }
 
   private var mouseOver = false
@@ -100,6 +102,14 @@ class EditorCellView(
       if (field == value) return
       field = value
       updateRunButtonVisibility()
+      updateDraggableBarVisibility()
+    }
+
+  var isUnderDiff: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      updateCellActionsToolbarVisibility()
     }
 
   init {
@@ -117,6 +127,13 @@ class EditorCellView(
     updateExecutionStatus(executionStatus.count, executionStatus.status, executionStatus.startTime, executionStatus.endTime)
     editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
       updateCellHighlight(force = true)
+    }
+    cell.notebook.readOnly.afterChange(this) {
+      updateRunButtonVisibility()
+      updateDraggableBarVisibility()
+    }
+    cell.notebook.showCellToolbar.afterChange(this) {
+      updateCellActionsToolbarVisibility()
     }
     recreateControllers()
     updateSelection(false)
@@ -267,7 +284,8 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    updateDraggableBarVisibility()
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -275,7 +293,8 @@ class EditorCellView(
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    updateDraggableBarVisibility()
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -357,7 +376,7 @@ class EditorCellView(
     selected = value
     updateFolding()
     updateCellHighlight()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
   }
 
   private fun updateFolding() {
@@ -369,18 +388,34 @@ class EditorCellView(
 
   private fun updateRunButtonVisibility() {
     input.runCellButton ?: return
-    val shouldBeVisible = !disableActions && (mouseOver || selected)
+    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() == true
+    val shouldBeVisible = !isReadOnlyNotebook && !disableActions && (mouseOver || selected)
     if (input.runCellButton.lastRunButtonVisibility == shouldBeVisible) return
 
     input.runCellButton.visible = shouldBeVisible
     input.runCellButton.lastRunButtonVisibility = shouldBeVisible
   }
 
+  private fun updateDraggableBarVisibility() {
+    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() == true
+    val shouldBeVisible =
+      Registry.`is`("jupyter.editor.dnd.cells")
+      && !isReadOnlyNotebook
+      && !disableActions
+      && (mouseOver || selected)
+      && editor.isOrdinaryNotebookEditor()
+
+    if (input.draggableBar.visible == shouldBeVisible) return
+    input.draggableBar.visible = shouldBeVisible
+  }
+
   private fun updateCellActionsToolbarVisibility() {
     val toolbarManager = input.cellActionsToolbar ?: return
+    if ((isUnderDiff == true)) return
     val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
     val tracker = NotebookCellActionsToolbarStateTracker.get(editor) ?: return
     when {
+      !cell.notebook.showCellToolbar.get() -> toolbarManager.hideToolbar()
       mouseOver -> toolbarManager.showToolbar(targetComponent)
       selected -> {
         // we show the toolbar only for the last selected cell

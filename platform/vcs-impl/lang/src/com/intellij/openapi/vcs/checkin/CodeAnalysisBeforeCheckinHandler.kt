@@ -309,7 +309,7 @@ class ProfileChooser(private val project: Project,
         override fun actionPerformed(e: AnActionEvent) {
           profileProperty.set(profile.name)
           isLocalProperty.set(manager !is InspectionProjectProfileManager)
-          linkContext.setCheckboxText(getProfileText(profile))
+          linkContext.update(getProfileText(profile))
         }
       })
     }

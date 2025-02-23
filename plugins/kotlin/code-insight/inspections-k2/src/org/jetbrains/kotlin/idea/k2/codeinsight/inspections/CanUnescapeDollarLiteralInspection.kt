@@ -34,10 +34,10 @@ class CanUnescapeDollarLiteralInspection :
         return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.problem.description")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): KotlinModCommandQuickFix<KtStringTemplateExpression> = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String {
             return KotlinBundle.message("replace.with.dollar.literals")
         }
@@ -84,7 +84,7 @@ class CanUnescapeDollarLiteralInspection :
                 }
             }
         }
-    })
+    }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix?.textLength?.let { it > 1 } != true
@@ -112,8 +112,7 @@ class CanUnescapeDollarLiteralInspection :
      * If the length exceeds `prefixLength - 1`, don't add the index of the last entry as replacing it will change the string.
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
         val prefixLength = element.interpolationPrefix?.textLength ?: 0
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()

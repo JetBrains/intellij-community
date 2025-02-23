@@ -244,7 +244,10 @@ fun serveStream(
             // register streams before we publish them to remote with `sendAsync` or we may miss some messages from FROM_REMOTE streams if remote is fast enough
             val internalStreamDescriptors = streamDescriptors.map { registerStream(it) }
             descriptor.budget.withdrawSuspend()
-            RpcStream.logger.trace { "Sending in stream ${descriptor.uid} <${descriptor.displayName}> item ${item?.javaClass?.simpleName}($item)" }
+            RpcStream.logger.trace {
+              val itemName = item?.let { it::class.simpleName }
+              "Sending in stream ${descriptor.uid} <${descriptor.displayName}> item ${itemName}($item)"
+            }
             sendMessage(RpcMessage.StreamData(streamId = descriptor.uid, data = jsonElement))
             // we must serve TO_REMOTE streams only after initial message was sent
             for (internalStream in internalStreamDescriptors) {

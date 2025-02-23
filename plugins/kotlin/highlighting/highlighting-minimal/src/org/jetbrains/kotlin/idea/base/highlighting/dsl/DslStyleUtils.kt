@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.highlighting.dsl
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.ide.highlighter.custom.CustomHighlighterColors
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
@@ -32,8 +33,15 @@ object DslStyleUtils {
     private val styles: List<TextAttributesKey> = (1..STYLE_COUNT).map { index ->
         TextAttributesKey.createTextAttributesKey(externalKeyName(index), STYLE_KEYS[index - 1])
     }
-    private val types: List<HighlightInfoType> = styles.map { attributeKey  ->
-        HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributeKey, false)
+    /**
+     * highlight DSL errors as slightly more severe than HighlightInfoType.SYMBOL_TYPE_SEVERITY,
+     * to avoid conflicts with [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinFunctionCallSemanticHighlightingVisitor],
+     * which highlights exactly the same function calls with HighlightInfoType.SYMBOL_TYPE_SEVERITY
+     */
+    private val DSL_TYPE_SEVERITY = HighlightSeverity("DSL_TYPE_SEVERITY", HighlightInfoType.SYMBOL_TYPE_SEVERITY.myVal + 1);
+
+    internal val types: List<HighlightInfoType> = styles.map { attributeKey  ->
+        HighlightInfoType.HighlightInfoTypeImpl(DSL_TYPE_SEVERITY, attributeKey, false)
     }
 
     val DSL_MARKER_CLASS_ID = ClassId.topLevel(FqName("kotlin.DslMarker"))

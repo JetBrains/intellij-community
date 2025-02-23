@@ -4,16 +4,14 @@ package org.jetbrains.idea.devkit.debugger
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.sun.jdi.BooleanValue
-import com.sun.jdi.ClassType
-import com.sun.jdi.ObjectReference
-import com.sun.jdi.ReferenceType
+import com.sun.jdi.*
 import java.util.*
 
 private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation"
@@ -110,9 +108,8 @@ private class SessionThreadsData() {
   private fun getOrCreateThreadState(suspendContext: SuspendContextImpl): ThreadState? {
     val thread = suspendContext.thread ?: return null
     if (threadStates.containsKey(thread)) return threadStates[thread]
-    val reference = initializeThreadState(suspendContext)
-    val state = reference?.let { ThreadState(it) }
-    return state.also { threadStates[thread] = it }
+    val reference = invokeInSuspendCommand(suspendContext) { initializeThreadState(suspendContext) } ?: return null
+    return ThreadState(reference).also { threadStates[thread] = it }
   }
 
   private fun isPCEAdjustmentEnabled(suspendContextImpl: SuspendContextImpl): Boolean {
@@ -128,7 +125,7 @@ private class SessionThreadsData() {
  * @see com.intellij.openapi.progress.Cancellation.isInNonCancelableSection
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
-  if (!suspendContext.debugProcess.isEvaluationPossible(suspendContext)) return null
+  if (!suspendContext.debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
   val method = DebuggerUtilsImpl.findMethod(cancellationClass,
@@ -151,3 +148,27 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
 }
 
 private fun booleanValue(suspendContext: SuspendContextImpl, b: Boolean): BooleanValue = suspendContext.virtualMachineProxy.mirrorOf(b)
+
+private fun <T> invokeInSuspendCommand(suspendContext: SuspendContextImpl, action: () -> T): T? {
+  if (DebugProcessImpl.isInSuspendCommand(suspendContext)) {
+    return action()
+  }
+  var result: T? = null
+  var exception: Exception? = null
+  val command = object : SuspendContextCommandImpl(suspendContext) {
+    override fun contextAction(suspendContext: SuspendContextImpl) {
+      try {
+        result = action()
+      }
+      catch (e: VMDisconnectedException) {
+        throw e
+      }
+      catch (e: Exception) {
+        exception = e
+      }
+    }
+  }
+  exception?.let { throw it }
+  suspendContext.managerThread.invokeNow(command)
+  return result
+}

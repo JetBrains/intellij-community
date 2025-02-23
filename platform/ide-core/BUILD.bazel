@@ -18,7 +18,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/concurrency",
     "//platform/util:util-ui",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
     "//platform/platform-util-io:ide-util-io",

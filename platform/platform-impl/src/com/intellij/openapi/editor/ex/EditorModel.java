@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -17,7 +16,7 @@ public interface EditorModel extends Disposable {
   MarkupModelEx getEditorMarkupModel();
   MarkupModelEx getDocumentMarkupModel();
   EditorHighlighter getHighlighter();
-  InlayModel getInlayModel();
+  InlayModelEx getInlayModel();
   FoldingModelEx getFoldingModel();
   SoftWrapModelEx getSoftWrapModel();
   CaretModel getCaretModel();

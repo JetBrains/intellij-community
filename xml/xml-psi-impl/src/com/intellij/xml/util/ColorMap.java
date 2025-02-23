@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ public final class ColorMap {
   private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<>(25);
   private static final Map<String, String> ourHexCodeToColorNameMap = new HashMap<>(25);
 
-  static final @NonNls String systemColorsString = """
+  public static final @NonNls String systemColorsString = """
     ActiveBorder
         Active window border.
     ActiveCaption
@@ -72,12 +73,14 @@ public final class ColorMap {
         Window frame.
     WindowText
         Text in windows.\s""";
-  static final @NonNls String standardColorsString = """
+  @ApiStatus.Internal
+  public static final @NonNls String standardColorsString = """
     maroon #800000 red #ff0000 orange #ffA500 yellow #ffff00 olive #808000
     purple #800080 fuchsia #ff00ff white #ffffff lime #00ff00 green #008000
     navy #000080 blue #0000ff aqua #00ffff teal #008080
     black #000000 silver #c0c0c0 gray #808080""";
-  static final @NonNls String colorsString = """
+  @ApiStatus.Internal
+  public static final @NonNls String colorsString = """
     aliceblue \t#f0f8ff \t240,248,255
       \t  \tantiquewhite \t#faebd7 \t250,235,215
       \t  \taqua \t#00ffff \t0,255,255

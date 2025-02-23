@@ -490,10 +490,8 @@ a:com.intellij.codeInsight.daemon.ProblemHighlightFilter
 - s:shouldProcessFileInBatch(com.intellij.psi.PsiFile):Z
 - shouldProcessInBatch(com.intellij.psi.PsiFile):Z
 com.intellij.codeInsight.daemon.QuickFixActionRegistrar
-- sf:IGNORE_ALL:com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 - a:register(com.intellij.codeInsight.intention.IntentionAction):V
 - a:register(com.intellij.openapi.util.TextRange,com.intellij.codeInsight.intention.IntentionAction,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
-- unregister(com.intellij.openapi.util.Condition):V
 com.intellij.codeInsight.daemon.UnusedImportProvider
 - a:isUnusedImportEnabled(com.intellij.psi.PsiElement):Z
 e:com.intellij.codeInsight.editorActions.SmartBackspaceMode
@@ -1349,11 +1347,7 @@ c:com.intellij.codeInspection.LocalInspectionEP
 - unfair:Z
 - <init>():V
 - getDefaultAlternativeID():java.lang.String
-- a:getDefaultDisplayName():java.lang.String
-- a:getDefaultGroupDisplayName():java.lang.String
 - getDefaultID():java.lang.String
-- a:getDefaultShortName():java.lang.String
-- a:getGroupKey():java.lang.String
 a:com.intellij.codeInspection.LocalInspectionTool
 - com.intellij.codeInspection.InspectionProfileEntry
 - com.intellij.openapi.project.PossiblyDumbAware

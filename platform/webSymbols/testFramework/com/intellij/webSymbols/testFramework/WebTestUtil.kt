@@ -18,12 +18,15 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
@@ -44,11 +47,13 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.EditorHintFixture
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
@@ -60,7 +65,6 @@ import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.Callable
-import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.min
 
@@ -498,6 +502,27 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<o
   return buildUsageViewQuery(getProject(), target, allOptions).findAll()
 }
 
+fun CodeInsightTestFixture.getParameterInfoAtCaret(): String? {
+  val disposable = Disposer.newDisposable()
+  val hintFixture = EditorHintFixture(disposable)
+  try {
+    performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO)
+
+    // There is an effective chain of 5 nonBlockingRead actions.
+    // Use 10 in case this increases at some point
+    repeat(10) {
+      UIUtil.dispatchAllInvocationEvents()
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
+    return hintFixture.currentHintText
+      ?.removePrefix("<html>")
+      ?.removeSuffix("</html>")
+      ?.replace(Regex("</?span[^>]*>"), "")
+  } finally {
+    Disposer.dispose(disposable)
+  }
+}
+
 @JvmOverloads
 @RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {
@@ -548,10 +573,15 @@ fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFi
   if (!file.exists() && file.createNewFile()) {
     Logger.getInstance("#WebTestUtilKt").warn("File $file has been created.")
   }
-  val actualContents = actualList.joinToString("\n").trim() + "\n"
+  val actualContents = actualList.ifEmpty { listOf("<empty list>") }.joinToString("\n").trim() + "\n"
   val expectedContents = FileUtil.loadFile(file, "UTF-8", true).trim() + "\n"
   if (containsCheck) {
-    val expectedList = FileUtil.loadLines(file, "UTF-8").filter { it.isNotBlank() }
+    val expectedList = FileUtil.loadLines(file, "UTF-8").filter { it.isNotBlank() }.let {
+      if (it.size == 1 && it[0] == "<empty list>")
+        emptyList()
+      else
+        it
+    }
     val actualSet = actualList.toSet()
     if (!expectedList.all { actualSet.contains(it) }) {
       throw FileComparisonFailedError(expectedFile, expectedContents, actualContents, path)

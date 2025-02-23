@@ -41,7 +41,7 @@ import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
 import java.nio.file.Paths
-import java.util.Locale
+import java.util.*
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -117,7 +117,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                         myFixture.enableInspections(*inspections)
 
                         doKotlinQuickFixTest(beforeFileName)
-                        runInEdtAndWait { checkForUnexpectedErrors() }
+                        runInEdtAndWait {
+                            checkForErrorsAfter(beforeFile, myFixture.file as KtFile, beforeFileText)
+                        }
                     } finally {
                         myFixture.disableInspections(*inspections)
                     }
@@ -367,9 +369,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
         val actionHint = myFixture.file.actionHint(text)
-        if (!InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
-            return
-        }
+        val actionDirective = pluginMode.actionsListDirectives.firstNotNullOfOrNull {
+            if (!InTextDirectivesUtils.isDirectiveDefined(text, it)) it else null
+        } ?: return
 
         myFixture.doHighlighting()
         val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
@@ -384,7 +386,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 "$className should be inheritor of IntentionAction or ModCommandAction"
             }
 
-            val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE))
+            val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, actionDirective))
 
             actions.removeAll { action -> !aClass.isAssignableFrom(action.javaClass) || validActions.contains(action.text) }
 
@@ -433,10 +435,14 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
-        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(dataFile(), actions)
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+            myFixture.file,dataFile(), actions, actionsListDirectives = pluginMode.actionsListDirectives
+        )
     }
 
-    protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+    }
 
     override val additionalToolDirectives: Array<String>
         get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)

@@ -15,9 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 

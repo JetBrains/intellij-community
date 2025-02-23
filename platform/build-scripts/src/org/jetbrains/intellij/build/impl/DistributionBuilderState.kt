@@ -1,6 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
@@ -9,15 +7,19 @@ suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, 
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
   filterPluginsToPublish(pluginsToPublishEffective, context)
   val platform = createPlatformLayout(context)
-  return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishEffective, context = context)
+  return DistributionBuilderState(platform, pluginsToPublishEffective, context)
 }
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
-  val platform = createPlatformLayout(context = context)
-  return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
+  val platform = createPlatformLayout(context)
+  return DistributionBuilderState(platform, pluginsToPublish = emptySet(), context)
 }
 
-class DistributionBuilderState internal constructor(@JvmField val platform: PlatformLayout, @JvmField val pluginsToPublish: Set<PluginLayout>, context: BuildContext) {
+class DistributionBuilderState internal constructor(
+  @JvmField val platform: PlatformLayout,
+  @JvmField val pluginsToPublish: Set<PluginLayout>,
+  context: BuildContext,
+) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {
@@ -27,17 +29,6 @@ class DistributionBuilderState internal constructor(@JvmField val platform: Plat
 
   val platformModules: Sequence<String>
     get() = platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
-
-  fun getModulesForPluginsToPublish(): Set<String> {
-    return getModulesForPluginsToPublish(platform, pluginsToPublish)
-  }
-}
-
-internal fun getModulesForPluginsToPublish(platform: PlatformLayout, pluginsToPublish: Set<PluginLayout>): Set<String> {
-  val result = LinkedHashSet<String>()
-  result.addAll((platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()))
-  pluginsToPublish.flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-  return result
 }
 
 internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: BuildContext) {

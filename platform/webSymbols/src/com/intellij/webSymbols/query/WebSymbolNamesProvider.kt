@@ -20,7 +20,8 @@ interface WebSymbolNamesProvider : ModificationTracker {
   enum class Target {
     CODE_COMPLETION_VARIANTS,
     NAMES_MAP_STORAGE,
-    NAMES_QUERY
+    NAMES_QUERY,
+    RENAME_QUERY,
   }
 
 }

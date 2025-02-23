@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.ui.jcef` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
@@ -10,6 +10,12 @@ kt_javac_options(
     "java.desktop/sun.awt=ALL-UNNAMED",
     "java.desktop/java.awt.peer=ALL-UNNAMED",
   ]
+)
+
+jvm_resources(
+  name = "ui-jcef_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -29,7 +35,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/util-ex",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/concurrency",
@@ -39,6 +45,7 @@ jvm_library(
     "//platform/jbr",
     "@lib//:jna",
   ],
-  exports = ["@lib//:jcef"]
+  exports = ["@lib//:jcef"],
+  runtime_deps = [":ui-jcef_resources"]
 )
 ### auto-generated section `build intellij.platform.ui.jcef` end

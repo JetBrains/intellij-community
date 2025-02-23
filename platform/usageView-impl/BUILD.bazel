@@ -15,7 +15,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ide-core",
     "//platform/ide-core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//platform/analysis-impl",

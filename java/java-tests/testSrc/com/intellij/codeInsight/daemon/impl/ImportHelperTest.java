@@ -46,6 +46,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -639,16 +640,63 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> errors = ContainerUtil.sorted(highlightErrors(), Segment.BY_START_OFFSET_THEN_END_OFFSET);
     assertSize(1000, errors);
     LazyQuickFixUpdaterImpl updater = (LazyQuickFixUpdaterImpl)LazyQuickFixUpdater.getInstance(getProject());
+    long deadline = System.currentTimeMillis() + 60_000;
     for (int i = 0; i < errors.size(); i++) {
       HighlightInfo error = errors.get(i);
       if (visibleRange.contains(error)) { // we care only for visible errors; invisible ones may or may not be computed
-        updater.waitForBackgroundJobIfStartedInTests(error, 60, TimeUnit.SECONDS);
+        updater.waitForBackgroundJobIfStartedInTests(getFile(), editor, error, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         if (!error.hasHint()) {
           List<HintAction> hints = ShowAutoImportPass.extractHints(error);
           String message = error + ": " + i + " hasHints: "+error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);
           fail(message);
         }
       }
+    }
+  }
+
+  public void testImportHintMustStillBeAvailableAfterTypingBeforeTheReference() throws Exception {
+    ThreadingAssertions.assertEventDispatchThread();
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+    @Language("JAVA")
+    @NonNls final String text = """
+      class S {{
+      new ArrayList();
+       }}""";
+    configureByText(text);
+
+    UIUtil.dispatchAllInvocationEvents();
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    Editor editor = getEditor();
+
+    assertHasImportHintAllOverUnresolvedReference("");
+    int offset = editor.getDocument().getText().indexOf("ArrayList");
+    for (int i=0; i<10; i++) {
+      getEditor().getCaretModel().moveToOffset(offset+i);
+      type(" ");
+      assertHasImportHintAllOverUnresolvedReference(String.valueOf(i));
+    }
+    for (int i=0; i<10; i++) {
+      getEditor().getCaretModel().moveToOffset(offset+10+i);
+      type("\n");
+      assertHasImportHintAllOverUnresolvedReference(String.valueOf(i));
+    }
+  }
+
+  private void assertHasImportHintAllOverUnresolvedReference(String message) throws Exception {
+    List<HighlightInfo> errors = ContainerUtil.sorted(highlightErrors(), Segment.BY_START_OFFSET_THEN_END_OFFSET);
+    assertNotEmpty(errors);
+    HighlightInfo error = errors.get(0);
+    assertEquals(message, "Cannot resolve symbol 'ArrayList'", error.getDescription());
+    assertTrue(message, error.hasHint());
+    HighlightInfo.IntentionActionDescriptor errDesc = error.findRegisteredQuickFix((descriptor, range) -> descriptor.getAction().getText().startsWith("Import class") ? descriptor : null);
+    assertNotNull(errDesc);
+    assertTrue(message, errDesc.getAction().isAvailable(getProject(), getEditor(), getFile()));
+    for (int i = error.getActualStartOffset(); i < error.getActualEndOffset(); i++) {
+      getEditor().getCaretModel().moveToOffset(i);
+      List<HighlightInfo.IntentionActionDescriptor> errDescriptors = ReadAction.nonBlocking(()->ShowIntentionsPass.getActionsToShow(getEditor(), getFile()).errorFixesToShow).submit(AppExecutorUtil.getAppExecutorService()).get();
+      HighlightInfo.IntentionActionDescriptor importDesc = ContainerUtil.find(errDescriptors, descriptor -> descriptor.getAction().getText().startsWith("Import class"));
+      assertNotNull(message + ": " + i, importDesc);
+      assertTrue(message, importDesc.getAction().isAvailable(getProject(), getEditor(), getFile()));
     }
   }
 }

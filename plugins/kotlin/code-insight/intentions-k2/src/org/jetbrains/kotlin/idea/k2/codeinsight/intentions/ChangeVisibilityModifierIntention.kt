@@ -2,12 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModChooseAction
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.*
+import com.intellij.modcommand.ModCommand.chooseAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -18,10 +14,7 @@ import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Internal
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Private
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Protected
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Public
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.*
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -29,7 +22,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
-import kotlin.collections.listOf
 
 class ChangeVisibilityModifierIntentionChooser : PsiBasedModCommandAction<KtDeclaration>(KtDeclaration::class.java) {
     private val modCommands = listOf(Public(), Private(), Protected(), Internal())
@@ -38,14 +30,19 @@ class ChangeVisibilityModifierIntentionChooser : PsiBasedModCommandAction<KtDecl
         context: ActionContext,
         element: KtDeclaration
     ): Presentation? {
-        if (modCommands.all { it.getPresentation(context) == null }) return null
-        return Presentation.of("${KotlinBundle.message("change.visibility", element.name.toString())}…")
+        return if (modCommands.any { it.getPresentation(context) != null }) {
+            Presentation.of("${KotlinBundle.message("change.visibility", element.name.toString())}…")
+        } else {
+            null
+        }
     }
 
     override fun perform(
         context: ActionContext,
         element: KtDeclaration
-    ): ModCommand = ModChooseAction(KotlinBundle.message("change.visibility.popup"), modCommands)
+    ): ModCommand {
+        return chooseAction(KotlinBundle.message("change.visibility.popup"), modCommands)
+    }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("change.visibility")
 }
@@ -106,9 +103,8 @@ sealed class ChangeVisibilityModifierIntention(
         return true
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtDeclaration): Unit? {
+    override fun KaSession.prepareContext(element: KtDeclaration): Unit? {
         val symbol = element.symbol
 
         @OptIn(KaExperimentalApi::class)
@@ -120,7 +116,7 @@ sealed class ChangeVisibilityModifierIntention(
             val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.allOverriddenSymbols
-                    .map { it.compilerVisibility?.compareTo(targetVisibility) }
+                    .map { it.compilerVisibility.compareTo(targetVisibility) }
                     .any { it == null || it > 0 }
             ) return null
         }
@@ -146,8 +142,10 @@ sealed class ChangeVisibilityModifierIntention(
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        (element.actualsForExpect() + element.expectDeclarationIfAny() + element).filterNotNull().forEach { declaration ->
-            val psiFactory = KtPsiFactory(declaration.project)
+        val psiFactory = KtPsiFactory(actionContext.project)
+        val declarations = element.actualsForExpect() + element.expectDeclarationIfAny() + element
+        declarations.filterNotNull().forEach {
+            val declaration = updater.getWritable(it)
             declaration.setVisibility(modifier)
             if (declaration is KtPropertyAccessor) {
                 declaration.modifierList?.nextSibling?.replace(psiFactory.createWhiteSpace())

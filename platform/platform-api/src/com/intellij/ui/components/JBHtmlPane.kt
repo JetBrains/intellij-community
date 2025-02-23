@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -31,6 +33,7 @@ import javax.swing.text.EditorKit
 import javax.swing.text.StyledDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
+import kotlin.math.roundToInt
 
 /**
  * The [JBHtmlPane] allows to render HTML according to the IntelliJ UI guidelines.
@@ -107,17 +110,55 @@ import javax.swing.text.html.StyleSheet
  */
 @Experimental
 @Suppress("LeakingThis")
-open class JBHtmlPane(
-  private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
-  private val myPaneConfiguration: JBHtmlPaneConfiguration,
-) : JEditorPane(), Disposable {
+open class JBHtmlPane : JEditorPane, Disposable {
 
   private val service: ImplService = ApplicationManager.getApplication().service()
   private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
   private var myCurrentDefaultStyleSheet: StyleSheet? = null
-  private val mutableBackgroundFlow: MutableStateFlow<Color>
+  private val mutableBackgroundFlow: MutableStateFlow<Color> = MutableStateFlow(background)
+  private val myStyleConfiguration: JBHtmlPaneStyleConfiguration
+  private val myPaneConfiguration: JBHtmlPaneConfiguration
 
-  init {
+  /**
+   * Use this constructor to provide configuration for [com.intellij.ui.components.JBHtmlPane] upfront,
+   * without the requirement to extend this class.
+   * When this constructor is used, [initializePaneConfiguration] and [initializeStyleConfiguration]
+   * methods are not called.
+   */
+  constructor(
+    styleConfiguration: JBHtmlPaneStyleConfiguration,
+    paneConfiguration: JBHtmlPaneConfiguration,
+  ) : super() {
+    this.myStyleConfiguration = styleConfiguration
+    this.myPaneConfiguration = paneConfiguration
+    init()
+  }
+
+  /**
+   * Default constructor, the pane configuration is initialized using [initializePaneConfiguration]
+   * and [initializeStyleConfiguration] methods.
+   */
+  constructor() : super() {
+    myStyleConfiguration = JBHtmlPaneStyleConfiguration.builder().also { initializeStyleConfiguration(it) }.build()
+    myPaneConfiguration = JBHtmlPaneConfiguration.builder().also { initializePaneConfiguration(it) }.build()
+    init()
+  }
+
+  /**
+   * Use the provided builder to initialize pane configuration. This method is called only if [JBHtmlPane]
+   * is constructed using parameter-less constructor.
+   */
+  protected open fun initializePaneConfiguration(builder: JBHtmlPaneConfiguration.Builder) {
+  }
+
+  /**
+   * Use the provided builder to initialize pane style configuration. This method is called only if [JBHtmlPane]
+   *    * is constructed using parameter-less constructor.
+   */
+  protected open fun initializeStyleConfiguration(builder: JBHtmlPaneStyleConfiguration.Builder) {
+  }
+
+  private fun init() {
     enableEvents(AWTEvent.KEY_EVENT_MASK)
     isEditable = false
     if (ScreenReader.isActive()) {
@@ -129,7 +170,6 @@ open class JBHtmlPane(
 
       UIUtil.doNotScrollToCaret(this)
     }
-    mutableBackgroundFlow = MutableStateFlow(background)
     val extensions = ArrayList(myPaneConfiguration.extensions)
     extensions.addAllIfNotNull(
       icons { key: String -> myPaneConfiguration.iconResolver(key) },
@@ -137,6 +177,7 @@ open class JBHtmlPane(
       ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.BLOCK_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.FORM_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT,
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
@@ -151,6 +192,10 @@ open class JBHtmlPane(
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)
 
+    // The value might have changed already since the flow was created,
+    // so we need to update it manually just before we register the listener.
+    // For example, the background is changed when we set isEditable above.
+    mutableBackgroundFlow.value = background
     addPropertyChangeListener { evt: PropertyChangeEvent ->
       val propertyName = evt.propertyName
       if ("background" == propertyName || "UI" == propertyName) {
@@ -167,11 +212,19 @@ open class JBHtmlPane(
     caret.isVisible = false // Caret, if blinking, has to be deactivated.
   }
 
+  override fun getSelectedText(): String? =
+    // We need to replace zero-width space char used to represent <wbr>
+    // in JBHtmlEditorKit.JBHtmlDocument.JBHtmlReader.addSpecialElement().
+    // Swing HTML control does not accept elements with no text.
+    super.getSelectedText()?.replace("\u200B", "")
+
   override fun getText(): @Nls String {
     return myText
   }
 
   override fun setText(t: @Nls String?) {
+    if (t != null && t.length > 50000)
+      thisLogger().warn("HTML pane text is very long (${t.length}): ${StringUtil.shortenTextWithEllipsis(t, 1000, 250, "<TRUNCATED>")}")
     myText = t?.let { service.transpileHtmlPaneInput(it) } ?: ""
     try {
       super.setText(myText)
@@ -188,19 +241,42 @@ open class JBHtmlPane(
   val backgroundFlow: StateFlow<Color>
     get() = mutableBackgroundFlow
 
+  /**
+   * Override to provide an alternate scale factor for pane contents.
+   *
+   * Note: the control font must already be scaled by this factor because
+   * some Swing internals render contents directly using the default
+   * font size, ignoring CSS settings. Such an example is the list
+   * view rendering logic.
+   */
+  protected open val contentsScaleFactor: Float
+    get() = JBUIScale.scale(1.0f)
+
+  /**
+   * Forces all stylesheets to be regenerated if anything changed,
+   * and reapplies CSS to all controls again.
+   */
+  fun reloadCssStylesheets() {
+    updateDocumentationPaneDefaultCssRules(editorKit as HTMLEditorKit)
+  }
+
   private fun updateDocumentationPaneDefaultCssRules(editorKit: HTMLEditorKit) {
     val editorStyleSheet = editorKit.styleSheet
     myCurrentDefaultStyleSheet
       ?.let { editorStyleSheet.removeStyleSheet(it) }
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
-    val background = background
-    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, myStyleConfiguration))
-    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
+
+    val contentsScaleFactor = contentsScaleFactor
+    val baseFontSize = (font.size / contentsScaleFactor).roundToInt()
+
+    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, baseFontSize, myStyleConfiguration))
+    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorSchemeProvider()))
     myPaneConfiguration.customStyleSheetProviders.forEach {
-      newStyleSheet.addStyleSheet(it(background))
+      newStyleSheet.addStyleSheet(it(this))
     }
     editorStyleSheet.addStyleSheet(newStyleSheet)
+    service.applyCssToView(this)
   }
 
   override fun processKeyEvent(e: KeyEvent) {
@@ -217,6 +293,7 @@ open class JBHtmlPane(
   override fun paintComponent(g: Graphics) {
     GraphicsUtil.setupAntialiasing(g)
     super.paintComponent(g)
+    service.ensureEditableViewsAreNotFocusable(this)
   }
 
   override fun setDocument(doc: Document) {
@@ -235,12 +312,15 @@ open class JBHtmlPane(
 
     fun defaultEditorCssFontResolver(): CSSFontResolver
 
-    fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
+    fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
 
     fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet
 
     fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image>
 
+    fun applyCssToView(pane: JBHtmlPane)
+
+    fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane)
   }
 
 }

@@ -3,19 +3,15 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
-import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import fleet.util.async.takeUntilInclusive
-import fleet.util.causeOfType
 import fleet.util.logging.KLoggers
 import fleet.fastutil.ints.IntList
-import fleet.util.async.consumeToChannelIn
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consume
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 
 object TransactionResultKey : ChangeScopeKey<TransactionResult>

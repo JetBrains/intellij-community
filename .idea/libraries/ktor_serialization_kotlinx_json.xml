@@ -1,40 +1,38 @@
 <component name="libraryTable">
   <library name="ktor-serialization-kotlinx-json" type="repository">
-    <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.13">
+    <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:3.0.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.13/ktor-serialization-kotlinx-json-jvm-2.3.13.jar">
-          <sha256sum>c622e10cb9cf0ab733faf637b43111f06359cbd07bf992d92eb5fed52b56acda</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.0.3/ktor-serialization-kotlinx-json-jvm-3.0.3.jar">
+          <sha256sum>dbee8f66edf9a845c1f96b9b8c34ff6920c600f1c46e72f4fe530b4333f4a8cb</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/2.3.13/ktor-serialization-kotlinx-jvm-2.3.13.jar">
-          <sha256sum>833fc47df54c13dd0bac8653560d4d3a68ac1f16bfb26ae46235adf8a034ea7e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.0.3/ktor-serialization-kotlinx-jvm-3.0.3.jar">
+          <sha256sum>101fa93a9bb0a1b70d410834bbad3e7a060a5eb8da0ba76f3c6f00737ade28ea</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.3.13/ktor-serialization-jvm-2.3.13.jar">
-          <sha256sum>2f076e022ff7815decb5810fac3dbc9a757cdfa170f8d990257867268efd91a3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.0.3/ktor-serialization-jvm-3.0.3.jar">
+          <sha256sum>78eb204e4b58f9357cd7f5c7a92d301518488c721befedb6c3832dc4c32a0354</sha256sum>
         </artifact>
       </verification>
       <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
         <dependency maven-id="io.ktor:ktor-http-jvm" />
         <dependency maven-id="io.ktor:ktor-websockets-jvm" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.13/ktor-serialization-kotlinx-json-jvm-2.3.13.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/2.3.13/ktor-serialization-kotlinx-jvm-2.3.13.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.3.13/ktor-serialization-jvm-2.3.13.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.0.3/ktor-serialization-kotlinx-json-jvm-3.0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.0.3/ktor-serialization-kotlinx-jvm-3.0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.0.3/ktor-serialization-jvm-3.0.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.13/ktor-serialization-kotlinx-json-jvm-2.3.13-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/2.3.13/ktor-serialization-kotlinx-jvm-2.3.13-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.3.13/ktor-serialization-jvm-2.3.13-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.0.3/ktor-serialization-kotlinx-json-jvm-3.0.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.0.3/ktor-serialization-kotlinx-jvm-3.0.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.0.3/ktor-serialization-jvm-3.0.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

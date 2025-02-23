@@ -22,6 +22,37 @@ public class LinkStyle(
     public val icons: LinkIcons,
     public val underlineBehavior: LinkUnderlineBehavior,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (icons != other.icons) return false
+        if (underlineBehavior != other.underlineBehavior) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + icons.hashCode()
+        result = 31 * result + underlineBehavior.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "LinkStyle(" +
+            "colors=$colors, " +
+            "metrics=$metrics, " +
+            "icons=$icons, " +
+            "underlineBehavior=$underlineBehavior" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -49,6 +80,43 @@ public class LinkColors(
             )
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkColors
+
+        if (content != other.content) return false
+        if (contentDisabled != other.contentDisabled) return false
+        if (contentFocused != other.contentFocused) return false
+        if (contentPressed != other.contentPressed) return false
+        if (contentHovered != other.contentHovered) return false
+        if (contentVisited != other.contentVisited) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = content.hashCode()
+        result = 31 * result + contentDisabled.hashCode()
+        result = 31 * result + contentFocused.hashCode()
+        result = 31 * result + contentPressed.hashCode()
+        result = 31 * result + contentHovered.hashCode()
+        result = 31 * result + contentVisited.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "LinkColors(" +
+            "content=$content, " +
+            "contentDisabled=$contentDisabled, " +
+            "contentFocused=$contentFocused, " +
+            "contentPressed=$contentPressed, " +
+            "contentHovered=$contentHovered, " +
+            "contentVisited=$contentVisited" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -59,12 +127,60 @@ public class LinkMetrics(
     public val textIconGap: Dp,
     public val iconSize: DpSize,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkMetrics
+
+        if (focusHaloCornerSize != other.focusHaloCornerSize) return false
+        if (textIconGap != other.textIconGap) return false
+        if (iconSize != other.iconSize) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = focusHaloCornerSize.hashCode()
+        result = 31 * result + textIconGap.hashCode()
+        result = 31 * result + iconSize.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "LinkMetrics(" +
+            "focusHaloCornerSize=$focusHaloCornerSize, " +
+            "textIconGap=$textIconGap, " +
+            "iconSize=$iconSize" +
+            ")"
+    }
+
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class LinkIcons(public val dropdownChevron: IconKey, public val externalLink: IconKey) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkIcons
+
+        if (dropdownChevron != other.dropdownChevron) return false
+        if (externalLink != other.externalLink) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = dropdownChevron.hashCode()
+        result = 31 * result + externalLink.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "LinkIcons(dropdownChevron=$dropdownChevron, externalLink=$externalLink)"
+
     public companion object
 }
 

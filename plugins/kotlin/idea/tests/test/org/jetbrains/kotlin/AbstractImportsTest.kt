@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin
 
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -107,6 +108,10 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 assertNotNull("No user notification info was provided", userNotificationInfo)
                 assertEquals(message, userNotificationInfo)
             }
+
+            // Make sure that PSI is modified 
+            // correctly and consistently during tests 
+            PsiTestUtil.checkStubsMatchText(file)
         }
     }
 

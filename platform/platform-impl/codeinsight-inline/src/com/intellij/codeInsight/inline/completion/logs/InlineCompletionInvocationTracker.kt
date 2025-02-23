@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -35,9 +36,12 @@ internal class InlineCompletionInvocationTracker(
   private var language: Language? = null
   private var fileLanguage: Language? = null
 
+  private val editorType: InlineCompletionEditorType = InlineCompletionEditorType.get(request.editor)
+
   fun createShowTracker() = InlineCompletionShowTracker(
     request,
     requestId,
+    editorType,
     provider,
     invocationTime,
     language,
@@ -94,6 +98,7 @@ internal class InlineCompletionInvocationTracker(
       InvokedEvents.REQUEST_ID.with(requestId),
       *data.toTypedArray(),
       InvokedEvents.EVENT.with(request.event::class.java),
+      InvokedEvents.EDITOR_TYPE.with(editorType),
       InvokedEvents.PROVIDER.with(provider),
       InvokedEvents.PROVIDER_PLUGIN_INFO.with(getPluginInfo(provider)),
       InvokedEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),

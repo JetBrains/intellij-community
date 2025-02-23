@@ -1,5 +1,6 @@
 // NEW_NAME: r
 // RENAME: member
+// SHOULD_FAIL_WITH: Parameter 'c' will be shadowed by parameter 'r'
 class Receiver(val r: String)
 class Container(val <caret>c: String) {
     fun Receiver.respond() {

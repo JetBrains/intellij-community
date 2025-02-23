@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.SystemProperties
 import com.intellij.util.system.CpuArch
 import com.sun.jna.Library
 import com.sun.jna.Memory
@@ -30,22 +31,13 @@ abstract class PlatformMemoryUtil {
    * Returns OS-provided memory metrics for the current process. See [MemoryStats] fields
    */
   fun getCurrentProcessMemoryStats(): MemoryStats? {
-    if (memoryStatsApiIsBroken) return null
-
-    return try {
-      getCurrentProcessMemoryStatsInner()
-    }
-    catch (t: Throwable) {
-      if (t is OutOfMemoryError || t is StackOverflowError || t is CancellationException) {
-        throw t
-      }
-      LOG.error("Failed to get current process memory stats", t)
-      memoryStatsApiIsBroken = true
-      null
-    }
+    return newMemoryStatsProvider().use { it.getCurrentProcessMemoryStats() }
   }
 
-  protected abstract fun getCurrentProcessMemoryStatsInner(): MemoryStats?
+  /**
+   * [MemoryStatsProvider] is optimized for frequent [MemoryStatsProvider.getCurrentProcessMemoryStats] invocations within single thread
+   */
+  abstract fun newMemoryStatsProvider(): MemoryStatsProvider
 
   /**
    * Releases unused memory from the native allocator (`malloc`/`free`) back to the operating system.
@@ -107,12 +99,39 @@ abstract class PlatformMemoryUtil {
     val fileMappingsRam: Long,
   )
 
+  /**
+   * The class is not thread safe; its methods should not be invoked from multiple threads simultaneously
+   */
+  abstract inner class MemoryStatsProvider: AutoCloseable {
+    /**
+     * Returns OS-provided memory metrics for the current process. See [MemoryStats] fields
+     */
+    fun getCurrentProcessMemoryStats(): MemoryStats? {
+      if (memoryStatsApiIsBroken) return null
+
+      return try {
+        getCurrentProcessMemoryStatsInner()
+      }
+      catch (t: Throwable) {
+        if (t is OutOfMemoryError || t is StackOverflowError || t is CancellationException) {
+          throw t
+        }
+        LOG.error("Failed to get current process memory stats", t)
+        memoryStatsApiIsBroken = true
+        null
+      }
+    }
+
+    protected abstract fun getCurrentProcessMemoryStatsInner(): MemoryStats?
+    override fun close() {}
+  }
+
   companion object {
     private val INSTANCE: PlatformMemoryUtil = try {
       when {
         SystemInfo.isLinux -> LinuxMemoryUtil()
-        SystemInfo.isWin10OrNewer && CpuArch.isIntel64() -> WindowsMemoryUtil()
-        SystemInfo.isMac && CpuArch.isArm64() -> MacosMemoryUtil()
+        SystemInfo.isWin10OrNewer -> WindowsMemoryUtil()
+        SystemInfo.isMac -> MacosMemoryUtil()
         else -> DummyMemoryUtil()
       }
     }
@@ -129,8 +148,10 @@ abstract class PlatformMemoryUtil {
 private val LOG: Logger = logger<PlatformMemoryUtil>()
 
 private class DummyMemoryUtil : PlatformMemoryUtil() {
-  override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
-    return null
+  override fun newMemoryStatsProvider(): MemoryStatsProvider {
+    return object : MemoryStatsProvider() {
+      override fun getCurrentProcessMemoryStatsInner(): MemoryStats? = null
+    }
   }
 }
 
@@ -138,7 +159,13 @@ private class DummyMemoryUtil : PlatformMemoryUtil() {
 private class LinuxMemoryUtil : PlatformMemoryUtil() {
   private val libc: LibC = Native.load("c", LibC::class.java)
 
-  override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
+  override fun newMemoryStatsProvider(): MemoryStatsProvider {
+    return object : MemoryStatsProvider() {
+      override fun getCurrentProcessMemoryStatsInner(): MemoryStats? = getCurrentProcessMemoryStatsLinux()
+    }
+  }
+
+  private fun getCurrentProcessMemoryStatsLinux(): MemoryStats? {
     val statusFile = Path.of("/proc/self/status")
     if (!statusFile.exists()) {
       return null
@@ -203,20 +230,30 @@ private class WindowsMemoryUtil : PlatformMemoryUtil() {
   private val kernel32: Kernel32 = Kernel32.INSTANCE
   private val psapi: Psapi = Native.load("psapi", Psapi::class.java)
 
-  override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
-    val processHandle = kernel32.GetCurrentProcess().pointer
-    return ProcessMemoryCountersEx2().use { memoryCounters ->
-      memoryCounters.cb = memoryCounters.size()
+  override fun newMemoryStatsProvider(): MemoryStatsProvider = WindowsMemoryStatsProvider()
 
+  private inner class WindowsMemoryStatsProvider : MemoryStatsProvider() {
+    private var memoryCounters: ProcessMemoryCountersEx2? = ProcessMemoryCountersEx2().apply {
+      cb = size()
+    }
+
+    override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
+      val memoryCounters = memoryCounters ?: return null
+      val processHandle = kernel32.GetCurrentProcess().pointer
       val success = psapi.GetProcessMemoryInfo(processHandle, memoryCounters, memoryCounters.size())
-      if (!success) return@use null
+      if (!success) return null
       memoryCounters.read()
 
-      WindowsMemoryStats(
+      return WindowsMemoryStats(
         workingSetSize = memoryCounters.WorkingSetSize,
         privateWorkingSetSize = memoryCounters.PrivateWorkingSetSize,
         privateUsage = memoryCounters.PrivateUsage,
       ).toMemoryStats()
+    }
+
+    override fun close() {
+      memoryCounters?.close()
+      memoryCounters = null
     }
   }
 
@@ -353,19 +390,29 @@ private class WindowsMemoryUtil : PlatformMemoryUtil() {
 private class MacosMemoryUtil : PlatformMemoryUtil() {
   private val libc = Native.load("System", Libc::class.java)
 
-  override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
-    return TaskVMInfo().use { info ->
+  override fun newMemoryStatsProvider(): MemoryStatsProvider = MacosMemoryStatsProvider()
+
+  private inner class MacosMemoryStatsProvider : MemoryStatsProvider() {
+    private var info: TaskVMInfo? = TaskVMInfo()
+
+    override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
+      val info = info ?: return null
       val size = IntByReference(info.size() / 4)
       val result = libc.task_info(libc.mach_task_self(), TASK_VM_INFO, info.pointer, size)
-      if (result != 0) return@use null
+      if (result != 0) return null
       info.read()
 
-      MacosMemoryStats(
+      return MacosMemoryStats(
         physFootprint = info.phys_footprint,
         residentSize = info.resident_size,
         internal = info.internal,
         external = info.external,
       ).toMemoryStats()
+    }
+
+    override fun close() {
+      info?.close()
+      info = null
     }
   }
 

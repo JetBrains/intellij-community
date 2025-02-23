@@ -13,12 +13,12 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
     "//platform/util",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":psi_resources"]

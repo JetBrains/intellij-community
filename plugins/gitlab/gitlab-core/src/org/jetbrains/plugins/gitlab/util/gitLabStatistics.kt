@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
-import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName.*
 
 @PublishedApi
 internal object GitLabStatistics {

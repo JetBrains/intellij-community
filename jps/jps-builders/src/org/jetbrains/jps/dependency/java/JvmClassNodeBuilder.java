@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.SmartList;
@@ -24,13 +26,16 @@ import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
+  
+  private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = Iterators.collect(
+    ServiceLoader.load(AnnotationChangesTracker.class, JvmClassNodeBuilder.class.getClassLoader()),
+    new SmartList<>()
+  );
 
   private static final Logger LOG = Logger.getInstance(JvmClassNodeBuilder.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
@@ -101,7 +106,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     private final TypeRepr.ClassType myType;
     private final ElemType myTarget;
-    private final ContentHashBuilder myHashBuilder = ContentHashBuilder.create();
+    private final ContentHashBuilder myHashBuilder;
     private final Consumer<ElementAnnotation> myResultConsumer;
 
     private final Set<String> myUsedArguments = new HashSet<>();
@@ -111,6 +116,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       this.myType = type;
       this.myTarget = target;
       myResultConsumer = resultConsumer;
+
+      // Do not track changes in the annotation's content, if there are no registered annotation trackers that would process these changes.
+      // Some technical annotations (e.g. DebugInfo) may contain different content after every compiler run => they will always be considered "changed".
+      // Handling such changes may involve additional type-consuming analysis and unnecessary dependency data updates.
+      myHashBuilder = isAnnotationTracked(type)? ContentHashBuilder.create() : ContentHashBuilder.NULL;
+
       final Set<ElemType> targets = myAnnotationTargets.get(type);
       if (targets == null) {
         myAnnotationTargets.put(type, EnumSet.of(target));
@@ -180,10 +191,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
-      if (argName != null) {
-        registerUsages(argName, getMethodDescr(value, isArray), value);
-      }
-      myHashBuilder.update(value);
+      registerUsages(argName, () -> getMethodDescr(value, isArray), value);
     }
 
     @Override
@@ -198,9 +206,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
-      if (argName != null) {
-        registerUsages(argName, (isArray? "()[" : "()") + desc, value);
-      }
+      registerUsages(argName, () -> (isArray? "()[" : "()") + desc, value);
     }
 
     @Override
@@ -214,13 +220,17 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       return this;
     }
 
-    private void registerUsages(String methodName, String methodDescr, Object value) {
+    private void registerUsages(@Nullable String methodName, Supplier<String> methodDescr, Object value) {
       if (value instanceof Type) {
         final String className = ((Type)value).getClassName().replace('.', '/');
         addUsage(new ClassUsage(className));
       }
-      addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr));
+      if (methodName != null) {
+        addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr.get()));
       myUsedArguments.add(methodName);
+        myHashBuilder.update(methodName);
+      }
+      myHashBuilder.update(value);
     }
 
     @Override
@@ -398,6 +408,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private boolean myIsModule = false;
   private final String myFileName;
   private final boolean myIsGenerated;
+  private final boolean myIsLibraryMode;
   private int myAccess;
   private String myName;
   private String myVersion; // for class contains a class bytecode version, for module contains a module version
@@ -426,16 +437,28 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private final List<JvmMetadata<?, ?>> myMetadata = new SmartList<>();
 
-  private JvmClassNodeBuilder(final String fn, boolean isGenerated) {
+  private JvmClassNodeBuilder(final String fn, boolean isGenerated, boolean isLibraryMode) {
     super(ASM_API_VERSION);
     myFileName = fn;
     myIsGenerated = isGenerated;
+    myIsLibraryMode = isLibraryMode;
   }
 
   public static JvmClassNodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
-    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated);
+    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated, false);
     try {
       cr.accept(builder, ClassReader.SKIP_FRAMES);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Corrupted .class file: " + filePath, e);
+    }
+    return builder;
+  }
+
+  public static JvmClassNodeBuilder createForLibrary(String filePath, ClassReader cr) {
+    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, false, true);
+    try {
+      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
     }
     catch (RuntimeException e) {
       throw new RuntimeException("Corrupted .class file: " + filePath, e);
@@ -471,33 +494,45 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
     }
-    
-    if (myIsModule) {
-      for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
-        addUsage(usage);
-      }
-      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages, myMetadata);
+    if (myIsLibraryMode) {
+      flags = flags.deriveIsLibrary();
     }
 
-    for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
-      addUsage(usage);
+    if (myIsModule) {
+      if (!myIsLibraryMode) {
+        for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
+          addUsage(usage);
+        }
+      }
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Set.of() : myUsages, myMetadata);
     }
-    for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
-      addUsage(usage);
-    }
-    for (JvmMethod jvmMethod : myMethods) {
-      for (Usage usage : jvmMethod.getType().getUsages()) {
+
+    if (!myIsLibraryMode) {
+      for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
         addUsage(usage);
       }
-      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), t -> t.getUsages()))) {
+      for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
         addUsage(usage);
       }
-      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getExceptions(), t -> t.getUsages()))) {
-        addUsage(usage);
+      for (JvmMethod jvmMethod : myMethods) {
+        for (Usage usage : jvmMethod.getType().getUsages()) {
+          addUsage(usage);
+        }
+        for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), TypeRepr::getUsages))) {
+          addUsage(usage);
+        }
+        for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getExceptions(), TypeRepr.ClassType::getUsages))) {
+          addUsage(usage);
+        }
       }
     }
-    
-    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages, myMetadata);
+
+    var fields = myIsLibraryMode? Iterators.filter(myFields, f -> !f.isPrivate()) : myFields;
+    var methods = myIsLibraryMode? Iterators.filter(myMethods, m -> !m.isPrivate()) : myMethods;
+    var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
+    return new JvmClass(
+      flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
+    );
   }
 
   @Override
@@ -671,14 +706,24 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
           @Override
           public void visitEnd() {
             if (myAcc != null) {
-              Object[] template = null;
               if (!myAcc.isEmpty()) {
-                final Object elem = myAcc.get(0);
+                Object elem = null;
+                for (Object o : myAcc) {
+                  if (o != null) {
+                    elem = o;
+                    break;
+                  }
+                }
                 if (elem != null) {
-                  template = (Object[])Array.newInstance(elem.getClass(), 0);
+                  defaultValue.set(myAcc.toArray((Object[])Array.newInstance(elem.getClass(), 0)));
                 }
               }
-              defaultValue.set(template != null? myAcc.toArray(template) : myAcc.toArray());
+
+              if (defaultValue.get() == null) {
+                Type declaredType = Type.getReturnType(desc);
+                // array of array is not allowed by spec
+                defaultValue.set(Array.newInstance(getTypeClass(declaredType.getSort() == Type.ARRAY? declaredType.getElementType() : declaredType), myAcc.size()));
+              }
             }
           }
 
@@ -923,6 +968,15 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     addUsage(new ClassPermitsUsage(permittedSubclass));
   }
 
+  private static boolean isAnnotationTracked(TypeRepr.ClassType annotationType) {
+    for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
+      if (tracker.isAnnotationTracked(annotationType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class BaseSignatureVisitor extends SignatureVisitor {
 
     BaseSignatureVisitor() {
@@ -936,45 +990,38 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   private interface ContentHashBuilder {
+    ContentHashBuilder NULL = new ContentHashBuilder() {
+      @Override
+      public void update(Object data) {
+      }
+
+      @Override
+      public Object getResult() {
+        return null;
+      }
+    };
+
     void update(Object data);
     Object getResult();
 
     static ContentHashBuilder create() {
-      try {
-        MessageDigest digest = MessageDigest.getInstance("MD5");
-        return wrap(new ContentHashBuilder() {
-          @Override
-          public void update(Object data) {
-            digest.update(String.valueOf(data).trim().getBytes(StandardCharsets.UTF_8));
-          }
-
-          @Override
-          public Object getResult() {
-            byte[] digestBytes = digest.digest();
-            long[] hash = new long[digestBytes.length / 8];
-            for (int hi = 0; hi < hash.length; hi++) {
-              for (int i = 0; i < 8; i++) {
-                hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
-              }
-            }
-            return hash;
-          }
-        });
-      }
-      catch (NoSuchAlgorithmException e) {
-        LOG.info(e);
-      }
-      // fallback logic
+      HashStream64 digest = Hashing.komihash5_0().hashStream();
       return wrap(new ContentHashBuilder() {
-        int hash = 0;
         @Override
         public void update(Object data) {
-          hash = 31 * hash + String.valueOf(data).trim().hashCode();
+          if (data.getClass().isArray()) {
+            for (int idx = 0, length = Array.getLength(data); idx < length; idx++) {
+              update(Array.get(data, idx));
+            }
+          }
+          else {
+            digest.putString(String.valueOf(data).trim());
+          }
         }
 
         @Override
         public Object getResult() {
-          return hash;
+          return digest.getAsLong();
         }
       });
     }
@@ -994,6 +1041,24 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         }
       };
     }
+  }
+
+  private static Class getTypeClass(Type t)  {
+    switch(t.getSort()) {
+      case Type.BOOLEAN: return boolean.class;
+      case Type.CHAR: return char.class;
+      case Type.BYTE: return byte.class;
+      case Type.SHORT: return short.class;
+      case Type.INT: return int.class;
+      case Type.FLOAT: return float.class;
+      case Type.LONG: return long.class;
+      case Type.DOUBLE: return double.class;
+      case Type.OBJECT:
+        if ("java.lang.String".equals(t.getClassName())) {
+          return String.class;
+        }
+    }
+    return Type.class;
   }
 
 }

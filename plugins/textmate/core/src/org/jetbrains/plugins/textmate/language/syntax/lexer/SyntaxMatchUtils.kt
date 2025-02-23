@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString
-import java.util.regex.Pattern
 
 internal object SyntaxMatchUtils {
 
@@ -46,8 +45,8 @@ internal object SyntaxMatchUtils {
           }
           if (hasGroupIndex && matchData.count() > groupIndex) {
             val range = matchData.byteOffset(groupIndex)
-            val replacement = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
-            append(BACK_REFERENCE_REPLACEMENT_REGEX.matcher(replacement).replaceAll("\\\\$0"))
+            val replacement = matchingString.bytes.decodeToString(range.start, range.end)
+            append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
             charIndex = digitIndex
             continue
           }
@@ -58,8 +57,8 @@ internal object SyntaxMatchUtils {
     }
   }
 
-  private val BACK_REFERENCE_REPLACEMENT_REGEX: Pattern = Pattern.compile("[\\-\\\\{}*+?|^$.,\\[\\]()#\\s]")
-  private val CAPTURE_GROUP_REGEX: Pattern = Pattern.compile("\\$([0-9]+)|\\$\\{([0-9]+):/(downcase|upcase)}")
+  private val BACK_REFERENCE_REPLACEMENT_REGEX: Regex = Regex("[\\-\\\\{}*+?|^$.,\\[\\]()#\\s]")
+  private val CAPTURE_GROUP_REGEX: Regex = Regex("\\$([0-9]+)|\\$\\{([0-9]+):/(downcase|upcase)}")
 
   /**
    * Replaces parts like $1 or $20 in string parameter with group captures from matchData,
@@ -82,17 +81,17 @@ internal object SyntaxMatchUtils {
     if (!matchData.matched) {
       return string
     }
-    val matcher = CAPTURE_GROUP_REGEX.matcher(string)
+    var matcher = CAPTURE_GROUP_REGEX.find(string)
     return buildString {
       var lastPosition = 0
-      while (matcher.find()) {
-        val groupIndex = (if (matcher.group(1) != null) matcher.group(1) else matcher.group(2)).toIntOrNull() ?: -1
+      while (matcher != null) {
+        val groupIndex = (matcher.groups[1] ?: matcher.groups[2])?.value?.toIntOrNull() ?: -1
         if (groupIndex >= 0 && matchData.count() > groupIndex) {
-          append(string, lastPosition, matcher.start())
+          append(string, lastPosition, matcher.range.start)
           val range = matchData.byteOffset(groupIndex)
           val capturedText = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
           val replacement = capturedText.trimStart('.')
-          val command = matcher.group(3)
+          val command = matcher.groups[3]?.value
           when (command) {
             "downcase" -> {
               append(replacement.lowercase())
@@ -104,8 +103,9 @@ internal object SyntaxMatchUtils {
               append(replacement)
             }
           }
-          lastPosition = matcher.end()
+          lastPosition = matcher.range.endInclusive + 1
         }
+        matcher = matcher.next()
       }
       if (lastPosition < string.length) {
         append(string.subSequence(lastPosition, string.length))

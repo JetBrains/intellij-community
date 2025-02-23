@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.*
-import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -16,6 +17,13 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     element: E?,
     elementClass: KClass<E>?,
 ) : PsiBasedModCommandAction<E>(element, elementClass?.java) {
+
+    init {
+      check(this !is LowPriorityAction && this !is HighPriorityAction) {
+          "${javaClass.name}: neither LowPriorityAction nor HighPriorityAction have an effect on the modcommand action. " +
+                  "Specify the priority explicitly in `getPresentation` method."
+      }
+    }
 
     /**
      * @see [PsiUpdateModCommandAction.perform]

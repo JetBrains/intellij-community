@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventObject
 import javax.swing.event.TreeModelListener
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 

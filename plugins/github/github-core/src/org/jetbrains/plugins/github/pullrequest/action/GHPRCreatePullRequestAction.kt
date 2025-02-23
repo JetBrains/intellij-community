@@ -12,6 +12,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
@@ -41,13 +43,34 @@ internal class GHPRCreatePullRequestAction : DumbAwareAction() {
 }
 
 // NOTE: no need to register in plugin.xml
+internal class GHOpenPullRequestExistingTabNotificationAction(
+  private val project: Project,
+  private val projectMapping: GHGitRepositoryMapping,
+  private val account: GithubAccount,
+  private val existingPrOrNull: GHPRIdentifier,
+) : NotificationAction(GithubBundle.message("pull.request.notification.open.action")) {
+  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+    val twVm = project.service<GHPRToolWindowViewModel>()
+    val selectorVm = twVm.selectorVm
+    selectorVm.selectRepoAndAccount(projectMapping, account)
+    selectorVm.submitSelection()
+    openExistingTab(e, existingPrOrNull)
+  }
+}
+
+private fun openExistingTab(event: AnActionEvent, prId: GHPRIdentifier) {
+  event.project!!.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+    selectTab(GHPRToolWindowTab.PullRequest(prId))
+  }
+}
+
+
+// NOTE: no need to register in plugin.xml
 internal class GHPRCreatePullRequestNotificationAction(
   private val project: Project,
   private val projectMapping: GHGitRepositoryMapping,
-  private val account: GithubAccount
-) : NotificationAction(
-  GithubBundle.message("pull.request.notification.create.action")
-) {
+  private val account: GithubAccount,
+) : NotificationAction(GithubBundle.message("pull.request.notification.create.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
     val twVm = project.service<GHPRToolWindowViewModel>()
     val selectorVm = twVm.selectorVm

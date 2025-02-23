@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.DocumentationMarkup
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import java.net.URL
 import javax.swing.Icon
@@ -12,7 +13,7 @@ interface GotItTextBuilder {
   /**
    * Adds an inline shortcut of the action with [actionId]
    */
-  fun shortcut(actionId: String): String = """<shortcut actionId="$actionId"/>"""
+  fun shortcut(@Language("devkit-action-id") actionId: String): String = """<shortcut actionId="$actionId"/>"""
 
   /**
    * Adds an inline raw shortcut. Please use only when there is no corresponding action.

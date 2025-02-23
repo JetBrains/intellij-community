@@ -1,0 +1,6 @@
+
+fun String.foo(a<caret>: String) {
+    this.foo("")
+}
+
+// IGNORE_K1

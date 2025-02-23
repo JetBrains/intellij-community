@@ -2,7 +2,7 @@
 
 class Foo {
 
-    val foo: Int
+    val foo: Int = 42
 }
 
 operator fun Foo.component1(): Int {

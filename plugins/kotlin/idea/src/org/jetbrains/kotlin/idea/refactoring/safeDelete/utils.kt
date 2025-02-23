@@ -94,6 +94,7 @@ private fun collectParametersHierarchy(method: PsiMethod, parameter: PsiParamete
             .filter { it !in visited }
             .forEach { queue.offer(it) }
         OverridingMethodsSearch.search(currentMethod)
+            .asIterable()
             .filter { it !in visited }
             .forEach { queue.offer(it) }
     }

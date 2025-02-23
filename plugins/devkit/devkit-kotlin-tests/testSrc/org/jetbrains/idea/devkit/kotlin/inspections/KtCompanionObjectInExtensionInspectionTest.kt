@@ -5,7 +5,7 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/companionObjectInExtension")
-class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/companionObjectInExtension"
 

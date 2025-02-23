@@ -19,31 +19,40 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     try {
-      Result.success(runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name)))
+      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name))
     }
     catch (ex: ExecutionException) {
-      Result.failure(ex)
+      return Result.failure(ex)
     }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
+    return Result.success(Unit)
+  }
+
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
     try {
-      Result.success(runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name)))
+      runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name))
     }
     catch (ex: ExecutionException) {
-      Result.failure(ex)
+      return Result.failure(ex)
     }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> =
+    return Result.success(Unit)
+  }
+
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
     try {
-      Result.success(runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name)))
+      runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
     }
     catch (ex: ExecutionException) {
-      Result.failure(ex)
+      return Result.failure(ex)
     }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> =
+    return Result.success(Unit)
+  }
+
+  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     try {
       val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
       val packages = output.lineSequence()
@@ -54,9 +63,11 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
         }
         .sortedWith(compareBy(PythonPackage::name))
         .toList()
-      Result.success(packages)
+
+      return Result.success(packages)
     }
     catch (ex: ExecutionException) {
-      Result.failure(ex)
+      return Result.failure(ex)
     }
+  }
 }

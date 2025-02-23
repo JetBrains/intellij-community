@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 class JavaPeekCallFactory : PeekCallFactory {
     override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =

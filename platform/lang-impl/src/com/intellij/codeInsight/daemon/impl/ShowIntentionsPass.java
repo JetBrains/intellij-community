@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -7,6 +7,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -96,30 +98,25 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
 
   @ApiStatus.Internal
   public static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
-                                                 @NotNull Editor editor,
-                                                 @NotNull PsiFile file,
-                                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
-                                                 int group,
-                                                 int offset,
-                                                 boolean checkOffset) {
+                                                @NotNull Editor editor,
+                                                @NotNull PsiFile file,
+                                                @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
+                                                int group,
+                                                int offset,
+                                                boolean checkOffset) {
     if (group != -1 && group != info.getGroup()) return;
-    boolean fixRangeIsEmpty = info.getFixTextRange().isEmpty();
     Editor[] injectedEditor = {null};
     PsiFile[] injectedFile = {null};
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
-    info.findRegisteredQuickFix((descriptor, range) -> {
-      if (!fixRangeIsEmpty && isEmpty(range)) {
-        return null;
-      }
-
+    info.findRegisteredQuickFix((descriptor, fixRange) -> {
       if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 
-      if (checkOffset && !range.contains(offset) && offset != range.getEndOffset()) {
+      if (checkOffset && !fixRange.contains(offset) && offset != fixRange.getEndOffset()) {
         return null;
       }
       Editor editorToUse;
@@ -300,7 +297,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true);
+    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, hostFile.getProject());
+    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
@@ -308,7 +306,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }

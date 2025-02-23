@@ -18,6 +18,11 @@ object PythonCommunityPluginModules {
     "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.installer",
     "intellij.python.community.impl.huggingFace",
+    "intellij.python.community.impl.venv",
+    "intellij.python.community.services.systemPython",
+    "intellij.python.community.services.shared",
+    "intellij.python.community.services.internal.impl",
+    "intellij.python.community.execService",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
     "intellij.python.community.plugin.minor",
@@ -60,9 +65,7 @@ object PythonCommunityPluginModules {
   }
 
   fun pythonPlugin(mainModuleName: String, name: String, modules: List<String>, body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
-    return PluginLayout.pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
-      spec.directoryName = name
-      spec.mainJarName = "$name.jar"
+    return PluginLayout.pluginAutoWithCustomDirName(mainModuleName, name) { spec ->
       spec.withModules(modules)
       if (mainModuleName == "intellij.python.community.plugin") {
         spec.withGeneratedResources { targetDir, context ->

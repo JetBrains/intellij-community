@@ -36,10 +36,10 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
     override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainExpressions): String =
         KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", conversion.replacement)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtQualifiedExpression,
         context: CallChainExpressions
-    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(SimplifyCallChainFix(conversion))
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(conversion)
 
     override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> {
         val chain = CallChainExpressions.from(element) ?: return emptyList()
@@ -58,8 +58,7 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
         return lambdaArgument?.anyDescendantOfType<KtReturnExpression>() != true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val firstCalleeCall = callChainExpressions.firstCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val secondCalleeCall = callChainExpressions.secondCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null

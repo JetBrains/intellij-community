@@ -38,9 +38,7 @@ import javax.swing.GroupLayout.DEFAULT_SIZE
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.LayoutStyle
 import javax.swing.LayoutStyle.ComponentPlacement.RELATED
-import javax.swing.plaf.ScrollPaneUI
 import kotlin.io.path.relativeTo
 
 internal class TreeViewModelDemoAction : AnAction() {

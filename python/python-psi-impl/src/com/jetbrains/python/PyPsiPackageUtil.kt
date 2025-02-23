@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
 import com.jetbrains.python.packaging.PyPackage
 import java.io.IOException
-import java.util.*
 
 /**
  * Python package utility methods with no dependencies on the Python runtime.

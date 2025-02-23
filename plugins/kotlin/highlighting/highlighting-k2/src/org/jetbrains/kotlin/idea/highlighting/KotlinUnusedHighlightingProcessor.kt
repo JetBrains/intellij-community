@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 
 internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
     private val enabled: Boolean
@@ -124,6 +125,14 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
                 refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi, expression)
             }
+
+            override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
+                expression.getReferences().forEach { reference ->
+                    reference.resolve()?.let {
+                        refHolder.registerLocalRef(it, expression)
+                    }
+                }
+            }
         }
         for (declaration in elements) {
             declaration.accept(registerDeclarationAccessVisitor)
@@ -159,6 +168,8 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         val mustBeLocallyReferenced = declaration is KtParameter && !declaration.hasValOrVar()
                                                && (declaration.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) != true // parameters of external functions might be referenced elsewhere
                 || declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)
+                   // "List.component6" declaration will be checked by reference search, since there's no psi which can be `ctrl-b`ed to this declaration
+                   && declaration.name?.let { DataClassResolver.isComponentLike(it) } != true
                 || ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
         if (SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection)) {
             return
@@ -187,9 +198,9 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
 class KotlinRefsHolder {
     private val localRefs = mutableMapOf<KtDeclaration, KtElement>()
 
-    fun registerLocalRef(declaration: PsiElement?, reference: KtElement) {
+    fun registerLocalRef(declaration: PsiElement?, referenceElement: KtElement) {
         if (declaration is KtDeclaration) {
-            localRefs[declaration] = reference
+            localRefs[declaration] = referenceElement
         }
     }
 

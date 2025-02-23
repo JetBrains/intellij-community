@@ -6,5 +6,5 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 @GraphQLFragment("/graphql/fragment/reaction.graphql")
 data class GHReaction(
   val content: GHReactionContent,
-  val user: GHUser
+  val user: GHUser?
 )

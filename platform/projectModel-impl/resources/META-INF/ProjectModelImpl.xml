@@ -2,8 +2,6 @@
   <extensionPoints>
     <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"
                     dynamic="true"/>
-    <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
-                    area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="workspaceModel.moduleExtensionBridgeFactory"
                     interface="com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory"
@@ -14,11 +12,6 @@
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
-    <extensionPoint name="workspaceModel.fileIndexContributor"
-                    interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"
-                    dynamic="true"/>
-    <extensionPoint name="workspaceModel.entityLifecycleSupporter" dynamic="true"
-                    interface="com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
@@ -36,9 +29,6 @@
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
-    <!-- Global Workspace Model Libraries -->
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
     <!-- Global or Custom Workspace Model Libraries -->
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
@@ -47,13 +37,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
-    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModel"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.EntitiesOrphanage"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
-                    serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl"/>
 
@@ -73,9 +58,6 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.SingleFileSourcesTracker"
-                    serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
-
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
 
@@ -84,19 +66,10 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
-    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
-                 description="Enable additional checks after replaceBySource and applyChangesFrom"/>
-    <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
-                 description="Enable workspace model consistency checking after every update"/>
-    <registryKey key="ide.workspace.model.assertions.on.long.listeners" defaultValue="true" restartRequired="true"
-                 description="Enable workspace model checking for listeners that execute more than 200ms"/>
-    <registryKey key="ide.workspace.model.assertions.bridges.usage" defaultValue="false" restartRequired="true"
-                 description="Enable workspace model checking for accessing bridges from WSM listeners"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor"/>
 
-    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
 
-    <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>
 
   <projectListeners>

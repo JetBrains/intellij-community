@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.event.HyperlinkEvent;
 
-public final class DslErrorReporterImpl extends DslErrorReporter {
+final class DslErrorReporterImpl extends DslErrorReporter {
   private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
   public DslErrorReporterImpl() {
@@ -48,7 +49,8 @@ public final class DslErrorReporterImpl extends DslErrorReporter {
         HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))
       )
     ).toString();
-    NOTIFICATION_GROUP.createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR)
+    NotificationGroupManager.getInstance().getNotificationGroup("Groovy DSL errors")
+      .createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR)
       .setListener(new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

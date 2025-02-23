@@ -1,7 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
-load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options")
+load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options", "jvm_provided_library")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 
 label_flag(
@@ -27,9 +27,13 @@ bool_flag(
     name = "kt_trace",
     build_setting_default = False,
 )
-# --@rules_jvm//:jps_threshold=500
+# --@rules_jvm//:koltin_inc_threshold=100
 int_flag(
-    name = "jps_threshold",
+    name = "koltin_inc_threshold",
+    build_setting_default = -1,
+)
+int_flag(
+    name = "java_inc_threshold",
     build_setting_default = -1,
 )
 
@@ -37,6 +41,12 @@ _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
     visibility = ["//src:__subpackages__", "//zip:__pkg__"],
+)
+
+jvm_provided_library(
+  name = "kotlin-compiler-provided",
+  lib = "//:kotlin-compiler",
+  visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `libraries` start
@@ -82,7 +92,7 @@ jvm_import(
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",
-        ":kotlinx-coroutines-core"
+        "@lib//:kotlinx-coroutines-core"
     ],
 )
 
@@ -111,20 +121,6 @@ jvm_import(
     name = "kotlin-compose-compiler-plugin",
     jar = "@kotlin-compose-compiler-plugin//file",
     source_jar = "@kotlin-compose-compiler-plugin-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "poko-compiler-plugin",
-    jar = "@poko-compiler-plugin//file",
-    source_jar = "@poko-compiler-plugin-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinx-coroutines-core",
-    jar = "@kotlinx-coroutines-core-jvm//file",
-    source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
     visibility = ["//visibility:public"],
 )
 
@@ -192,9 +188,27 @@ jvm_import(
 )
 
 jvm_import(
-    name = "proguard-core",
-    jar = "@proguard-core//file",
-    source_jar = "@proguard-core-sources//file",
+    name = "opentelemetry-sdk-extension-autoconfigure-spi",
+    jar = "@opentelemetry-sdk-extension-autoconfigure-spi//file",
+    source_jar = "@opentelemetry-sdk-extension-autoconfigure-spi-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp",
+    jar = "@opentelemetry-exporter-otlp//file",
+    source_jar = "@opentelemetry-exporter-otlp-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-exporter-sender-jdk",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-sender-jdk",
+    jar = "@opentelemetry-exporter-sender-jdk//file",
+    source_jar = "@opentelemetry-exporter-sender-jdk-sources//file",
     visibility = ["//visibility:public"],
 )
 

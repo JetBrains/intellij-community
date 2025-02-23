@@ -24,14 +24,20 @@ import org.jetbrains.jewel.intui.markdown.standalone.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.light
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.dark
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extension.autolink.AutolinkProcessorExtension
-import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
+import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension
+import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
+import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -45,12 +51,20 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
     val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
-    val extensions = remember { listOf(GitHubAlertProcessorExtension, AutolinkProcessorExtension) }
-    val markdownMode = LocalMarkdownMode.current
+
     // We are doing this here for the sake of simplicity.
     // In a real-world scenario you would be doing this outside your Composables,
     // potentially involving ViewModels, dependency injection, etc.
-    val processor = remember { MarkdownProcessor(extensions, markdownMode = markdownMode) }
+    val processor = remember {
+        MarkdownProcessor(
+            listOf(
+                AutolinkProcessorExtension,
+                GitHubAlertProcessorExtension,
+                GitHubStrikethroughProcessorExtension(),
+                GitHubTableProcessorExtension,
+            )
+        )
+    }
 
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also
@@ -61,18 +75,26 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
     }
 
     val blockRenderer =
-        remember(markdownStyling, extensions) {
+        remember(markdownStyling) {
             if (isDark) {
                 MarkdownBlockRenderer.dark(
-                    styling = MarkdownStyling.dark(),
+                    styling = markdownStyling,
                     rendererExtensions =
-                        listOf(GitHubAlertRendererExtension(AlertStyling.dark(), MarkdownStyling.dark())),
+                        listOf(
+                            GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
+                            GitHubStrikethroughRendererExtension,
+                            GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
+                        ),
                 )
             } else {
                 MarkdownBlockRenderer.light(
-                    styling = MarkdownStyling.light(),
+                    styling = markdownStyling,
                     rendererExtensions =
-                        listOf(GitHubAlertRendererExtension(AlertStyling.light(), MarkdownStyling.light())),
+                        listOf(
+                            GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
+                            GitHubStrikethroughRendererExtension,
+                            GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),
+                        ),
                 )
             }
         }
@@ -90,8 +112,10 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
                     PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp + scrollbarContentSafePadding(), bottom = 8.dp),
                 state = lazyListState,
                 selectable = true,
-                onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
+                onUrlClick = onUrlClick(),
             )
         }
     }
 }
+
+private fun onUrlClick(): (String) -> Unit = { url -> Desktop.getDesktop().browse(URI.create(url)) }

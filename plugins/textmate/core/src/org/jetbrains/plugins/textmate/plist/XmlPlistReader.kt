@@ -88,14 +88,6 @@ class XmlPlistReader : PlistReader {
         "real" == type && content != null -> {
           value(content.toDouble(), PlistValueType.REAL)
         }
-        "date" == type && content != null -> {
-          try {
-            value(Plist.dateFormatter().parse(content), PlistValueType.DATE)
-          }
-          catch (e: ParseException) {
-            throw IOException(e)
-          }
-        }
         else -> null
       }
     }

@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.env.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import com.jetbrains.python.tools.PythonType
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -24,7 +25,8 @@ import kotlin.reflect.KClass
  * [lazy]: postpone resource creation until first parameter used.
  * [additionalTags]: only use pythons with these tags
  */
-internal abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonType<ENV>>(
+@Internal
+abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonType<ENV>>(
   private val annotation: KClass<out Annotation>,
   private val pythonType: PYTHON_TYPE,
   private val envType: KClass<ENV>,
@@ -52,8 +54,8 @@ internal abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonTy
   }
 
   private fun createEnv(): ResourceWrapper<ENV> {
-    val (env, autoClosable) = runBlocking {
-      pythonType.getTestEnvironment(*additionalTags).getOrElse {
+    val (_, autoClosable, env) = runBlocking {
+      pythonType.createSdkClosableEnv(*additionalTags).getOrElse {
         // Logging due to IDEA-356206
         LOG.warn(it)
         val message = "Couldn't find python to run test against ($pythonType , ${additionalTags.toList()})"

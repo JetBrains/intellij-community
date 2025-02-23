@@ -51,7 +51,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val directory = Files.createTempDirectory(meaningfulDirName)
 
   val fakeRoot = if (SystemInfo.isUnix) {
-    "/eel-test/${directory.name}"
+    "/eel-test-${directory.name}"
   }
   else {
     "\\\\eel-test\\${directory.name}"

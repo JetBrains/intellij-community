@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -41,10 +41,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -251,7 +248,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return new MyAbstractAction(listPopup, number, executor);
   }
 
-  private abstract static class Wrapper implements NumericMnemonicItem {
+  @ApiStatus.Internal
+  public abstract static class Wrapper implements NumericMnemonicItem {
     private int myMnemonic = -1;
     private boolean myMnemonicsEnabled;
     private final boolean myAddSeparatorAbove;
@@ -932,7 +930,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   /**
    * @deprecated Use {@link #createSettingsList(Project, ExecutorProvider, DataContext, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
                                                                  @NotNull ExecutorProvider executorProvider,
                                                                  boolean isCreateEditAction) {

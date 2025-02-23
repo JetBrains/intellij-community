@@ -18,4 +18,5 @@ package com.intellij.database.extensions;
 public abstract class DataConsumer {
   public abstract void consumeColumns(String[] names, Class<?>[] types);
   public abstract void consume(Object... row);
+  public abstract void consumeMessage(String message);
 }

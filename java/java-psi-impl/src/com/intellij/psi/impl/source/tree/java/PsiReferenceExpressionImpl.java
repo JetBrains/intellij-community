@@ -108,8 +108,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(qualifierClass.getProject());
     boolean hasToBeImportedBySettings =
       (javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) ||
-      refs.size() + 1 >= javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand())  ||
-                                             javaCodeStyleManager.isStaticAutoImportClass(qualifiedName);
+      refs.size() + 1 >= javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand());
     if (!hasToBeImportedBySettings ||
         javaCodeStyleManager.hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));

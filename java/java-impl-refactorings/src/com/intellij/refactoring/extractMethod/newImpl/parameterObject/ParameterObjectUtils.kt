@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
 import com.intellij.pom.java.JavaFeature
@@ -31,6 +31,7 @@ object ParameterObjectUtils {
   private fun findAffectedReferences(variable: PsiVariable, scope: List<PsiElement>): List<PsiReferenceExpression>? {
     val startingOffset = scope.last().textRange.endOffset
     val references = ReferencesSearch.search(variable)
+      .asIterable()
       .mapNotNull { it.element as? PsiReferenceExpression }
       .filter { reference -> reference.textRange.startOffset >= startingOffset }
       .sortedBy { reference -> reference.textRange.startOffset }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
@@ -15,6 +15,7 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -23,7 +24,8 @@ import java.util.*;
 /**
  * A persistent {@code Set<VirtualFile>} or persistent {@code Map<VirtualFile, String>}
  */
-abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String URL_ATTR = "url";
   private static final String VALUE_ATTR = "value";

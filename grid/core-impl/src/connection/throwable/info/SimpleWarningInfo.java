@@ -4,7 +4,7 @@ import com.intellij.database.datagrid.GridUtilCore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-class SimpleWarningInfo extends SimpleThrowableInfo implements WarningInfo {
+final class SimpleWarningInfo extends SimpleThrowableInfo implements WarningInfo {
   private final boolean myIsUserOutput;
 
   SimpleWarningInfo(@Nls @NotNull String message, @NotNull Throwable throwable) {

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -304,8 +304,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       return;
     }
 
-    if (HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, place) != null &&
-        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
+    if (ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, place) != null &&
+        !ControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }

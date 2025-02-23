@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
 import org.jetbrains.plugins.textmate.Constants
+import kotlin.jvm.JvmField
 
 /**
  * Syntax rule of languages from TextMate bundle.

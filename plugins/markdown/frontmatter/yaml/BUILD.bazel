@@ -17,8 +17,8 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//plugins/markdown/core:markdown",
     "//platform/lang-impl",
+    "//plugins/yaml/backend",
     "//plugins/yaml",
-    "//plugins/yaml/editing",
     "//platform/backend",
   ],
   runtime_deps = [":markdown-frontmatter-yaml_resources"]

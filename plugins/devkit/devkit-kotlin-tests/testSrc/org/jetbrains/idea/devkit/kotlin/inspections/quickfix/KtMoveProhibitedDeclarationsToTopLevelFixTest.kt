@@ -6,9 +6,9 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/moveProhibitedDeclarationsToTopLevelFix")
-class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
-  private val fixName = "Move prohibited declarations to top level"
+  protected val fixName = "Move prohibited declarations to top level"
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/moveProhibitedDeclarationsToTopLevelFix"
 
@@ -19,12 +19,4 @@ class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensi
   fun testMoveJvmStaticDeclarations() {
     doTestFixWithReferences(fixName, refFileExtension = "java")
   }
-
-  fun testMoveConflicts() {
-    val expectedConflicts = listOf(
-      "Following declarations would clash: to move function &#39;fun foo()&#39; and destination function &#39;fun foo()&#39; declared in scope ",
-    )
-    doTestFixWithConflicts(fixName, expectedConflicts)
-  }
-
 }

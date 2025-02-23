@@ -11,8 +11,11 @@ java_library(
     "//platform/project/backend",
     "//platform/progress/backend",
     "//platform/xdebugger-impl/backend:debugger-impl-backend",
+    "//platform/searchEverywhere/backend",
     "//platform/vcs-impl/backend:vcs-impl-backend",
     "//platform/bookmarks/backend",
+    "//platform/recentFiles/backend",
+    "//platform/editor/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

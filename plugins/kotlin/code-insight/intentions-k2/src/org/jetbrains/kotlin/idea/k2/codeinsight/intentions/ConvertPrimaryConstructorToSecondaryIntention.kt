@@ -51,8 +51,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtClass): List<Item>? {
+    override fun KaSession.prepareContext(element: KtClass): List<Item>? {
         val items = mutableListOf<Item>()
         for (property in element.getProperties()) {
             val propertyName = property.name ?: continue

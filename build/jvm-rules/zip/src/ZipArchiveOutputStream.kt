@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
@@ -22,7 +22,7 @@ class ZipArchiveOutputStream(
   private var finished = false
 
   private var bufferReleased = false
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(512 * 1024)
+  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(128 * 1024)
 
   private var channelPosition = 0L
 
@@ -77,9 +77,40 @@ class ZipArchiveOutputStream(
     )
   }
 
-  fun writeDataRawEntryWithoutCrc(data: ByteBuffer, name: ByteArray) {
-    val size = data.remaining()
-    writeDataRawEntry(data = data, name = name, size = size, compressedSize = size, method = ZipEntry.STORED, crc = 0)
+  fun writeDataRawEntryWithoutCrc(name: ByteArray, data: ByteArray) {
+    writeDataRawEntry(name = name, data = data, size = data.size, crc = 0)
+  }
+
+  // data contains only data - zip local file header will be generated
+  fun writeDataRawEntry(
+    name: ByteArray,
+    data: ByteArray,
+    size: Int,
+    crc: Long,
+  ) {
+    if (finished) {
+      throw IOException("Stream has already been finished")
+    }
+
+    buffer.clear()
+    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = buffer)
+
+    val localFileHeaderOffset = channelPosition
+    val dataOffset = localFileHeaderOffset + buffer.readableBytes()
+
+    // write to buffer, to avoid writing to disk in two calls
+    buffer.writeBytes(data)
+    writeBuffer(buffer)
+
+    zipIndexWriter.writeCentralFileHeader(
+      size = size,
+      compressedSize = size,
+      method = ZipEntry.STORED,
+      crc = crc,
+      name = name,
+      localFileHeaderOffset = localFileHeaderOffset,
+      dataOffset = dataOffset,
+    )
   }
 
   // data contains only data - zip local file header will be generated
@@ -103,7 +134,7 @@ class ZipArchiveOutputStream(
     val localFileHeaderOffset = channelPosition
     val dataOffset = localFileHeaderOffset + buffer.readableBytes()
 
-    writeBuffer()
+    writeBuffer(buffer)
     writeBuffer(data)
 
     zipIndexWriter.writeCentralFileHeader(

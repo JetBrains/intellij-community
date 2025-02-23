@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -160,7 +161,6 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolvingPropertiesForLocalProjectsInCompletion() = runBlocking {
-    runWithoutStaticSync()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -397,17 +397,20 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
   fun testResolutionParentPathOutsideTheProject() = runBlocking {
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/org/example/example/1.0/example-1.0.pom")
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
-    val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(projectRoot.getPath()), File(filePath))!!.replace("\\\\".toRegex(), "/")
+    val relativePathUnixSeparator = FileUtil.getRelativePath(
+      projectRoot.getPath(),
+      filePath.toCanonicalPath(),
+      File.separatorChar
+    )!!.replace("\\\\".toRegex(), "/")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -421,7 +424,7 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertResolved(projectPom, findPsiFile(f))
   }
 
@@ -449,15 +452,15 @@ $relativePathUnixSeparator<caret></relativePath>
                           """.trimIndent())
     importProjectAsync()
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
   fun testResolveLATESTDependency() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestDataPath("local1")
+    val repoPath = helper.getTestData("local1")
     repositoryPath = repoPath
 
     updateProjectPom("""
@@ -487,8 +490,8 @@ $relativePathUnixSeparator<caret></relativePath>
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
 
     assertResolved(projectPom, findPsiFile(f))
   }
@@ -509,8 +512,8 @@ $relativePathUnixSeparator<caret></relativePath>
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
 
     assertResolved(projectPom, findPsiFile(f))
   }
@@ -552,7 +555,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
   @Test
   fun testResolvingSystemScopeDependencies() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -569,7 +572,7 @@ $libPath</systemPath>
 </dependencies>
 """)
 
-    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
@@ -594,7 +597,7 @@ $libPath</systemPath>
 
   @Test
   fun testDoNotHighlightValidSystemScopeDependencies() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -615,7 +618,7 @@ $libPath</systemPath>
 
   @Test
   fun testResolvingSystemScopeDependenciesWithProperties() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -635,20 +638,20 @@ $libPath</depPath>
 </dependencies>
 """)
 
-    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
   @Test
   fun testCompletionSystemScopeDependenciesWithProperties() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <properties>
   <depDir>
-${File(libPath).getParent()}</depDir>
+${libPath.parent}</depDir>
 </properties>
 <dependencies>
   <dependency>
@@ -666,7 +669,7 @@ ${File(libPath).getParent()}</depDir>
 
   @Test
   fun testResolvingSystemScopeDependenciesFromSystemPath() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -683,7 +686,7 @@ $libPath<caret></systemPath>
 </dependencies>
 """)
 
-    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
@@ -706,8 +709,8 @@ $libPath<caret></systemPath>
     val action = getIntentionAtCaret("Choose File")
     assertNotNull(action)
 
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
-    val libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
+    val libFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)
 
     val intentionAction = IntentionActionDelegate.unwrap(action!!)
     (intentionAction as ChooseFileIntentionAction).setFileChooser { arrayOf(libFile) }

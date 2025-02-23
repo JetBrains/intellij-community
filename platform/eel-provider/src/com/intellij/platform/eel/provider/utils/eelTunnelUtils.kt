@@ -4,18 +4,13 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.eel.EelConnectionError
-import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.component1
-import com.intellij.platform.eel.component2
-import com.intellij.platform.eel.withAcceptorForRemotePort
-import com.intellij.platform.eel.withConnectionToRemotePort
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
+import java.io.IOException
 import java.net.*
 import java.nio.ByteBuffer
 import kotlin.time.Duration.Companion.seconds
@@ -128,79 +123,65 @@ fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, ad
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: SendChannel<ByteBuffer>) = launch(CoroutineName("Reader for connection $connectionId")) {
-  try {
-    val inputStream = socket.getInputStream()
-    val buffer = ByteArray(4096)
-    while (true) {
-      try {
-        val bytesRead = runInterruptible {
-          inputStream.read(buffer, 0, buffer.size)
+private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: EelSendChannel<IOException>) = launch(CoroutineName("Reader for connection $connectionId")) {
+
+  val result = copy(
+    socket.consumeAsEelChannel(), channelToIJent,
+    onReadError = {
+      if (it is SocketTimeoutException && channelToIJent.closed) {
+        this@launch.cancel("Channel is closed normally")
+        OnError.EXIT
+      }
+      else {
+        OnError.RETRY
+      }
+    },
+  )
+  channelToIJent.close()
+  when (result) {
+    is EelResult.Ok -> Unit
+    is EelResult.Error -> {
+      when (val error = result.error) {
+        is CopyResultError.InError -> {
+          if (!socket.isClosed) {
+            LOG.warn("Connection $connectionId closed", error.inError)
+            throw CancellationException("Closed because of a socket exception", error.inError)
+          }
         }
-        LOG.trace("Connection $connectionId; Bytes read: $bytesRead")
-        if (bytesRead >= 0) {
-          LOG.trace("Sending message to IJent for $connectionId")
-          channelToIJent.send(ByteBuffer.wrap(buffer.copyOf(), 0, bytesRead)) // important to make a copy, we have no guarantees when buffer will be processed
-        }
-        else {
-          channelToIJent.close()
-          break
+        is CopyResultError.OutError -> {
+          LOG.warn("Connection $connectionId closed by IJent; ${error.outError}")
         }
       }
-      catch (_: SocketTimeoutException) {
-        if (channelToIJent.isClosedForSend) {
-          this@launch.cancel("Channel is closed normally")
-        }
-        ensureActive()
-      }
     }
-  }
-  catch (e: ClosedSendChannelException) {
-    LOG.warn("Connection $connectionId closed by IJent; $e")
-  }
-  catch (e: SocketException) {
-    if (!socket.isClosed) {
-      LOG.warn("Connection $connectionId closed", e)
-    }
-    channelToIJent.close()
-    throw CancellationException("Closed because of a socket exception", e)
   }
 }
 
-private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: ReceiveChannel<ByteBuffer>) = launch(CoroutineName("Writer for connection $connectionId")) {
-  try {
-    val outputStream = socket.getOutputStream()
-    for (data in backChannel) {
-      LOG.debug("IJent port forwarding: $connectionId; Received ${data.remaining()} bytes from IJent; sending them back to client connection")
-      try {
-        runInterruptible {
-          outputStream.write(data.toByteArray())
-          outputStream.flush()
+private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: EelReceiveChannel<IOException>) = launch(CoroutineName("Writer for connection $connectionId")) {
+
+  val result = copy(backChannel, socket.asEelChannel(),
+                    onReadError = {
+                      if (it is SocketTimeoutException) OnError.RETRY else OnError.EXIT
+                    })
+
+  backChannel.close()
+  when (result) {
+    is EelResult.Ok -> Unit
+    is EelResult.Error -> {
+      when (val error = result.error) {
+        is CopyResultError.InError -> {
+          LOG.warn("Error reading from channel", error.inError)
+        }
+        is CopyResultError.OutError -> {
+          val e = error.outError
+          if (!socket.isClosed) {
+            LOG.warn("Socket connection $connectionId closed", e)
+          }
+          else {
+            LOG.debug("Socket connection $connectionId closed because of cancellation", e)
+          }
         }
       }
-      catch (_: SocketTimeoutException) {
-        ensureActive()
-      }
     }
-    outputStream.flush()
-  }
-  catch (e: EelTunnelsApi.RemoteNetworkException) {
-    if (e is EelTunnelsApi.RemoteNetworkException.ConnectionReset) {
-      socket.close() // causing TCP RST to be sent back
-    }
-    else {
-      LOG.warn("Connection $connectionId closed", Throwable(e))
-    }
-  }
-  catch (e: SocketException) {
-    if (!socket.isClosed) {
-      LOG.warn("Socket connection $connectionId closed", Throwable(e))
-    }
-    else {
-      LOG.debug("Socket connection $connectionId closed because of cancellation", e)
-    }
-    backChannel.cancel()
-    throw CancellationException("Connection closed", e)
   }
 }
 

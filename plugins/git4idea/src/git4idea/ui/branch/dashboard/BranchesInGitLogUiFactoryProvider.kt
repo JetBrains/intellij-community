@@ -4,8 +4,10 @@ package git4idea.ui.branch.dashboard
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,6 +22,7 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
@@ -39,6 +42,7 @@ import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import git4idea.GitVcs
 import git4idea.i18n.GitBundleExtensions.messagePointer
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardTreeSelectionHandler.SelectionAction
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -104,8 +108,8 @@ internal class BranchesVcsLogUi(
     val filterUi = mainFrame.filterUi
     val roots = logData.roots.toSet()
     val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener {
-      model.rootsToFilter = when (roots.size) {
-        1 -> roots
+      model.rootsToFilter = when {
+        roots.size == 1 || BranchesDashboardBehaviour.alwaysShowBranchForAllRoots() -> roots
         else -> VcsLogUtil.getAllVisibleRoots(roots, filterUi.filters)
       }
     }
@@ -216,13 +220,21 @@ internal class BranchesVcsLogUi(
           }
         }
 
-    override fun filterBy(branches: List<String>) {
+    override fun filterBy(branches: List<String>, repositories: Set<GitRepository>) {
       val oldFilters = filterUi.filters
-      val newFilters = if (branches.isNotEmpty()) {
-        oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branches))
+      var newFilters = oldFilters.without(VcsLogBranchLikeFilter::class.java)
+
+      if (branches.isNotEmpty()) {
+        newFilters = newFilters.with(VcsLogFilterObject.fromBranches(branches))
       }
-      else {
-        oldFilters.without(VcsLogBranchLikeFilter::class.java)
+
+      if (BranchesDashboardBehaviour.filterByBranchAndRoot() && repositories.isNotEmpty()) {
+        newFilters = newFilters.without(VcsLogRootFilter::class.java)
+
+        val newRoots = repositories.map { it.root }
+        if (!Comparing.haveEqualElements(logData.roots, newRoots) ) {
+          newFilters = newFilters.with(VcsLogFilterObject.fromRoots(newRoots))
+        }
       }
       filterUi.filters = newFilters
     }
@@ -257,3 +269,9 @@ val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsL
   object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
     override fun defaultValue() = false
   }
+
+private object BranchesDashboardBehaviour {
+  fun alwaysShowBranchForAllRoots(): Boolean = filterByBranchAndRoot()
+
+  fun filterByBranchAndRoot(): Boolean = Registry.`is`("git.branch.dashboard.filter.branch.and.root")
+}

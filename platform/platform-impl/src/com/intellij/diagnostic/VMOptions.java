@@ -334,10 +334,5 @@ public final class VMOptions {
     return null;
   }
 
-  /** @deprecated please see {@link #read()} for details */
-  @Deprecated(forRemoval = true)
-  public static @Nullable Path getWriteFile() {
-    return getUserOptionsFile();
-  }
   //</editor-fold>
 }

@@ -36,6 +36,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   private @Nullable String productionModuleId;
   private @NotNull String moduleName;
 
+  private @NotNull ModuleNameDeduplicationStrategy moduleNameDeduplicationStrategy = ModuleNameDeduplicationStrategy.DEFAULT;
+
   @Property(allowedTypes = {LibraryData.class, ProjectId.class}) private @Nullable ProjectCoordinate publication;
 
   private boolean inheritProjectCompileOutputPath = true;
@@ -234,6 +236,14 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
         return null;
       }
     }
+  }
+
+  public @NotNull ModuleNameDeduplicationStrategy getModuleNameDeduplicationStrategy() {
+    return moduleNameDeduplicationStrategy;
+  }
+
+  public void setModuleNameDeduplicationStrategy(@NotNull ModuleNameDeduplicationStrategy moduleNameDeduplicationStrategy) {
+    this.moduleNameDeduplicationStrategy = moduleNameDeduplicationStrategy;
   }
 
   @Override

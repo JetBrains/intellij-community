@@ -120,6 +120,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       return MessagesService.getInstance().showMessageDialog(
         project = project, parentComponent = parentComponent, message = message, title = title, options = arrayOf(yesText, noText),
         icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
+        exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO)
       ) == YES
     }
   }
@@ -152,7 +153,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val options = arrayOf(yesText, noText, cancelText)
       val choice = MessagesService.getInstance().showMessageDialog(
         project = project, parentComponent = parentComponent, message = message, title = title, options = options,
-        icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace)
+        icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
+        exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO, ExitActionType.CANCEL))
       return when (choice) {
         0 -> YES
         1 -> NO
@@ -212,6 +214,7 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
     val noText = noText ?: CommonBundle.getCancelButtonText()
     return MessagesService.getInstance().showMessageDialog(
       project = project, parentComponent = parentComponent, message = message, title = title, options = arrayOf(yesText, noText),
-      icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace) == 0
+      icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
+      exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO)) == 0
   }
 }

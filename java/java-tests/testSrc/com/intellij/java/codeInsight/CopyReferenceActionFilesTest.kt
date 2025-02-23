@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight
 
 import com.intellij.ide.actions.CopyReferenceAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
@@ -46,7 +46,7 @@ class CopyReferenceActionFilesTest {
   
   @BeforeEach
   fun setUp() = runBlocking {
-    writeAction {
+    edtWriteAction {
       rootDir = projectModel.baseProjectDir.newVirtualDirectory("root")
       module = projectModel.createModule()
       module.setModuleType(JavaModuleType.getModuleType().id)
@@ -59,7 +59,7 @@ class CopyReferenceActionFilesTest {
     lateinit var dir: VirtualFile
     lateinit var dirSubFile: VirtualFile
     lateinit var file: VirtualFile
-    writeAction {
+    edtWriteAction {
       dir = rootDir.createChildDirectory(this, "dir")
       dirSubFile = dir.createChildData(this, "dir_subfile.txt")
       file = rootDir.createChildData(this, "file.txt")
@@ -77,7 +77,7 @@ class CopyReferenceActionFilesTest {
   @Test
   fun `reference to file under non-java source root must include path from content root`() = runBlocking {
     lateinit var file: VirtualFile
-    writeAction {
+    edtWriteAction {
       module.setModuleType(WEB_MODULE_ENTITY_TYPE_ID_NAME)
       val sourceRoot = rootDir.createChildDirectory(this, "src")
       PsiTestUtil.addContentRoot(module, rootDir)
@@ -95,7 +95,7 @@ class CopyReferenceActionFilesTest {
     lateinit var dir: VirtualFile
     lateinit var dirSubFile: VirtualFile
     lateinit var file: VirtualFile
-    writeAction {
+    edtWriteAction {
       dir = rootDir.createChildDirectory(this, "dir")
       dirSubFile = dir.createChildData(this, "dir_subfile.txt")
       file = rootDir.createChildData(this, "file.txt")
@@ -115,7 +115,7 @@ class CopyReferenceActionFilesTest {
     lateinit var dir: VirtualFile
     lateinit var dirDir: VirtualFile
     lateinit var dirDirFile: VirtualFile
-    writeAction {
+    edtWriteAction {
       dir = rootDir.createChildDirectory(this, "dir")
       dirDir = dir.createChildDirectory(this, "dir_dir")
       dirDirFile = dirDir.createChildData(this, "file.txt")
@@ -135,7 +135,7 @@ class CopyReferenceActionFilesTest {
     lateinit var dir: VirtualFile
     lateinit var dirDir: VirtualFile
     lateinit var dirDirFile: VirtualFile
-    writeAction {
+    edtWriteAction {
       dir = rootDir.createChildDirectory(this, "dir")
       dirDir = dir.createChildDirectory(this, "dir_dir")
       dirDirFile = dirDir.createChildData(this, "file.txt")

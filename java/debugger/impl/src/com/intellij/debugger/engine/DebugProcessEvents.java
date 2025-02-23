@@ -363,7 +363,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     DebuggerUtilsAsync.setEnabled(request, true);
   }
 
-  private static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
+  public static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
     request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
     enableRequestWithHandler(request, handler);
   }
@@ -382,6 +382,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processVMStartEvent(@NotNull SuspendContextImpl suspendContext, VMStartEvent event) {
+    // force cache thread proxy as we do not receive a threadStart event for this thread
+    suspendContext.getVirtualMachineProxy().threadStarted(event.thread());
     preprocessEvent(suspendContext, event.thread());
 
     LOG.debug("enter: processVMStartEvent()");

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
@@ -48,6 +48,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   }
 
   fun turnOff() {
+    LOG.info("Turning off file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount + 1}")
     val app = ApplicationManager.getApplication()
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!app.isWriteAccessAllowed)
@@ -94,8 +95,11 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   @JvmOverloads
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
+    LOG.info("Turning on file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount - 1}")
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
     nestedLevelCount--
+    LOG.assertTrue(nestedLevelCount >= 0, "nestedLevelCount is less than 0: $nestedLevelCount. " +
+                                          "This probably means that DynamicPluginListener.plugin[Un]Loaded event was fired without corresponding 'before' event")
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
@@ -140,10 +144,10 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             )
             indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
           }
-          LOG.info("Index rescanning has been started after `$reason`")
+          LOG.info("Index rescanning has been started. Reason: `$reason`")
         }
         else {
-          LOG.info("Index rescanning has been skipped after `$reason`")
+          LOG.info("Index rescanning has been skipped. Reason `$reason`")
         }
       }
       finally {

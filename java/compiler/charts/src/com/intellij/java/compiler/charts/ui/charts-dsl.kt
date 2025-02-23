@@ -130,7 +130,7 @@ class CompilationChartsModuleInfo(
   component: CompilationChartsDiagramsComponent,
 ) : MouseAdapter() {
   private val components = ConcurrentHashMap<ModuleKey, ModuleIndex>()
-  private val hint = CompilationChartsHint(vm.project(), component)
+  private val hint = CompilationChartsHint(vm.project(), component, vm.disposable())
 
   override fun mouseClicked(e: MouseEvent) {
     val name = search(e.point)?.key?.name ?: return

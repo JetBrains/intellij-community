@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.python.community.testFramework.testEnv.PythonType
+import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.remote.RemoteSdkException
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -23,7 +23,7 @@ import org.junit.Assume
  * To be used with [createSdk]
  */
 sealed class SdkCreationRequest {
-  data class LocalPython(val pythonType: PythonType<*> = PythonType.VanillaPython3) : SdkCreationRequest()
+  data class LocalPython(val pythonType: PythonType<*> = TypeVanillaPython3) : SdkCreationRequest()
   data class RemotePython(val targetConfig: TargetEnvironmentConfiguration) : SdkCreationRequest()
 }
 
@@ -33,17 +33,8 @@ sealed class SdkCreationRequest {
 suspend fun createSdk(request: SdkCreationRequest): Pair<Sdk, AutoCloseable> = withContext(Dispatchers.IO) {
   when (request) {
     is SdkCreationRequest.LocalPython -> {
-      when (val pythonType = request.pythonType) {
-        is PythonType.Conda -> {
-          val (env, closable) = pythonType.getTestEnvironment().getOrThrow()
-          Pair(env.createSdkFromThisEnv(null, emptyList()), closable)
-        }
-        is PythonType.VanillaPython3 -> {
-          val (python, closable) = pythonType.getTestEnvironment().getOrThrow()
-          Pair(SdkConfigurationUtil.setupSdk(emptyArray(), python.refreshAndGetVirtualFile(),
-                                             PythonSdkType.getInstance(), null, null), closable)
-        }
-      }
+      val (sdk, closable, _) = request.pythonType.createSdkClosableEnv().getOrThrow()
+      Pair(sdk, closable)
     }
     is SdkCreationRequest.RemotePython -> {
       val targetData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
@@ -60,7 +51,7 @@ suspend fun createSdk(request: SdkCreationRequest): Pair<Sdk, AutoCloseable> = w
         sdkModificator.apply {
           homePath = PYTHON_PATH_ON_TARGET
           sdkAdditionalData = targetData
-          writeAction {
+          edtWriteAction {
             commitChanges()
           }
         }

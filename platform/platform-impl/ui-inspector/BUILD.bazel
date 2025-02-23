@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.ide.ui.inspector` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-ui-inspector_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "ide-ui-inspector",
@@ -14,6 +20,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
     "@lib//:guava",
-  ]
+  ],
+  runtime_deps = [":ide-ui-inspector_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.ui.inspector` end

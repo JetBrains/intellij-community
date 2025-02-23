@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -37,10 +37,10 @@ public final class KotlinBaseResourcesIcons {
   /** 16x16 */ public static final @NotNull Icon Kotlin_js = load("org/jetbrains/kotlin/idea/icons/expui/kotlinJs.svg", "org/jetbrains/kotlin/idea/icons/kotlin_js.svg", -452891758, 0);
   /** 16x16 */ public static final @NotNull Icon Kotlin_launch_configuration = load("org/jetbrains/kotlin/idea/icons/expui/kotlin.svg", "org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg", 847158157, 0);
   /** 16x16 */ public static final @NotNull Icon Kotlin_multiplatform_project = load("org/jetbrains/kotlin/idea/icons/kotlin_multiplatform_project.svg", -1623765240, 0);
-  /** 16x16 */ public static final @NotNull Icon Kotlin_native = load("org/jetbrains/kotlin/idea/icons/kotlin_native.svg", -1262638669, 0);
+  /** 16x16 */ public static final @NotNull Icon Kotlin_native = load("org/jetbrains/kotlin/idea/icons/expui/kotlinNative.svg", "org/jetbrains/kotlin/idea/icons/kotlin_native.svg", -1262638669, 0);
   /** 16x16 */ public static final @NotNull Icon Kotlin_script = load("org/jetbrains/kotlin/idea/icons/expui/kotlinScript.svg", "org/jetbrains/kotlin/idea/icons/kotlin_script.svg", 1451468015, 0);
   /** 16x16 */ public static final @NotNull Icon Lambda = load("org/jetbrains/kotlin/idea/icons/expui/lambda.svg", "org/jetbrains/kotlin/idea/icons/lambda.svg", -1516467044, 0);
-  /** 16x16 */ public static final @NotNull Icon LoadScriptConfiguration = load("org/jetbrains/kotlin/idea/icons/loadScriptConfiguration.svg", -1579422606, 2);
+  /** 16x16 */ public static final @NotNull Icon LoadScriptConfiguration = load("org/jetbrains/kotlin/idea/icons/expui/loadScriptConfiguration.svg", "org/jetbrains/kotlin/idea/icons/loadScriptConfiguration.svg", -1579422606, 2);
   /** 16x16 */ public static final @NotNull Icon ObjectKotlin = load("org/jetbrains/kotlin/idea/icons/expui/objectKotlin.svg", "org/jetbrains/kotlin/idea/icons/objectKotlin.svg", 865593956, 0);
   /** 12x12 */ public static final @NotNull Icon SuspendCall = load("org/jetbrains/kotlin/idea/icons/expui/suspendCall@14x14.svg", "org/jetbrains/kotlin/idea/icons/suspendCall.svg", -609493759, 2);
   /** 16x16 */ public static final @NotNull Icon TypeAlias = load("org/jetbrains/kotlin/idea/icons/expui/typeAlias.svg", "org/jetbrains/kotlin/idea/icons/typeAlias.svg", -285848846, 0);

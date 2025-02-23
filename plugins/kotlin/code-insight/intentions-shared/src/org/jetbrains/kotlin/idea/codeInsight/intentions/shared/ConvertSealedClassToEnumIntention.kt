@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -63,7 +63,7 @@ internal class ConvertSealedClassToEnumIntention : PsiBasedModCommandAction<KtCl
 
     override fun perform(context: ActionContext, element: KtClass): ModCommand {
         val klass = liftToExpect(element) as? KtClass ?: element
-        val subclasses = HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().mapNotNull { it.unwrapped }
+        val subclasses = HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().asIterable().mapNotNull { it.unwrapped }
         val subclassesByContainer: Map<KtClass?, List<PsiElement>> = subclasses.sortedBy { it.textOffset }.groupBy {
             if (it !is KtObjectDeclaration) return@groupBy null
             if (it.superTypeListEntries.size != 1) return@groupBy null

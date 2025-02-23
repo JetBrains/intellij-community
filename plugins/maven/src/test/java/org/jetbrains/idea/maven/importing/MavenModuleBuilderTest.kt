@@ -5,7 +5,7 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
+
 
 class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
@@ -385,7 +386,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     }
 
     waitForImportWithinTimeout {
-      writeAction {
+      edtWriteAction {
         val model = ModuleManager.getInstance(project).getModifiableModel()
         myBuilder.createModule(model)
         model.commit()

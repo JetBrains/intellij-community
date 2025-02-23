@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -119,10 +120,13 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   }
 
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.usages\") explicitly")
     @JvmField val USAGES: @Nls String = RefactoringBundle.message("suggested.refactoring.usages")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.overrides\") explicitly")
     @JvmField val OVERRIDES: @Nls String = RefactoringBundle.message("suggested.refactoring.overrides")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.implementations\") explicitly")
     @JvmField val IMPLEMENTATIONS: @Nls String = RefactoringBundle.message("suggested.refactoring.implementations")
   }

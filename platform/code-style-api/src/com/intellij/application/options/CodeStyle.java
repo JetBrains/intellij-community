@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.lang.Math.max;
 
@@ -325,7 +326,13 @@ public final class CodeStyle {
    * Invoke a runnable using the specified settings.
    * <p>
    * Inside the <code>runnable</code>, <code>localSettings</code> override code style settings for all files associated with
-   * <code>project</code>. This effect is limited to current thread.
+   * <code>project</code>. This effect is limited to the current thread.
+   * <p>
+   * <code>localSettings</code> <b>must not</b> be an instance representing actual settings
+   * (e.g. the output of {@link CodeStyle#getSettings}).
+   * It is preferable to use {@link CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)}
+   * or {@link CodeStyle#computeWithLocalSettings(Project, CodeStyleSettings, Function)} instead,
+   * which provides a copy of provided base settings out-of-the-box.
    *
    * @param project The current project.
    * @param localSettings The local settings.
@@ -341,7 +348,7 @@ public final class CodeStyle {
    * Invoke the specified consumer with a copy of the given <code>baseSettings</code>.
    * <p>
    * Inside <code>localSettingsConsumer</code>, this copy will override code style settings for all files associated with <code>project</code>.
-   * This effect is limited to current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
+   * This effect is limited to the current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
    * will not affect any currently set code style.
    *
    * @param project              The current project.
@@ -352,6 +359,25 @@ public final class CodeStyle {
                                           @NotNull CodeStyleSettings baseSettings,
                                           @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
     CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(baseSettings, localSettingsConsumer);
+  }
+
+  /**
+   * Invoke the specified function with a copy of the given <code>baseSettings</code>.
+   * <p>
+   * Inside <code>localSettingsFunction</code>,
+   * this copy will override code style settings for all files associated with <code>project</code>.
+   * This effect is limited to the current thread.
+   * It is safe to make any changes to the copy of settings passed to the function, these changes
+   * will not affect any currently set code style.
+   *
+   * @param project               The current project.
+   * @param baseSettings          The base settings to be cloned and used in the function.
+   * @param localSettingsFunction The function to execute with the base settings copy.
+   */
+  public static <T> T computeWithLocalSettings(@NotNull Project project,
+                                               @NotNull CodeStyleSettings baseSettings,
+                                               @NotNull Function<? super @NotNull CodeStyleSettings, T> localSettingsFunction) {
+    return CodeStyleSettingsManager.getInstance(project).computeWithLocalSettings(baseSettings, localSettingsFunction);
   }
 
   /**

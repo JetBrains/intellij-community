@@ -62,4 +62,13 @@ public final class TextRangeScalarUtil {
   public static @NotNull TextRange create(long range) {
     return TextRange.create(startOffset(range), endOffset(range));
   }
+
+  /**
+   * @return {@code range} coerced to be within ({@code start}, {@code end})
+   */
+  public static long coerce(long range, int start, int end) {
+    int newStart = Math.max(startOffset(range), start);
+    int newEnd = Math.max(newStart, Math.min(endOffset(range), end));
+    return toScalarRange(newStart, newEnd);
+  }
 }

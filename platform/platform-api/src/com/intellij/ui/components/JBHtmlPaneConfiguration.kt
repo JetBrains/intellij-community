@@ -6,9 +6,7 @@ import com.intellij.util.ui.CSSFontResolver
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.awt.Color
 import java.awt.Image
 import java.awt.event.ActionListener
 import java.net.URL
@@ -46,7 +44,7 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
   internal val keyboardActions: Map<KeyStroke, ActionListener> = builder.keyboardActions.toMap()
   internal val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = builder.imageResolverFactory
   internal val iconResolver: (String) -> Icon? = builder.iconResolver
-  internal val customStyleSheetProviders: List<(backgroundColor: Color) -> StyleSheet> = builder.customStyleSheetProviders.toList()
+  internal val customStyleSheetProviders: List<(pane: JBHtmlPane) -> StyleSheet> = builder.customStyleSheetProviders.toList()
   internal val fontResolver: CSSFontResolver? = builder.fontResolver
   internal val underlinedHoveredHyperlink = builder.underlinedHoveredHyperlink
   internal val extensions: List<ExtendableHTMLViewFactory.Extension> = builder.extensions.toList()
@@ -83,7 +81,7 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
     /**
      * @see [customStyleSheetProvider]
      */
-    val customStyleSheetProviders: MutableList<(backgroundColor: Color) -> StyleSheet> = mutableListOf()
+    val customStyleSheetProviders: MutableList<(pane: JBHtmlPane) -> StyleSheet> = mutableListOf()
 
     /**
      * Provide custom [fontResolver].
@@ -151,18 +149,18 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
       apply { this.iconResolver = iconResolver }
 
     /**
-     * Provide custom [StyleSheet] based on the `backgroundColor` of the [JBHtmlPane].
-     * The provider will be called each time a theme is changed, or when the background
-     * color of the pane changes. You should use [StyleSheetUtil.loadStyleSheet] to load
-     * a [StyleSheet] from a [String]. When providing values in `px`, make sure to scale them
-     * using [com.intellij.ui.scale.JBUIScale.scale]:
+     * Provide custom [StyleSheet] based on the current state of [JBHtmlPane].
+     * The provider will be called each time a theme is changed, when the background
+     * color of the pane changes, or when a CSS refresh is required for some other reason.
+     * You should use [StyleSheetUtil.loadStyleSheet] to load a [StyleSheet] from a [String].
+     * When providing values in `px`, make sure to scale them using [com.intellij.ui.scale.JBUIScale.scale]:
      * ```kotlin
      * customStyleSheetProvider {
      *    StyleSheetUtil.loadStyleSheet("div {margin: ${JBUIScale.scale(2)}px}")
      * }
      * ```
      */
-    fun customStyleSheetProvider(customStyleSheetProvider: (backgroundColor: Color) -> StyleSheet): Builder =
+    fun customStyleSheetProvider(customStyleSheetProvider: (pane: JBHtmlPane) -> StyleSheet): Builder =
       apply { this.customStyleSheetProviders.add(customStyleSheetProvider) }
 
     /**

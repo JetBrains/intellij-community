@@ -2,10 +2,8 @@
 package com.intellij.xdebugger.evaluation
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind

@@ -176,6 +176,14 @@ com.intellij.ide.AppLifecycleListener
 - projectFrameClosed():V
 - projectOpenFailed():V
 - welcomeScreenDisplayed():V
+f:com.intellij.ide.CliResult
+- java.lang.Record
+- sf:OK:com.intellij.ide.CliResult
+- <init>(I,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- exitCode():I
+- f:hashCode():I
+- message():java.lang.String
 f:com.intellij.ide.GeneralLocalSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - sf:Companion:com.intellij.ide.GeneralLocalSettings$Companion
@@ -227,7 +235,6 @@ f:com.intellij.ide.GeneralSettings
 - f:isShowWelcomeScreen():Z
 - f:isSupportScreenReaders():Z
 - f:isSyncOnFrameActivation():Z
-- f:isUseDefaultBrowser():Z
 - f:isUseSafeWrite():Z
 - loadState(com.intellij.ide.GeneralSettingsState):V
 - noStateLoaded():V
@@ -577,6 +584,7 @@ c:com.intellij.notification.Notification
 - hasContent():Z
 - hasTitle():Z
 - hideBalloon():V
+- isAddExtraAction():Z
 - s:isEmpty(java.lang.String):Z
 - isExpired():Z
 - isImportant():Z
@@ -584,6 +592,7 @@ c:com.intellij.notification.Notification
 - isRemoveWhenExpired():Z
 - isSuggestionType():Z
 - notify(com.intellij.openapi.project.Project):V
+- setAddExtraAction(Z):com.intellij.notification.Notification
 - setBalloon(com.intellij.openapi.ui.popup.Balloon):V
 - setCollapseActionsDirection(com.intellij.notification.Notification$CollapseActionsDirection):V
 - setCollapseDirection(com.intellij.notification.Notification$CollapseActionsDirection):com.intellij.notification.Notification
@@ -1161,6 +1170,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_TOGGLE_LINE_BREAKPOINT:java.lang.String
 - sf:ACTION_TOGGLE_RENDERED_DOC:java.lang.String
 - sf:ACTION_TOGGLE_RENDERED_DOC_FOR_ALL:java.lang.String
+- sf:ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING:java.lang.String
 - sf:ACTION_TYPE_HIERARCHY:java.lang.String
 - sf:ACTION_UNDO:java.lang.String
 - sf:ACTION_UNSELECT_PREVIOUS_OCCURENCE:java.lang.String
@@ -1331,6 +1341,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isShowFileSystemRoots():Z
 - isShowHiddenFiles():Z
 - isTreeRootVisible():Z
+- p:matchesFilters(com.intellij.openapi.vfs.VirtualFile):Z
 - putUserData(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - setDescription(java.lang.String):V
 - setForcedToUseIdeaFileChooser(Z):V
@@ -1368,6 +1379,14 @@ f:com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 - s:createSingleFileOrFolderDescriptor(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createSingleFolderDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createSingleLocalFileDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiFiles():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiFilesOrDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiJarsOrDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleDir():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFile():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFileOrAppBundle():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFileOrDir():com.intellij.openapi.fileChooser.FileChooserDescriptor
 c:com.intellij.openapi.fileChooser.FileElement
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - equals(java.lang.Object):Z
@@ -1823,6 +1842,16 @@ a:com.intellij.openapi.ui.DoNotAskOption$Adapter
 - a:rememberChoice(Z,I):V
 - f:setToBeShown(Z,I):V
 - shouldSaveOptionsOnCancel():Z
+e:com.intellij.openapi.ui.ExitActionType
+- java.lang.Enum
+- sf:CANCEL:com.intellij.openapi.ui.ExitActionType
+- sf:NO:com.intellij.openapi.ui.ExitActionType
+- sf:OK:com.intellij.openapi.ui.ExitActionType
+- sf:UNDEFINED:com.intellij.openapi.ui.ExitActionType
+- sf:YES:com.intellij.openapi.ui.ExitActionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.ui.ExitActionType
+- s:values():com.intellij.openapi.ui.ExitActionType[]
 f:com.intellij.openapi.ui.MessageConstants
 - sf:CANCEL:I
 - sf:NO:I

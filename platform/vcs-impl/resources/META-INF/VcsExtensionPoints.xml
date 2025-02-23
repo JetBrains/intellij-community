@@ -166,6 +166,10 @@
                     dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="vcsSharedChecker"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.VcsSharedChecker" area="IDEA_PROJECT"/>
+
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"

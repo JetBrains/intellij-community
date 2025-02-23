@@ -1,9 +1,9 @@
-- name: lib/frontend-split/yaml-frontend.jar
-  modules:
-  - name: intellij.yaml.frontend
-- name: lib/yaml-editing.jar
-  modules:
-  - name: intellij.yaml.editing
+- name: lib/modules/intellij.yaml.backend.jar
+  contentModules:
+  - name: intellij.yaml.backend
+- name: lib/modules/intellij.yaml.frontend.split.jar
+  contentModules:
+  - name: intellij.yaml.frontend.split
 - name: lib/yaml.jar
-  modules:
+  contentModules:
   - name: intellij.yaml

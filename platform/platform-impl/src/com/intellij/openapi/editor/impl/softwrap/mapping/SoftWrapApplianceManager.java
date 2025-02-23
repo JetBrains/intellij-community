@@ -6,9 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -26,6 +24,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
@@ -88,6 +87,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private boolean                        myIsDirty = true;
   private IncrementalCacheUpdateEvent    myDocumentChangedEvent;
   private int                            myAvailableWidth = QUICK_DUMMY_WRAPPING;
+  private @Nullable LineWrapPositionStrategy myLineWrapPositionStrategy;
 
 
   @ApiStatus.Internal
@@ -229,7 +229,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
         doRecalculateSoftWrapsRoughly(event);
       }
       else {
-        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myVisibleAreaWidth,
+        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myLineWrapPositionStrategy, myVisibleAreaWidth,
                            myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
@@ -463,6 +463,17 @@ public final class SoftWrapApplianceManager implements Dumpable {
   //@ApiStatus.Internal
   public @NotNull VisibleAreaWidthProvider getWidthProvider() {
     return myWidthProvider;
+  }
+
+  /**
+   * By default, line wrap strategy depends on the editor's file language
+   * and can be provided using {@link LanguageLineWrapPositionStrategy}.
+   * This method can be used to specify the strategy for the Editor that is not bound to any particular file.
+   * Note that the strategy set using this method takes precedence over one provided using {@link LanguageLineWrapPositionStrategy}.
+   */
+  public void setLineWrapPositionStrategy(@NotNull LineWrapPositionStrategy strategy) {
+    myLineWrapPositionStrategy = strategy;
+    reset();
   }
 
   @Override

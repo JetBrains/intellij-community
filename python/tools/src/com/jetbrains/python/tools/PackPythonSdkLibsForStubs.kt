@@ -2,8 +2,7 @@
 package com.jetbrains.python.tools
 
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

@@ -48,6 +48,8 @@ jvm_library(
     "//platform/service-container:serviceContainer",
     "//platform/remote-driver/client:driver-client",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+    "//platform/eel-provider",
+    "//platform/recentFiles/frontend",
   ],
   runtime_deps = [":performanceTesting_resources"]
 )
@@ -101,6 +103,8 @@ jvm_library(
     "//platform/remote-driver/client:driver-client",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
+    "//platform/eel-provider",
+    "//platform/recentFiles/frontend",
   ],
   runtime_deps = [":performanceTesting_resources"]
 )

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.CacheSwitcher;
@@ -228,7 +228,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Object url = ((VirtualFilePointerImpl)pointer).myNode.myFileOrUrl;
+        Object url = ((VirtualFilePointerImpl)pointer).getNode().getFileOrUrl();
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
       }
@@ -781,7 +781,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot, "test", null);
+            bb.getNode().update(((VirtualFilePointerImpl)fileToCreatePointer).getNode(), fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {
@@ -1338,7 +1338,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
     String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
     assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
     assertFalse(pointer.isValid());
 
     File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
@@ -1354,7 +1354,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
     assertEquals(expectedPointerUrl, pointer.getUrl());
     assertEquals(expectedPointerFileName, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
     assertFalse(pointer.isValid());
   }
 }

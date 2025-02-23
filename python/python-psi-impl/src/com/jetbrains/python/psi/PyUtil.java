@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -686,7 +685,7 @@ public final class PyUtil {
     if (isInitMethod(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
-        PyType providedClassType = getGenericTypeForClass(context, cls);
+        PyType providedClassType = PyTypeChecker.findGenericDefinitionType(cls, context);
         if (providedClassType != null) return providedClassType;
 
         final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
@@ -697,16 +696,6 @@ public final class PyUtil {
     }
 
     return context.getReturnType(function);
-  }
-
-  public static @Nullable PyType getGenericTypeForClass(@NotNull TypeEvalContext context, PyClass cls) {
-    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      final PyType providedClassType = provider.getGenericType(cls, context);
-      if (providedClassType != null) {
-        return providedClassType;
-      }
-    }
-    return null;
   }
 
   /**
@@ -1024,17 +1013,30 @@ public final class PyUtil {
       () -> {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         for (VirtualFile root : roots) {
-          boolean added = false;
           for (ContentEntry entry : model.getContentEntries()) {
             final VirtualFile file = entry.getFile();
             if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
               entry.addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
-              added = true;
             }
           }
+        }
+        model.commit();
+      }
+    );
+  }
 
-          if (!added) {
-            model.addContentEntry(root).addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
+  @RequiresEdt
+  public static void addModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (Module dependency : dependencies) {
+          if (dependency != module && model.findModuleOrderEntry(dependency) == null) {
+            model.addModuleOrderEntry(dependency);
           }
         }
         model.commit();
@@ -1057,9 +1059,25 @@ public final class PyUtil {
               entry.removeSourceFolder(folder);
             }
           }
+        }
+        model.commit();
+      }
+    );
+  }
 
-          if (roots.contains(entry.getFile()) && entry.getSourceFolders().length == 0) {
-            model.removeContentEntry(entry);
+  @RequiresEdt
+  public static void removeModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (Module dependency : dependencies) {
+          ModuleOrderEntry moduleOrderEntry = model.findModuleOrderEntry(dependency);
+          if (moduleOrderEntry != null) {
+            model.removeOrderEntry(moduleOrderEntry);
           }
         }
         model.commit();

@@ -3,9 +3,8 @@ package com.intellij.ui
 
 import com.intellij.ide.projectWizard.ProjectWizardJdkComboBox
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
-import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
@@ -52,7 +51,7 @@ class ProjectWizardJdkComboBoxTest {
     val sdk = jdkTable.createSdk(name, javaSdkType)
     val modificator = sdk.sdkModificator
     modificator.homePath = path.toString()
-    writeAction {
+    edtWriteAction {
       modificator.commitChanges()
       jdkTable.addJdk(sdk, disposable)
     }

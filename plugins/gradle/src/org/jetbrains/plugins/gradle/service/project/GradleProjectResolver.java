@@ -27,7 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -852,10 +852,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
         var contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSetNode);
 
-        var contentRootNodes = CanonicalPathPrefixTreeFactory.INSTANCE.<ContentRootData>createMap();
+        var contentRootNodes = CanonicalPathPrefixTree.INSTANCE.<ContentRootData>createMap();
         for (var contentRootPath : contentRootPaths) {
           var contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
-          contentRootNodes.set(contentRootPath, contentRootData);
+          contentRootNodes.put(contentRootPath, contentRootData);
         }
 
         for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {

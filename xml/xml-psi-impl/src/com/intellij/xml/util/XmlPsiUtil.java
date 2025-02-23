@@ -162,7 +162,7 @@ public final class XmlPsiUtil {
   }
 
   private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = getContextType(ref);
+    XmlEntityContextType type = getContextType(ref);
 
     {
       final XmlEntityDecl entityDecl = ref.resolve(targetFile);
@@ -199,27 +199,27 @@ public final class XmlPsiUtil {
     return null;
   }
 
-  private static XmlEntityDecl.EntityContextType getContextType(XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = XmlEntityDecl.EntityContextType.GENERIC_XML;
+  private static XmlEntityContextType getContextType(XmlEntityRef ref) {
+    XmlEntityContextType type = XmlEntityContextType.GENERIC_XML;
     PsiElement temp = ref;
     while (temp != null) {
       if (temp instanceof XmlAttributeDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTRIBUTE_SPEC;
+        type = XmlEntityContextType.ATTRIBUTE_SPEC;
       }
       else if (temp instanceof XmlElementDecl) {
-        type = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
+        type = XmlEntityContextType.ELEMENT_CONTENT_SPEC;
       }
       else if (temp instanceof XmlAttlistDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTLIST_SPEC;
+        type = XmlEntityContextType.ATTLIST_SPEC;
       }
       else if (temp instanceof XmlEntityDecl) {
-        type = XmlEntityDecl.EntityContextType.ENTITY_DECL_CONTENT;
+        type = XmlEntityContextType.ENTITY_DECL_CONTENT;
       }
       else if (temp instanceof XmlEnumeratedType) {
-        type = XmlEntityDecl.EntityContextType.ENUMERATED_TYPE;
+        type = XmlEntityContextType.ENUMERATED_TYPE;
       }
       else if (temp instanceof XmlAttributeValue) {
-        type = XmlEntityDecl.EntityContextType.ATTR_VALUE;
+        type = XmlEntityContextType.ATTR_VALUE;
       }
       else {
         temp = temp.getContext();
@@ -232,7 +232,7 @@ public final class XmlPsiUtil {
 
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
-                                            final XmlEntityDecl.EntityContextType type,
+                                            final XmlEntityContextType type,
                                             final XmlEntityRef entityRef) {
     CachedValue<PsiElement> value = ConcurrencyUtil.computeIfAbsent(entityRef, PARSED_DECL_KEY, () ->
       CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {

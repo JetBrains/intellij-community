@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -14,16 +14,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import javax.swing.Icon
 
 
-class GenerateGetterSetterHandleCompletionCommand :
-  BaseGenerateGetterSetterHandleCompletionCommand(true, true, "Create Getter/Setter",
+internal class GenerateGetterSetterHandleCompletionCommand :
+  BaseGenerateGetterSetterHandleCompletionCommand(true, true, "Generate 'Getter/Setter'",
                                                   QuickFixBundle.message("create.getter.setter"))
 
-class GenerateSetterHandleCompletionCommand :
-  BaseGenerateGetterSetterHandleCompletionCommand(false, true, "Create Setter",
+internal class GenerateSetterHandleCompletionCommand :
+  BaseGenerateGetterSetterHandleCompletionCommand(false, true, "Generate 'Setter'",
                                                   QuickFixBundle.message("create.setter"))
 
-class GenerateGetterHandleCompletionCommand :
-  BaseGenerateGetterSetterHandleCompletionCommand(true, false, "Create Getter",
+internal class GenerateGetterHandleCompletionCommand :
+  BaseGenerateGetterSetterHandleCompletionCommand(true, false, "Generate 'Getter'",
                                                   QuickFixBundle.message("create.getter"))
 
 abstract class BaseGenerateGetterSetterHandleCompletionCommand(

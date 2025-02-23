@@ -1055,6 +1055,7 @@ f:com.intellij.openapi.application.CoroutinesKt
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadActionBlocking(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadAndWriteAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:edtWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEDT(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - sf:readAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:readActionBlocking(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -1213,6 +1214,12 @@ com.intellij.openapi.application.WriteActionListener
 - beforeWriteActionStart(java.lang.Class):V
 - writeActionFinished(java.lang.Class):V
 - writeActionStarted(java.lang.Class):V
+com.intellij.openapi.application.WriteIntentReadActionListener
+- java.util.EventListener
+- afterWriteIntentReadActionFinished(java.lang.Class):V
+- beforeWriteIntentReadActionStart(java.lang.Class):V
+- writeIntentReadActionFinished(java.lang.Class):V
+- writeIntentReadActionStarted(java.lang.Class):V
 f:com.intellij.openapi.client.ClientSessionsUtil
 - sf:forEachSession(com.intellij.openapi.application.Application,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
 - sf:forEachSession(com.intellij.openapi.project.Project,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
@@ -1379,6 +1386,8 @@ f:com.intellij.openapi.components.ServiceManager
 - s:getServiceIfCreated(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
 f:com.intellij.openapi.components.ServicesKt
 - sf:serviceNotFoundError(com.intellij.openapi.components.ComponentManager,java.lang.Class):java.lang.IllegalStateException
+f:com.intellij.openapi.editor.CharacterSequences
+- sf:codePointAt(java.lang.CharSequence,I):I
 com.intellij.openapi.editor.Document
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.Document[]
@@ -2040,7 +2049,6 @@ a:com.intellij.openapi.progress.Task
 - a:isModal():Z
 - notifyFinished():com.intellij.openapi.progress.Task$NotificationInfo
 - onCancel():V
-- onError(java.lang.Exception):V
 - onFinished():V
 - onSuccess():V
 - onThrowable(java.lang.Throwable):V
@@ -4541,15 +4549,7 @@ a:com.intellij.psi.search.GlobalSearchScope
 - uniteWith(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
 c:com.intellij.psi.search.GlobalSearchScope$FilesScope
 - com.intellij.psi.search.GlobalSearchScope
-- asArray():I[]
-- calcHashCode():I
-- contains(I):Z
-- contains(com.intellij.openapi.vfs.VirtualFile):Z
-- equals(java.lang.Object):Z
 - getFiles():com.intellij.openapi.vfs.VirtualFileSet
-- getFilesIfCollection():java.util.Collection
-- isSearchInLibraries():Z
-- isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 f:com.intellij.psi.search.GlobalSearchScopeUtil
 - <init>():V
 - s:getLocalScopeFiles(com.intellij.psi.search.LocalSearchScope):java.util.Set
@@ -5136,6 +5136,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - sf:skipTokens(kotlin.sequences.Sequence,com.intellij.psi.tree.TokenSet):kotlin.sequences.Sequence
+- sf:startOffsetInAncestor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
 - sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.psi.util.PsiUtilCore
 - sf:NULL_PSI_ELEMENT:com.intellij.psi.PsiElement
@@ -5629,11 +5630,14 @@ com.intellij.util.Query
 - allMatch(java.util.function.Predicate):Z
 - allowParallelProcessing():com.intellij.util.Query
 - anyMatch(java.util.function.Predicate):Z
+- asIterable():java.lang.Iterable
 - a:findAll():java.util.Collection
 - a:findFirst():java.lang.Object
 - a:forEach(com.intellij.util.Processor):Z
+- forEach(java.util.function.Consumer):V
 - forEachAsync(com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
 - iterator():java.util.Iterator
+- spliterator():java.util.Spliterator
 - toArray(java.lang.Object[]):java.lang.Object[]
 com.intellij.util.QueryExecutor
 - a:execute(java.lang.Object,com.intellij.util.Processor):Z
@@ -5686,8 +5690,6 @@ f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertReadAccess():V
 - s:assertWriteAccess():V
 - s:assertWriteIntentReadAccess():V
-- s:isImplicitLockOnEDT():Z
-- s:setImplicitLockOnEDT(Z):V
 - s:softAssertBackgroundThread():V
 - s:softAssertEventDispatchThread():V
 - s:softAssertReadAccess():V

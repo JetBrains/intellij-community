@@ -55,7 +55,7 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
-    <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.repl" scope="TEST" />
@@ -144,7 +144,6 @@
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.base" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" scope="TEST" />
@@ -171,5 +170,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm.k1" scope="TEST" />
   </component>
 </module>

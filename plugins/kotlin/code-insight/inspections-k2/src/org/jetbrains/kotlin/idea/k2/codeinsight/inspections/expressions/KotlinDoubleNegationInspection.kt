@@ -36,16 +36,15 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
         element.operationToken == KtTokens.EXCL
                 && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
-    context(KaSession)
-    override fun prepareContext(element: KtPrefixExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtPrefixExpression): Unit? =
         element.expressionType
             ?.isBooleanType
             ?.asUnit
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtPrefixExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtPrefixExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtPrefixExpression>() {
+    ): KotlinModCommandQuickFix<KtPrefixExpression> = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.kotlin.double.negation.action.name")
@@ -58,7 +57,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
             element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
         }
 
-    })
+    }
 }
 
 private val PsiElement.parentThroughParenthesis: PsiElement

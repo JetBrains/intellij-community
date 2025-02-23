@@ -12,7 +12,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/core-impl",
     "//platform/util:util-ui",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/lang-impl",
   ]
 )

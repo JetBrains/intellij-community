@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.TooltipEvent;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -156,7 +157,10 @@ public abstract class AbstractValueHint {
 
     createHighlighter();
     if (myType != ValueHintType.MOUSE_ALT_OVER_HINT) {
-      evaluateAndShowHint();
+      //noinspection RedundantTypeArguments, fixes compilation error
+      WriteIntentReadAction.<Object, Throwable>run(() -> {
+        evaluateAndShowHint();
+      });
     }
   }
 
@@ -534,6 +538,11 @@ public abstract class AbstractValueHint {
   @ApiStatus.Internal
   public void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
     myEditorMouseEvent = editorMouseEvent;
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable EditorMouseEvent getEditorMouseEvent() {
+    return myEditorMouseEvent;
   }
 
   @ApiStatus.Internal

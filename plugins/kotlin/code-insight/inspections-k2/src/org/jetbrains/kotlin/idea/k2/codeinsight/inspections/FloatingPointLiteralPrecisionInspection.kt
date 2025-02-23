@@ -46,13 +46,12 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
         return KotlinBundle.message("floating.point.literal.precision.inspection")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtConstantExpression,
         context: String
-    ): Array<KotlinModCommandQuickFix<KtConstantExpression>> = arrayOf(FloatingPointLiteralPrecisionQuickFix(context))
+    ): KotlinModCommandQuickFix<KtConstantExpression> = FloatingPointLiteralPrecisionQuickFix(context)
 
-    context(KaSession)
-    override fun prepareContext(element: KtConstantExpression): String? {
+    override fun KaSession.prepareContext(element: KtConstantExpression): String? {
         if (element.elementType == KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)) {
             val isFloat = element.expressionType?.isFloatType == true
             val uppercaseSuffix = isFloat && element.text?.endsWith('F') == true
@@ -87,9 +86,9 @@ private class FloatingPointLiteralPrecisionQuickFix(val replacementText: String)
     override fun getFamilyName(): String = name
 
     override fun applyFix(
-            project: Project,
-            element: KtConstantExpression,
-            updater: ModPsiUpdater,
+        project: Project,
+        element: KtConstantExpression,
+        updater: ModPsiUpdater,
     ) {
         element.replace(KtPsiFactory(project).createExpression(replacementText))
     }

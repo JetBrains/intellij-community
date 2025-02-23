@@ -108,6 +108,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     private val FLEET_MODULES_IN_COMMUNITY = setOf(
       "fleet.andel",
       "fleet.kernel",
+      "fleet.multiplatform.shims",
       "fleet.preferences",
       "fleet.reporting.api",
       "fleet.rhizomedb",
@@ -117,7 +118,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.util.logging.api",
       "fleet.util.multiplatform",
       "fleet.util.os",
-      "fleet.util.multiplatform",
       "fleet.fastutil",
     )
   }

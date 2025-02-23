@@ -1,19 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -208,22 +205,9 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
   }
 
   public static @Nullable PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
-    @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
-    if (!contracts.isEmpty()) {
-      attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
-    }
-    if (pure) {
-      attrMap.put("pure", "true");
-    }
-    else if (!mutates.trim().isEmpty()) {
-      attrMap.put("mutates", StringUtil.wrapWithDoubleQuote(mutates));
-    }
-    if (attrMap.isEmpty()) {
-      return null;
-    }
-    String attrs = attrMap.keySet().equals(Collections.singleton("value")) ?
-                   attrMap.get("value") : EntryStream.of(attrMap).join(" = ").joining(", ");
-    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attrs);
+    String attributes = JavaMethodContractUtil.createAttributesText(pure, contracts, mutates);
+    if (attributes.isEmpty()) return null;
+    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attributes);
   }
 
   @Override

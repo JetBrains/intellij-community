@@ -22,16 +22,14 @@ import java.io.File
 import java.nio.file.Path
 
 internal class BazelModuleBuildTarget(
-  @JvmField val outDir: Path,
   module: JpsModule,
-  private val sources: List<Path>,
+  @JvmField val sources: List<Path>,
+  @JvmField val javaFileCount: Int,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
-  private val outDirFile = outDir.toFile()
-  private val outRoots = java.util.List.of(outDirFile)
+  // org.jetbrains.kotlin.incremental.IncrementalJvmCache allows `null`
+  override fun getOutputDir(): File? = null
 
-  override fun getOutputDir(): File = outDirFile
-
-  override fun getOutputRoots(context: CompileContext): Collection<File> = outRoots
+  override fun getOutputRoots(context: CompileContext): Collection<File> = throw IllegalStateException("")
 
   override fun isTests() = false
 

@@ -38,11 +38,11 @@ open class CoroutineInfoData(
     var parentJob: String? = null
 
     private val contextSummary by lazy {
-        "[$dispatcher ${if (job == null) "" else ", $job"}]"
+        "[$dispatcher${if (job == null) "" else ", $job"}]"
     }
 
     val coroutineDescriptor: String by lazy {
-        "\"${this.name}:$id\": $state ${if (isRunning) "on thread ${lastObservedThread?.name() ?: UNKNOWN_THREAD }" else "" } $contextSummary"
+        "\"${this.name}:$id\" $state ${if (isRunning) "on thread ${lastObservedThread?.name() ?: UNKNOWN_THREAD }" else "" } $contextSummary"
     }
 
     private val coroutineStackFrames: CoroutineStacksInfoData? by lazy {
@@ -139,14 +139,7 @@ class CompleteCoroutineInfoData(
     lastObservedThread = activeThread,
     debugCoroutineInfoRef = null,
     stackFrameProvider = null
-) {
-    override val continuationStackFrames: List<CoroutineStackFrameItem> by lazy {
-        continuationStackFrames
-    }
-    override val creationStackFrames: List<CreationCoroutineStackFrameItem> by lazy {
-        creationStackFrames
-    }
-}
+)
 
 @Deprecated("Please use CoroutineInfoData API instead.")
 fun CoroutineInfoData.toCompleteCoroutineInfoData() =

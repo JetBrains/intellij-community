@@ -8,7 +8,6 @@ import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
-import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -134,7 +133,7 @@ internal open class FirCallableCompletionContributor(
 
             else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
         }.filterIfInsideAnnotationEntryArgument(positionContext.position, expectedType)
-            .filterOutShadowedCallables(expectedType)
+            .mapNotNull(shadowIfNecessary(expectedType))
             .filterNot(isUninitializedCallable(positionContext.position))
             .flatMap { callableWithMetadata ->
                 createCallableLookupElements(
@@ -530,11 +529,9 @@ internal open class FirCallableCompletionContributor(
                 positionContext = positionContext,
                 scope = scopeWithKind.scope,
                 hasSuitableExtensionReceiver = extensionChecker,
-            )
-            ShadowedCallablesFilter.sortExtensions(
-                extensions = suitableExtensions.toList(),
-                receiversFromContext = receiverTypes,
-            ).map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
+            ).toList()
+            ShadowedCallablesFilter.sortExtensions(suitableExtensions, receiverTypes)
+                .map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
 
@@ -654,31 +651,28 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
-    private fun Sequence<CallableWithMetadataForCompletion>.filterOutShadowedCallables(
+    private fun shadowIfNecessary(
         expectedType: KaType?,
-    ): Sequence<CallableWithMetadataForCompletion> =
-        sequence {
-            val shadowedCallablesFilter = ShadowedCallablesFilter()
+    ) = object : Function1<CallableWithMetadataForCompletion, CallableWithMetadataForCompletion?> {
 
-            for (callableWithMetadata in this@filterOutShadowedCallables) {
-                val callableFqName = callableWithMetadata.signature.callableId?.asSingleFqName()
-                val isAlreadyImported = with(importStrategyDetector) { callableFqName?.isAlreadyImported() == true }
-                val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KaFunctionSymbol)?.let {
-                    FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
-                } == false
+        private val shadowedCallablesFilter = ShadowedCallablesFilter()
 
-                val (excludeFromCompletion, updatedOptions) = shadowedCallablesFilter.excludeFromCompletion(
-                    callableWithMetadata.signature,
-                    callableWithMetadata.options,
-                    callableWithMetadata.symbolOrigin,
-                    isAlreadyImported,
-                    typeArgumentsAreRequired,
-                )
-                if (excludeFromCompletion) continue
-
-                yield(callableWithMetadata.applyIf(updatedOptions != callableWithMetadata.options) { copy(options = updatedOptions) })
+        override fun invoke(callableWithMetadata: CallableWithMetadataForCompletion): CallableWithMetadataForCompletion? {
+            val insertionOptions = callableWithMetadata.options
+            val (excludeFromCompletion, newImportStrategy) = shadowedCallablesFilter.excludeFromCompletion(
+                callableSignature = callableWithMetadata.signature,
+                options = insertionOptions,
+                symbolOrigin = callableWithMetadata.symbolOrigin,
+                importStrategyDetector = importStrategyDetector,
+            ) {
+                !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
             }
+
+            return if (excludeFromCompletion) null
+            else if (newImportStrategy == null) callableWithMetadata
+            else callableWithMetadata.copy(options = insertionOptions.copy(importingStrategy = newImportStrategy))
         }
+    }
 
     context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterIfInsideAnnotationEntryArgument(

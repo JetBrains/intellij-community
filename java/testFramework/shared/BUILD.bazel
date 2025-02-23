@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.java.testFramework.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-testFramework-shared",
+  module_name = "intellij.java.testFramework.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//platform/util",
+    "@lib//:junit4",
+    "//platform/util/jdom",
+    "//platform/lang-api:lang",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//java/idea-ui:ui",
+    "@lib//:org-codehaus-groovy-groovy",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/lang-api:lang",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build intellij.java.testFramework.shared` end

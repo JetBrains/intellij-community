@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -542,7 +543,8 @@ public final class ScrollingUtil {
     installActions(table, UISettings.getInstance().getCycleScrolling());
   }
 
-  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction, LightEditCompatible {
+  @ApiStatus.Internal
+  public abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction, LightEditCompatible {
     private final JComponent myComponent;
 
     MyScrollingAction(@NotNull JComponent component) {

@@ -14,9 +14,9 @@ interface Component {
   val width: Int
   val height: Int
   fun getBounds(): Rectangle
-  fun isVisible(): Boolean
   fun isShowing(): Boolean
   fun isEnabled(): Boolean
+  fun requestFocus()
   fun isFocusOwner(): Boolean
   fun getLocationOnScreen(): Point
   fun getClass(): Class
@@ -31,7 +31,6 @@ interface Component {
 interface Window: Component {
   fun isFocused(): Boolean
   fun dispose()
-  fun requestFocus()
   fun toFront()
   fun setBounds(x: Int, y: Int, width: Int, height: Int)
   fun getWindows(): List<Window>

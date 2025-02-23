@@ -13,6 +13,7 @@ import fleet.kernel.rebase.deserialize
 import fleet.kernel.rebase.encodeDbValue
 import fleet.tracing.span
 import fleet.util.UID
+import fleet.util.computeShim
 import fleet.util.logging.logger
 import fleet.util.serialization.withSerializationCallback
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -123,7 +124,7 @@ fun DbContext<Q>.buildDurableSnapshot(
       val (e, a, v, t) = datom
       curDatom = datom
       val uid = requireNotNull(getOne(e, uidAttribute)) { "datom is not durable: ${displayDatom(datom)}" }
-      entities.compute(uid) { _: UID, m: MutableMap<DurableSnapshot.Attr, DurableSnapshot.OneOrMany>? ->
+      entities.computeShim(uid) { _: UID, m: MutableMap<DurableSnapshot.Attr, DurableSnapshot.OneOrMany>? ->
         val map = (m ?: hashMapOf())
         val attr = DurableSnapshot.Attr(attributeIdent(a)!!, a.schema.value)
         when (a.schema.cardinality) {
@@ -131,7 +132,7 @@ fun DbContext<Q>.buildDurableSnapshot(
             map[attr] = DurableSnapshot.OneOrMany.One(DurableSnapshot.VersionedValue(encodeDbValue(uidAttribute, a, v), t))
           }
           Cardinality.Many -> {
-            map.compute(attr) { _, existingValue ->
+            map.computeShim(attr) { _, existingValue ->
               existingValue as DurableSnapshot.OneOrMany.Many?
               val value = encodeDbValue(uidAttribute, a, v)
               if (existingValue != null) {

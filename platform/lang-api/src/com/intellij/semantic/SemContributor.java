@@ -15,8 +15,15 @@ public abstract class SemContributor {
 
   public abstract void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project);
 
-  @ApiStatus.NonExtendable
-  public boolean isAvailable(@NotNull Project project) {
+  @ApiStatus.OverrideOnly
+  protected boolean isAvailable(@NotNull Project project) {
     return true;
+  }
+
+  @ApiStatus.Internal
+  public static final class SemContributorHelper {
+    public static boolean isAvailable(@NotNull SemContributor contributor, @NotNull Project project) {
+      return contributor.isAvailable(project);
+    }
   }
 }

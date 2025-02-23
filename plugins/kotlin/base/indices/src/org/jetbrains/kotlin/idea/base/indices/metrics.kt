@@ -10,11 +10,11 @@ import kotlin.time.*
 
 @ApiStatus.Internal
 inline fun getByKeyMaxDuration(): Duration =
-    Registry.intValue("kotlin.indices.timing.threshold.single").toDuration(DurationUnit.MILLISECONDS)
+    Registry.intValue("kotlin.indices.timing.threshold.single", Int.MAX_VALUE).toDuration(DurationUnit.MILLISECONDS)
 
 @ApiStatus.Internal
 inline fun processElementsMaxDuration(): Duration =
-    Registry.intValue("kotlin.indices.timing.threshold.batch").toDuration(DurationUnit.MILLISECONDS)
+    Registry.intValue("kotlin.indices.timing.threshold.batch", Int.MAX_VALUE).toDuration(DurationUnit.MILLISECONDS)
 
 @ApiStatus.Internal
 inline fun <T> processElementsAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =

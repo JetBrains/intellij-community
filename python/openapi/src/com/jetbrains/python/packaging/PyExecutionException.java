@@ -4,8 +4,6 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PyCommunityBundle;
 import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.execution.FailureReasonKt;
 import com.jetbrains.python.execution.PyExecutionFailure;

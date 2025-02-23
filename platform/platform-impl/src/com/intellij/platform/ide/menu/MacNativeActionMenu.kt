@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decora
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.IdeFocusManager
@@ -32,14 +33,16 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   }
   menuPeer.setOnOpen(frame) {
     try {
-      Utils.fillMenu(uiKind = FrameMenuUiKind(frame, menuPeer),
-                     group = groupRef.getAction(),
-                     enableMnemonics = isMnemonicEnabled,
-                     presentationFactory = presentationFactory,
-                     context = context ?: getDataContext(frame),
-                     place = place,
-                     progressPoint = null
-      ) { !menuPeer.isOpened }
+      WriteIntentReadAction.run {
+        Utils.fillMenu(uiKind = FrameMenuUiKind(frame, menuPeer),
+                       group = groupRef.getAction(),
+                       enableMnemonics = isMnemonicEnabled,
+                       presentationFactory = presentationFactory,
+                       context = context ?: getDataContext(frame),
+                       place = place,
+                       progressPoint = null
+        ) { !menuPeer.isOpened }
+      }
     }
     catch (e: ProcessCanceledException) {
       // a possible fix is to update PotemkinProgress.isUrgentInvocationEvent()

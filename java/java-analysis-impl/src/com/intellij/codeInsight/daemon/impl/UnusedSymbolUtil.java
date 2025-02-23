@@ -224,7 +224,7 @@ public final class UnusedSymbolUtil {
    * @deprecated use {@link #processUsages(Project, PsiFile, SearchScope, PsiMember, PsiFile, Processor)}
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
                                       @NotNull PsiMember member,

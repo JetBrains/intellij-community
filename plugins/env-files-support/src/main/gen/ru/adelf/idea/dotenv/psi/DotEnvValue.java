@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface DotEnvValue extends PsiElement {
 
+  @NotNull
+  List<DotEnvNestedVariableKey> getNestedVariableKeyList();
+
 }

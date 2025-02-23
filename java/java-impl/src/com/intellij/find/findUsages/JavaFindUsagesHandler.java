@@ -90,7 +90,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
       }
     }
 
-    FunctionalExpressionSearch.search(method).forEach(element -> {
+    FunctionalExpressionSearch.search(method).asIterable().forEach(element -> {
       if (element instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ReadAction.compute(() -> ((PsiLambdaExpression)element).getParameterList().getParameters());
         if (idx < parameters.length) {
@@ -212,7 +212,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return !isSingleFile &&
            new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }

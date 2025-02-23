@@ -29,7 +29,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
+import static org.jetbrains.idea.maven.utils.MavenUtil.*;
 
 @Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
@@ -88,8 +88,12 @@ public final class MavenDistributionsCache {
 
   private static @Nullable MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
     Path file = Path.of(path);
-    if (!isValidMavenHome(file)) return null;
-    return new LocalMavenDistribution(file, label);
+    if (isValidMavenHome(file)) return new LocalMavenDistribution(file, label);
+    if (isValidMavenDaemon(file)) {
+      var mvnFile = extractMvnFromDaemon(file);
+      if (mvnFile != null) return new DaemonedLocalDistribution(new LocalMavenDistribution(mvnFile, label), file);
+    }
+    return null;
   }
 
   public @NotNull String getVmOptions(@Nullable String workingDirectory) {

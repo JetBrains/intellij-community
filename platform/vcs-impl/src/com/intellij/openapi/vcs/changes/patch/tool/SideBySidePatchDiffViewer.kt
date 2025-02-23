@@ -16,7 +16,6 @@ import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.simple.AlignedDiffModel
 import com.intellij.diff.tools.simple.AlignedDiffModelBase
 import com.intellij.diff.tools.util.*
-import com.intellij.diff.tools.util.BaseSyncScrollable.ScrollHelper
 import com.intellij.diff.tools.util.FocusTrackerSupport.Twoside
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings

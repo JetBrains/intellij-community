@@ -4,41 +4,58 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiType
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.findParentOfType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.Variance
 
 object K2CreatePropertyFromUsageBuilder {
@@ -50,6 +67,101 @@ object K2CreatePropertyFromUsageBuilder {
     ): IntentionAction? {
         if (!request.isValid) null
         return CreatePropertyFromUsageAction(targetContainer, classOrFileName, request, lateinit)
+    }
+
+    internal fun generateCreatePropertyActions(element: KtElement): List<IntentionAction> {
+        val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return emptyList()
+        if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return emptyList()
+
+        return buildRequestsAndActions(refExpr)
+    }
+
+    internal fun buildRequestsAndActions(ref: KtNameReferenceExpression): List<IntentionAction> {
+        val propertyRequests = analyze(ref) { buildRequests(ref) }
+        val extensions = EP_NAME.extensions
+        return propertyRequests.flatMap { (targetClass, request) ->
+            extensions.flatMap { ext ->
+                ext.createAddFieldActions(targetClass, request)
+            }
+        }
+    }
+
+    context(KaSession)
+    private fun buildRequests(ref: KtNameReferenceExpression): List<Pair<JvmClass, CreateFieldRequest>> {
+        val requests = mutableListOf<Pair<JvmClass, CreateFieldRequest>>()
+        val qualifiedElement = ref.getQualifiedElement()
+        var static = false
+
+        val (defaultContainerPsi, receiverExpression) = when {
+          qualifiedElement == ref -> {
+              ref.parentOfType<KtClassOrObject>() to null
+          }
+          qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref -> {
+              val receiverExpression = qualifiedElement.receiverExpression
+              static = receiverExpression.mainReference?.resolveToSymbol() is KaClassSymbol
+              val symbol = receiverExpression.resolveExpression()
+              if (symbol is KaCallableSymbol) {
+                  symbol.returnType.symbol?.psi
+              } else {
+                  symbol?.psi
+              } to receiverExpression
+          }
+          else -> return emptyList()
+        }
+
+        val receiverType = receiverExpression?.expressionType
+
+        val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
+        val isAbstract = lightClass?.hasModifier(JvmModifier.ABSTRACT)
+        val containingKtFile = ref.containingKtFile
+        val wrapperForKtFile = JvmClassWrapperForKtClass(containingKtFile)
+        if (defaultContainerPsi != null) {
+            if (defaultContainerPsi.manager.isInProject(defaultContainerPsi)) {
+                if (lightClass != null) {
+                    val jvmModifiers = createModifiers(ref, defaultContainerPsi, isExtension = false, static = static, isAbstract = isAbstract == true)
+                    if (static || isAbstract!!.not()) {
+                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = false))
+                    }
+                    if (lightClass.hasModifier(JvmModifier.ABSTRACT)) {
+                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers + JvmModifier.ABSTRACT, receiverType, isExtension = false))
+                    }
+                }
+                val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
+                val classId =
+                    (defaultContainerPsi as? KtClassOrObject)?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
+                if (classId != null) {
+                    val targetClassType = buildClassType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
+                    requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))
+                }
+            } else {
+                val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
+                requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = true))
+            }
+        } else {
+            val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = receiverExpression != null, static = true, isAbstract = false)
+            requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = receiverExpression != null))
+        }
+        return requests
+    }
+
+    private fun createModifiers(ref: KtNameReferenceExpression, container: PsiElement, isExtension: Boolean, static: Boolean, isAbstract: Boolean): List<JvmModifier> {
+        val qualifiedElement = ref.getQualifiedElement()
+        val assignment = (if (qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref) qualifiedElement else ref).getAssignmentByLHS()
+        val varExpected = assignment != null
+        val valVarModifier = if (varExpected) null else JvmModifier.FINAL
+        val staticModifier = if (static) JvmModifier.STATIC else null
+        val jvmModifier = CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
+            container,
+            isAbstract = isAbstract,
+            isExtension = isExtension,
+            isConstructor = false,
+            originalElement = ref
+        )
+        if (jvmModifier != null) {
+            return listOfNotNull(jvmModifier, valVarModifier, staticModifier)
+        }
+
+        return listOfNotNull(JvmModifier.PUBLIC, valVarModifier, staticModifier)
     }
 
     fun generateAnnotationAction(
@@ -80,17 +192,28 @@ object K2CreatePropertyFromUsageBuilder {
             get() =
                 buildList {
                     request.modifiers
-                        .filter { it != JvmModifier.PUBLIC }
+                        .filter { it != JvmModifier.PUBLIC && it != JvmModifier.ABSTRACT }
                         .mapNotNullTo(this, CreateFromUsageUtil::jvmModifierToKotlin)
 
-                    if (lateinit) {
+                    if (lateinit && !(request is CreatePropertyFromKotlinUsageRequest && request.isExtension)) {
                         this += KtTokens.LATEINIT_KEYWORD
                     } else if (request.isConstant) {
                         this += KtTokens.CONST_KEYWORD
                     }
                 }.takeUnless { it.isEmpty() }
 
-        override fun getText(): String =
+        override fun getText(): String {
+            return if (request is CreatePropertyFromKotlinUsageRequest) {
+                if (request.isExtension) {
+                    val receiverType = request.receiverTypeNameString?.let { "$it." } ?: ""
+                    KotlinBundle.message("fix.create.from.usage.extension.property", """$receiverType${request.fieldName}""")
+                } else {
+                    val key = if (JvmModifier.ABSTRACT in request.modifiers) {
+                        "fix.create.from.usage.abstract.property"
+                    } else "fix.create.from.usage.property"
+                    KotlinBundle.message(key, request.fieldName)
+                }
+            } else
             KotlinBundle.message(
                 "quickFix.add.property.text",
                 kotlinModifiers?.joinToString(separator = " ", postfix = " ") ?: "",
@@ -98,6 +221,7 @@ object K2CreatePropertyFromUsageBuilder {
                 request.fieldName,
                 classOrFileName.toString()
             )
+        }
 
         private var declarationText: String = computeDeclarationText()
 
@@ -106,24 +230,40 @@ object K2CreatePropertyFromUsageBuilder {
             val container = pointer.element ?: return ""
 
             return buildString {
+                if (request is CreateFieldFromJavaUsageRequest && !lateinit) {
+                    append("@")
+                    append(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+                    append(" ")
+                }
+
                 kotlinModifiers?.joinTo(this, separator = " ", postfix = " ")
+
+                if (JvmModifier.ABSTRACT in request.modifiers && (container as? KtDeclaration)?.isAbstract() == true) {
+                    append("abstract")
+                    append(" ")
+                }
 
                 append(varVal)
                 append(" ")
-                append(request.fieldName)
+                if (request is CreatePropertyFromKotlinUsageRequest && request.isExtension) {
+                    (request.receiverTypeString)?.let { append(it).append(".") }
+                }
+                append(request.fieldName.quoteIfNeeded())
                 append(": ")
 
                 analyze(container) {
-                    val psiType = request.fieldType.firstOrNull()?.theType as? PsiType
-                    val type = psiType?.asKaType(container)
-                    val approximateType = type?.let {
-                        KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                    val expectedType = request.fieldType.firstOrNull()
+                    val type = when (expectedType) {
+                        is ExpectedKotlinType -> expectedType.kaType
+                        else -> (expectedType?.theType as? PsiType)?.asKaType(container)
                     }
-                    approximateType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+                    type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
                 }?.let { append(it) }
 
                 val requestInitializer = request.initializer
-                if (requestInitializer != null) {
+                val addInitializer =
+                    requestInitializer != null || !lateinit && request.isCreateEmptyInitializer && request !is CreatePropertyFromKotlinUsageRequest
+                if (addInitializer) {
                     append(" = ")
                     when {
                         requestInitializer is JvmLong -> {
@@ -143,17 +283,15 @@ object K2CreatePropertyFromUsageBuilder {
                 return
             }
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
-                val createConstructorParameter = container is KtClass && !lateinit
-                val adjustedContainer = if (createConstructorParameter) {
-                    container.createPrimaryConstructorIfAbsent().valueParameterList!!
-                } else {
-                    container
-                }
+                val adjustedContainer =
+                    if (container is KtClass && request.modifiers.contains(JvmModifier.STATIC))
+                        container.getOrCreateCompanionObject()
+                    else container
                 val psiFactory = KtPsiFactory(pointer.project)
                 val actualAnchor = when (adjustedContainer) {
                     is KtClassOrObject -> {
-                        val bodyBlock = adjustedContainer.body
-                        bodyBlock?.declarations?.firstOrNull()
+                        val bodyBlock = adjustedContainer.getOrCreateBody()
+                        bodyBlock.declarations.firstOrNull()
                     }
                     is KtParameterList -> {
                         val rightParenthesis = adjustedContainer.rightParenthesis!!
@@ -167,22 +305,15 @@ object K2CreatePropertyFromUsageBuilder {
 
                         rightParenthesis
                     }
+                    is KtFile -> adjustedContainer.declarations.firstOrNull()
                     else -> throw IllegalStateException(container.toString())
                 }
                 val createdDeclaration: KtCallableDeclaration =
-                    if (createConstructorParameter) {
-                        psiFactory.createParameter(declarationText)
-                    } else {
                         psiFactory.createDeclaration(declarationText) as KtVariableDeclaration
-                    }
 
-                if (actualAnchor != null) {
-                    val declarationInContainer =
-                        CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
-                    declarationInContainer.typeReference?.let {
-                        ShortenReferencesFacility.getInstance().shorten(it)
-                    }
-                }
+                val declarationInContainer =
+                    CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
+                shortenReferences(declarationInContainer)
             }
         }
 

@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class RefJavaUtilImpl extends RefJavaUtil {
   private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
@@ -660,8 +657,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
         }
       }
       PsiClass aClass = javaMethod.getContainingClass();
-      if (aClass == null ||
-          GenericsHighlightUtil.getUnrelatedDefaultsMessage(aClass, Arrays.asList(superMethods), true) != null) {
+      if (aClass == null || hasUnrelatedDefaults(aClass, Arrays.asList(superMethods))) {
         return false;
       }
     }
@@ -792,5 +788,11 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
       return element.getNavigationElement();
     }
     return element;
+  }
+
+  private static boolean hasUnrelatedDefaults(@NotNull PsiClass aClass,
+                                              @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods) {
+    return JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentSuperMethods) != null ||
+           JavaPsiMethodUtil.getUnrelatedSuperMethods(aClass, overrideEquivalentSuperMethods) != null;
   }
 }

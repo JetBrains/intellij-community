@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,12 +17,17 @@ import java.util.Collection;
 
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
-  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getPsiFile is not yet implemented in " + getClass().getName());
   }
 
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
+    return getCachedPsiFile(document, CodeInsightContextKt.anyContext());
+  }
+
+  @Override
+  public @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getCachedPsiFile is not yet implemented in " + getClass().getName());
   }
 
@@ -81,6 +88,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
   public boolean isCommitted(@NotNull Document document) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    return getPsiFile(document, CodeInsightContextKt.anyContext());
   }
 
   @Override

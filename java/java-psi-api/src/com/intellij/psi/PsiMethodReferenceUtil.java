@@ -81,7 +81,7 @@ public final class PsiMethodReferenceUtil {
 
   public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                JavaResolveResult result,
-                                               PsiType functionalInterfaceType) {
+                                               @Nullable PsiType functionalInterfaceType) {
     return isReturnTypeCompatible(expression, result, functionalInterfaceType, null);
   }
 
@@ -146,7 +146,7 @@ public final class PsiMethodReferenceUtil {
 
   private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                 JavaResolveResult result,
-                                                PsiType functionalInterfaceType,
+                                                @Nullable PsiType functionalInterfaceType,
                                                 Ref<@Nls String> errorMessage) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
@@ -302,7 +302,8 @@ public final class PsiMethodReferenceUtil {
     return type;
   }
 
-  public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
+  public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, 
+                                                                        @Nullable PsiType functionalInterfaceType) {
     final Ref<@Nls String> errorMessage = Ref.create();
     if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {
       return errorMessage.get();

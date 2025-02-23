@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import fleet.util.openmap.SerializedValue
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.reflect.KClass
 
 private val LOG = fileLogger()
@@ -30,7 +31,8 @@ abstract class CustomTypeRpcSerializer<T : Any>(internal val serializationClass:
  *
  * This function uses [CustomTypeRpcSerializer] extension point implementations only.
  */
-internal fun <ValueClass : Any> serializeToRpc(value: ValueClass): SerializedValue? {
+@ApiStatus.Internal
+fun <ValueClass : Any> serializeToRpc(value: ValueClass): SerializedValue? {
   val serializedValue = CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
     try {
       serializer.takeIf { it.serializationClass.isInstance(value) }?.let {
@@ -51,21 +53,24 @@ internal fun <ValueClass : Any> serializeToRpc(value: ValueClass): SerializedVal
  *
  * This function uses [CustomTypeRpcSerializer] extension point implementations only.
  */
-internal inline fun <reified ValueClass> deserializeFromRpc(serializedValue: SerializedValue?): ValueClass? {
-  val deserializedValue = serializedValue?.let { serializedValue ->
-    CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
-      try {
-        serializer.takeIf { it.serializationClass == ValueClass::class }?.let {
-          @Suppress("UNCHECKED_CAST")
-          (it as CustomTypeRpcSerializer<ValueClass>).deserialize(serializedValue)
-        }
-      }
-      catch (e: Exception) {
-        LOG.debug("Error during custom type deserialization", e)
-        null
+internal inline fun <reified ValueClass: Any> deserializeFromRpc(serializedValue: SerializedValue?): ValueClass? {
+  return deserializeFromRpc(serializedValue, ValueClass::class)
+}
+
+@Internal
+fun <ValueClass: Any> deserializeFromRpc(serializedValue: SerializedValue?, valueClass: KClass<ValueClass>): ValueClass? {
+  serializedValue ?: return null
+
+  return CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
+    try {
+      serializer.takeIf { it.serializationClass == valueClass }?.let {
+        @Suppress("UNCHECKED_CAST")
+        (it as CustomTypeRpcSerializer<ValueClass>).deserialize(serializedValue)
       }
     }
+    catch (e: Exception) {
+      LOG.warn("Error during custom type deserialization", e)
+      null
+    }
   }
-
-  return deserializedValue
 }

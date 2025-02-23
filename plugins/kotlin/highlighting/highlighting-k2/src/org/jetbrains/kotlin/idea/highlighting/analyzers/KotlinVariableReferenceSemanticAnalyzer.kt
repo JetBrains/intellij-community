@@ -5,16 +5,27 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
+import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory.highlightName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.BACKING_FIELD_VARIABLE
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_DEFAULT_PARAMETER
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.PARAMETER
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY
+import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer.Companion.getHighlightInfoTypeForCallFromExtension
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.*
 
 internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -32,20 +43,20 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
             is KaLocalVariableSymbol -> {
                 val result = mutableListOf<HighlightInfo.Builder>()
                 result.addIfNotNull(symbol.getHighlightingForMutableVar(expression))
-                HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)?.let { result.add(it) }
+                highlightName(expression, LOCAL_VARIABLE)?.let { result.add(it) }
                 result
             }
             is KaSyntheticJavaPropertySymbol -> buildList {
-                addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY))
+                addIfNotNull(highlightName(expression, SYNTHETIC_EXTENSION_PROPERTY))
                 addIfNotNull(symbol.getHighlightingForMutableVar(expression))
             }
             is KaValueParameterSymbol -> listOfNotNull(highlightValueParameter (symbol, expression))
-            is KaEnumEntrySymbol -> listOfNotNull(HighlightingFactory.highlightName (expression, KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY))
+            is KaEnumEntrySymbol -> listOfNotNull(highlightName (expression, KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY))
             is KaJavaFieldSymbol -> buildList {
                 if (symbol.isStatic) {
-                    addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY))
+                    addIfNotNull(highlightName(expression, PACKAGE_PROPERTY))
                 } else {
-                    addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY))
+                    addIfNotNull(highlightName(expression, INSTANCE_PROPERTY))
                 }
                 addIfNotNull(symbol.getHighlightingForMutableVar(expression))
             }
@@ -57,21 +68,21 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         return if (isVal) {
             null
         } else {
-            HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
+            highlightName(expression, MUTABLE_VARIABLE)
         }
     }
 
     private fun highlightValueParameter(symbol: KaValueParameterSymbol, expression: KtSimpleNameExpression): HighlightInfo.Builder? {
         return when {
             symbol.isImplicitLambdaParameter -> {
-                HighlightingFactory.highlightName(
-                  expression,
-                  KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_DEFAULT_PARAMETER,
-                  KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type")
+                highlightName(
+                    expression,
+                    FUNCTION_LITERAL_DEFAULT_PARAMETER,
+                    KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type")
                 )
             }
 
-            else -> HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.PARAMETER)
+            else -> highlightName(expression, PARAMETER)
         }
     }
 
@@ -79,33 +90,55 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         symbol: KaKotlinPropertySymbol,
         expression: KtSimpleNameExpression
     ): List<HighlightInfo.Builder> {
-        val result = mutableListOf<HighlightInfo.Builder>()
-        if (!symbol.isVal) {
-            HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)?.let { result.add(it) }
+        val extHighlightInfoType = getHighlightingInfoTypeForPropertyCallFromExtension(expression)
+        if (extHighlightInfoType != null) return listOf(extHighlightInfoType)
+
+        return getDefaultHighlightingInfoForPropertyCall(symbol, expression)
+    }
+
+    private fun getHighlightingInfoTypeForPropertyCallFromExtension(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
+        val highlightInfoType = with(session) {
+            val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return@with null
+            getHighlightInfoTypeForCallFromExtension(expression, call)
         }
+
+        return highlightInfoType?.let { infoType -> highlightName(expression, infoType) }
+    }
+
+    private fun getDefaultHighlightingInfoForPropertyCall(
+        symbol: KaKotlinPropertySymbol,
+        expression: KtSimpleNameExpression
+    ): List<HighlightInfo.Builder> {
+        val results = mutableListOf<HighlightInfo.Builder>()
+
+        if (!symbol.isVal) {
+            results.addIfNotNull(highlightName(expression, MUTABLE_VARIABLE))
+        }
+
         val hasExplicitGetterOrSetter = symbol.getter?.hasBody == true || symbol.setter?.hasBody == true
         val color = when {
-            symbol.isExtension -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
+            symbol.isExtension -> EXTENSION_PROPERTY
             symbol.location == KaSymbolLocation.TOP_LEVEL -> when {
-                hasExplicitGetterOrSetter -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
-                else -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
+                hasExplicitGetterOrSetter -> PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                else -> PACKAGE_PROPERTY
             }
 
             else -> when {
-                hasExplicitGetterOrSetter -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
-                else -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
+                hasExplicitGetterOrSetter -> INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                else -> INSTANCE_PROPERTY
             }
         }
-        HighlightingFactory.highlightName(expression, color)?.let { result.add(it) }
-        return result
+        results.addIfNotNull(highlightName(expression, color))
+
+        return results
     }
 
     private fun highlightBackingField(symbol: KaBackingFieldSymbol, expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
         val result = mutableListOf<HighlightInfo.Builder>()
         if (!symbol.owningProperty.isVal) {
-            HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)?.let { result.add(it) }
+            highlightName(expression, MUTABLE_VARIABLE)?.let { result.add(it) }
         }
-        HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.BACKING_FIELD_VARIABLE)?.let { result.add(it) }
+        highlightName(expression, BACKING_FIELD_VARIABLE)?.let { result.add(it) }
         return result
     }
 

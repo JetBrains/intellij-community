@@ -1202,4 +1202,18 @@ public class SwitchPrimitivePatternDominated {
       case <error descr="Label is dominated by a preceding case label 'Object b'">boolean b</error> -> System.out.println("2");//error
     }
   }
+
+  static void switchInteger(Integer i) {
+    switch (i) {
+      case Integer i2 -> System.out.println("int" + i2);
+      case long l1 -> System.out.println("long" + l1);
+    }
+  }
+
+  static void switchDouble(double i) {
+    switch (i) {
+      case double i2 -> System.out.println("double" + i2);
+      case long l1 -> System.out.println("long" + l1);
+    }
+  }
 }

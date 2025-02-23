@@ -303,9 +303,17 @@ internal suspend fun <T> withReteDbSource(body: suspend () -> T): T =
     else {
       waitForReteToCatchUp(coroutineContext.transactor.dbState.value)
       val dbSourceContextElement = DbSource.ContextElement(rete.dbSource)
-      withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
-        body()
+      val (res, dbTimestamp) = withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
+        val res = body()
+        res to db().timestamp
       }
+      // we're switching db source here:
+      // in general we don't know how this db source is ordered to Rete, 
+      // it might not necessary be a transactor source, 
+      // it might be noria, or other Rete,
+      // so let's ensure happens before here by catching up with what we've seen:
+      waitForDbSourceToCatchUpWithTimestamp(dbTimestamp)
+      res
     }
   }
 

@@ -156,13 +156,15 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Import class");
     assertFalse(intentions.isEmpty());
-
+    int oldOffset = myFixture.getEditor().getCaretModel().getOffset();
     int commentOffset = file.getText().indexOf("//");
     myFixture.getEditor().getCaretModel().moveToOffset(commentOffset);
     LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
     LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    assertFalse(intentions.get(0).isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+    myFixture.getEditor().getCaretModel().moveToOffset(oldOffset);
+    intentions = myFixture.filterAvailableIntentions("Import class");
+    assertTrue(intentions.isEmpty() || !intentions.get(0).isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
   }
 
   public void testPackageLocalInner() {

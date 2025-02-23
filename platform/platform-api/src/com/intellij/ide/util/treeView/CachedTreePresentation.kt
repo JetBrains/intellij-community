@@ -55,7 +55,7 @@ class CachedTreePresentationData(
         }
         val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
-          TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
+          TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
           CachedPresentationDataImpl(presentation.presentableText ?: "", iconData, isLeaf),
           extraAttrs,
           children

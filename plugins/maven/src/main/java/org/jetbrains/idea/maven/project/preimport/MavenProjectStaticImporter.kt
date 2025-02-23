@@ -322,7 +322,11 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
 
       applyParentProperties(parentInterpolated, project)
-
+      val interpolatedMavenId = resolveMavenId(project)
+      if (interpolatedMavenId != project.mavenId) {
+        tree.replace(interpolatedMavenId, project.mavenId)
+        project.updateMavenId(interpolatedMavenId)
+      }
 
 
       project.dependencyManagement.forEach {
@@ -348,6 +352,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     return@async project
 
 
+  }
+
+  private fun resolveMavenId(data: MavenProjectData): MavenId {
+    val groupId = resolveProperty(data, data.mavenProject.mavenId.groupId ?: "")
+    val artifactId = resolveProperty(data, data.mavenProject.mavenId.artifactId ?: "")
+    val version = resolveProperty(data, data.mavenProject.mavenId.version ?: "")
+    return MavenId(groupId, artifactId, version)
   }
 
   private fun applyParentProperties(
@@ -490,9 +501,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
-    mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    val buildDir = MavenJDOMUtil.findChildValueByPath(rootModel, "build.directory") ?: "target"
+    mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
+    mavenModel.build.outputDirectory = parentFolder.resolve("$buildDir/classes").toString()
+    mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
 
     declaredDependencies.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map {
@@ -564,9 +576,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     val parentFolder = mavenProjectData.file.parent.toNioPath()
 
 
-    mavenProjectData.mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    val buildDir = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.directory") ?: "target"
+    mavenProjectData.mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
+    mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("$buildDir/classes").toString()
+    mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
     mavenProjectData.mavenModel.build.sources = sources
       .mapNotNull { resolveProperty(mavenProjectData, it) }
       .map(parentFolder::resolve)
@@ -700,6 +713,16 @@ private class ProjectTree {
       managedMavenIds[trimVersion(root.mavenId)] = root
     }
   }
+  suspend fun replace(newMavenId: MavenId, oldMavenId: MavenId) {
+    mutex.withLock {
+      val data = fullMavenIds[oldMavenId] ?: return@withLock
+      fullMavenIds.remove(oldMavenId)
+      managedMavenIds.remove(trimVersion(oldMavenId))
+      fullMavenIds[newMavenId] = data
+      managedMavenIds[trimVersion(newMavenId)] = data
+
+    }
+  }
 
   suspend fun addChild(aggregator: MavenProjectData, child: MavenProjectData) {
     mutex.withLock {
@@ -728,6 +751,11 @@ private class ProjectTree {
 }
 
 private class MavenProjectData(val mavenProject: MavenProject, val mavenModel: MavenModel, val rootModel: Element) {
+  fun updateMavenId(newId: MavenId) {
+    mavenProject.updateMavenId(newId)
+    mavenModel.mavenId = newId
+  }
+
   val dependencyManagement = ArrayList<DependencyData>()
   val declaredDependencies = ArrayList<DependencyData>()
   val resolvedDependencyManagement = HashMap<MavenId, DependencyData>()
@@ -736,8 +764,10 @@ private class MavenProjectData(val mavenProject: MavenProject, val mavenModel: M
 
   val plugins = HashMap<MavenId, MavenPlugin>()
 
-  val mavenId by lazy { mavenProject.mavenId }
-  val parentId by lazy { mavenProject.parentId }
+  val mavenId: MavenId
+    get() = mavenProject.mavenId
+  val parentId
+    get() = mavenProject.parentId
   val file = mavenProject.file
 }
 

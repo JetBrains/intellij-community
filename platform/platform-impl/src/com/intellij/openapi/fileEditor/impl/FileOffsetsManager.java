@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public final class FileOffsetsManager {
     return ApplicationManager.getApplication().getService(FileOffsetsManager.class);
   }
 
-  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = new HashMap<>();
+  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = Collections.synchronizedMap(new HashMap<>());
 
   public static final class LineOffsets {
     public final long myFileModificationStamp;
@@ -86,7 +87,7 @@ public final class FileOffsetsManager {
     }
   }
 
-  private synchronized @NotNull LineOffsets getLineOffsets(final @NotNull VirtualFile file) {
+  private @NotNull LineOffsets getLineOffsets(final @NotNull VirtualFile file) {
     LineOffsets offsets = myLineOffsetsMap.get(file);
     if (offsets != null && file.getModificationStamp() == offsets.myFileModificationStamp) {
       return offsets;
@@ -133,7 +134,8 @@ public final class FileOffsetsManager {
 
   /**
    * Similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertLineSeparatorsToSlashN()
-   * @param buffer NB This buffer can be modified
+   *
+   * @param buffer            NB This buffer can be modified
    * @param modificationStamp The timestamp
    */
   public static @NotNull LineOffsets loadLineOffsets(final @NotNull CharBuffer buffer, final long modificationStamp) {

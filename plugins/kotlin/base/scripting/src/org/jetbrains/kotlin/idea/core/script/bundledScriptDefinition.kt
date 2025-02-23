@@ -9,15 +9,15 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
+import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
-import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.experimental.jvm.jdkHome
-import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.host.getScriptingClass
+import kotlin.script.experimental.jvm.*
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-val scriptClassPath = listOf(
+val scriptClassPath: List<File> = listOf(
     KotlinArtifacts.kotlinScriptRuntime,
     KotlinArtifacts.kotlinStdlib,
     KotlinArtifacts.kotlinReflect
@@ -52,6 +52,8 @@ val Project.defaultDefinition: ScriptDefinition
         return BundledScriptDefinition(compilationConfiguration, evaluationConfiguration)
     }
 
+private const val BUNDLED_SCRIPT_DEFINITION_ID = "ideBundledScriptDefinition"
+
 class BundledScriptDefinition(
     compilationConfiguration: ScriptCompilationConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?
@@ -62,4 +64,29 @@ class BundledScriptDefinition(
 ) {
     override val canDefinitionBeSwitchedOff: Boolean = false
     override val isDefault: Boolean = true
+    override val definitionId: String
+        get() = BUNDLED_SCRIPT_DEFINITION_ID
 }
+
+@Suppress("unused")
+@KotlinScript(
+    displayName = "KotlinScratchScript",
+    fileExtension = "kts",
+    compilationConfiguration = KotlinScratchCompilationConfiguration::class,
+    hostConfiguration = KotlinScratchHostConfiguration::class
+)
+abstract class KotlinScratchScript()
+
+private class KotlinScratchCompilationConfiguration() : ScriptCompilationConfiguration(
+    {
+        displayName("Kotlin Scratch")
+        explainField(SCRATCH_EXPLAIN_VARIABLE_NAME)
+    })
+
+private class KotlinScratchHostConfiguration : ScriptingHostConfiguration(
+    {
+        getScriptingClass(JvmGetScriptingClass())
+    })
+
+
+private const val SCRATCH_EXPLAIN_VARIABLE_NAME: String = "\$\$explain"

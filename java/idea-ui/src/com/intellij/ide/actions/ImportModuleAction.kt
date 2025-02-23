@@ -209,7 +209,7 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
       val openProcessor = builder.getProjectOpenProcessor()
       return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         // openProjectAsync must be implemented
-        openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
+        openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)
       }
     }
 

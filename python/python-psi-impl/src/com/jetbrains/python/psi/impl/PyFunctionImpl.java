@@ -22,10 +22,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.PyRaiseInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -50,7 +47,6 @@ import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.getGenericTypeForClass;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
@@ -227,7 +223,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (substitutions != null) {
         PyClass containingClass = getContainingClass();
         if (containingClass != null && type instanceof PySelfType) {
-          PyType genericType = getGenericTypeForClass(context, containingClass);
+          PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
           if (genericType != null) {
             type = genericType;
           }
@@ -390,6 +386,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return ControlFlowUtil.Operation.CONTINUE;
       }
       if (instruction instanceof PyRaiseInstruction) {
+        return ControlFlowUtil.Operation.CONTINUE;
+      }
+      if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
         return ControlFlowUtil.Operation.CONTINUE;
       }
       final PsiElement element = instruction.getElement();

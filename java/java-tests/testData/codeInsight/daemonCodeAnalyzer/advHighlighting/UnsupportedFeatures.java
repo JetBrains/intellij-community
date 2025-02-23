@@ -20,7 +20,7 @@ class UnsupportedFeatures {
     boolean b1 = Boolean.<error descr="Incompatible types. Found: 'java.lang.Boolean', required: 'boolean'">TRUE</error>;
 
     java.lang.annotation.ElementType t = null;
-    switch (<error descr="Incompatible types. Found: 'java.lang.annotation.ElementType', required: 'byte, char, short or int'">t</error>) { }
+    switch (<error descr="Selector type of 'java.lang.annotation.ElementType' is not supported at language level '1.4'">t</error>) { }
 
     String raw = <error descr="Text block literals are not supported at language level '1.4'">"""hi there"""</error>;
 

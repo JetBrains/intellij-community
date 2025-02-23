@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.geom.Rectangle2D
@@ -39,7 +38,8 @@ abstract class DeclarativeInlayRendererBase<Model>(
   abstract val presentationLists: List<InlayPresentationList>
 
   @RequiresEdt
-  internal fun updateModel(newModel: Model) {
+  @ApiStatus.Internal
+  fun updateModel(newModel: Model) {
     view.updateModel(newModel)
   }
 
@@ -73,9 +73,19 @@ abstract class DeclarativeInlayRendererBase<Model>(
     return "DummyActionGroup"
   }
 
-  internal fun toInlayData(): List<InlayData> {
-    val inlay = this.inlay // will be initialized here because this method is called only on the renderer got from the inlay instance
-    return presentationLists.map { it.model.copyAndUpdatePosition(inlay) }
+  @ApiStatus.Internal
+  fun toInlayData(needUpToDateOffsets: Boolean = true): List<InlayData> {
+    // this.inlay should always be initialized right after construction.
+    // However, InlayModel.Listener.onAdded will be called before that can happen,
+    // and someone (e.g., rem-dev backend) might want to serialize right away;
+    // it is not a problem, though, because at that moment,
+    // the offsets of the original declared position are still actual.
+    return if (needUpToDateOffsets && this::inlay.isInitialized) {
+      presentationLists.map { it.model.copyAndUpdatePosition(inlay) }
+    }
+    else {
+      presentationLists.map { it.model }
+    }
   }
 }
 

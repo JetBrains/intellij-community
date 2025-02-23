@@ -15,7 +15,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge
@@ -124,7 +123,7 @@ class ExternalSystemStorageTest {
   fun `applying external system options twice`() {
     createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
       runBlocking {
-        writeAction {
+        edtWriteAction {
           val projectDir = project.stateStore.directoryStorePath!!.parent
           val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").invariantSeparatorsPathString,
                                                                     JAVA_MODULE_ENTITY_TYPE_ID_NAME)
@@ -584,7 +583,7 @@ class ExternalSystemStorageTest {
   fun `check project model saved correctly at internal storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
       runBlocking {
-        writeAction {
+        edtWriteAction {
           writeTextToProjectFile(project, """
             <?xml version="1.0" encoding="UTF-8"?>
             <project version="4">
@@ -604,7 +603,7 @@ class ExternalSystemStorageTest {
   fun `check project model saved correctly at external storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
       runBlocking {
-        writeAction {
+        edtWriteAction {
           writeTextToProjectFile(project, """
             <?xml version="1.0" encoding="UTF-8"?>
             <project version="4">

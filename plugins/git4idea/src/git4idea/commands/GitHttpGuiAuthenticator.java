@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
@@ -29,6 +30,7 @@ import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -50,7 +50,8 @@ import static com.intellij.credentialStore.CredentialAttributesKt.generateServic
  * <p>
  * git version <=1.7.7 does not provide url for methods (method parameter will be a blank line)
  */
-class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
+@ApiStatus.Internal
+public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
   private static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;
@@ -287,7 +288,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private abstract static class AuthDataProvider {
+  @ApiStatus.Internal
+  public abstract static class AuthDataProvider {
     protected final @NotNull String myUrl;
 
     protected AuthDataProvider(@NotNull String url) {
@@ -305,13 +307,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     abstract void onAuthFailure();
   }
 
-  private static class ExtensionAdapterProvider extends AuthDataProvider {
+  private static final class ExtensionAdapterProvider extends AuthDataProvider {
     private final @NotNull Project myProject;
     private final @NotNull GitHttpAuthDataProvider myDelegate;
 
     private AuthData myData = null;
 
-    protected ExtensionAdapterProvider(@NotNull String url, @NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
+    ExtensionAdapterProvider(@NotNull String url, @NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
       super(url);
       myProject = project;
       myDelegate = provider;
@@ -346,14 +348,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class DialogProvider extends AuthDataProvider {
+  private static final class DialogProvider extends AuthDataProvider {
     private final @NotNull Project myProject;
     private final @NotNull PasswordSafeProvider myPasswordSafeDelegate;
     private final boolean showActionForGitHelper;
     private boolean myCancelled;
     private boolean myDataForSession = false;
 
-    protected DialogProvider(@NotNull String url,
+    DialogProvider(@NotNull String url,
                              @NotNull Project project,
                              @NotNull PasswordSafeProvider passwordSafeDelegate,
                              boolean showActionForGitHelper) {
@@ -369,12 +371,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    public @Nullable AuthData getData() {
+    public @NotNull AuthData getData() {
       return getDataFromDialog(myUrl, myPasswordSafeDelegate.getRememberedLogin(myUrl), true);
     }
 
     @Override
-    public @Nullable AuthData getDataForKnownLogin(@NotNull String login) {
+    public @NotNull AuthData getDataForKnownLogin(@NotNull String login) {
       return getDataFromDialog(myUrl, login, false);
     }
 
@@ -446,7 +448,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @VisibleForTesting
-  static class PasswordSafeProvider extends AuthDataProvider {
+  @ApiStatus.Internal
+  public static class PasswordSafeProvider extends AuthDataProvider {
     private final @NotNull DvcsRememberedInputs myRememberedInputs;
     private final @NotNull PasswordSafe myPasswordSafe;
 
@@ -524,15 +527,18 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @VisibleForTesting
-    static @NotNull CredentialAttributes credentialAttributes(@NotNull String key) {
-      return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
+    @ApiStatus.Internal
+    public static @NotNull CredentialAttributes credentialAttributes(@NotNull String key) {
+      return new CredentialAttributes(
+        CredentialAttributesKt.generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
     }
 
     /**
      * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
      */
     @VisibleForTesting
-    static @NotNull String makeKey(@NotNull String url, @Nullable String login) {
+    @ApiStatus.Internal
+    public static @NotNull String makeKey(@NotNull String url, @Nullable String login) {
       if (login == null) {
         return url;
       }
@@ -546,7 +552,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class CancelledProvider extends AuthDataProvider {
+  private static final class CancelledProvider extends AuthDataProvider {
     CancelledProvider(@NotNull String url) {
       super(url);
     }
@@ -557,14 +563,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return "Cancelled";
     }
 
-    @Nullable
     @Override
+    @NotNull
     AuthData getData() {
       return new AuthData("", "");
     }
 
-    @Nullable
     @Override
+    @NotNull
     AuthData getDataForKnownLogin(@NotNull String login) {
       return new AuthData("", "");
     }

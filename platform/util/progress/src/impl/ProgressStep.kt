@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress.impl
 
 import com.intellij.platform.util.progress.*
@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.Flow
  * Represents an entity used to send progress updates to.
  * The client code is not supposed to read the progress updates, thus there are no getters.
  *
- * The current step is usually obtained in the beginning of a function,
+ * The current step is usually obtained at the beginning of a function,
  * which wants to report progress, using [currentProgressStep].
  *
  * ### Lifecycle
  *
- * A step starts in fresh state (internal fraction is -1.0).
+ * A step starts in a fresh state (an internal fraction is -1.0).
  * The client code can choose how it wants to use the step by invoking one of the functions of this interface.
- * Once chosen, subsequent invocations of functions of this interface have no effect on this step, and return no-op reporters.
+ * Once chosen, subsequent invocations of this interface's functions have no effect on this step and return no-op reporters.
  *
  * The start of the first determinate child step (e.g. [SequentialProgressReporter.sizedStep] or [ProgressReporter.itemStep])
  * triggers the transition of the current step to the determinate state (internal fraction is 0.0).
@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.Flow
  *
  * Indeterminate and determinate child steps can go in any order.
  *
- * Finally, when related action finishes, the step transitions to the final state (internal fraction is 1.0).
+ * Finally, when the related action finishes, the step transitions to the final state (an internal fraction is 1.0).
  *
  * ### Fraction Scaling
  *
@@ -38,9 +38,9 @@ import kotlinx.coroutines.flow.Flow
  *
  * ### Text levels composition
  *
- * When a text is set in the current step, the text of child step becomes details of the current step.
+ * When a text is set in the current step, the text of a child step becomes details of the current step.
  *
- * Let's implement a function, which processes a collection:
+ * Let's implement a function which processes a collection:
  * ```
  * suspend fun processItems(items: Collection<Int>) {
  *   reportProgress(items.size) { reporter ->
@@ -80,11 +80,11 @@ import kotlinx.coroutines.flow.Flow
  * ### Concurrency
  *
  * Child steps of the current step are allowed to exist concurrently.
- * The text of the current step is the last reported text of any the child steps.
+ * The text of the current step is the last reported text of any child step.
  * The fraction of the current step is a sum of scaled child fractions.
  *
- * To reason about the growth of end fraction, each end fraction is expected to be greater than the previous one.
- * For example, the following might throw depending on execution order:
+ * To reason about the growth of the end fraction, each end fraction is expected to be greater than the previous one.
+ * For example, the following code might throw depending on execution order:
  * ```
  * suspend fun run() = reportSequentialProgress { reporter ->
  *   launch {

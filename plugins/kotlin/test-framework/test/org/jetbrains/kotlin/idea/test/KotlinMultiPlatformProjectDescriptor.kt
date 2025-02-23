@@ -50,7 +50,8 @@ import kotlin.sequences.forEach
  * For more details, please refer to [the YT KB article](https://youtrack.jetbrains.com/articles/KTIJ-A-50/Light-Multiplatform-Tests)
  */
 class KotlinMultiPlatformProjectDescriptor(
-    val platformDescriptors: List<PlatformDescriptor> = PlatformDescriptor.entries
+    val platformDescriptors: List<PlatformDescriptor> = PlatformDescriptor.entries,
+    val postponeKotlinSdkCreation: Boolean = false,
 ) : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
@@ -271,14 +272,38 @@ class KotlinMultiPlatformProjectDescriptor(
 
     private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         if (descriptor.isKotlinSdkUsed) {
+            setUpKotlinSdk(module)
+        } else {
+            model.sdk = sdk
+        }
+    }
+
+    private val modulesWithKotlinSdkForPostSetup = mutableSetOf<Module>()
+
+    private fun setUpKotlinSdk(module: Module) {
+        if (postponeKotlinSdkCreation) {
+            modulesWithKotlinSdkForPostSetup += module
+        } else {
             KotlinSdkType.setUpIfNeeded(module)
             ConfigLibraryUtil.configureSdk(
                 module,
                 runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
                     ?: error("Kotlin SDK wasn't created")
             )
-        } else {
-            model.sdk = sdk
+        }
+    }
+
+    fun runPostponedSetup() {
+        check(postponeKotlinSdkCreation)
+        runWriteAction {
+            for (module in modulesWithKotlinSdkForPostSetup) {
+                KotlinSdkType.setUpIfNeeded(module)
+                ConfigLibraryUtil.configureSdk(
+                    module,
+                    runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
+                        ?: error("Kotlin SDK wasn't created")
+                )
+            }
         }
     }
 

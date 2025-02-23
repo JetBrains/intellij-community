@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -18,9 +18,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.io.Compressor;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.*;
 
@@ -28,9 +31,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -163,20 +169,89 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static void reportProblem(String title, String message, @Nullable Throwable error) {
-    if (error != null) {
-      title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
-    }
+  private static void reportProblem(String title, String description, @Nullable Throwable error) {
+    var progressBar = new JProgressBar();
+    progressBar.setIndeterminate(true);
+    var label = new JLabel(BootstrapBundle.message("bootstrap.error.message.logs"));
+    var panel = new JPanel(new BorderLayout(5, 5));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(progressBar, BorderLayout.CENTER);
+    var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
+    progressDialog.add(panel);
+    progressDialog.setSize(300, 100);
+
+    @SuppressWarnings("SSBasedInspection")
+    var worker = new SwingWorker<Path, Void>() {
+      @Override
+      protected Path doInBackground() throws Exception {
+        return collectLogs(error);
+      }
+
+      @Override
+      protected void done() {
+        progressDialog.setVisible(false);
+        progressDialog.dispose();
+      }
+    };
+
+    worker.execute();
+    progressDialog.setVisible(true);
+
+    var logs = (Path)null;
     try {
+      logs = worker.get();
+    }
+    catch (Throwable t) {
+      var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", t));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
+      return;
+    }
+
+    var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.ready", logs));
+    var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+    if (ok != 0) return;
+
+    try {
+      if (error != null) {
+        title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
+      }
       var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
-        .replace("$DESCR$", URLUtil.encodeURIComponent(message))
+        .replace("$DESCR$", URLUtil.encodeURIComponent(description))
         .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
       Desktop.getDesktop().browse(new URI(url));
     }
     catch (Throwable t) {
       showBrowserError(t);
     }
+  }
+
+  private static Path collectLogs(@Nullable Throwable error) throws IOException {
+    var logs = Files.createTempFile(Path.of(SystemProperties.getUserHome()), "startup-logs-", ".zip");
+
+    try (var zip = new Compressor.Zip(logs)) {
+      var log = PathManager.getLogDir().resolve("idea.log");
+      if (Files.exists(log)) {
+        zip.addFile(log.getFileName().toString(), log);
+      }
+
+      var productData = Path.of(PathManager.getHomePath(), "product-info.json");
+      if (!Files.exists(productData)) {
+        productData = Path.of(PathManager.getHomePath(), "Resources/product-info.json");
+      }
+      if (Files.exists(productData)) {
+        zip.addFile(productData.getFileName().toString(), productData);
+      }
+
+      if (error instanceof ExceptionWithAttachments ewa) {
+        for (var attachment : ewa.getAttachments()) {
+          zip.addFile(attachment.getName(), attachment.getBytes());
+        }
+      }
+    }
+
+    return logs;
   }
 
   private static void cleanStart() {

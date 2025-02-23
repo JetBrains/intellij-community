@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.reference;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.util.function.Supplier;
 
 /**
@@ -23,16 +21,6 @@ public class SoftReference<T> extends java.lang.ref.SoftReference<T> implements 
   @Deprecated
   public SoftReference(final T referent) {
     super(referent);
-    //myReferent = referent;
-  }
-
-  /**
-   * @deprecated use {@link java.lang.ref.SoftReference#SoftReference(Object, ReferenceQueue)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public SoftReference(final T referent, final ReferenceQueue<? super T> q) {
-    super(referent, q);
     //myReferent = referent;
   }
 

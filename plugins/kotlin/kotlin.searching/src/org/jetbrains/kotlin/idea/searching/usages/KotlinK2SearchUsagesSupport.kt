@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
@@ -294,7 +294,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                 val iterator = if (searchDeeply) {
                     member.findAllOverridings().filterIsInstance<KtElement>().iterator()
                 } else {
-                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                    DirectKotlinOverridingCallableSearch.search(member).asIterable().iterator()
                 }
                 for (psiElement in iterator) {
                     if (!processor(member, psiElement)) return false

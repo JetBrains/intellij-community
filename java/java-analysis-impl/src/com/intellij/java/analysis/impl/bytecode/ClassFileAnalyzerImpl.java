@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.analysis.impl.bytecode;
 
 import com.intellij.java.analysis.bytecode.ClassFileAnalyzer;
@@ -11,7 +11,6 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -19,7 +18,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
+final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
   private static final Label LABEL = new Label();
 
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
@@ -39,14 +38,13 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
 
   @Override
   public void processFile(@NotNull Path path) throws IOException {
-    try (InputStream is = new BufferedInputStream(Files.newInputStream(path))) {
-      processInputStream(is);
-    }
+    // ASM ClassReader in any case reads the whole file into memory
+    processData(Files.readAllBytes(path));
   }
 
   @Override
-  public void processInputStream(@NotNull InputStream inputStream) throws IOException {
-    ClassReader cr = new ClassReader(inputStream) {
+  public void processData(byte @NotNull [] data) {
+    ClassReader cr = new ClassReader(data) {
       @Override
       protected Label readLabel(int offset, Label[] labels) {
         if (offset >= labels.length) {
@@ -60,6 +58,11 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
       }
     };
     cr.accept(this, ClassReader.SKIP_FRAMES);
+  }
+
+  @Override
+  public void processInputStream(@NotNull InputStream inputStream) throws IOException {
+    processData(inputStream.readAllBytes());
   }
 
   @Override
@@ -78,17 +81,10 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     }
   }
 
-
   private final Map<String, JvmClassBytecodeDeclaration> myClassDeclarations = new HashMap<>();
 
   private @NotNull JvmClassBytecodeDeclaration getOrCreateClassDeclaration(@NotNull String name) {
-    JvmClassBytecodeDeclaration result = myClassDeclarations.get(name);
-    if (result == null) {
-      result = new JvmClassBytecodeDeclarationImpl(name);
-      myClassDeclarations.put(name, result);
-    }
-
-    return result;
+    return myClassDeclarations.computeIfAbsent(name, JvmClassBytecodeDeclarationImpl::new);
   }
 
   private void processMethodReference(JvmClassBytecodeDeclaration targetClass, String methodName, String methodDescriptor) {
@@ -153,8 +149,7 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     return new DependencyMethodVisitor();
   }
 
-  private class DependencyMethodVisitor extends MethodVisitor {
-
+  private final class DependencyMethodVisitor extends MethodVisitor {
     private Label myFirstLabel = null;
 
     DependencyMethodVisitor() {
@@ -273,11 +268,9 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
       addDesc(desc);
       return myAnnotationVisitor;
     }
-
   }
 
-  private class DependencyFieldVisitor extends FieldVisitor {
-
+  private final class DependencyFieldVisitor extends FieldVisitor {
     DependencyFieldVisitor() {
       super(Opcodes.API_VERSION);
     }
@@ -295,8 +288,7 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     }
   }
 
-  private class AnnotationDependencyVisitor extends AnnotationVisitor {
-
+  private final class AnnotationDependencyVisitor extends AnnotationVisitor {
     AnnotationDependencyVisitor() {
       super(Opcodes.API_VERSION);
     }
@@ -323,8 +315,7 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     }
   }
 
-  private class DependencySignatureVisitor extends SignatureVisitor {
-
+  private final class DependencySignatureVisitor extends SignatureVisitor {
     DependencySignatureVisitor() {
       super(Opcodes.API_VERSION);
     }

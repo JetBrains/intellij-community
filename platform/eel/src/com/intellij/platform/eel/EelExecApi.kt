@@ -101,7 +101,7 @@ interface EelExecApi {
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
 @CheckReturnValue
-suspend fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessOptions.Builder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
+suspend inline fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessOptions.Builder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
   val builder = EelExecApi.ExecuteProcessOptions.Builder(exe).apply(setup).build()
   return execute(builder)
 }

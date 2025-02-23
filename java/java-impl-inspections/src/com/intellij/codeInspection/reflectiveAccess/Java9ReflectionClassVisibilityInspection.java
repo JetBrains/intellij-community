@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddOpensDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public final class Java9ReflectionClassVisibilityInspection extends AbstractBase
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(holder.getFile());
+    final PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(holder.getFile());
     if (javaModule != null) {
       return new JavaElementVisitor() {
         @Override
@@ -59,9 +59,9 @@ public final class Java9ReflectionClassVisibilityInspection extends AbstractBase
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final PsiClass psiClass = facade.findClass(className, callExpression.getResolveScope());
         if (psiClass != null) {
-          final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
+          final PsiJavaModule otherModule = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
-            if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
+            if (!JavaPsiModuleUtil.reads(javaModule, otherModule)) {
               String message = JavaBundle.message("module.not.in.requirements", javaModule.getName(), otherModule.getName());
               holder.problem(classNameArgument, message).fix(new AddRequiresDirectiveFix(javaModule, otherModule.getName())).register();
               return;

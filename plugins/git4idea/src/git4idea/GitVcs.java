@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
+import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
@@ -32,11 +33,12 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
+import git4idea.commit.GitCommitModeProvider;
+import git4idea.commit.GitStagingAreaCommitMode;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
-import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitMergeProvider;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -353,9 +355,17 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  public boolean isWithCustomLocalChanges() {
-    return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
-           GitStageManagerKt.canEnableStagingArea();
+  public @Nullable CommitMode getForcedCommitMode() {
+    if (GitVcsApplicationSettings.getInstance().isStagingAreaEnabled()) {
+      return GitStagingAreaCommitMode.INSTANCE;
+    }
+    CommitMode commitModeFromExtension = GitCommitModeProvider.EP_NAME.computeSafeIfAny(GitCommitModeProvider::getCommitMode);
+    if (commitModeFromExtension != null) {
+      return commitModeFromExtension;
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

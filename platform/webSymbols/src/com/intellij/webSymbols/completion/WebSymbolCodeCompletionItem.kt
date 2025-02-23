@@ -11,7 +11,6 @@ import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
-import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon

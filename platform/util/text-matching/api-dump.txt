@@ -8,11 +8,6 @@ c:com.intellij.psi.codeStyle.FixingLayoutMatcher
 - com.intellij.psi.codeStyle.MinusculeMatcher
 - <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
 - s:fixLayout(java.lang.String):java.lang.String
-- getPattern():java.lang.String
-- matches(java.lang.String):Z
-- matchingDegree(java.lang.String,Z):I
-- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
-- matchingFragments(java.lang.String):com.intellij.util.containers.FList
 a:com.intellij.psi.codeStyle.MinusculeMatcher
 - com.intellij.util.text.Matcher
 - p:<init>():V

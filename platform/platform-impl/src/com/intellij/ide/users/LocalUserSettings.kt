@@ -5,6 +5,7 @@ import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use `com.intellij.util.SystemProperties.getUserName`", level = DeprecationLevel.ERROR)
 object LocalUserSettings {
   val userName: String

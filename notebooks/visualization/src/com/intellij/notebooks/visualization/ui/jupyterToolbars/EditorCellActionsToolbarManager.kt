@@ -127,12 +127,7 @@ class EditorCellActionsToolbarManager(
 
     val panelRoofHeight = panelHeight - delimiterSize
 
-    val relativeOffsetRatio = when(cell.interval.ordinal) {
-      0 -> 0.12
-      else -> 0.05
-    }
-
-    val xOffset = (panelWidth - toolbarWidth - (panelWidth * relativeOffsetRatio)).toInt()
+    val xOffset = (panelWidth - toolbarWidth - (panelWidth * RELATIVE_Y_OFFSET_RATIO)).toInt()
     val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
 
     val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
@@ -144,6 +139,8 @@ class EditorCellActionsToolbarManager(
   }
 
   companion object {
+    private const val RELATIVE_Y_OFFSET_RATIO = 0.05
+
     @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
     @Language("devkit-action-id")

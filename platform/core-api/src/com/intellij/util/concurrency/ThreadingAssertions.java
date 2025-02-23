@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
+import java.util.function.Function;
 
 /**
  * This class contains various threading assertions.
@@ -65,8 +66,6 @@ public final class ThreadingAssertions {
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
-
-  private static boolean implicitLock = false;
 
   /**
    * Asserts that the current thread is the event dispatch thread.
@@ -123,11 +122,8 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresReadLock
    */
   public static void assertReadAccess() {
-    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+    if (!isFlagSet(Application::isReadAccessAllowed)) {
       throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
-    }
-    else if (isImplicitLockOnEDT() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      reportImplicitRead();
     }
   }
 
@@ -151,7 +147,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertReadAccess() {
-    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+    if (!isFlagSet(Application::isReadAccessAllowed)) {
       getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION));
     }
   }
@@ -162,7 +158,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
    */
   public static void assertNoReadAccess() {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+    if (isFlagSet(Application::isReadAccessAllowed)) {
       throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
@@ -171,7 +167,7 @@ public final class ThreadingAssertions {
    * Asserts that the current thread has <b>no</b> read access local to this thread (non-inherited).
    */
   public static void assertNoOwnReadAccess() {
-    if (ApplicationManager.getApplication().holdsReadLock()) {
+    if (isFlagSet(Application::holdsReadLock)) {
       throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
@@ -180,20 +176,9 @@ public final class ThreadingAssertions {
    * Asserts that the current thread has write-intent read access.
    */
   public static void assertWriteIntentReadAccess() {
-    if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
+    if (!isFlagSet(Application::isWriteIntentLockAcquired)) {
       throwWriteIntentReadAccess();
     }
-    else if (isImplicitLockOnEDT()) {
-      reportImplicitWriteIntent();
-    }
-  }
-
-  /**
-   * Reports message about implicit read to logger at error level
-   */
-  @Internal
-  public static void reportImplicitWriteIntent() {
-    getLogger().error(new RuntimeExceptionWithAttachments(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -209,7 +194,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresWriteLock
    */
   public static void assertWriteAccess() {
-    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (!isFlagSet(Application::isWriteAccessAllowed)) {
       throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
     }
   }
@@ -239,22 +224,8 @@ public final class ThreadingAssertions {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
 
-  public static boolean isImplicitLockOnEDT() {
-    if (!EDT.isCurrentThreadEdt())
-      return false;
+  private static boolean isFlagSet(@NotNull Function<Application, Boolean> getter) {
     Application app = ApplicationManager.getApplication();
-    // Don't report implicit locks for unit tests, too many false positives
-    if (app != null && app.isUnitTestMode())
-      return false;
-    // Reset to decrease noise
-    boolean il = implicitLock;
-    implicitLock = false;
-    return il;
-  }
-
-  public static void setImplicitLockOnEDT(boolean implicitLock) {
-    if (!EDT.isCurrentThreadEdt())
-      return;
-    ThreadingAssertions.implicitLock = implicitLock;
+    return app != null && getter.apply(app);
   }
 }

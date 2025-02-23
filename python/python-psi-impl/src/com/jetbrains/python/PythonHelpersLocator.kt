@@ -40,6 +40,10 @@ interface PythonHelpersLocator {
     const val COMMUNITY_HELPERS_MODULE_NAME: String = "intellij.python.helpers"
     private val EP_NAME: ExtensionPointName<PythonHelpersLocator> = ExtensionPointName("com.jetbrains.python.pythonHelpersLocator")
 
+    @TestOnly
+    @Internal
+    val epNameForTests: ExtensionPointName<PythonHelpersLocator> = EP_NAME
+
     /**
      * @return A list of Path objects representing the roots of the Python Helpers.
      */

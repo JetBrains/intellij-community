@@ -4,9 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
 )
 
 jvm_resources(
@@ -39,7 +41,7 @@ jvm_library(
     "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
     "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/idea",
     "//platform/lang-impl",
     "//platform/code-style-impl:codeStyle-impl",
@@ -49,6 +51,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ],
   runtime_deps = [":kotlin-j2k-k1-new-post-processing_resources"]
 )

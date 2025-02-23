@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.OpenProjectTaskBuilder
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
-import git4idea.config.GitVersion
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.nio.file.Path

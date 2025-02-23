@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -27,7 +27,7 @@ public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
       return;
     }
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
-    for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false)) {
+    for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false).asIterable()) {
       final PsiElement referenceElement = reference.getElement();
       if (referenceElement instanceof PsiReferenceExpression ref) {
         methodCalls.add(updater.getWritable(ref));

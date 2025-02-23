@@ -13,10 +13,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.CustomFoldRegionRenderer
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.CaretEvent
@@ -24,9 +21,8 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -54,12 +50,8 @@ class NotebookCellInlayManager private constructor(
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
-  private val invalidationListeners = mutableListOf<Runnable>()
-
-  private var valid = false
-
-  private fun update(force: Boolean = false, block: (UpdateContext) -> Unit) {
-    editor.updateManager.update(force, block)
+  private fun update(force: Boolean = false, keepScrollingPosition: Boolean = false, block: (UpdateContext) -> Unit) {
+    editor.updateManager.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
   }
 
   override fun dispose() {
@@ -130,12 +122,6 @@ class NotebookCellInlayManager private constructor(
     })
 
     addViewportChangeListener()
-
-    editor.foldingModel.addListener(object : FoldingListener {
-      override fun onFoldProcessingEnd() {
-        invalidateCells()
-      }
-    }, editor.disposable)
 
     initialized = true
 
@@ -226,7 +212,7 @@ class NotebookCellInlayManager private constructor(
   private fun addBelowLastCellInlay() {  // PY-77218
     belowLastCellInlay = editor.addComponentInlay(
       UiDataProvider.wrapComponent(belowLastCellPanel) { sink ->
-        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.last()?.interval
+        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.lastOrNull()?.interval
       },
       isRelatedToPrecedingText = true,
       showAbove = false,
@@ -293,10 +279,16 @@ class NotebookCellInlayManager private constructor(
     notebook.clear()
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
 
-    update {
+    update(keepScrollingPosition = false) {
       notebookCellLines.intervals.forEach { interval ->
         notebook.addCell(pointerFactory.create(interval))
       }
+    }
+    //Forcefully synchronize components and inlays height
+    update(keepScrollingPosition = false) {
+      editor.contentComponent.components
+        .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
+        .forEach { it.doLayout() }
     }
   }
 
@@ -426,12 +418,10 @@ class NotebookCellInlayManager private constructor(
 
   private fun addCell(pointer: NotebookIntervalPointer) {
     notebook.addCell(pointer)
-    invalidateCells()
   }
 
   private fun removeCell(index: Int) {
     notebook.removeCell(index)
-    invalidateCells()
   }
 
   fun addCellEventsListener(editorCellEventListener: EditorCellEventListener, disposable: Disposable) {
@@ -462,18 +452,10 @@ class NotebookCellInlayManager private constructor(
     return getCell(pointer.get()!!)
   }
 
-  fun invalidateCells() {
-    if (valid) {
-      valid = false
-      invalidationListeners.forEach { it.run() }
-    }
-  }
-
   internal fun getInputFactories(): Sequence<NotebookCellInlayController.InputFactory> {
     return NotebookCellInlayController.InputFactory.EP_NAME.extensionList.asSequence()
   }
 }
-
 
 class UpdateContext(val force: Boolean = false) {
 
@@ -526,7 +508,5 @@ class UpdateContext(val force: Boolean = false) {
       }
       return model.addCustomLinesFolding(startLine, endLine, renderer)
     }
-
   }
-
 }

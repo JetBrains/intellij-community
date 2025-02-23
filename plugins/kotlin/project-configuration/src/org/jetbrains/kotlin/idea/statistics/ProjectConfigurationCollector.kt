@@ -7,9 +7,12 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.facet.isKpmModule
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
@@ -20,37 +23,54 @@ import org.jetbrains.kotlin.idea.configuration.getPlatform
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.util.Locale
+import java.util.*
 
 internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
         val metrics = mutableSetOf<MetricEvent>()
-        val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
+        val modulesLanguageDataInfo = runReadAction {
+            ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID).map {
+                ProgressManager.checkCanceled()
 
-        if (modulesWithFacet.isNotEmpty()) {
-            modulesWithFacet.forEach {
                 val buildSystem = getBuildSystemType(it)
                 val platform = getPlatform(it)
-                val languageLevel = KotlinFacet.get(it)?.configuration?.settings?.languageLevel?.versionString
+                val facetSettings = KotlinFacet.get(it)?.configuration?.settings
+                val languageLevel = facetSettings?.languageLevel?.versionString
                 val nonDefaultLanguageFeatures = getNonDefaultLanguageFeatures(it).toList()
-                metrics.add(
-                    buildEvent.metric(
-                        systemField.with(buildSystem),
-                        platformField.with(platform),
-                        languageLevelField.with(languageLevel),
-                        isMPPBuild.with(it.isMultiPlatformModule || it.isNewMultiPlatformModule),
-                        pluginInfoField.with(KotlinIdePlugin.getPluginInfo()),
-                        eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it)),
-                        nonDefaultLanguageFeaturesField.with(nonDefaultLanguageFeatures)
-                    )
-                )
+                val mppBuild = facetSettings.isMultiPlatformModule || facetSettings.isNewMultiPlatformModule
+                val kpmModule = it.isKpmModule
+
+                Data(buildSystem, platform, languageLevel, nonDefaultLanguageFeatures, mppBuild, kpmModule)
             }
+        }
+
+        modulesLanguageDataInfo.forEach {
+            metrics.add(
+                buildEvent.metric(
+                    systemField.with(it.buildSystem),
+                    platformField.with(it.platform),
+                    languageLevelField.with(it.languageLevel),
+                    isMPPBuild.with(it.mppBuild),
+                    pluginInfoField.with(KotlinIdePlugin.getPluginInfo()),
+                    eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it.kpmModule)),
+                    nonDefaultLanguageFeaturesField.with(it.nonDefaultLanguageFeatures)
+                )
+            )
         }
 
         return metrics
     }
+
+    private data class Data(
+        val buildSystem: String,
+        val platform: String,
+        val languageLevel: String?,
+        val nonDefaultLanguageFeatures: List<LanguageFeature>,
+        val mppBuild: Boolean,
+        val kpmModule: Boolean
+    )
 
     private fun getBuildSystemType(it: Module): String {
         val buildSystem = it.buildSystemType
@@ -62,7 +82,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         }
     }
 
-    private val GROUP = EventLogGroup("kotlin.project.configuration", 20)
+    private val GROUP = EventLogGroup("kotlin.project.configuration", 21)
 
     private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
     private val platformField = EventFields.String("platform", composePlatformFields())

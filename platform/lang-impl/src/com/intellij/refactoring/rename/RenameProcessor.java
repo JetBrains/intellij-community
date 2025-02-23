@@ -278,9 +278,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private void setNewName(@NotNull String newName) {
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
-    myCommandName = RefactoringBundle
-      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), DescriptiveNameUtil.getDescriptiveName(myPrimaryElement),
-               newName);
+    myCommandName = RefactoringBundle.message("renaming.0.1.to.2",
+                                              UsageViewUtil.getType(myPrimaryElement),
+                                              DescriptiveNameUtil.getDescriptiveName(myPrimaryElement),
+                                              newName);
   }
 
   @Override
@@ -346,7 +347,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     return myForceShowPreview || super.isPreviewUsages(usages) || UsageViewUtil.reportNonRegularUsages(usages, myProject);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -25,9 +25,9 @@ object IdeaReferenceSearcher : ReferenceSearcher {
     override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =
         ReferencesSearch.search(element, LocalSearchScope(scope)).findAll()
 
-    override fun hasInheritors(`class`: PsiClass) = ClassInheritorsSearch.search(`class`, false).any()
+    override fun hasInheritors(`class`: PsiClass) = ClassInheritorsSearch.search(`class`, false).asIterable().any()
 
-    override fun hasOverrides(method: PsiMethod) = OverridingMethodsSearch.search(method, false).any()
+    override fun hasOverrides(method: PsiMethod) = OverridingMethodsSearch.search(method, false).asIterable().any()
 
     override fun findUsagesForExternalCodeProcessing(
         element: PsiElement,

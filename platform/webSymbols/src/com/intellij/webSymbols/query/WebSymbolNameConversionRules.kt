@@ -21,6 +21,13 @@ interface WebSymbolNameConversionRules {
   val matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
   /**
+   * Used for renaming symbols.
+   *
+   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.RENAME_QUERY]
+   */
+  val renames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+
+  /**
    * Used for code completion.
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
@@ -30,10 +37,13 @@ interface WebSymbolNameConversionRules {
   companion object {
 
     @JvmStatic
-    fun create(canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-               matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-               completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()): WebSymbolNameConversionRules =
-      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants)
+    fun create(
+      canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+      matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+      completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+      renames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+    ): WebSymbolNameConversionRules =
+      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants, renames)
 
     @JvmStatic
     fun create(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRules =

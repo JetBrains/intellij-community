@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class RangeMarkerWindow implements RangeMarkerEx {
+@ApiStatus.Internal
+public class RangeMarkerWindow implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerWindow.class);
   private final DocumentWindow myDocumentWindow;
   private final RangeMarkerEx myHostMarker;

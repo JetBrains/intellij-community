@@ -86,8 +86,10 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
           if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) {
             variantChanged(event, index, state.elements, newSnapshot.elements)
 
-            state.elements.clear()
-            state.elements.addAll(newSnapshot.elements)
+            if (state.elements !== newSnapshot.elements) {
+              state.elements.clear()
+              state.elements.addAll(newSnapshot.elements)
+            }
             newSnapshot.data.copyUserDataTo(state.data)
           }
           else {

@@ -2,13 +2,17 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
 sealed interface MavenHomeType {
   @get:NlsContexts.Label
   val title: String
+
+  @get:NlsContexts.DetailedDescription
   val description: String
 }
 
@@ -19,25 +23,25 @@ sealed interface MavenHomeType {
  */
 interface StaticResolvedMavenHomeType : MavenHomeType
 object MavenWrapper : MavenHomeType {
-  override val title = MavenProjectBundle.message("maven.wrapper.version.title")
-  override val description = MavenProjectBundle.message("maven.wrapper.version.label")
+  override val title: @Nls String = MavenProjectBundle.message("maven.wrapper.version.title")
+  override val description: @Nls String = MavenProjectBundle.message("maven.wrapper.version.label")
 }
 
 object BundledMaven3 : StaticResolvedMavenHomeType {
-  override val title = MavenProjectBundle.message("maven.bundled.version.3.title")
-  override val description = MavenProjectBundle.message("maven.bundled.version.label")
+  override val title: @Nls String = MavenProjectBundle.message("maven.bundled.version.3.title")
+  override val description: @Nls String = MavenProjectBundle.message("maven.bundled.version.label")
 }
 
 object BundledMaven4 : StaticResolvedMavenHomeType {
-  override val title = MavenProjectBundle.message("maven.bundled.version.4.title")
-  override val description = MavenProjectBundle.message("maven.bundled.version.label")
+  override val title: @Nls String = MavenProjectBundle.message("maven.bundled.version.4.title")
+  override val description: @Nls String = MavenProjectBundle.message("maven.bundled.version.label")
 }
 
-data class MavenInSpecificPath(val mavenHome: String) : StaticResolvedMavenHomeType {
+data class MavenInSpecificPath(@NlsSafe val mavenHome: String) : StaticResolvedMavenHomeType {
   constructor(home: Path) : this(home.toAbsolutePath().pathString)
 
-  override val title = mavenHome
-  override val description = MavenProjectBundle.message("maven.home.specific.label", mavenHome)
+  override val title: @NlsSafe String = mavenHome
+  override val description: @Nls String = MavenProjectBundle.message("maven.home.specific.label", mavenHome)
 }
 
 

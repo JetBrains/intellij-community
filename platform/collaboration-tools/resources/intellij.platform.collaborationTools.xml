@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
@@ -17,7 +18,7 @@
       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>-->
 
     <advancedSetting id="enable.combined.diff.for.codereview"
-                     default="true"
+                     default="false"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
   </extensions>

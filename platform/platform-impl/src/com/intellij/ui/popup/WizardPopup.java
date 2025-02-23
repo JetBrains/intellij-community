@@ -16,6 +16,7 @@ import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -196,30 +197,44 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
     if (UiInterceptors.tryIntercept(this)) return;
 
-    PopupShowOptionsImpl options = showOptions.build();
-    Component owner = options.getOwner();
-    var aScreenX = options.getScreenX();
-    var aScreenY = options.getScreenY();
-
     LOG.assertTrue (!isDisposed());
-    Dimension size = getContent().getPreferredSize();
-    Dimension minimumSize = getMinimumSize();
-    size.width = Math.max(size.width, minimumSize.width);
-    size.height = Math.max(size.height, minimumSize.height);
-    Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
 
-    if (getParent() != null && alignByParentBounds) {
-      final Rectangle parentBounds = getParent().getBounds();
-      parentBounds.x += STEP_X_PADDING;
-      parentBounds.width -= STEP_X_PADDING * 2;
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
-        parentBounds.x + parentBounds.width / 2,
-        parentBounds.y + parentBounds.height / 2), null);
-      if (parentBounds.intersects(targetBounds)) {
-        targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+    PopupShowOptionsImpl options = showOptions.build();
+    PopupShowOptionsBuilder newOptions;
+
+    if (options.getPopupAnchor() == AnchoredPoint.Anchor.TOP_LEFT) {
+      // The old logic that existed here before other anchors were added.
+      Component owner = options.getOwner();
+      var aScreenX = options.getScreenX();
+      var aScreenY = options.getScreenY();
+
+      Dimension size = getContent().getPreferredSize();
+      Dimension minimumSize = getMinimumSize();
+      size.width = Math.max(size.width, minimumSize.width);
+      size.height = Math.max(size.height, minimumSize.height);
+      Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
+
+      if (getParent() != null && alignByParentBounds) {
+        final Rectangle parentBounds = getParent().getBounds();
+        parentBounds.x += STEP_X_PADDING;
+        parentBounds.width -= STEP_X_PADDING * 2;
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
+          parentBounds.x + parentBounds.width / 2,
+          parentBounds.y + parentBounds.height / 2), null);
+        if (parentBounds.intersects(targetBounds)) {
+          targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+        }
+      } else {
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
       }
-    } else {
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
+      newOptions = new PopupShowOptionsBuilder()
+        .withOwner(owner)
+        .withScreenXY(targetBounds.x, targetBounds.y)
+        .withForcedXY(true);
+    }
+    else {
+      // The superclass does positioning for the new anchors, so do nothing here.
+      newOptions = showOptions;
     }
 
     if (getParent() == null && myIsActiveRoot) {
@@ -230,12 +245,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     LOG.assertTrue (!isDisposed(), "Disposed popup, parent="+getParent());
-    super.showImpl(
-      new PopupShowOptionsBuilder()
-        .withOwner(owner)
-        .withScreenXY(targetBounds.x, targetBounds.y)
-        .withForcedXY(true)
-    );
+    super.showImpl(newOptions);
   }
 
   @Override
@@ -530,6 +540,16 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     } else {
       getParent().setOk(ok);
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ActionMap getOwnActionMap() {
+    return myActionMap;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull InputMap getOwnInputMap() {
+    return myInputMap;
   }
 
   private class ActionShortcutDelegate extends DumbAwareAction {

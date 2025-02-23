@@ -7,6 +7,7 @@ import com.esotericsoftware.kryo.kryo5.Serializer
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -88,7 +89,7 @@ sealed class JpsProjectFileEntitySource : JpsFileEntitySource() {
 /**
  * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
  */
-data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource()
+data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource(), GlobalStorageEntitySource
 
 /**
  * Represents entities which configuration is loaded from an JPS format configuration file (e.g. *.iml, stored in [originalSource]) and some additional configuration

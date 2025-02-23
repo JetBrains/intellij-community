@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "kotlin.RequiresOptIn",
     "kotlinx.serialization.ExperimentalSerializationApi",
@@ -49,6 +48,7 @@ jvm_library(
     "@lib//:jackson-databind",
     "@lib//:json-schema-validator",
     "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-json-io",
     "@lib//:kotlinx-serialization-core",
     "//platform/util/zip",
     "//platform/runtime/product",

@@ -87,7 +87,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       final SearchScope searchScope = interfaceClass.getUseScope();
       final List<PsiClass> elements = new ArrayList<>();
       elements.add(interfaceClass);
-      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
+      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false).asIterable()) {
         elements.add(inheritor);
       }
       return ModCommand.psiUpdate(interfaceClass, (cls, updater) -> {

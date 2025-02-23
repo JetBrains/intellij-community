@@ -6,6 +6,9 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
+import com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.progress.ProgressManager
@@ -15,9 +18,13 @@ import com.intellij.testFramework.assertEqualsToFile
 import junit.framework.TestCase
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import java.io.File
@@ -39,7 +46,15 @@ object DirectiveBasedActionUtils {
      * - all other quickfixes with names not mentioned in "//ACTION" are not available.
      * When no "// ACTION" directives are present in the file, quickfixes are not checked.
      */
-    const val ACTION_DIRECTIVE: String = "// ACTION:"
+    const val K1_ACTIONS_LIST_DIRECTIVE: String = "// ACTION:"
+    const val K2_ACTIONS_LIST_DIRECTIVE: String = "// K2_ACTIONS_LIST:"
+    const val IGNORE_IRRELEVANT_ACTIONS_DIRECTIVE: String = "// IGNORE_IRRELEVANT_ACTIONS"
+
+    /**
+     * If present in the test data file, checks actions are displayed in the same order as specified in a file
+     * There is no action order check by default.
+     */
+    const val KEEP_ACTIONS_LIST_ORDER_DIRECTIVE: String = "// KEEP_ACTIONS_LIST_ORDER"
 
     fun checkForUnexpectedErrors(
         file: KtFile,
@@ -142,31 +157,48 @@ object DirectiveBasedActionUtils {
         )
     }
 
-    fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
-        checkAvailableActionsAreExpected(file, availableActions, emptyList())
+    fun checkAvailableActionsAreExpected(
+        psiFile: PsiFile,
+        file: File,
+        availableActions: Collection<IntentionAction>,
+        actionsListDirectives: Array<String> = arrayOf(K1_ACTIONS_LIST_DIRECTIVE),
+    ) {
+        checkAvailableActionsAreExpected(
+            psiFile = psiFile,
+            file = file,
+            availableActions = availableActions,
+            actionsToExclude = emptyList(),
+            actionsListDirectives = actionsListDirectives,
+        )
     }
 
     fun checkAvailableActionsAreExpected(
-        file: File, availableActions: Collection<IntentionAction>, actionsToExclude: List<String>,
+        psiFile: PsiFile,
+        file: File,
+        availableActions: Collection<IntentionAction>,
+        actionsToExclude: List<String>,
+        actionsListDirectives: Array<String> = arrayOf(K1_ACTIONS_LIST_DIRECTIVE),
     ) {
         val fileText = file.readText()
         checkAvailableActionsAreExpected(
-            fileText,
-            availableActions,
-            actionsToExclude,
-        ) { expectedActionsDirectives, actualActionsDirectives ->
+            psiFile = psiFile,
+            fileText = fileText,
+            availableActions = availableActions,
+            actionsToExclude = actionsToExclude,
+            actionListDirectives = actionsListDirectives
+        ) { actionDirective, expectedActionsDirectives, actualActionsDirectives ->
             if (expectedActionsDirectives != actualActionsDirectives) {
                 val actual = fileText.let { text ->
                     val lines = text.split('\n')
-                    val firstActionIndex = lines.indexOfFirst { it.startsWith(ACTION_DIRECTIVE) }.takeIf { it != -1 }
-                    val textWithoutActions = lines.filterNot { it.startsWith(ACTION_DIRECTIVE) }
+                    val firstActionIndex = lines.indexOfFirst { it.startsWith(actionDirective) }.takeIf { it != -1 }
+                    val textWithoutActions = lines.filterNot { it.startsWith(actionDirective) }
                     textWithoutActions.subList(0, firstActionIndex ?: 1)
                         .plus(actualActionsDirectives)
                         .plus(textWithoutActions.drop(firstActionIndex ?: 1))
                         .joinToString("\n")
                 }
                 assertEqualsToFile(
-                    description = "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive in $file",
+                    description = "Some unexpected actions available at current position. Use '$actionDirective' directive in $file",
                     expected = file,
                     actual = actual
                 )
@@ -174,13 +206,15 @@ object DirectiveBasedActionUtils {
         }
     }
 
-    fun checkAvailableActionsAreExpected(file: PsiFile, availableActions: Collection<IntentionAction>) {
+    fun checkAvailableActionsAreExpected(psiFile: PsiFile, availableActions: Collection<IntentionAction>) {
         checkAvailableActionsAreExpected(
-            file.text,
+            psiFile,
+            psiFile.text,
             availableActions,
-        ) { expectedDirectives, actualActionsDirectives ->
+            actionListDirectives = arrayOf(K1_ACTIONS_LIST_DIRECTIVE)
+        ) { actionDirective, expectedDirectives, actualActionsDirectives ->
             UsefulTestCase.assertOrderedEquals(
-                "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive\n",
+                "Some unexpected actions available at current position. Use '$actionDirective' directive\n",
                 actualActionsDirectives,
                 expectedDirectives
             )
@@ -200,27 +234,56 @@ object DirectiveBasedActionUtils {
     }
 
     private fun checkAvailableActionsAreExpected(
+        psiFile: PsiFile,
         fileText: String,
         availableActions: Collection<IntentionAction>,
         actionsToExclude: List<String> = emptyList(),
-        assertion: (expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
+        actionListDirectives: Array<String>,
+        assertion: (actionListDirective: String, expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
     ) {
-        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
-        if (expectedActions.isEmpty()) return // do not check for available fixes if there are no //ACTION
-
-        UsefulTestCase.assertEmpty(
-            "Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
-            expectedActions.filter(::isIrrelevantAction),
-        )
-
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
+        if (InTextDirectivesUtils.isDirectiveDefined(fileText, IGNORE_IRRELEVANT_ACTIONS_DIRECTIVE)) {
             return
         }
 
-        val actualActions = availableActions.map { it.text }.filterOutElementsToExclude(actionsToExclude).sorted()
-        val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" }
-        val expectedActionsDirectives = expectedActions.filterOutElementsToExclude(actionsToExclude).map { "$ACTION_DIRECTIVE $it" }
-        assertion(expectedActionsDirectives, actualActionsDirectives)
+        val (actionListDirective, expectedActions) = actionListDirectives.firstNotNullOfOrNull { actionDirective ->
+            val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, actionDirective)
+            // do not check for available fixes if there are no // ACTION
+            if (expectedActions.isNotEmpty()) {
+                actionDirective to expectedActions
+            } else {
+                null
+            }
+        } ?: return
+
+        UsefulTestCase.assertEmpty(
+            "Irrelevant actions should not be specified in $actionListDirective directive for they are not checked anyway",
+            expectedActions.filter(::isIrrelevantAction),
+        )
+
+        val keepActionsOrder = InTextDirectivesUtils.isDirectiveDefined(fileText, KEEP_ACTIONS_LIST_ORDER_DIRECTIVE)
+        val actualActions = if (keepActionsOrder) {
+            val cachedIntentions = CachedIntentions(psiFile.project, psiFile, null)
+
+            val intentionsOrder = IntentionsOrderProvider.EXTENSION.forLanguage(KotlinLanguage.INSTANCE)
+            val sortedIntentions =
+                intentionsOrder.getSortedIntentions(cachedIntentions, availableActions.map { IntentionActionWithTextCaching(it) })
+            sortedIntentions.map { it.text }.filterOutElementsToExclude(actionsToExclude)
+        } else {
+            availableActions.map { it.text }.filterOutElementsToExclude(actionsToExclude).sorted()
+        }
+
+
+        val expectedActionsInOrder = if (keepActionsOrder) {
+            expectedActions
+        } else {
+            expectedActions.sorted()
+        }
+
+        val expectedActionsDirectives =
+            expectedActionsInOrder.filterOutElementsToExclude(actionsToExclude).map { "$actionListDirective $it" }
+
+        val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$actionListDirective $it" }
+        assertion(actionListDirective, expectedActionsDirectives, actualActionsDirectives)
     }
 
     // TODO: Some missing K2 actions are missing. We filter out them out to avoid the test failure caused by the exact action list match.
@@ -270,3 +333,10 @@ object DirectiveBasedActionUtils {
         CodeInsightBundle.message("remove.intention.shortcut"),
     )
 }
+
+val KotlinPluginMode.actionsListDirectives: Array<String>
+    get() = if (this == KotlinPluginMode.K1) {
+        arrayOf(K1_ACTIONS_LIST_DIRECTIVE)
+    } else {
+        arrayOf(K2_ACTIONS_LIST_DIRECTIVE, K1_ACTIONS_LIST_DIRECTIVE)
+    }

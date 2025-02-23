@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -47,9 +48,17 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
     return names;
   }
 
-  public boolean isStaticAutoImportClass(@Nullable String name) {
+  /**
+   * Determines whether the given name should be considered as a static auto-import name.
+   * Can be a fully qualified name of a class or member of a class
+   *
+   * @param name the name to check, which can be null
+   * @return true if the name is included in the list of static auto-import names, false otherwise
+   */
+  public boolean isStaticAutoImportName(@Nullable String name) {
     if (name == null) return false;
-    return getAllIncludedAutoStaticNames().contains(name);
+    List<String> names = getAllIncludedAutoStaticNames();
+    return names.contains(name) || names.contains(StringUtil.getPackageName(name));
   }
 
   public boolean isExcluded(@NotNull String name) {
@@ -113,9 +122,9 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   @Override
   public @NotNull OptionController getOptionController() {
     String autoStaticImportMessage =
-      JavaBundle.message("auto.static.import.comment") + " " + JavaBundle.message("auto.static.import.comment.2");
+      JavaBundle.message("auto.static.import.comment");
     String excludeStaticImportMessage =
-      JavaBundle.message("exclude.from.imports.no.exclusions") + " "+ JavaBundle.message("exclude.from.imports.no.exclusions.2");
+      JavaBundle.message("exclude.from.imports.no.exclusions");
     return OptionContainer.super.getOptionController()
       .withRootPane(() -> OptPane.pane(
         OptPane.stringList("includedAutoStaticNames", autoStaticImportMessage),

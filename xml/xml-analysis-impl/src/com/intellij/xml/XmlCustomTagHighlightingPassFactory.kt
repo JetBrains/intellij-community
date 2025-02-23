@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighli
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.xml.XmlFile
 import com.intellij.xml.util.HtmlUtil
 
 class XmlCustomTagHighlightingPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {

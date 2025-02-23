@@ -108,7 +108,7 @@ public class GridCopyProvider implements CopyProvider {
     SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
     if (selectionModel.getSelectedRowCount() == 1 &&
         selectionModel.getSelectedColumnCount() == 1) {
-      return GridExtractorsUtilCore.getSingleValueExtractor(myGrid.getObjectFormatter(), GridUtil.getConfigProvider(myGrid));
+      return GridExtractorsUtilCore.getSingleValueExtractor(myGrid.getObjectFormatter(), GridUtil.getConfigProvider(myGrid, true));
     }
 
     DataExtractorFactory extractorFactory = DataExtractorFactories.getExtractorFactory(myGrid, GridUtil::suggestPlugin);

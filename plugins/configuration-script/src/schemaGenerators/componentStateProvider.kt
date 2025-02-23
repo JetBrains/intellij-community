@@ -3,7 +3,6 @@ package com.intellij.configurationScript.schemaGenerators
 import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.SchemaGenerator
 import com.intellij.configurationStore.ComponentSerializationUtil
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent

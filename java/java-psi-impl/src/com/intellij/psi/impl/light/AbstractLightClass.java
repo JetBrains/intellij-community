@@ -99,6 +99,11 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
+  public @Nullable PsiReferenceList getPermitsList() {
+    return getDelegate().getPermitsList();
+  }
+
+  @Override
   public @Nullable PsiReferenceList getImplementsList() {
     return getDelegate().getImplementsList();
   }

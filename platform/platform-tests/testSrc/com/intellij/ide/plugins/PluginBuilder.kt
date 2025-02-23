@@ -46,7 +46,7 @@ fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") des
   outDir.resolve("$ownerId/$moduleId.xml").write(descriptor.trimIndent())
 }
 
-class PluginBuilder {
+class PluginBuilder private constructor() {
   private data class ExtensionBlock(val ns: String, val text: String)
   private data class DependsTag(val pluginId: String, val configFile: String?)
 
@@ -65,6 +65,7 @@ class PluginBuilder {
   private var extensionPoints: String? = null
   private var untilBuild: String? = null
   private var version: String? = null
+  private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
   private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
@@ -73,8 +74,9 @@ class PluginBuilder {
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder, val separateJar: Boolean)
   private val subDescriptors = ArrayList<SubDescriptor>()
 
-  init {
+  fun dependsIntellijModulesLang(): PluginBuilder {
     depends("com.intellij.modules.lang")
+    return this
   }
 
   fun id(id: String): PluginBuilder {
@@ -107,8 +109,8 @@ class PluginBuilder {
     return this
   }
 
-  fun depends(pluginId: String, subDescriptor: PluginBuilder): PluginBuilder {
-    val fileName = "dep_${pluginIdCounter.incrementAndGet()}.xml"
+  fun depends(pluginId: String, subDescriptor: PluginBuilder, filename: String? = null): PluginBuilder {
+    val fileName = filename ?: "dep_${pluginIdCounter.incrementAndGet()}.xml"
     subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor, separateJar = false))
     depends(pluginId, fileName)
     return this
@@ -122,6 +124,11 @@ class PluginBuilder {
 
     // remove default dependency on lang
     moduleDescriptor.noDepends()
+    return this
+  }
+
+  fun pluginAlias(alias: String): PluginBuilder {
+    pluginAliases.add(alias)
     return this
   }
 
@@ -235,6 +242,11 @@ class PluginBuilder {
         append("\n</dependencies>")
       }
 
+      for (alias in pluginAliases) {
+        append("\n")
+        append("""<module value="$alias"/>""")
+      }
+
       append("</idea-plugin>")
     }
   }
@@ -293,6 +305,11 @@ class PluginBuilder {
     }
 
     return this
+  }
+
+  companion object {
+    fun withModulesLang(): PluginBuilder = PluginBuilder().dependsIntellijModulesLang()
+    fun empty(): PluginBuilder = PluginBuilder()
   }
 }
 

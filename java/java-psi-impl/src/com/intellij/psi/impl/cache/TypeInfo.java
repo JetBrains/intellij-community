@@ -736,6 +736,7 @@ public /*sealed*/ abstract class TypeInfo {
    * @return type text without annotations
    * @deprecated Use simply {@link TypeInfo#text()}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nullable String createTypeText(@NotNull TypeInfo typeInfo) {
     return typeInfo.text();

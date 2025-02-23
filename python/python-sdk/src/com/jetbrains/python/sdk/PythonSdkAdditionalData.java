@@ -60,7 +60,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
    * @deprecated Use constructor with data. This ctor only supports flavours with empty data
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor<?> flavor) {
     this(flavor == null
          ? PyFlavorAndData.getUNKNOWN_FLAVOR_DATA()
@@ -243,7 +243,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
-    Set<VirtualFile> ret = new HashSet<>();
+    Set<VirtualFile> ret = new LinkedHashSet<>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
   }

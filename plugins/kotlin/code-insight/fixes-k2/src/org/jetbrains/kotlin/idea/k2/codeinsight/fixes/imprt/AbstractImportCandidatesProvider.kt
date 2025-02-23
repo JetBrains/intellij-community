@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -19,32 +20,31 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.ImportPath
 
-internal abstract class AbstractImportCandidatesProvider(
-    protected val positionContext: KotlinNameReferencePositionContext,
-): ImportCandidatesProvider {
+internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProvider {
+    protected abstract val positionContext: KotlinRawPositionContext
 
-    private val file: KtFile get() = positionContext.nameExpression.containingKtFile
+    private val file: KtFile get() = positionContext.position.containingFile as KtFile
     private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun ImportCandidate.isVisible(fileSymbol: KaFileSymbol): Boolean = 
+    protected fun ImportCandidate.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean = 
         when (this) {
-            is CallableImportCandidate -> symbol.isVisible(fileSymbol) && dispatcherObject?.isVisible(fileSymbol) != false
-            is ClassLikeImportCandidate -> symbol.isVisible(fileSymbol)
+            is CallableImportCandidate -> symbol.isVisible(visibilityChecker) && dispatcherObject?.isVisible(visibilityChecker) != false
+            is ClassLikeImportCandidate -> symbol.isVisible(visibilityChecker)
         }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
-        this is KaDeclarationSymbol && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
+    private fun KaSymbol.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean =
+        this is KaDeclarationSymbol && visibilityChecker.isVisible(this)
 
     protected fun PsiElement.isImported(): Boolean =
         kotlinFqName?.let { ImportPath(it, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList()) } == true
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {
-            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC))
+            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC) || positionContext.acceptsInnerClasses())
             is PsiField, is PsiMethod -> hasModifier(JvmModifier.STATIC) && containingClass?.qualifiedName != null
             else -> false
         }

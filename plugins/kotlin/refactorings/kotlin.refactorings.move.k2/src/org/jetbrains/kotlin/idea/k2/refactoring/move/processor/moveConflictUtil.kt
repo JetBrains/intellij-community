@@ -93,6 +93,7 @@ internal fun findAllMoveConflicts(
         putAllValues(checkNameClashConflicts(allDeclarationsToMove, targetPkg, targetKaModule, target?.getTarget() as? KtClassOrObject))
         putAllValues(checkUsedTypeParameterFromParentClassConflict(allDeclarationsToMove, target))
         putAllValues(checkFunctionOverriddenInSubclassConflict(allDeclarationsToMove))
+        putAllValues(checkRequiresClassInstanceConflict(usages, allDeclarationsToMove, target))
     }
 }
 

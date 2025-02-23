@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -27,10 +27,10 @@ import java.util.List;
 /**
  * GlobalMatchingVisitor does the walking of the pattern tree, and invokes the language specific MatchingVisitor on elements.
  * It also stores the current code element to match. MatchingVisitor visits pattern elements, not code elements.
- * A language specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
+ * A language-specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
  * {@link #getElement(Class)} or {@link #getElement()} from inside the visit methods.
  */
-public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
+public final class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
   public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
@@ -40,7 +40,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private PsiElement myElement;
 
   /**
-   * The result of matching in the language specific visitor
+   * The result of matching in the language-specific visitor
    */
   private boolean myResult;
 
@@ -71,7 +71,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Set the current result to the specified value.
    * @param result  the new result value
-   * @return the current value of result, i.e. the value just set. To allow a call to this method used as an if condition.
+   * @return the current value of a result, i.e., the value just set. To allow a call to this method used as an if condition.
    */
   @Contract("true->true;false->false")
   public boolean setResult(boolean result) {
@@ -103,7 +103,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return LexicalNodesFilter.getInstance();
   }
 
-  public final boolean handleTypedElement(PsiElement typedElement, PsiElement match) {
+  public boolean handleTypedElement(PsiElement typedElement, PsiElement match) {
     final MatchingHandler initialHandler = matchContext.getPattern().getHandler(typedElement);
     MatchingHandler handler = initialHandler;
     if (handler instanceof DelegatingHandler) {
@@ -121,7 +121,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   /**
-   * Identifies the match between given element of program tree and pattern element
+   * Identifies the match between given element of a program tree and pattern element
    *
    * @param patternElement the pattern element
    * @param matchElement the match element from the code.
@@ -132,7 +132,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     ProgressManager.checkCanceled();
     if (patternElement == matchElement) return true;
     if (patternElement == null) {
-      // absence of pattern element is match
+      // absence of a pattern element is match
       return true;
     }
     if (matchElement == null) {
@@ -261,7 +261,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
         setResult(handler.handle(matchNode, matchContext));
 
         final MatchResultImpl nestedResult = handler.getNestedResult();
-        if (nestedResult != null) { // some constraint prevent from adding
+        if (nestedResult != null) { // some constraint prevents from adding
           copyResults(nestedResult);
           handler.setNestedResult(null);
         }
@@ -273,7 +273,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private void copyResults(MatchResult source) {
-    final MatchResultImpl result = matchContext.getResult();
-    for (MatchResult child : source.getChildren()) result.addChild(child);
+    MatchResultImpl result = matchContext.getResult();
+    for (MatchResult child : source.getChildren()) {
+      result.addChild(child);
+    }
   }
 }

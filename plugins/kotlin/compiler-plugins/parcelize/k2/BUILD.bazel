@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True
 )
 
@@ -23,6 +22,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-parcelize-compiler-plugin",
@@ -35,7 +35,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [":kotlin-compiler-plugins-parcelize-k2_resources"]
 )

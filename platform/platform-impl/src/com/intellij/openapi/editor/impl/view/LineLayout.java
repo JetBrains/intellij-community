@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.Bidi;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -300,29 +300,29 @@ abstract class LineLayout {
         specialFragment = SpecialCharacterFragment.create(view, c, text, i);
       }
       if (specialFragment != null) {
-        addFragmentsNoTabs(run, chunk, text, last, i, it);
+        addFragmentsNoTabs(run, chunk, text, last, i, it, view);
         chunk.fragments.add(specialFragment);
         last = i + 1;
       }
     }
-    addFragmentsNoTabs(run, chunk, text, last, end, it);
+    addFragmentsNoTabs(run, chunk, text, last, end, it, view);
     assert !chunk.fragments.isEmpty();
   }
 
-  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it) {
+  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it, EditorView view) {
     if (start < end) {
       it.start(text, start, end);
       while (!it.atEnd()) {
-        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl());
+        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl(), view);
         it.advance();
       }
     }
   }
 
-  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
+  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl, EditorView view) {
     if (to > from) {
       assert fontInfo != null;
-      TextFragmentFactory.createTextFragments(chunk.fragments, chars, from, to, isRtl, fontInfo);
+      TextFragmentFactory.createTextFragments(chunk.fragments, chars, from, to, isRtl, fontInfo, view);
     }
   }
 

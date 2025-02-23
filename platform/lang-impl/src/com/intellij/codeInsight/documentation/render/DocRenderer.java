@@ -29,7 +29,6 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
@@ -416,7 +415,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
-        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
         JBHtmlPaneConfiguration.builder()
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
           .customStyleSheetProvider(bg -> getStyleSheet(editor))

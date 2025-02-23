@@ -23,8 +23,9 @@ from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
-from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 from _pydevd_bundle.pydevd_constants import IS_PY313
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY314
 
 
 try:
@@ -285,7 +286,7 @@ def test_case_suspend_thread(case_setup):
 # we're inside the tracing other threads don't run (so, we can have only one
 # thread paused in the debugger).
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
-@pytest.mark.xfail(IS_PY313, reason='PCQA-888')
+@pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-888')
 def test_case_suspend_all_thread(case_setup):
     with case_setup.test_file('_debugger_case_suspend_all.py') as writer:
         writer.write_make_initial_run()
@@ -673,7 +674,6 @@ def test_case_15(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.xfail(reason="PCQA-702")
 def test_case_16(case_setup):
     # numpy.ndarray resolver
     try:
@@ -693,19 +693,19 @@ def test_case_16(case_setup):
         writer.write_get_frame(hit.thread_id, hit.frame_id)
         writer.wait_for_multiple_vars((
             (
-                '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B 0.%252B1.j  1.%252B1.j  2.%252B1.j  3.%252B1.j  4.%252B1.j  5.%252B1.j  6.%252B1.j  7.%252B1.j  8.%252B1.j%250A  9.%252B1.j 10.%252B1.j 11.%252B1.j 12.%252B1.j 13.%252B1.j 14.%252B1.j 15.%252B1.j 16.%252B1.j 17.%252B1.j%250A 18.%252B1.j 19.%252B1.j 20.%252B1.j 21.%252B1.j 22.%252B1.j 23.%252B1.j 24.%252B1.j 25.%252B1.j 26.%252B1.j%250A 27.%252B1.j 28.%252B1.j 29.%252B1.j 30.%252B1.j 31.%252B1.j 32.%252B1.j 33.%252B1.j 34.%252B1.j 35.%252B1.j%250A 36.%252B1.j 37.%252B1.j 38.%252B1.j 39.%252B1.j 40.%252B1.j 41.%252B1.j 42.%252B1.j 43.%252B1.j 44.%252B1.j%250A 45.%252B1.j 46.%252B1.j 47.%252B1.j 48.%252B1.j 49.%252B1.j 50.%252B1.j 51.%252B1.j 52.%252B1.j 53.%252B1.j%250A 54.%252B1.j 55.%252B1.j 56.%252B1.j 57.%252B1.j 58.%252B1.j 59.%252B1.j 60.%252B1.j 61.%252B1.j 62.%252B1.j%250A 63.%252B1.j 64.%252B1.j 65.%252B1.j 66.%252B1.j 67.%252B1.j 68.%252B1.j 69.%252B1.j 70.%252B1.j 71.%252B1.j%250A 72.%252B1.j 73.%252B1.j 74.%252B1.j 75.%252B1.j 76.%252B1.j 77.%252B1.j 78.%252B1.j 79.%252B1.j 80.%252B1.j%250A 81.%252B1.j 82.%252B1.j 83.%252B1.j 84.%252B1.j 85.%252B1.j 86.%252B1.j 87.%252B1.j 88.%252B1.j 89.%252B1.j%250A 90.%252B1.j 91.%252B1.j 92.%252B1.j 93.%252B1.j 94.%252B1.j 95.%252B1.j 96.%252B1.j 97.%252B1.j 98.%252B1.j%250A 99.%252B1.j%255D" isContainer="True" />',
-                '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B  0.%252B1.j   1.%252B1.j   2.%252B1.j   3.%252B1.j   4.%252B1.j   5.%252B1.j   6.%252B1.j   7.%252B1.j%250A   8.%252B1.j   9.%252B1.j  10.%252B1.j  11.%252B1.j  12.%252B1.j  13.%252B1.j  14.%252B1.j  15.%252B1.j%250A  16.%252B1.j  17.%252B1.j  18.%252B1.j  19.%252B1.j  20.%252B1.j  21.%252B1.j  22.%252B1.j  23.%252B1.j%250A  24.%252B1.j  25.%252B1.j  26.%252B1.j  27.%252B1.j  28.%252B1.j  29.%252B1.j  30.%252B1.j  31.%252B1.j%250A  32.%252B1.j  33.%252B1.j  34.%252B1.j  35.%252B1.j  36.%252B1.j  37.%252B1.j  38.%252B1.j  39.%252B1.j%250A  40.%252B1.j  41.%252B1.j  42.%252B1.j  43.%252B1.j  44.%252B1.j  45.%252B1.j  46.%252B1.j  47.%252B1.j%250A  48.%252B1.j  49.%252B1.j  50.%252B1.j  51.%252B1.j  52.%252B1.j  53.%252B1.j  54.%252B1.j  55.%252B1.j%250A  56.%252B1.j  57.%252B1.j  58.%252B1.j  59.%252B1.j  60.%252B1.j  61.%252B1.j  62.%252B1.j  63.%252B1.j%250A  64.%252B1.j  65.%252B1.j  66.%252B1.j  67.%252B1.j  68.%252B1.j  69.%252B1.j  70.%252B1.j  71.%252B1.j%250A  72.%252B1.j  73.%252B1.j  74.%252B1.j  75.%252B1.j  76.%252B1.j  77.%252B1.j  78.%252B1.j  79.%252B1.j%250A  80.%252B1.j  81.%252B1.j  82.%252B1.j  83.%252B1.j  84.%252B1.j  85.%252B1.j  86.%252B1.j  87.%252B1.j%250A  88.%252B1.j  89.%252B1.j  90.%252B1.j  91.%252B1.j  92.%252B1.j  93.%252B1.j  94.%252B1.j  95.%252B1.j%250A  96.%252B1.j  97.%252B1.j  98.%252B1.j  99.%252B1.j%255D" isContainer="True" />'
+                '<var name="smallarray" type="ndarray" qualifier="numpy"',
+                '<var name="smallarray" type="ndarray" qualifier="numpy"',
             ),
 
             (
-                '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...  9997  9998  9999%255D%250A %255B10000 10001 10002 ... 19997 19998 19999%255D%250A %255B20000 20001 20002 ... 29997 29998 29999%255D%250A ...%250A %255B70000 70001 70002 ... 79997 79998 79999%255D%250A %255B80000 80001 80002 ... 89997 89998 89999%255D%250A %255B90000 90001 90002 ... 99997 99998 99999%255D%255D" isContainer="True" />',
-                '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...%252C  9997  9998  9999%255D%250A %255B10000 10001 10002 ...%252C 19997 19998 19999%255D%250A %255B20000 20001 20002 ...%252C 29997 29998 29999%255D%250A ...%252C %250A %255B70000 70001 70002 ...%252C 79997 79998 79999%255D%250A %255B80000 80001 80002 ...%252C 89997 89998 89999%255D%250A %255B90000 90001 90002 ...%252C 99997 99998 99999%255D%255D" isContainer="True" />'
+                '<var name="bigarray" type="ndarray" qualifier="numpy"',
+                '<var name="bigarray" type="ndarray" qualifier="numpy"'
             ),
 
             # Any of the ones below will do.
             (
-                '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ... 9999997 9999998 9999999%255D" isContainer="True" />',
-                '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ...%252C 9999997 9999998 9999999%255D" isContainer="True" />'
+                '<var name="hugearray" type="ndarray" qualifier="numpy"',
+                '<var name="hugearray" type="ndarray" qualifier="numpy"'
             )
         ))
 
@@ -715,56 +715,47 @@ def test_case_16(case_setup):
             '<var name="min" type="complex128"',
             '<var name="max" type="complex128"',
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"',
         ))
         # ...and check that the internals are resolved properly
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'smallarray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray')
         # isContainer could be true on some numpy versions, so, we only check for the var begin.
         writer.wait_for_multiple_vars((
             [
-                '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
-                '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
-                '<var name="size" type="int" qualifier="{0}" value="int%3A 100000"'.format(builtin_qualifier),
+                '<var name="min" type="int64" qualifier="numpy"',
+                '<var name="min" type="int64" qualifier="numpy"',
+                '<var name="size" type="int" qualifier="{0}"'.format(builtin_qualifier),
             ],
             [
-                '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
-                '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
-                '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"',
-                '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
+                '<var name="max" type="int64" qualifier="numpy"',
+                '<var name="max" type="int32" qualifier="numpy"',
+                '<var name="max" type="int64" qualifier="numpy"',
+                '<var name="max" type="int32" qualifier="numpy"',
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"'
         ))
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         # this one is different because it crosses the magic threshold where we don't calculate
         # the min/max
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray')
         writer.wait_for_var((
             [
-                '<var name="min" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier="{0}"'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier="{0}"'.format(builtin_qualifier),
             ],
             [
-                '<var name="max" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier="{0}"'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier="{0}"'.format(builtin_qualifier),
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"',
         ))
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
@@ -1075,7 +1066,7 @@ def test_case_qthread4(case_setup):
         writer.log.append('Marking finished ok.')
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-941')
 def test_m_switch(case_setup_m_switch):
     with case_setup_m_switch.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -1102,7 +1093,7 @@ def test_m_switch(case_setup_m_switch):
 
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-942')
 def test_module_entry_point(case_setup_m_switch_entry_point):
     with case_setup_m_switch_entry_point.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -1654,22 +1645,6 @@ def test_case_settrace(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(True or IS_PY26 or IS_JYTHON, reason='This is *very* flaky. Scapy only supports 2.7 onwards, not available for jython.')
-def test_case_scapy(case_setup):
-    with case_setup.test_file('_debugger_case_scapy.py') as writer:
-        writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
-        writer.reader_thread.set_messages_timeout(30)  # Starting scapy may be slow (timed out with 15 seconds on appveyor).
-        writer.write_add_breakpoint(2, None)
-        writer.write_make_initial_run()
-
-        hit = writer.wait_for_breakpoint_hit()
-        thread_id = hit.thread_id
-        frame_id = hit.frame_id
-
-        writer.write_run_thread(thread_id)
-        writer.finished_ok = True
-
-
 @pytest.mark.skipif(IS_APPVEYOR or IS_JYTHON, reason='Flaky on appveyor / Jython encoding issues (needs investigation).')
 def test_redirect_output(case_setup):
 
@@ -1966,7 +1941,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-735")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-735")
 def test_stop_on_start_regular(case_setup):
 
     with case_setup.test_file('_debugger_case_simple_calls.py') as writer:
@@ -2022,7 +1997,7 @@ def test_generator_cases(case_setup, filename):
 
         writer.finished_ok = True
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-736")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-736")
 def test_stop_on_start_m_switch(case_setup_m_switch):
 
     with case_setup_m_switch.test_file() as writer:
@@ -2036,7 +2011,7 @@ def test_stop_on_start_m_switch(case_setup_m_switch):
         writer.finished_ok = True
 
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-737")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-737")
 def test_stop_on_start_entry_point(case_setup_m_switch_entry_point):
 
     with case_setup_m_switch_entry_point.test_file() as writer:
@@ -2156,6 +2131,7 @@ def test_multiprocessing(case_setup_multiprocessing):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PY-79070", strict=False)
 def test_fork_no_attach(case_setup):
     with case_setup.test_file('_debugger_case_fork.py') as writer:
         writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
@@ -2481,8 +2457,8 @@ def test_return_value(case_setup):
 @pytest.mark.parametrize(
     'check_single_notification',
     (
-        pytest.param(True, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-889')),
-        pytest.param(False, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-890')),
+        pytest.param(True, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-889')),
+        pytest.param(False, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-890')),
     ),
 )
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):

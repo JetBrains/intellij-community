@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
-// IGNORE_K2
 
 package test
 
@@ -19,7 +18,6 @@ class Outer {
 // FILE: first.after.kt
 // "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
-// IGNORE_K2
 
 package test
 

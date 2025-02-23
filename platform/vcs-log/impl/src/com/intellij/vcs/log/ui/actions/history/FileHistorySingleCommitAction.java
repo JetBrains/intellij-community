@@ -26,7 +26,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 /**
  * @deprecated replaced by {@link FileHistoryOneCommitAction}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

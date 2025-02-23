@@ -8,8 +8,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.async
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.service.sources.GradleLibrarySourcesDownloader
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
@@ -29,11 +27,6 @@ class GradleDocumentationDownloader : DocumentationDownloader {
   }
 
   override suspend fun download(project: Project, file: VirtualFile): Boolean {
-    // operation should be executed in a different coroutine scope to prevent
-    // cancellation on the documentation popup close
-    val nonCancellableCoroutineScope = GradleCoroutineScopeProvider.getInstance(project).cs
-    return nonCancellableCoroutineScope.async {
-      return@async GradleLibrarySourcesDownloader.download(project, file) != null
-    }.await()
+    return GradleLibrarySourcesDownloader.download(project, file) != null
   }
 }

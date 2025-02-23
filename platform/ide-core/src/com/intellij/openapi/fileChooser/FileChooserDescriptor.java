@@ -38,6 +38,7 @@ public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseFolders;
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
+  private final @Nullable FileChooserDescriptor myBaseDescriptor;
 
   private @NlsContexts.DialogTitle String myTitle = IdeCoreBundle.message("file.chooser.default.title");
   private @NlsContexts.Label String myDescription;
@@ -63,22 +64,30 @@ public class FileChooserDescriptor implements Cloneable {
     boolean chooseJarContents,
     boolean chooseMultiple
   ) {
-    this(chooseFiles || chooseJars || chooseJarsAsFiles, chooseFolders, chooseJarContents, chooseMultiple);
+    this(chooseFiles || (chooseJars && !chooseJarContents) || chooseJarsAsFiles, chooseFolders, chooseJarContents, chooseMultiple);
   }
 
   FileChooserDescriptor(boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple) {
+    this(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple, null);
+  }
+
+  private FileChooserDescriptor(
+    boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple,
+    @Nullable FileChooserDescriptor baseDescriptor
+  ) {
     myChooseFiles = chooseFiles;
     myChooseFolders = chooseFolders;
     myChooseJarContents = chooseJarContents;
     myChooseMultiple = chooseMultiple;
+    myBaseDescriptor = baseDescriptor;
   }
 
   /**
-   * Prefer {@link FileChooserDescriptorFactory} and {@link #withExtensionFilter} / {@link #withFileFilter};
+   * Prefer {@link FileChooserDescriptorFactory} and {@link #withExtensionFilter};
    * use this way only for overriding default behavior.
    */
   public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
-    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJarContents(), d.isChooseMultiple());
+    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJarContents(), d.isChooseMultiple(), d);
     myTitle = d.getTitle();
     myDescription = d.getDescription();
     myHideIgnored = d.isHideIgnored();
@@ -216,8 +225,6 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * @see #withExtensionFilter(String, String...)
-   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(FileType)
-   * @see FileChooserDescriptorFactory#createSingleFileOrFolderDescriptor(FileType)
    */
   public FileChooserDescriptor withExtensionFilter(@NotNull FileType type) {
     return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", type.getName()), type);
@@ -239,7 +246,6 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * @see #withExtensionFilter(String, String...)
-   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(String)
    */
   public FileChooserDescriptor withExtensionFilter(@NotNull String extension) {
     return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", extension.toUpperCase(Locale.ROOT)), extension);
@@ -330,7 +336,7 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseFiles || myChooseJarContents && isArchive(file);
   }
 
-  private boolean matchesFilters(VirtualFile file) {
+  protected boolean matchesFilters(VirtualFile file) {
     return
       (myExtensionFilter == null || ContainerUtil.exists(myExtensionFilter.second, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext))) &&
       (myFileTypeFilter == null || ContainerUtil.exists(myFileTypeFilter, type -> FileTypeRegistry.getInstance().isFileOfType(file, type))) &&
@@ -348,7 +354,11 @@ public class FileChooserDescriptor implements Cloneable {
    * @param files selected files to be checked
    * @throws Exception if selected files cannot be accepted, the exception message will be shown in the UI.
    */
-  public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception { }
+  public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
+    if (myBaseDescriptor != null) {
+      myBaseDescriptor.validateSelectedFiles(files);
+    }
+  }
 
   public Icon getIcon(VirtualFile file) {
     return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));

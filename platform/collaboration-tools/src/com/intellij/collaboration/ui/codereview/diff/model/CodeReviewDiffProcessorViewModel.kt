@@ -50,7 +50,7 @@ interface PreLoadingCodeReviewAsyncDiffViewModelDelegate<C : Any, CVM : AsyncDif
   companion object {
     fun <D : Any, C : Any, CVM : AsyncDiffViewModel> create(
       preloadedDataFlow: Flow<ComputedResult<D>?>,
-      changesPreProcessor: Flow<(List<C>) -> List<C>>,
+      changesPreProcessor: Flow<(List<C>) -> List<C>> = flowOf { it },
       createViewModel: CoroutineScope.(D, C) -> CVM,
     ): PreLoadingCodeReviewAsyncDiffViewModelDelegate<C, CVM> =
       PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl(preloadedDataFlow, changesPreProcessor, createViewModel)
@@ -85,17 +85,22 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
       var lastList: List<C> = emptyList()
       changesPreProcessor.collectLatest { preProcessor ->
         changesToShow.collectScoped { changesState ->
-          if (changesState.selectedChanges.list != lastList) {
-            emit(ComputedResult.loading())
-            val processedList = preProcessor(changesState.selectedChanges.list)
-            vmsContainer.update(processedList)
-            lastList = changesState.selectedChanges.list
+          try {
+            if (changesState.selectedChanges.list != lastList) {
+              emit(ComputedResult.loading())
+              val processedList = preProcessor(changesState.selectedChanges.list)
+              vmsContainer.update(processedList)
+              lastList = changesState.selectedChanges.list
+            }
+            val mappingState = vmsContainer.mappingState.value
+            val vms = mappingState.values.toList()
+            val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
+            val newState = ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
+            emit(ComputedResult.success(newState))
           }
-          val mappingState = vmsContainer.mappingState.value
-          val vms = mappingState.values.toList()
-          val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
-          val newState = ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
-          emit(ComputedResult.success(newState))
+          catch (e: Exception) {
+            emit(ComputedResult.failure(e))
+          }
         }
       }
     }

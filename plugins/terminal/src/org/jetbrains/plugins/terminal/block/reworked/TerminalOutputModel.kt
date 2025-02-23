@@ -3,14 +3,17 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
+import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.
  */
-internal interface TerminalOutputModel {
+@ApiStatus.Internal
+interface TerminalOutputModel {
   val document: Document
 
   /**
@@ -34,4 +37,8 @@ internal interface TerminalOutputModel {
   fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
+
+  fun dumpState(): TerminalOutputModelState
+
+  fun restoreFromState(state: TerminalOutputModelState)
 }

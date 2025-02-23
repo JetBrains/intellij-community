@@ -34,6 +34,16 @@ import org.jetbrains.concurrency.await
 import java.awt.Point
 
 internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
+  override suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int {
+    val project = projectId.findProject()
+    val editor = editorId.findEditor()
+    return readAction {
+      // adjust offset to match with other actions, like go to declaration
+      val document = editor.document
+      TargetElementUtil.adjustOffset(PsiDocumentManager.getInstance(project).getPsiFile(document), document, offset)
+    }
+  }
+
   override suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo? {
     return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
@@ -58,13 +68,11 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
   ): ExpressionInfo? {
     val document = editor.getDocument()
     val evaluateExpressionData = readAction {
-      // adjust offset to match with other actions, like go to declaration
-      val adjustedOffset = TargetElementUtil.adjustOffset(PsiDocumentManager.getInstance(project).getPsiFile(document), document, offset)
       val selectionModel = editor.getSelectionModel()
       val selectionStart = selectionModel.selectionStart
       val selectionEnd = selectionModel.selectionEnd
       val hasSelection = selectionModel.hasSelection()
-      EditorEvaluateExpressionData(adjustedOffset, hasSelection, selectionStart, selectionEnd)
+      EditorEvaluateExpressionData(offset, hasSelection, selectionStart, selectionEnd)
     }
     if ((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && evaluateExpressionData.hasSelection
         && evaluateExpressionData.adjustedOffset in evaluateExpressionData.selectionStart..evaluateExpressionData.selectionEnd

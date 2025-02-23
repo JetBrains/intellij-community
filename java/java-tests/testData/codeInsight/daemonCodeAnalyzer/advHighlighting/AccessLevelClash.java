@@ -7,7 +7,7 @@ public class a implements i {
  void <error descr="'ff()' in 'a' clashes with 'ff()' in 'i'; attempting to assign weaker access privileges ('package-private'); was 'public'">ff</error>() {}
 }
 class ai implements i {
- public <error descr="'ff()' in 'ai' clashes with 'ff()' in 'i'; attempting to use incompatible return type">int</error> ff() { return 0;}
+ public <error descr="'ff()' in 'ai' clashes with 'ff()' in 'i'; incompatible return type">int</error> ff() { return 0;}
 }
 
 class c2 implements i {
@@ -29,7 +29,7 @@ class c4 extends c3 {
  private String fff(String s) throws java.io.IOException { return null; }
 }
 class c4i extends c3 {
- protected <error descr="'g()' in 'c4i' clashes with 'g()' in 'c2'; attempting to use incompatible return type">Object</error> g() {return null;}
+ protected <error descr="'g()' in 'c4i' clashes with 'g()' in 'c2'; incompatible return type">Object</error> g() {return null;}
 }
 
 // sibling inheritance
@@ -39,7 +39,7 @@ interface i5 { void ff(); }
 }
 
 class c7 { public String ff() { return null;} }
-<error descr="'ff()' in 'c7' clashes with 'ff()' in 'i5'; attempting to use incompatible return type">class c8 extends c7 implements i5</error> {
+<error descr="'ff()' in 'c7' clashes with 'ff()' in 'i5'; incompatible return type">class c8 extends c7 implements i5</error> {
 }
 
 // interface should not clash with Object
@@ -47,9 +47,9 @@ interface A {
     Object clone() throws CloneNotSupportedException;
     void finalize();
 
-    <error descr="'hashCode()' in 'A' clashes with 'hashCode()' in 'java.lang.Object'; attempting to use incompatible return type">void</error> hashCode();
-    <error descr="'equals(Object)' in 'A' clashes with 'equals(Object)' in 'java.lang.Object'; attempting to use incompatible return type">void</error> equals(Object o);
-    <error descr="'toString()' in 'A' clashes with 'toString()' in 'java.lang.Object'; attempting to use incompatible return type">void</error> toString();
+    <error descr="'hashCode()' in 'A' clashes with 'hashCode()' in 'java.lang.Object'; incompatible return type">void</error> hashCode();
+    <error descr="'equals(Object)' in 'A' clashes with 'equals(Object)' in 'java.lang.Object'; incompatible return type">void</error> equals(Object o);
+    <error descr="'toString()' in 'A' clashes with 'toString()' in 'java.lang.Object'; incompatible return type">void</error> toString();
 }
 
 interface ConflictWithObject {

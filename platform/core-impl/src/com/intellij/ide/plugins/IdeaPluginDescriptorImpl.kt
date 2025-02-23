@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -181,8 +182,8 @@ class IdeaPluginDescriptorImpl(
   @JvmField
   val packagePrefix: String? = raw.`package`
 
-  private val sinceBuild = raw.sinceBuild
-  private val untilBuild = raw.untilBuild
+  private val sinceBuild: String? = raw.sinceBuild
+  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
   private var isEnabled = true
 
   var isDeleted: Boolean = false
@@ -672,3 +673,28 @@ private val CE_PLUGIN_CARDS = mapOf<String, PluginCardInfo>(
     "Provides an easy way to install AI assistant to your IDE"
   )
 )
+
+private object UntilBuildDeprecation {
+  private val forceHonorUntilBuild = System.getProperty("idea.plugins.honor.until.build.after.243", "false").toBoolean()
+
+  fun nullizeIfTargets243OrLater(untilBuild: String?, diagnosticId: String?): String? {
+    if (forceHonorUntilBuild || untilBuild == null) {
+      return untilBuild
+    }
+    try {
+      val untilBuildNumber = BuildNumber.fromStringOrNull(untilBuild)
+      if (untilBuildNumber != null && untilBuildNumber.baselineVersion >= 243) {
+        if (untilBuildNumber < PluginManagerCore.buildNumber) {
+          // log only if it would fail the compatibility check without the deprecation in place
+          LOG.info("Plugin ${diagnosticId ?: "<no name>"} has until-build set to $untilBuild. " +
+                   "Until-build _from plugin configuration file (plugin.xml)_ for plugins targeting 243+ is ignored. " +
+                   "Effective until-build value can be set via the Marketplace.")
+        }
+        return null
+      }
+    } catch (e: Throwable) {
+      LOG.warn("failed to parse until-build number", e)
+    }
+    return untilBuild
+  }
+}

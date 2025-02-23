@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle;
-import org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants;
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils;
 import org.jetbrains.kotlin.idea.base.util.ProjectStructureUtils;
@@ -64,6 +63,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
+import static org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRendererKt.createDescriptionAwareRenderer;
 
 public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private static final Logger LOG = Logger.getInstance(KotlinCompilerConfigurableTab.class);
@@ -515,9 +515,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             index++;
         }
 
-        languageVersionComboBox.setRenderer(new DescriptionListCellRenderer());
-        kotlinJpsPluginVersionComboBox.setRenderer(new DescriptionListCellRenderer());
-        apiVersionComboBox.setRenderer(new DescriptionListCellRenderer());
+        languageVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+        kotlinJpsPluginVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+        apiVersionComboBox.setRenderer(createDescriptionAwareRenderer());
     }
 
     private static VersionView latestStableVersion = null;

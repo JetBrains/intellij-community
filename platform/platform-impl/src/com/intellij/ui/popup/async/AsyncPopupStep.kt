@@ -5,8 +5,6 @@ import com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
 import org.jetbrains.concurrency.Promise
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 /**
  * Use this "mock" popup step when you need long processing (I/O, network activity etc.) to build real one.

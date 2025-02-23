@@ -79,7 +79,7 @@ public final class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return true;
     });
     for (int fileId = idSet.nextSetBit(0); fileId > 0; fileId = idSet.nextSetBit(fileId + 1)) {
-      if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) != FileIndexingState.UP_TO_DATE) {
+      if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME).updateRequired()) {
         idSet.clear(fileId);
       }
       else if (!consumer.test(fileId)) return false;

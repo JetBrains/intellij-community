@@ -22,10 +22,10 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("should.be.replaced.with.if.type.check")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
         override fun getFamilyName() = KotlinBundle.message("replace.with.if.fix.text")
 
         override fun applyFix(
@@ -47,7 +47,7 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
             )
             commentSaver.restore(result)
         }
-    })
+    }
 
     override fun isApplicableByPsi(expression: KtBinaryExpression): Boolean {
         val left = expression.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return false
@@ -61,9 +61,8 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         return true
     }
 
-    context(KaSession@KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         val withRHS = element.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return null
         if (element.isUsedAsExpression) {
             val lambda = withRHS.getStrictParentOfType<KtLambdaExpression>() ?: return null

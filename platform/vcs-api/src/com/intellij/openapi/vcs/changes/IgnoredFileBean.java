@@ -36,11 +36,11 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     myPattern = null;
   }
 
-  IgnoredFileBean(@NotNull @NonNls String mask) {
+  IgnoredFileBean(@NotNull @NonNls String mask, @Nullable String path) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
     myPattern = PatternUtil.fromMask(mask);
-    myPath = null;
+    myPath = path;
     myFilenameIfFile = null;
     myProject = null;
   }

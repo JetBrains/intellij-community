@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
-import com.intellij.codeInsight.JavaContainerProvider;
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
@@ -21,15 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 final class JavaErrorFormatUtil {
-  static @NotNull @NlsContexts.DetailedDescription String formatClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
-    if (showContainingClasses) {
-      PsiClass class1 = method1.getContainingClass();
-      PsiClass class2 = method2.getContainingClass();
-      if (class1 != null && class2 != null) {
-        return JavaCompilationErrorBundle.message("clash.methods.message.show.classes",
-                                                  formatMethod(method1), formatMethod(method2),
-                                                  formatClass(class1), formatClass(class2));
-      }
+  static @NotNull @NlsContexts.DetailedDescription String formatClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2) {
+    PsiClass class1 = method1.getContainingClass();
+    PsiClass class2 = method2.getContainingClass();
+    if (class1 != null && class2 != null && !class1.isEquivalentTo(class2)) {
+      return JavaCompilationErrorBundle.message("clash.methods.message.show.classes",
+                                                formatMethod(method1), formatMethod(method2),
+                                                formatClass(class1), formatClass(class2));
     }
     return JavaCompilationErrorBundle.message("clash.methods.message", formatMethod(method1), formatMethod(method2));
   }
@@ -58,9 +56,17 @@ final class JavaErrorFormatUtil {
     return symbolName == null ? "?" : symbolName;
   }
 
+  private static PsiElement getContainer(@NotNull PsiElement refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
+      PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
   static @NotNull String formatResolvedSymbolContainer(@NotNull JavaResolveResult result) {
     PsiElement element = result.getElement();
-    PsiElement container = element == null ? null : new JavaContainerProvider().getContainer(element);
+    PsiElement container = element == null ? null : getContainer(element);
     String symbolName = container == null ? null : HighlightMessageUtil.getSymbolName(container, result.getSubstitutor());
     return symbolName == null ? "?" : symbolName;
   }
@@ -95,6 +101,9 @@ final class JavaErrorFormatUtil {
   static @Nullable TextRange getRange(@NotNull PsiElement element) {
     if (element instanceof PsiMember member) {
       return getMemberDeclarationTextRange(member);
+    }
+    if (element instanceof PsiJavaModule module) {
+      return getModuleRange(module);
     }
     if (element instanceof PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
@@ -131,6 +140,12 @@ final class JavaErrorFormatUtil {
       end = method.getThrowsList().getTextRange().getEndOffset();
     }
     return new TextRange(start, end).shiftLeft(method.getTextRange().getStartOffset());
+  }
+
+  private static @NotNull TextRange getModuleRange(@NotNull PsiJavaModule module) {
+    PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
+    return new TextRange(kw != null ? kw.getTextRangeInParent().getStartOffset() : 0, 
+                         module.getNameIdentifier().getTextRangeInParent().getEndOffset());
   }
 
   static @Nullable TextRange getMemberDeclarationTextRange(@NotNull PsiMember member) {

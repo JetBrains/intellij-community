@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.jdi.*
 import org.jetbrains.eval4j.*
@@ -104,7 +105,7 @@ open class JDIEval(
         }
 
         val jdiValue = value.asJdiValue(vm) { OBJECT_TYPE } ?: return false
-        return DebuggerUtils.instanceOf(jdiValue.type(), targetType.className)
+        return DebuggerUtilsImpl.instanceOf((jdiValue as ObjectReference).referenceType(), targetType.asReferenceType())
     }
 
     private fun Type.asReferenceType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ReferenceType =

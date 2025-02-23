@@ -9,7 +9,6 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 import kotlin.io.path.absolute
 import kotlin.io.path.exists
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -40,6 +39,7 @@ object FleetFromSourcesPaths {
     Path.of("") // former path has been emptied here, Fleet should never know about build tooling paths
   }
 
+  @Deprecated(message = "Delete on Dock API breaking", level = DeprecationLevel.ERROR)
   val nemmetPath: Path by lazy {
     projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
   }

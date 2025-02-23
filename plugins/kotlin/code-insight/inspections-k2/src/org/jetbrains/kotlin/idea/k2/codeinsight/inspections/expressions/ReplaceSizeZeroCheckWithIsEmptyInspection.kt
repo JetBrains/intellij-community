@@ -14,14 +14,14 @@ internal class ReplaceSizeZeroCheckWithIsEmptyInspection : ReplaceSizeCheckInspe
     override val methodToReplaceWith: EmptinessCheckMethod
         get() = EmptinessCheckMethod.IS_EMPTY
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: ReplacementInfo,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : ReplaceSizeCheckQuickFixBase(context) {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : ReplaceSizeCheckQuickFixBase(context) {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.size.zero.check.with.isempty")
-    })
+    }
 
     override fun getProblemDescription(
         element: KtBinaryExpression,

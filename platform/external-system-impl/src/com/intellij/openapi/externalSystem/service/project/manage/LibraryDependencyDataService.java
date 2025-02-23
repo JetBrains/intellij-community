@@ -75,7 +75,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                                          modelsProvider);
       }
       else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
-        processingResult = importLibraryOrderEntry(libraryOrderEntry, toImport.projectLibraries, modifiableRootModel, modelsProvider,
+        processingResult = importLibraryOrderEntry(libraryOrderEntry, toImport.projectLibraries, modifiableRootModel,
                                                    toImport.hasUnresolvedLibraries);
         if (processingResult != null) {
           libraryOrderEntry.setExported(processingResult.isExported());
@@ -127,18 +127,12 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     @NotNull LibraryOrderEntry entry,
     @NotNull Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport,
     @NotNull ModifiableRootModel modifiableRootModel,
-    @NotNull IdeModifiableModelsProvider modelsProvider,
     boolean hasUnresolvedLibraries
   ) {
     String libraryName = entry.getLibraryName();
     LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + entry.getScope().name());
     if (existing != null) {
-      if (modelsProvider.findModuleByPublication(existing.getTarget()) == null) {
-        return existing;
-      }
-      else {
-        modifiableRootModel.removeOrderEntry(entry);
-      }
+      return existing;
     }
     else if (!hasUnresolvedLibraries) {
       // There is a possible case that a project has been successfully imported from external model and after
@@ -205,13 +199,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     }
     LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(projectLib);
     setLibraryScope(orderEntry, projectLib, module, dependencyData);
-    ModuleOrderEntry substitutionEntry = modelsProvider.trySubstitute(module, orderEntry, libraryData);
-    if (substitutionEntry != null) {
-      return substitutionEntry;
-    }
-    else {
-      return orderEntry;
-    }
+    return orderEntry;
   }
 
   private static void setLibraryScope(@NotNull LibraryOrderEntry orderEntry,

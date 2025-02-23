@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotifications
-import java.util.function.Function
 
 internal class WireMockSuggestionProvider : PluginSuggestionProvider {
 

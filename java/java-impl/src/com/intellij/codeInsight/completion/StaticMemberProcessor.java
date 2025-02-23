@@ -23,6 +23,7 @@ import java.util.*;
 
 public abstract class StaticMemberProcessor {
   private final Set<PsiClass> myStaticImportedClasses = new HashSet<>();
+  private final Set<PsiMember> myStaticImportedMembers = new HashSet<>();
   private final PsiElement myPosition;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
@@ -39,6 +40,10 @@ public abstract class StaticMemberProcessor {
 
   public void importMembersOf(@NotNull PsiClass psiClass) {
     myStaticImportedClasses.add(psiClass);
+  }
+
+  public void importMember(@NotNull PsiMember member) {
+    myStaticImportedMembers.add(member);
   }
 
   public void processStaticMethodsGlobally(@NotNull PrefixMatcher matcher, @NotNull Consumer<? super LookupElement> consumer) {
@@ -60,11 +65,8 @@ public abstract class StaticMemberProcessor {
       if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
         if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
         if(!additionalFilter(member)) return;
-        boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-        if (!shouldImport && codeInsightSettings.isStaticAutoImportClass(containingClass.getQualifiedName())) {
-          shouldImport = true;
-        }
-        else {
+        boolean shouldImport = myStaticImportedClasses.contains(containingClass) || myStaticImportedMembers.contains(member);
+        if (!codeInsightSettings.isStaticAutoImportName(containingClass.getQualifiedName() + "." + member.getName())) {
           showHint(shouldImport);
         }
         LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
@@ -118,11 +120,20 @@ public abstract class StaticMemberProcessor {
           }
         }
       }
+
       for (PsiField field : psiClass.getAllFields()) {
         if (nameCondition.value(field. getName())) {
           if (isStaticallyImportable(field)) {
             consumer.consume(field, psiClass);
           }
+        }
+      }
+    }
+
+    for (PsiMember member : myStaticImportedMembers) {
+      if (nameCondition.value(member. getName())) {
+        if (isStaticallyImportable(member)) {
+          consumer.consume(member, member.getContainingClass());
         }
       }
     }

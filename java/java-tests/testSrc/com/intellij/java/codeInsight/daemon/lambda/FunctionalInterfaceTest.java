@@ -16,104 +16,76 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCastExpression;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/functionalInterface";
 
-  private void doTestFunctionalInterface(@Nullable String expectedErrorMessage) {
-    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
-    configureByFile(filePath);
-    final PsiClass psiClass = getJavaFacade().findClass("Foo", GlobalSearchScope.projectScope(getProject()));
-    assertNotNull("Class Foo not found", psiClass);
-
-    final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(psiClass,
-                                                                                getJavaFacade().getElementFactory().createType(psiClass));
-    assertEquals(expectedErrorMessage, errorMessage);
+  private void doTest() {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 
   public void testSimple() {
-    doTestFunctionalInterface(null);
+    doTest();
   }
 
   public void testNoMethods() {
-    doTestFunctionalInterface("No target method found");
+    doTest();
   }
 
   public void testMultipleMethods() {
-    doTestFunctionalInterface(null);
+    doTest();
   }
   
   public void testMultipleMethodsInOne() {
-    doTestFunctionalInterface(null);
+    doTest();
   }
 
   public void testIntersectionOf2FunctionalTypesWithEqualSignatures() {
-    doTestIntersection(null);
+    doTest();
   }
 
   public void testIntersectionOf2FunctionalTypesWithEqualAfterSubstitutionSignatures() {
-    doTestIntersection("Multiple non-overriding abstract methods found in X & Y<Integer>");
+    doTest();
   }
 
   public void testClone() {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
+    doTest();
   }
 
   public void testTwoMethodsSameSignature() {
-    doTestFunctionalInterface(null);
+    doTest();
   } 
   
   public void testTwoMethodsSubSignature() {
-    doTestFunctionalInterface(null);
+    doTest();
   }
   
   public void testTwoMethodsNoSubSignature() {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
+    doTest();
   }
   
   public void testTwoMethodsNoSubSignature1() {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
+    doTest();
   } 
   
   public void testTwoMethodsSameSubstSignature() {
-    doTestFunctionalInterface(null);
+    doTest();
   }
   
   public void testMethodWithTypeParam() {
-    doTestFunctionalInterface("Target method is generic");
+    doTest();
   }
   
   public void testTwoMethodsSameSignatureTypeParams() {
-    doTestFunctionalInterface("Target method is generic");
+    doTest();
   }
 
   public void testAbstractClass() {
-    doTestFunctionalInterface("Target type of a lambda conversion must be an interface");
+    doTest();
   }
 
   public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() {
-    doTestIntersection(null);
-  }
-
-  private void doTestIntersection(final String expectedMessage) {
-    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
-    configureByFile(filePath);
-    final PsiTypeCastExpression castExpression =
-      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiTypeCastExpression.class);
-    assertNotNull(castExpression);
-    final PsiTypeElement castTypeElement = castExpression.getCastType();
-    assertNotNull(castTypeElement);
-    final PsiType type = castTypeElement.getType();
-    final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(castExpression, type);
-    assertEquals(expectedMessage, errorMessage);
+    doTest();
   }
 }

@@ -316,7 +316,7 @@ public final class PythonSdkType extends SdkType {
    */
   @Contract(pure = true)
   static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
-    return PythonSdkUtil.isCustomPythonSdkHomePath(homePath);
+    return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
   }
 
   public static boolean isSkeletonsPath(String path) {

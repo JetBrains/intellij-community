@@ -14,13 +14,13 @@ public class LombokDumbModeApplication {
                 .surname("3")
                 .email("4")
                 .<error descr="Incompatible types. Found: 'capture<?>', required: 'UserDao'">name</error>("1")<error descr="';' expected">a</error>
-                .id(1)
+                .<info descr="Not resolved until the project is fully loaded">id</info>(1)
                 .<info descr="Not resolved until the project is fully loaded">build</info>();
 
         String name = userDao
                 .nhaame();
         <info descr="Not resolved until the project is fully loaded">UserChain</info> userChain = new <info descr="Not resolved until the project is fully loaded">UserChain</info>();
-        String name1 = userChain.getName();
+        String name1 = userChain.<info descr="Not resolved until the project is fully loaded">getName</info>();
     }
 }
 

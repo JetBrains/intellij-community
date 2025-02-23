@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
 )
@@ -35,7 +34,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//plugins/IntelliLang:langInjection",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "@lib//:kotlinc-analysis-api",
   ],

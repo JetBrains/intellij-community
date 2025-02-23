@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -43,8 +44,14 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance.
    */
+
+  // todo ijpl-339 rework usages
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread(generateAssertion = false)
+  public abstract @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
   /**
    * Returns the cached PSI file for the specified document.
@@ -52,7 +59,14 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance, or {@code null} if there is currently no cached PSI tree for the file.
    */
-  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document);
+  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document) ;
+
+  /**
+   * @deprecated please don't use at the moment
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
   /**
    * Returns the document for the specified PSI file.

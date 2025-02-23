@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -115,10 +115,16 @@ public final class EditorTestUtil {
     }
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId) {
     executeAction(editor, actionId, false);
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     AnAction action = actionManager.getAction(actionId);

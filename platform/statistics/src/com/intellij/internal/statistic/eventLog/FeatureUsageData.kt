@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.codeWithMe.ClientId
 import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -24,7 +23,6 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
-import java.util.regex.Pattern
 
 private val LOG = logger<FeatureUsageData>()
 

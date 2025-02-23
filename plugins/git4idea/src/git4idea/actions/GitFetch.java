@@ -12,7 +12,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitVcs;
 import git4idea.fetch.GitFetchResult;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -215,7 +214,8 @@ class MarkdownPreviewFileEditor(
     val editor = mainEditor.firstOrNull() ?: return
     writeIntentReadAction {
       val offset = editor.caretModel.offset
-      panel.setHtml(lastRenderedHtml, offset, file)
+      val line = editor.document.getLineNumber(offset)
+      panel.setHtml(lastRenderedHtml, offset, line, file)
     }
   }
 

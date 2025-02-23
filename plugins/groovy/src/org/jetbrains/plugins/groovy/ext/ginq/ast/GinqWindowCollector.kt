@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 
-class GinqWindowCollector : GroovyRecursiveElementVisitor() {
+internal class GinqWindowCollector : GroovyRecursiveElementVisitor() {
   private val myWindows: MutableList<GinqWindowFragment> = mutableListOf()
 
-  val windows: List<GinqWindowFragment> get() = myWindows
+  val windows: List<GinqWindowFragment>
+    get() = myWindows
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
     val invoked = methodCallExpression.invokedExpression.asSafely<GrReferenceExpression>()?.takeIf { it.referenceName == "over" } ?: return super.visitMethodCallExpression(methodCallExpression)

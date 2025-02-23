@@ -2,28 +2,37 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 final class GenericsChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
+  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
+  // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
+  private final Map<PsiMember, JavaCompilationError<PsiMember, ?>> myOverrideEquivalentMethodsErrors = new HashMap<>();
 
   GenericsChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
@@ -87,7 +96,7 @@ final class GenericsChecker {
 
     PsiType parameterType = parameter.getType();
     if (TypeConversionUtil.isAssignable(parameterType, itemType)) return;
-    if (IncompleteModelUtil.isIncompleteModel(statement) && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
+    if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
       return;
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(itemType, parameterType)));
@@ -193,7 +202,7 @@ final class GenericsChecker {
                                              @NotNull PsiClass aClass,
                                              @NotNull GlobalSearchScope resolveScope,
                                              boolean checkParameters) {
-    JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
+    JavaPsiFacade factory = JavaPsiFacade.getInstance(myVisitor.project());
     for (PsiClassType superType : aClass.getSuperTypes()) {
       HashSet<PsiClass> checked = new HashSet<>();
       checked.add(aClass);
@@ -214,7 +223,7 @@ final class GenericsChecker {
     if (aClass != null && classes.add(aClass)) {
       VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
       if (vFile == null) return;
-      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      FileIndexFacade index = FileIndexFacade.getInstance(myVisitor.project());
       if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) return;
 
       PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
@@ -420,6 +429,271 @@ final class GenericsChecker {
     }
   }
 
+  void checkParametersAllowed(@NotNull PsiReferenceParameterList refParamList) {
+    PsiElement parent = refParamList.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression) && !(parent instanceof PsiMethodReferenceExpression)) {
+        myVisitor.report(JavaErrorKinds.TYPE_ARGUMENT_NOT_ALLOWED.create(refParamList));
+      }
+    }
+  }
+
+  void checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList) {
+    JavaResolveResult resolveResult = null;
+    PsiElement parent = refParamList.getParent();
+    PsiElement qualifier = null;
+    if (parent instanceof PsiJavaCodeReferenceElement referenceElement) {
+      resolveResult = referenceElement.advancedResolve(false);
+      qualifier = referenceElement.getQualifier();
+    }
+    else if (parent instanceof PsiCallExpression callExpression) {
+      resolveResult = callExpression.resolveMethodGenerics();
+      if (parent instanceof PsiMethodCallExpression methodCallExpression) {
+        PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        qualifier = methodExpression.getQualifier();
+      }
+    }
+    if (resolveResult != null) {
+      PsiElement element = resolveResult.getElement();
+      if (!(element instanceof PsiTypeParameterListOwner owner)) return;
+      if (owner.hasModifierProperty(PsiModifier.STATIC)) return;
+      if (qualifier instanceof PsiJavaCodeReferenceElement referenceElement && referenceElement.resolve() instanceof PsiTypeParameter) return;
+      PsiClass containingClass = owner.getContainingClass();
+      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
+        if (element instanceof PsiMethod psiMethod) {
+          if (myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_7)) return;
+          if (psiMethod.findSuperMethods().length > 0) return;
+          if (qualifier instanceof PsiReferenceExpression expression) {
+            PsiType type = expression.getType();
+            boolean isJavac7 = JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7);
+            if (type instanceof PsiClassType psiClassType && isJavac7 && psiClassType.isRaw()) return;
+            PsiClass typeParameter = PsiUtil.resolveClassInType(type);
+            if (typeParameter instanceof PsiTypeParameter) {
+              if (isJavac7) return;
+              for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
+                PsiClass resolve = classType.resolve();
+                if (resolve != null) {
+                  PsiMethod[] superMethods = resolve.findMethodsBySignature(psiMethod, true);
+                  for (PsiMethod superMethod : superMethods) {
+                    if (!PsiUtil.isRawSubstitutor(superMethod, resolveResult.getSubstitutor())) {
+                      return;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        var kind = element instanceof PsiClass ? JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_TYPE : JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_METHOD;
+        myVisitor.report(kind.create(refParamList));
+      }
+    }
+  }
+
+  void checkInstanceOfGenericType(@NotNull PsiInstanceOfExpression expression) {
+    PsiTypeElement typeElement = expression.getCheckType();
+    if (typeElement == null) {
+      typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
+    }
+    if (typeElement == null) return;
+    PsiType checkType = typeElement.getType();
+    if (myVisitor.isApplicable(JavaFeature.PATTERNS)) {
+      PsiPrimaryPattern pattern = expression.getPattern();
+      if (pattern != null) {
+        myVisitor.myPatternChecker.checkUncheckedPatternConversion(pattern);
+      } else {
+        checkUnsafeCastInInstanceOf(typeElement, checkType, expression.getOperand().getType());
+      }
+    } else {
+      checkIllegalForInstanceOf(checkType, typeElement);
+    }
+  }
+
+  void checkTypeParameterReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiTypeParameter typeParameter) {
+    PsiTypeParameterListOwner owner = typeParameter.getOwner();
+    if (owner instanceof PsiClass outerClass) {
+      if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
+        myVisitor.myExpressionChecker.checkIllegalEnclosingUsage(ref, null, outerClass, ref);
+      }
+    }
+    else if (owner instanceof PsiMethod) {
+      PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(ref, null);
+      if (staticElement != null && PsiTreeUtil.isAncestor(owner, staticElement, true)) {
+        PsiClass ownerContainingClass = owner.getContainingClass();
+        if (ownerContainingClass != null) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_OUTER_TYPE_PARAMETER_FROM_STATIC_CONTEXT.create(ref, typeParameter));
+        }
+      }
+    }
+  }
+
+  private void checkUnsafeCastInInstanceOf(@NotNull PsiTypeElement checkTypeElement, @NotNull PsiType checkType, @Nullable PsiType expressionType) {
+    if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_UNSAFE_CAST.create(
+        checkTypeElement, new JavaIncompatibleTypeErrorContext(expressionType, checkType)));
+    }
+  }
+
+  /**
+   * 15.20.2 Type Comparison Operator instanceof
+   * ReferenceType mentioned after the instanceof operator is reifiable
+   */
+  private void checkIllegalForInstanceOf(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
+    PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (resolved instanceof PsiTypeParameter) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_TYPE_PARAMETER.create(typeElement));
+    }
+    else if (!JavaGenericsUtil.isReifiableType(type)) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_ILLEGAL_GENERIC_TYPE.create(typeElement));
+    }
+  }
+
+  void checkDefaultMethodOverridesMemberOfJavaLangObject(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
+    if (!myVisitor.isApplicable(JavaFeature.EXTENSION_METHODS) || !aClass.isInterface() || 
+        !method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      return;
+    }
+    if (doesMethodOverrideMemberOfJavaLangObject(method)) {
+      myVisitor.report(JavaErrorKinds.METHOD_DEFAULT_OVERRIDES_OBJECT_MEMBER.create(method));
+    }
+  }
+
+  void checkUnrelatedConcrete(@NotNull PsiClass psiClass) {
+    PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null && superClass.hasTypeParameters()) {
+      Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
+      Map<MethodSignature, PsiMethod> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
+      for (HierarchicalMethodSignature hms : visibleSignatures) {
+        PsiMethod method = hms.getMethod();
+        if (method.isConstructor()) continue;
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+            method.hasModifierProperty(PsiModifier.DEFAULT) ||
+            method.hasModifierProperty(PsiModifier.STATIC)) continue;
+        if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) continue;
+        PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil
+          .obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        PsiMethod foundMethod = overrideEquivalent.get(signature);
+        if (foundMethod != null &&
+            !foundMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !foundMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            foundMethod.getContainingClass() != null) {
+          myVisitor.report(JavaErrorKinds.CLASS_INHERITANCE_METHOD_CLASH.create(
+            psiClass, new JavaErrorKinds.OverrideClashContext(method, foundMethod)));
+          return;
+        }
+        overrideEquivalent.put(signature, method);
+      }
+    }
+  }
+
+  void checkGenericCannotExtendException(@NotNull PsiReferenceList list) {
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiClass klass) {
+      if (hasGenericSignature(klass) && klass.getExtendsList() == list) {
+        PsiClass throwableClass = null;
+        for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
+          PsiElement resolved = refElement.resolve();
+          if (!(resolved instanceof PsiClass psiClass)) continue;
+          if (throwableClass == null) {
+            throwableClass =
+              JavaPsiFacade.getInstance(myVisitor.project()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, klass.getResolveScope());
+          }
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, throwableClass, true)) {
+            myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(refElement));
+          }
+        }
+      }
+    }
+    else if (parent instanceof PsiMethod method && method.getThrowsList() == list) {
+      for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
+        PsiReferenceParameterList parameterList = refElement.getParameterList();
+        if (parameterList != null && parameterList.getTypeParameterElements().length != 0) {
+          myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(refElement));
+        }
+      }
+    }
+  }
+  
+  void checkGenericCannotExtendException(@NotNull PsiAnonymousClass anonymousClass) {
+    if (hasGenericSignature(anonymousClass) &&
+        InheritanceUtil.isInheritor(anonymousClass, true, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(anonymousClass.getBaseClassReference()));
+    }
+  }
+
+  void checkClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
+    PsiType type = expression.getOperand().getType();
+    if (type instanceof PsiClassType classType) {
+      checkClassAccess(classType, expression.getOperand());
+    }
+    if (type instanceof PsiArrayType) {
+      PsiType arrayComponentType = type.getDeepComponentType();
+      if (arrayComponentType instanceof PsiClassType classType) {
+        checkClassAccess(classType, expression.getOperand());
+      }
+    }
+  }
+
+  private void checkClassAccess(@NotNull PsiClassType type, @NotNull PsiTypeElement operand) {
+    PsiClass aClass = type.resolve();
+    if (aClass instanceof PsiTypeParameter) {
+      myVisitor.report(JavaErrorKinds.EXPRESSION_CLASS_TYPE_PARAMETER.create(operand));
+      return;
+    }
+    if (type.getParameters().length > 0) {
+      myVisitor.report(JavaErrorKinds.EXPRESSION_CLASS_PARAMETERIZED_TYPE.create(operand));
+    }
+  }
+
+  void checkTypeParameterInstantiation(@NotNull PsiNewExpression expression) {
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    if (classReference == null) return;
+    JavaResolveResult result = classReference.advancedResolve(false);
+    PsiElement element = result.getElement();
+    if (element instanceof PsiTypeParameter typeParameter) {
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_TYPE_PARAMETER.create(classReference, typeParameter));
+    }
+  }
+
+  //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
+  void checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr,
+                                                 @NotNull JavaResolveResult result) {
+    PsiField field = ObjectUtils.tryCast(result.getElement(), PsiField.class);
+    if (field == null) return;
+
+    PsiClass enumClass = JavaPsiEnumUtil.getEnumClassForExpressionInInitializer(expr);
+    if (enumClass == null || !JavaPsiEnumUtil.isRestrictedStaticEnumField(field, enumClass)) return;
+    myVisitor.report(JavaErrorKinds.ENUM_CONSTANT_ILLEGAL_ACCESS_IN_CONSTRUCTOR.create(expr, field));
+  }
+
+  private static boolean hasGenericSignature(@NotNull PsiClass klass) {
+    PsiClass containingClass = klass;
+    while (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      if (containingClass.hasTypeParameters()) return true;
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+    }
+    return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
+  }
+
+  private static boolean doesMethodOverrideMemberOfJavaLangObject(@NotNull PsiMethod method) {
+    for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+      PsiMethod objectMethod = methodSignature.getMethod();
+      PsiClass containingClass = objectMethod.getContainingClass();
+      if (containingClass != null &&
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+          objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return true;
+      }
+      if (doesMethodOverrideMemberOfJavaLangObject(objectMethod)) return true;
+    }
+    return false;
+  }
+
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
     PsiNewExpression newExpression = requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
     PsiElement parent = newExpression.getParent();
@@ -503,5 +777,253 @@ final class GenericsChecker {
         myVisitor.report(JavaErrorKinds.ARRAY_GENERIC.create(element));
       }
     }
+  }
+
+  Map<PsiMember, JavaCompilationError<PsiMember, ?>> computeOverrideEquivalentMethodErrors(@NotNull PsiClass aClass) {
+    if (myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
+      Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
+      PsiManager manager = aClass.getManager();
+      Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
+        MethodSignatureUtil.createErasedMethodSignatureMap();
+
+      Set<MethodSignature> foundProblems = MethodSignatureUtil.createErasedMethodSignatureSet();
+      for (HierarchicalMethodSignature signature : signaturesWithSupers) {
+        JavaCompilationError<PsiMember, ?> error =
+          checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
+        if (error != null && foundProblems.add(signature)) {
+          myOverrideEquivalentMethodsErrors.put(error.psi(), error);
+        }
+        if (aClass instanceof PsiTypeParameter) {
+          error = MethodChecker.getMethodIncompatibleReturnType(aClass, signature, signature.getSuperSignatures());
+          if (error != null) {
+            myOverrideEquivalentMethodsErrors.put(aClass, error);
+          }
+        }
+      }
+    }
+    return myOverrideEquivalentMethodsErrors;
+  }
+
+  private static JavaCompilationError<PsiMember, ?> checkSameErasureNotSubSignatureInner(
+    @NotNull HierarchicalMethodSignature signature,
+    @NotNull PsiManager manager,
+    @NotNull PsiClass aClass,
+    @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+    PsiMethod method = signature.getMethod();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
+    MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
+    if (sameErasure == null) {
+      sameErasureMethods.put(signatureToErase, signature);
+    }
+    else if (aClass instanceof PsiTypeParameter ||
+             MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
+             !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
+               InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
+      JavaCompilationError<PsiMember, ?> error = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
+      if (error != null) return error;
+    }
+    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : supers) {
+      JavaCompilationError<PsiMember, ?> error =
+        checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
+      if (error != null) return error;
+
+      if (superSignature.isRaw() && !signature.isRaw()) {
+        PsiType[] parameterTypes = signature.getParameterTypes();
+        PsiType[] erasedTypes = superSignature.getErasedParameterTypes();
+        for (int i = 0; i < erasedTypes.length; i++) {
+          if (!Comparing.equal(parameterTypes[i], erasedTypes[i])) {
+            return getSameErasureMessage(method, superSignature.getMethod(), aClass);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static JavaCompilationError<PsiMember, ?> checkSameErasureNotSubSignatureOrSameClass(@NotNull MethodSignatureBackedByPsiMethod signatureToCheck,
+                                                                                               @NotNull HierarchicalMethodSignature superSignature,
+                                                                                               @NotNull PsiClass aClass,
+                                                                                               @NotNull PsiMethod superMethod) {
+    PsiMethod checkMethod = signatureToCheck.getMethod();
+    if (superMethod.equals(checkMethod)) return null;
+    PsiClass checkContainingClass = requireNonNull(checkMethod.getContainingClass());
+    PsiClass superContainingClass = superMethod.getContainingClass();
+    boolean checkEqualsSuper = checkContainingClass.equals(superContainingClass);
+    if (checkMethod.isConstructor()) {
+      if (!superMethod.isConstructor() || !checkEqualsSuper) return null;
+    }
+    else if (superMethod.isConstructor()) return null;
+
+    JavaVersionService javaVersionService = JavaVersionService.getInstance();
+    boolean atLeast17 = javaVersionService.isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
+      return null;
+    }
+
+    if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
+        superContainingClass.isInterface() && !checkEqualsSuper &&
+        PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, superContainingClass)) {
+      return null;
+    }
+
+    PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
+    PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
+
+    boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
+    if (checkEqualsSuper && atLeast17 && retErasure1 != null && retErasure2 != null) {
+      differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
+    }
+
+    if (differentReturnTypeErasure &&
+        !TypeConversionUtil.isVoidType(retErasure1) &&
+        !TypeConversionUtil.isVoidType(retErasure2) &&
+        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes())) &&
+        !atLeast17) {
+      int idx = 0;
+      PsiType[] erasedTypes = signatureToCheck.getErasedParameterTypes();
+      boolean erasure = erasedTypes.length > 0;
+      for (PsiType type : superSignature.getParameterTypes()) {
+        erasure &= Comparing.equal(type, erasedTypes[idx]);
+        idx++;
+      }
+
+      if (!erasure) return null;
+    }
+
+    if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
+      return null;
+    }
+    if (!javaVersionService.isCompilerVersionAtLeast(aClass, JavaSdkVersion.JDK_1_7)) {
+      //javac <= 1.6 didn't check transitive overriding rules for interfaces
+      if (superContainingClass != null &&
+          !superContainingClass.isInterface() &&
+          checkContainingClass.isInterface() &&
+          !aClass.equals(superContainingClass)) {
+        return null;
+      }
+    }
+    PsiMember anchor = aClass.equals(checkContainingClass) ? checkMethod : aClass;
+    return getSameErasureMessage(checkMethod, superMethod, anchor);
+  }
+
+  private static JavaCompilationError<PsiMember, ?> getSameErasureMessage(@NotNull PsiMethod method,
+                                                                          @NotNull PsiMethod superMethod,
+                                                                          @NotNull PsiMember anchor) {
+    return JavaErrorKinds.METHOD_GENERIC_CLASH.create(anchor, new JavaErrorKinds.OverrideClashContext(method, superMethod));
+  }
+
+  void checkTypeParameterOverrideEquivalentMethods(@NotNull PsiClass typeParameter) {
+    if (typeParameter instanceof PsiTypeParameter && myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+      PsiReferenceList extendsList = typeParameter.getExtendsList();
+      if (extendsList.getReferenceElements().length > 1) {
+        //todo suppress erased methods which come from the same class
+        var error = computeOverrideEquivalentMethodErrors(typeParameter).get(typeParameter);
+        if (error != null) {
+          myVisitor.report(error);
+        }
+      }
+    }
+  }
+
+  void checkMemberSignatureTypesAccessibility(@NotNull PsiReferenceExpression ref) {
+    PsiClass psiClass = null;
+
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression expression) {
+      JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method != null) {
+        Set<PsiClass> classes = new HashSet<>();
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        GlobalSearchScope resolveScope = ref.getResolveScope();
+
+        psiClass = getInaccessibleClass(substitutor.substitute(method.getReturnType()), classes, resolveScope, facade);
+        if (psiClass == null) {
+          for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
+            psiClass = getInaccessibleClass(type, classes, resolveScope, facade);
+            if (psiClass != null) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    else {
+      PsiElement resolve = ref.resolve();
+      if (resolve instanceof PsiField psiField) {
+        GlobalSearchScope resolveScope = ref.getResolveScope();
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        psiClass = getInaccessibleClass(psiField.getType(), new HashSet<>(), resolveScope, facade);
+      }
+    }
+
+    if (psiClass != null) {
+      myVisitor.report(JavaErrorKinds.CLASS_NOT_ACCESSIBLE.create(ref, psiClass));
+    }
+  }
+
+  private static @Nullable PsiClass getInaccessibleClass(@Nullable PsiType type,
+                                                         @NotNull Set<? super PsiClass> classes,
+                                                         @NotNull GlobalSearchScope resolveScope,
+                                                         @NotNull JavaPsiFacade factory) {
+    return getInaccessibleClass(type, classes, false, true, resolveScope, factory);
+  }
+
+  private static @Nullable PsiClass getInaccessibleClass(@Nullable PsiType type,
+                                                         @NotNull Set<? super PsiClass> classes,
+                                                         boolean checkParameters,
+                                                         boolean checkSuperTypes,
+                                                         @NotNull GlobalSearchScope resolveScope,
+                                                         @NotNull JavaPsiFacade factory) {
+    type = PsiClassImplUtil.correctType(type, resolveScope);
+
+    PsiClass aClass = PsiUtil.resolveClassInType(type);
+    if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) {
+        return null;
+      }
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) {
+        return null;
+      }
+
+      PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
+      String qualifiedName = aClass.getQualifiedName();
+      if (parentImplicitClass == null && qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+        return aClass;
+      }
+
+      if (!checkParameters){
+        return null;
+      }
+
+      if (type instanceof PsiClassType classType) {
+        for (PsiType parameterType : classType.getParameters()) {
+          PsiClass cls = getInaccessibleClass(parameterType, classes, true, false, resolveScope, factory);
+          if (cls != null) {
+            return cls;
+          }
+        }
+      }
+
+      if (!checkSuperTypes) {
+        return null;
+      }
+
+      boolean isInLibrary = !index.isInContent(vFile);
+      for (PsiClassType superType : aClass.getSuperTypes()) {
+        PsiClass cls = getInaccessibleClass(superType, classes, !isInLibrary, true, resolveScope, factory);
+        if (cls != null) {
+          return cls;
+        }
+      }
+    }
+
+    return null;
   }
 }

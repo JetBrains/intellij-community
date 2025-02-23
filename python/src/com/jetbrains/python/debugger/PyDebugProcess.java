@@ -810,7 +810,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private PyDebugValue evaluate(String expression, boolean execute, PyStackFrame frame, boolean trimResult) throws PyDebuggerException {
-    return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
+    PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(getProject());
+    return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute,
+                               settings.getEvaluationResponseTimeout(), trimResult);
   }
 
   public void consoleExec(String command, PyDebugCallback<String> callback) {

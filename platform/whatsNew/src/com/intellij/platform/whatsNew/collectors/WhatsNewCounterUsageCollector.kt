@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew.collectors
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
@@ -21,27 +21,22 @@ internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
 
   fun openedPerformed(project: Project?, byClient: Boolean) {
     opened.log(project, if (byClient) OpenedType.ByClient else OpenedType.Auto)
-    LegacyRiderWhatsNewCounterUsagesCollector.opened.log(project, if (byClient) OpenedType.ByClient else OpenedType.Auto)
   }
 
   fun closedPerformed(project: Project?) {
     closed.log(project)
-    LegacyRiderWhatsNewCounterUsagesCollector.closed.log(project)
   }
 
   fun actionPerformed(project: Project?, id: String) {
     perform.log(project, id)
-    LegacyRiderWhatsNewCounterUsagesCollector.perform.log(project, id)
   }
 
   fun actionNotAllowed(project: Project?, id: String) {
     failed.log(project, id, ActionFailedReason.Not_Allowed)
-    LegacyRiderWhatsNewCounterUsagesCollector.failed.log(project, id, ActionFailedReason.Not_Allowed)
   }
 
   fun actionNotFound(project: Project?, id: String) {
     failed.log(project, id, ActionFailedReason.Not_Found)
-    LegacyRiderWhatsNewCounterUsagesCollector.failed.log(project, id, ActionFailedReason.Not_Found)
   }
 
   fun visionActionPerformed(project: Project?, id: String) {

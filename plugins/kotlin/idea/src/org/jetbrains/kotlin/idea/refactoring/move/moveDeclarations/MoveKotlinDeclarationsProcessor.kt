@@ -106,7 +106,7 @@ open class MoveKotlinDeclarationsProcessor(
 
     fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { MoveConflictUsageInfo(it.key, it.value) }
 
-    override fun findUsages(): Array<UsageInfo> {
+    public override fun findUsages(): Array<UsageInfo> {
         if (!descriptor.searchReferences || elementsToMove.isEmpty()) return UsageInfo.EMPTY_ARRAY
 
         val newContainerName = descriptor.moveTarget.targetContainerFqName?.asString() ?: ""
@@ -151,6 +151,7 @@ open class MoveKotlinDeclarationsProcessor(
                 val foundReferences = HashSet<PsiReference>()
                 val results = ReferencesSearch
                     .search(lightElement, searchScope)
+                    .asIterable()
                     .mapNotNullTo(ArrayList()) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
                             KotlinMoveRenameUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
@@ -246,7 +247,7 @@ open class MoveKotlinDeclarationsProcessor(
         return UsageViewUtil.removeDuplicatedUsages(usages.toTypedArray())
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         return showConflicts(conflicts, refUsages.get())
     }
 

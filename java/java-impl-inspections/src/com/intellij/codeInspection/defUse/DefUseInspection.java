@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -179,10 +178,10 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       if (classInitializer.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         final List<PsiAssignmentExpression> assignments = collectAssignments(field, classInitializer);
         if (!assignments.isEmpty()) {
-          boolean isDefinitely = HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
+          boolean isDefinitely = ControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
           if (isDefinitely) {
             try {
-              ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
+              ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(classInitializer.getBody());
               if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                        read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
                                                read.isReferenceTo(field))) {
@@ -229,11 +228,11 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
     for (PsiMethod constructor : constructors) {
       if (!JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty()) continue;
       final PsiCodeBlock body = constructor.getBody();
-      if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+      if (body == null || !ControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         return false;
       }
       try {
-        ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
+        ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
         if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                  read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
           return false;

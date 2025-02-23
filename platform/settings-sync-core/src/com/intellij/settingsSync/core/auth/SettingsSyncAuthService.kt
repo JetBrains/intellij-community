@@ -1,7 +1,6 @@
 package com.intellij.settingsSync.core.auth
 
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
-import kotlinx.coroutines.Deferred
 import java.awt.Component
 import javax.swing.Icon
 

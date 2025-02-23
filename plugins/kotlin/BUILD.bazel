@@ -115,7 +115,9 @@ java_library(
     "//plugins/kotlin/j2k/k1.new.post-processing:kotlin-j2k-k1-new-post-processing",
     "//plugins/kotlin/j2k/k2:kotlin-j2k-k2",
     "//plugins/kotlin/i18n",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1",
+    "//plugins/kotlin/jvm/k2:kotlin-jvm-k2",
     "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
     "//plugins/kotlin/jvm-debugger/core:kotlin-jvm-debugger-core",
     "//plugins/kotlin/jvm-debugger/core-fe10:kotlin-jvm-debugger-core-fe10",
@@ -206,6 +208,7 @@ java_library(
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
+    "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
   ],
   runtime_deps = [
     "//platform/bootstrap",
@@ -322,7 +325,9 @@ java_library(
     "//plugins/kotlin/j2k/k1.new.post-processing:kotlin-j2k-k1-new-post-processing",
     "//plugins/kotlin/j2k/k2:kotlin-j2k-k2",
     "//plugins/kotlin/i18n",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1",
+    "//plugins/kotlin/jvm/k2:kotlin-jvm-k2",
     "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
     "//plugins/kotlin/jvm-debugger/core:kotlin-jvm-debugger-core",
     "//plugins/kotlin/jvm-debugger/core-fe10:kotlin-jvm-debugger-core-fe10",
@@ -419,6 +424,7 @@ java_library(
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
+    "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
   ]
 )
 ### auto-generated section `build intellij.kotlin.plugin.community.main` end

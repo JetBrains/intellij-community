@@ -55,10 +55,15 @@
 
         <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
 
-        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvKey"
+        <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+                  implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyReferenceUsageSearcher"/>
+
+        <psi.declarationProvider implementation="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbolDeclarationProvider"/>
+
+        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKey"
                                      hostLanguage="DotEnv"
-                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvSymbolReferenceProvider"
-                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
+                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvNestedVariableReferenceProvider"
+                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbol"/>
 
         <localInspection language="DotEnv"
                          groupBundle="messages.DotEnvBundle"
@@ -137,7 +142,34 @@
                          key="inspection.name.extra.spaces.surrounding"
                          enabledByDefault="true" 
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection"/>
-        
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="UndefinedNestedVariableInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.undefined.nested.variable"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.UndefinedNestedVariableInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="EmptyNestedVariableInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.empty.nested.variable"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.EmptyNestedVariableInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="NestedVariableOutsideDoubleQuotesInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.nested.variable.outside.double.quotes"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.NestedVariableOutsideDoubleQuotesInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
@@ -147,10 +179,19 @@
                                  key="group.dotenv"
                                  groupId="language"
         />
+
+        <completion.contributor
+            language="DotEnv"
+            implementationClass="ru.adelf.idea.dotenv.completion.NestedEnvVariableCompletionContributor"
+        />
+
+        <typedHandler implementation="ru.adelf.idea.dotenv.completion.NestedVariableTypedHandlerDelegate"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
         <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.DotEnvNestedVariablesProvider"/>
     </extensions>
 
     <actions>

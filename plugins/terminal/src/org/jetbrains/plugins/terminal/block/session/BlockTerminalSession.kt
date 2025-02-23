@@ -13,6 +13,7 @@ import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
@@ -29,10 +30,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  *
  * Disposed on terminal UI component disposing, not on the shell session termination.
  */
-internal class BlockTerminalSession(
+@ApiStatus.Internal
+class BlockTerminalSession(
   val settings: JBTerminalSystemSettingsProviderBase,
   val colorPalette: TerminalColorPalette,
-  val shellIntegration: ShellIntegration
+  val shellIntegration: ShellIntegration,
 ) : Disposable {
 
   val model: TerminalModel
@@ -49,7 +51,7 @@ internal class BlockTerminalSession(
    * handled even if the terminal's output stream
    * isn't immediately available at the time of the request.
    */
-  internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
+  val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 

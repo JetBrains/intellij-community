@@ -128,7 +128,7 @@ internal suspend fun buildDistribution(
 
 private suspend fun buildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
-  pluginLayouts: MutableSet<PluginLayout>,
+  pluginLayouts: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
@@ -476,8 +476,8 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
-        entries.add(PluginBuildDescriptor(dir = targetDirectory, layout = plugin, os = null, moduleNames = emptyList()) to layoutDistribution(
-          layout = plugin,
+        entries.add(PluginBuildDescriptor(targetDirectory, os = null, plugin, moduleNames = emptyList()) to layoutDistribution(
+          plugin,
           platformLayout,
           targetDirectory,
           copyFiles = false,
@@ -559,7 +559,7 @@ internal suspend fun buildPlugins(
         }
       }
 
-      PluginBuildDescriptor(pluginDir, os, layout = plugin, moduleNames = emptyList()) to task.await()
+      PluginBuildDescriptor(pluginDir, os, plugin, moduleNames = emptyList()) to task.await()
     }
   }
 
@@ -620,35 +620,29 @@ private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = 
 @VisibleForTesting
 class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
 
-fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): MutableSet<PluginLayout> {
+fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout, toPublish: Boolean = false): MutableSet<PluginLayout> {
   if (modules.isEmpty()) {
     return createPluginLayoutSet(expectedSize = 0)
   }
 
-  val pluginLayouts = productLayout.pluginLayouts
-  val pluginLayoutsByMainModule = pluginLayouts.groupByTo(HashMap()) { it.mainModule }
+  val layoutsByMainModule = productLayout.pluginLayouts.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val customLayouts = pluginLayoutsByMainModule.get(moduleName)
-    if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.pluginAuto(listOf(moduleName)))) {
-        "Plugin layout for module $moduleName is already added (duplicated module name?)"
-      }
+    val layouts = layoutsByMainModule[moduleName] ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
+    if (toPublish && layouts.size == 2 && layouts[0].bundlingRestrictions != layouts[1].bundlingRestrictions) {
+      layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
-    else {
-      for (layout in customLayouts) {
-        check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
-          "Plugin layout for module $moduleName is already added (duplicated module name?)"
-        }
+    for (layout in layouts) {
+      check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
+        "Plugin layout for module ${moduleName} is already added (duplicated module name?)"
       }
     }
   }
   return result
 }
 
-private fun basePath(buildContext: BuildContext, moduleName: String): Path {
-  return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
-}
+private fun basePath(buildContext: BuildContext, moduleName: String): Path =
+  Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 
 suspend fun buildLib(
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -712,9 +706,8 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
   moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, text)
 }
 
-fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
-  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
-}
+fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path =
+  context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 
 private suspend fun checkOutputOfPluginModules(
   mainPluginModule: String,
@@ -999,7 +992,7 @@ private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): B
 private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
   // quick fix for a very annoying FileAlreadyExistsException in CLion dev build
   val overwrite = ("intellij.rider.plugins.clion.radler" == (layout as? PluginLayout)?.mainModule)
-  layoutResourcePaths(layout, context, targetDirectory, overwrite = overwrite)
+  layoutResourcePaths(layout, context, targetDirectory, overwrite)
   if (layout !is PluginLayout) {
     return
   }
@@ -1015,10 +1008,12 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
 }
 
 @OptIn(ExperimentalPathApi::class)
-private suspend fun layoutArtifacts(layout: BaseLayout,
-                                    context: BuildContext,
-                                    copyFiles: Boolean,
-                                    targetDirectory: Path): Collection<DistributionFileEntry> {
+private suspend fun layoutArtifacts(
+  layout: BaseLayout,
+  context: BuildContext,
+  copyFiles: Boolean,
+  targetDirectory: Path,
+): Collection<DistributionFileEntry> {
   val span = Span.current()
   val entries = mutableListOf<DistributionFileEntry>()
   val jpsArtifactService = JpsArtifactService.getInstance()
@@ -1231,8 +1226,9 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
   for (entry in contentReport.bundledPlugins.flatMap { it.second }) {
     val relativePath = pluginDir.relativize(entry.path)
-    // for plugins, our classloader load JARs only from the "lib/" directory
-    if (relativePath.nameCount != 3 || relativePath.getName(1).toString() != LIB_DIRECTORY) {
+    // for plugins, our classloaders load JARs only from the "lib/" and "lib/modules/" directories
+    if (!(relativePath.nameCount in 3..4 && relativePath.getName(1).toString() == LIB_DIRECTORY && 
+          (relativePath.nameCount == 3 || relativePath.getName(2).toString() == "modules"))) {
       continue
     }
 

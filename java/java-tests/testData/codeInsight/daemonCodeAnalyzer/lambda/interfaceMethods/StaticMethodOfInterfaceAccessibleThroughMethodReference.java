@@ -5,7 +5,7 @@ interface I {
 class A implements I {
     {
         System.out.println(A./*c1*/<error descr="Static method may only be called on its containing interface">foo</error>());
-        Runnable r = <error descr="Static method may only be called on its containing interface">A/*c2*/::<String>foo;</error>
+        Runnable r = A/*c2*/::<String><error descr="Static method may only be called on its containing interface">foo</error>;
         System.out.println(r);
     }
 }

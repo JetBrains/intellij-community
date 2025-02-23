@@ -17,7 +17,6 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
@@ -32,7 +31,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -45,9 +44,9 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import kotlin.math.max
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
-    override fun isAvailable(position: SourcePosition?) = position?.file is KtFile
+    override fun isAvailable(position: SourcePosition?): Boolean = position?.file is KtFile
 
-    override fun findStepIntoTargets(position: SourcePosition, session: DebuggerSession) =
+    override fun findStepIntoTargets(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> =
         if (KotlinDebuggerSettings.getInstance().alwaysDoSmartStepInto) {
             findSmartStepTargetsAsync(position, session)
         } else {
@@ -68,7 +67,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         return promise
     }
 
-    override fun findSmartStepTargets(position: SourcePosition) = findSmartStepTargetsSync(position, null)
+    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> = findSmartStepTargetsSync(position, null)
 
     @ApiStatus.Internal
     fun findSmartStepTargetsSync(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
@@ -79,25 +78,34 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? =
         when (stepTarget) {
             is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
-            else -> runReadAction { super.createMethodFilter(stepTarget) }
+            else -> super.createMethodFilter(stepTarget)
         }
 
     private suspend fun findSmartStepTargetsInternal(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
         try {
             findSmartStepTargets(position, session)
         } catch (e: Exception) {
-            DebuggerStatistics.logSmartStepIntoTargetsDetection(session?.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.INTERNAL_ERROR)
+            DebuggerStatistics.logSmartStepIntoTargetsDetection(
+                session?.project, Engine.KOTLIN,
+                SmartStepIntoDetectionStatus.INTERNAL_ERROR
+            )
             throw e
         }
 
     private suspend fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> {
         val expression = readAction { position.getContainingExpression() } ?: run {
-            DebuggerStatistics.logSmartStepIntoTargetsDetection(session?.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.INVALID_POSITION)
+            DebuggerStatistics.logSmartStepIntoTargetsDetection(
+                session?.project, Engine.KOTLIN,
+                SmartStepIntoDetectionStatus.INVALID_POSITION
+            )
             return emptyList()
         }
         val project = readAction { expression.project }
         val lines = readAction { expression.getLines()?.coerceAtLeast(position.line) } ?: run {
-            DebuggerStatistics.logSmartStepIntoTargetsDetection(session?.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.INVALID_POSITION)
+            DebuggerStatistics.logSmartStepIntoTargetsDetection(
+                session?.project, Engine.KOTLIN,
+                SmartStepIntoDetectionStatus.INVALID_POSITION
+            )
             return emptyList()
         }
         var targets = dumbAction(project, fallback = emptyList()) {
@@ -114,7 +122,10 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             val context = SmartStepIntoContext(expression, session.process, position, lines.toClosedRange())
             targets = dumbAction(project, fallback = targets) { calculateSmartStepTargetsToShow(targets, context) }
         } else {
-            DebuggerStatistics.logSmartStepIntoTargetsDetection(position.file.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
+            DebuggerStatistics.logSmartStepIntoTargetsDetection(
+                position.file.project, Engine.KOTLIN,
+                SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
+            )
         }
         targets = readAction { targets.sortedBy { it.highlightElement?.textOffset ?: 0 } }
         return readAction { reorderWithSteppingFilters(targets) }
@@ -150,7 +161,10 @@ private suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(cont
     }
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: run {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(
+            debugProcess.project, Engine.KOTLIN,
+            SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
+        )
         return this
     }
     return filterSmartStepTargets(location, this, context)
@@ -230,25 +244,15 @@ private suspend fun filterSmartStepTargets(
 ): List<KotlinMethodSmartStepTarget> {
     val (expression, debugProcess, position, lines) = context
     val method = location.safeMethod() ?: run {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(
+            debugProcess.project, Engine.KOTLIN,
+            SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
+        )
         return targets
     }
     val targetFiltererAdapter = KotlinSmartStepTargetFiltererAdapter(lines, location)
 
-    MethodBytecodeUtil.visit(method, Long.MAX_VALUE, object : OpcodeReportingMethodVisitor(targetFiltererAdapter), MethodBytecodeUtil.InstructionOffsetReader {
-        override fun readBytecodeInstructionOffset(offset: Int) {
-            targetFiltererAdapter.currentOffset = offset.toLong()
-        }
-
-        override fun reportOpcode(opcode: Int) {
-            ProgressManager.checkCanceled()
-            targetFiltererAdapter.reportOpcode(opcode)
-        }
-
-        override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
-            targetFiltererAdapter.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-        }
-    }, true)
+    MethodBytecodeUtil.visit(method, Long.MAX_VALUE, SmartStepTargetsBytecodeVisitor(targetFiltererAdapter), true)
 
     val targetFilterer = KotlinSmartStepTargetFilterer(targets, debugProcess)
     var (unvisitedTargets, unvisitedAtTheEnd) = targetFiltererAdapter.visitTrace(targetFilterer, debugProcess.positionManager)
@@ -271,6 +275,23 @@ private suspend fun filterSmartStepTargets(
         DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.SUCCESS)
     }
     return unvisitedTargets
+}
+
+private class SmartStepTargetsBytecodeVisitor(private val targetFiltererAdapter: KotlinSmartStepTargetFiltererAdapter) :
+    OpcodeReportingMethodVisitor(targetFiltererAdapter), MethodBytecodeUtil.InstructionOffsetReader {
+
+    override fun readBytecodeInstructionOffset(offset: Int) {
+        targetFiltererAdapter.currentOffset = offset.toLong()
+    }
+
+    override fun reportOpcode(opcode: Int) {
+        ProgressManager.checkCanceled()
+        targetFiltererAdapter.reportOpcode(opcode)
+    }
+
+    override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
+        targetFiltererAdapter.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+    }
 }
 
 private fun Range<Int>.toClosedRange() = from..to

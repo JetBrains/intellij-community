@@ -1,5 +1,6 @@
 // "Change return type of enclosing function 'test' to 'Any'" "true"
 // ERROR: Unresolved reference: unknownVariable
+// K2_AFTER_ERROR: Unresolved reference 'unknownVariable'.
 
 fun test(): Any {
     if (true) {

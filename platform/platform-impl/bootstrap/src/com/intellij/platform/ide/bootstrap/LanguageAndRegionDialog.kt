@@ -5,6 +5,7 @@ import com.dd.plist.NSDictionary
 import com.dd.plist.PropertyListParser
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
@@ -36,9 +37,12 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.io.File
 import java.util.*
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
+import javax.swing.text.html.HTMLDocument
 
 private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"),
                                     Locale.JAPANESE to listOf("ja"),
@@ -72,15 +76,32 @@ private class LanguageAndRegionDialog(
       font = JBFont.h1()
       alignmentX = JLabel.CENTER_ALIGNMENT
     }
+    val text = object : JEditorPane() {
+      override fun getAccessibleContext(): AccessibleContext? {
+        if (accessibleContext == null) {
+          accessibleContext = object : AccessibleJTextComponent() {
+            override fun getAccessibleRole(): AccessibleRole? {
+              return AccessibleRole.LABEL
+            }
+          }
+        }
+        return accessibleContext
+      }
+    }.apply {
+      isEditable = false
+      isOpaque = false
+      isFocusable = false
+      editorKit = HTMLEditorKitBuilder.simple()
+      text = getMessageBundle().getString("description.language.and.region")
+    }
+    text.addHyperlinkListener { e -> if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) BrowserUtil.browse(e.url); }
 
     centerPanel.add(panel {
       row {
         cell(header).align(Align.CENTER)
       }
       row {
-        text(getMessageBundle().getString("description.language.and.region")).apply {
-          component.addHyperlinkListener { e -> if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) LocalizationActionsStatistics.hyperLinkActivated(source) }
-        }
+        cell(text)
       }
     }.withPreferredWidth(350), VerticalLayout.CENTER)
 

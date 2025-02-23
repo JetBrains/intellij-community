@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.resolve
 
 import com.intellij.psi.*
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-object GinqResolveUtils : GinqSupport {
+internal object GinqResolveUtils : GinqSupport {
 
   fun resolveSyntheticVariable(place: PsiElement, name: String, tree: GinqExpression): GrLightVariable? {
     if (name != _G && name != _RN) {

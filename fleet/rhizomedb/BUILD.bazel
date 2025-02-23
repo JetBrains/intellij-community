@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   allow_kotlin_package = True,
   opt_in = ["kotlin.ExperimentalStdlibApi"]
 )
@@ -17,6 +16,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//fleet/util/core:fleet-util-core",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SameParameterValue", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.bazel
@@ -9,6 +9,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.concurrent.thread
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -24,6 +25,10 @@ internal class JpsModuleToBazel {
       val jarRepositories = loadJarRepositories(projectDir)
 
       val urlCache = UrlCache(cacheFile = projectDir.resolve("build/lib-lock.json"))
+      Runtime.getRuntime().addShutdownHook(thread(start = false, name = "Save URL cache") {
+        println("Saving url cache to ${urlCache.cacheFile}")
+        urlCache.save()
+      })
 
       val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
       val moduleList = generator.computeModuleList()
@@ -58,6 +63,7 @@ internal class JpsModuleToBazel {
       val ultimateTargets = ultimateFiles.keys
         .sorted()
         .map { projectDir.relativize(it).invariantSeparatorsPathString }
+        .filter { !it.startsWith("rider/test/cases-supplementary") }
         .joinToString("\n") {
           "//$it:all"
         }

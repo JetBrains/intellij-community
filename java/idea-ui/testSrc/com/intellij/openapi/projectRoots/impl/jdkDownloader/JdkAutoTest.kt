@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
@@ -17,7 +16,6 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable

@@ -1,22 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix.Pattern;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +18,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 final class PatternHighlightingModel {
@@ -39,178 +26,6 @@ final class PatternHighlightingModel {
   //it is approximately equals max method size * 10
   private static final int MAX_ITERATION_COVERAGE = 5_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
-
-  static boolean createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern,
-                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (deconstructionPattern == null) return false;
-    PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
-    PsiType recordType = typeElement.getType();
-    ClassResolveResult resolveResult =
-      recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
-    PsiClass recordClass = resolveResult.getElement();
-    if (recordClass == null || !recordClass.isRecord()) {
-      String message = JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(recordType));
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
-      errorSink.accept(info);
-      return true;
-    }
-    if (resolveResult.getInferenceError() != null) {
-      String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
-      errorSink.accept(info);
-      return true;
-    }
-    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-    PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
-    boolean hasMismatchedPattern = false;
-    boolean reported = false;
-    for (int i = 0; i < Math.min(recordComponents.length, deconstructionComponents.length); i++) {
-      PsiPattern deconstructionComponent = deconstructionComponents[i];
-      PsiType recordComponentType = recordComponents[i].getType();
-      PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
-      PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(deconstructionPattern);
-      if (!isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType, languageLevel)) {
-        hasMismatchedPattern = true;
-        if (recordComponents.length == deconstructionComponents.length) {
-          HighlightInfo.Builder builder = null;
-          if (isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType,
-                                             JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
-            builder = HighlightUtil.checkFeature(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, languageLevel,
-                                                 deconstructionComponent.getContainingFile());
-          }
-          else if ((substitutedRecordComponentType instanceof PsiPrimitiveType ||
-                    deconstructionComponentType instanceof PsiPrimitiveType) &&
-                   JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
-            String message = JavaErrorBundle.message("inconvertible.type.cast",
-                                                     JavaHighlightUtil.formatType(substitutedRecordComponentType), JavaHighlightUtil
-                                                       .formatType(deconstructionComponentType));
-            builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(deconstructionComponent)
-              .descriptionAndTooltip(message);
-          }
-
-          if (builder == null) {
-            if (IncompleteModelUtil.isIncompleteModel(deconstructionPattern) &&
-                (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
-                 IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
-              continue;
-            }
-            builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
-                                                                        deconstructionComponent.getTextRange(), 0);
-          }
-
-          errorSink.accept(builder);
-          reported = true;
-        }
-      }
-      else {
-        HighlightInfo.Builder info = getUncheckedPatternConversionError(deconstructionComponent);
-        if (info != null) {
-          hasMismatchedPattern = true;
-          errorSink.accept(info);
-          reported = true;
-        }
-      }
-      if (recordComponents.length != deconstructionComponents.length && hasMismatchedPattern) {
-        break;
-      }
-      if (deconstructionComponent instanceof PsiDeconstructionPattern deconstructionComponentPattern) {
-        reported |= createDeconstructionErrors(deconstructionComponentPattern, errorSink);
-      }
-    }
-    if (recordComponents.length != deconstructionComponents.length) {
-      HighlightInfo.Builder
-        info = createIncorrectNumberOfNestedPatternsError(deconstructionPattern, deconstructionComponents, recordComponents,
-                                                          !hasMismatchedPattern);
-      errorSink.accept(info);
-      return true;
-    }
-    return reported;
-  }
-
-  static @Nullable HighlightInfo.Builder getUncheckedPatternConversionError(@NotNull PsiPattern pattern) {
-    PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
-    if (patternType == null) return null;
-    if (pattern instanceof PsiDeconstructionPattern subPattern) {
-      PsiJavaCodeReferenceElement element = subPattern.getTypeElement().getInnermostComponentReferenceElement();
-      if (element != null && element.getTypeParameterCount() == 0 && patternType instanceof PsiClassType classType) {
-        patternType = classType.rawType();
-      }
-    }
-    PsiType contextType = JavaPsiPatternUtil.getContextType(pattern);
-    if (contextType == null) return null;
-    if (contextType instanceof PsiWildcardType wildcardType) {
-      contextType = wildcardType.getExtendsBound();
-    }
-    if (!JavaGenericsUtil.isUncheckedCast(patternType, contextType)) return null;
-    String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", contextType.getPresentableText(),
-                                             patternType.getPresentableText());
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
-  }
-
-  /**
-   * Checks if the given record component type is applicable for the pattern type based on the specified language level.
-   * For example:
-   * <pre><code>
-   *  record SomeClass(RecordComponentType component)
-   *  (a instanceof SomeClass(PatternType obj))
-   * </code></pre>
-   *
-   * @param recordComponentType the type of the record component
-   * @param patternType         the type of the pattern
-   * @param languageLevel       the language level to consider
-   * @return true if the record component type is applicable for the pattern type, false otherwise
-   */
-  private static boolean isApplicableForRecordComponent(@NotNull PsiType recordComponentType,
-                                                        @Nullable PsiType patternType,
-                                                        @NotNull LanguageLevel languageLevel) {
-    if ((recordComponentType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
-        !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
-      return recordComponentType.equals(patternType);
-    }
-    return patternType != null && TypeConversionUtil.areTypesConvertible(recordComponentType, patternType);
-  }
-
-  private static @NotNull HighlightInfo.Builder createIncorrectNumberOfNestedPatternsError(@NotNull PsiDeconstructionPattern deconstructionPattern,
-                                                                                           PsiPattern @NotNull [] patternComponents,
-                                                                                           PsiRecordComponent @NotNull [] recordComponents,
-                                                                                           boolean needQuickFix) {
-    assert patternComponents.length != recordComponents.length;
-    String message = JavaErrorBundle.message("incorrect.number.of.nested.patterns", recordComponents.length, patternComponents.length);
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).escapedToolTip(message);
-    PsiDeconstructionList deconstructionList = deconstructionPattern.getDeconstructionList();
-    if (needQuickFix) {
-      if (patternComponents.length < recordComponents.length) {
-        builder.range(deconstructionList);
-        PsiRecordComponent[] missingRecordComponents =
-          Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
-        List<Pattern> missingPatterns =
-          ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
-        ModCommandAction fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
-        builder.registerFix(fix, null, null, null, null);
-      }
-      else {
-        PsiPattern[] deconstructionComponents = deconstructionList.getDeconstructionComponents();
-        int endOffset = deconstructionList.getTextLength();
-        int startOffset = deconstructionComponents[recordComponents.length].getStartOffsetInParent();
-        TextRange textRange = TextRange.create(startOffset, endOffset);
-        builder.range(deconstructionList, textRange);
-        PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
-        int diff = patternComponents.length - recordComponents.length;
-        String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
-        IntentionAction fix = QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text);
-        builder.registerFix(fix, null, text, null, null);
-      }
-    }
-    else {
-      builder.range(deconstructionList);
-    }
-    return builder;
-  }
 
   /**
    * Create light description for patterns
@@ -398,33 +213,6 @@ final class PatternHighlightingModel {
     return reducedToTypeTest;
   }
 
-  static @NotNull HighlightInfo.Builder createPatternIsNotExhaustiveError(@NotNull PsiDeconstructionPattern pattern,
-                                                                          @NotNull PsiType patternType,
-                                                                          @NotNull PsiType itemType) {
-    String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                 JavaHighlightUtil.formatType(itemType));
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(description);
-  }
-
-  static void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
-                                            @NotNull PsiType patternType,
-                                            @NotNull PsiType itemType,
-                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType) &&
-        (!IncompleteModelUtil.isIncompleteModel(pattern) ||
-         !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
-      errorSink.accept(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
-      return;
-    }
-    HighlightInfo.Builder error = getUncheckedPatternConversionError(pattern);
-    if (error != null) {
-      errorSink.accept(error);
-    }
-    else {
-      createDeconstructionErrors(pattern, errorSink);
-    }
-  }
-
 
   private static final class ReduceResultCacheContext {
     private final @NotNull PsiType mySelectorType;
@@ -539,7 +327,7 @@ final class PatternHighlightingModel {
           PatternDescription baseDescription = patternDescriptions.get(i);
           if (!(baseDescription instanceof PatternTypeTestDescription baseTypeDescription)) continue;
           if (baseTypeDescription.myPsiClass == null) continue;
-          if (!PatternsInSwitchBlockHighlightingModel.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
+          if (!JavaPsiSealedUtil.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
           for (PatternDeconstructionDescription comparedPattern : deconstructionExistedPatternWithTheSameType) {
             if (comparedPattern == basePattern) continue;
             if (!comparedPattern.type().equals(basePattern.type())) continue;
@@ -577,7 +365,7 @@ final class PatternHighlightingModel {
     }
     if (!visited.add(from)) return false;
     if (from.getManager().areElementsEquivalent(from, to)) {
-      boolean result = PatternsInSwitchBlockHighlightingModel.isAbstractSealed(to);
+      boolean result = JavaPsiSealedUtil.isAbstractSealed(to);
       addToSealedCache(from, to, cache, result);
       return result;
     }
@@ -587,7 +375,7 @@ final class PatternHighlightingModel {
       return result;
     }
     boolean result = ContainerUtil.exists(from.getSupers(),
-                                          superClass -> PatternsInSwitchBlockHighlightingModel.isAbstractSealed(superClass) &&
+                                          superClass -> JavaPsiSealedUtil.isAbstractSealed(superClass) &&
                                                         isDirectSealedPath(superClass, to, cache, visited));
     addToSealedCache(from, to, cache, result);
     return result;
@@ -714,7 +502,7 @@ final class PatternHighlightingModel {
           for (int i = 0; i < recordComponentTypes.size(); i++) {
             PsiType recordComponentType = recordComponentTypes.get(i);
             PsiType descriptionComponentType = descriptionTypes.get(i);
-            if (!PatternsInSwitchBlockHighlightingModel.cover(context, descriptionComponentType, recordComponentType)) {
+            if (!JavaPsiPatternUtil.covers(context, descriptionComponentType, recordComponentType)) {
               allCovered = false;
               break;
             }
@@ -813,12 +601,12 @@ final class PatternHighlightingModel {
     for (PsiClass covered : visitedCovered) {
       PsiClassType classType = TypeUtils.getType(covered);
       if (!existedTypes.contains(classType)) {
-        if (PatternsInSwitchBlockHighlightingModel.cover(context, selectorType, classType)) {
+        if (JavaPsiPatternUtil.covers(context, selectorType, classType)) {
           toAdd.add(new PatternTypeTestDescription(classType));
           changed = true;
         }
         //find something upper. let's change to selectorType
-        if (PatternsInSwitchBlockHighlightingModel.cover(context, classType, selectorType)) {
+        if (JavaPsiPatternUtil.covers(context, classType, selectorType)) {
           toAdd.add(new PatternTypeTestDescription(selectorType));
           changed = true;
           break;
@@ -1002,7 +790,7 @@ final class PatternHighlightingModel {
       return false;
     }
     for (int i = 0; i < whoType.list().size(); i++) {
-      if (!PatternsInSwitchBlockHighlightingModel.cover(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
+      if (!JavaPsiPatternUtil.covers(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
         return false;
       }
     }
@@ -1014,32 +802,11 @@ final class PatternHighlightingModel {
                                            @NotNull PsiType selectorType) {
     for (PatternDescription pattern : patterns) {
       if (pattern instanceof PatternTypeTestDescription &&
-          PatternsInSwitchBlockHighlightingModel.cover(context, pattern.type(), selectorType)) {
+          JavaPsiPatternUtil.covers(context, pattern.type(), selectorType)) {
         return true;
       }
     }
     return false;
-  }
-
-  static List<PsiType> getAllTypes(@NotNull PsiType selectorType) {
-    List<PsiType> selectorTypes = new ArrayList<>();
-    PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
-    //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
-    if (resolvedClass instanceof PsiTypeParameter typeParameter) {
-      PsiClassType[] types = typeParameter.getExtendsListTypes();
-      Arrays.stream(types)
-        .filter(t -> t != null)
-        .forEach(t -> selectorTypes.add(t));
-    }
-    if (selectorType instanceof PsiIntersectionType psiIntersectionType) {
-      for (PsiType conjunct : psiIntersectionType.getConjuncts()) {
-        selectorTypes.addAll(getAllTypes(conjunct));
-      }
-    }
-    if (selectorTypes.isEmpty()) {
-      selectorTypes.add(selectorType);
-    }
-    return selectorTypes;
   }
 
   sealed interface PatternDescription {

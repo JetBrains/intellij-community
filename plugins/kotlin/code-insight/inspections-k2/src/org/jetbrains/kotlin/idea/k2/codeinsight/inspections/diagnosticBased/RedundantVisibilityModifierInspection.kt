@@ -17,14 +17,14 @@ import kotlin.reflect.KClass
 internal class RedundantVisibilityModifierInspection :
     RedundantModifierInspectionBase<KaFirDiagnostic.RedundantVisibilityModifier>(KtTokens.VISIBILITY_MODIFIERS) {
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtModifierListOwner,
         context: ModifierContext,
-    ): Array<KotlinModCommandQuickFix<KtModifierListOwner>> = arrayOf(object : RemoveRedundantModifierQuickFixBase(context) {
+    ): KotlinModCommandQuickFix<KtModifierListOwner> = object : RemoveRedundantModifierQuickFixBase(context) {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.visibility.modifier")
-    })
+    }
 
     override val diagnosticType: KClass<KaFirDiagnostic.RedundantVisibilityModifier>
         get() = KaFirDiagnostic.RedundantVisibilityModifier::class
@@ -32,8 +32,7 @@ internal class RedundantVisibilityModifierInspection :
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.visibilityModifier(element)
 
-    context(KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtModifierListOwner,
         diagnostic: KaFirDiagnostic.RedundantVisibilityModifier,
     ): ModifierContext? {

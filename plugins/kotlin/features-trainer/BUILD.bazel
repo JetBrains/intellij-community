@@ -20,7 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/util:kotlin-base-util",
@@ -34,6 +34,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
   ],
   runtime_deps = [":features-trainer_resources"]
 )

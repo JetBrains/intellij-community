@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.tabInEditor;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

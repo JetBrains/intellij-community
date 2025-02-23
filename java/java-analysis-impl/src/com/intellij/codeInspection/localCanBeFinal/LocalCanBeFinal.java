@@ -13,6 +13,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.MathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -365,6 +366,10 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     if (modifierList == null) return true;
     if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;
     if (!REPORT_IMPLICIT_FINALS && modifierList.hasModifierProperty(PsiModifier.FINAL)) return true;
+    if (ContainerUtil.exists(IgnoreVariableCanBeFinalSupport.EP_NAME.getExtensionList(),
+                             ext -> ext.ignoreVariable(psiVariable))) {
+      return true;
+    }
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }

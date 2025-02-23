@@ -125,6 +125,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val templateManager = FileTemplateManager.getInstance(project)
     templateManager.saveAllTemplates()
 
+    ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(PluginNode(PluginId.getId("survive.template.plugin")))
     ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(PluginNode(PluginId.getId("survive.template.plugin")))
     val t = templateManager.getTemplate(template.qualifiedName)
     TestCase.assertNotSame(template, t)

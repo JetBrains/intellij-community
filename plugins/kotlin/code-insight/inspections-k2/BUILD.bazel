@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -46,7 +45,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//java/java-psi-api:psi",
     "@lib//:guava",
     "//plugins/kotlin/base/facet:kotlin-base-facet",

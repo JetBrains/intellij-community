@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.regex
 
-import org.jetbrains.plugins.textmate.regex.RegexUtil.codePointsRangeByByteRange
-
 data class MatchData(val matched: Boolean, private val offsets: IntArray) {
   fun count(): Int {
     return offsets.size / 2
@@ -12,21 +10,15 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
     return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
   }
 
-  fun charRange(s: CharSequence, stringBytes: ByteArray?, group: Int = 0): TextMateRange {
-    val range = codePointRange(stringBytes, group)
-    return TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
-                         Character.offsetByCodePoints(s, 0, range.end))
+  fun charRange(textMateString: TextMateString, group: Int = 0): TextMateRange {
+    return textMateString.charRangeByByteRange(byteOffset(group))
   }
 
-  fun codePointRange(stringBytes: ByteArray?, group: Int = 0): TextMateRange {
-    return codePointsRangeByByteRange(stringBytes, byteOffset(group))
-  }
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null) return false
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-
-    val matchData = o as MatchData
+    val matchData = other as MatchData
 
     if (matched != matchData.matched) return false
     if (!offsets.contentEquals(matchData.offsets)) return false

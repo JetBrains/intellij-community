@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -43,8 +43,12 @@ public final class DebuggerUtilsAsync {
 
   // Debugger manager thread
   public static CompletableFuture<String> getStringValue(StringReference value) {
-    if (value instanceof StringReferenceImpl && isAsyncEnabled()) {
-      return reschedule(((StringReferenceImpl)value).valueAsync());
+    return rescheduleIfNeeded(getStringValueJdiFuture(value));
+  }
+
+  static CompletableFuture<String> getStringValueJdiFuture(StringReference value) {
+    if (value instanceof StringReferenceImpl stringReference && isAsyncEnabled()) {
+      return stringReference.valueAsync();
     }
     return completedFuture(value.value());
   }
@@ -473,6 +477,28 @@ public final class DebuggerUtilsAsync {
       return ((VirtualMachineImpl)virtualMachine).allClassesAsync();
     }
     return toCompletableFuture(() -> virtualMachine.allClasses());
+  }
+
+  public static CompletableFuture<Void> disableCollection(Value value) {
+    if (value instanceof ObjectReference objectReference) {
+      if (value instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
+        return objectReferenceImpl.disableCollectionAsync();
+      }
+      return toCompletableFuture(() -> objectReference.disableCollection());
+    }
+    return completedFuture(null);
+  }
+
+  static CompletableFuture<Boolean> isCollectedJdiFuture(ObjectReference reference) {
+    if (reference instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
+      return objectReferenceImpl.isCollectedAsync();
+    }
+    return toCompletableFuture(() -> reference.isCollected());
+  }
+
+  private static <T> CompletableFuture<T> rescheduleIfNeeded(CompletableFuture<T> future) {
+    if (future.isDone()) return future;
+    return reschedule(future);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
@@ -20,6 +20,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,85 +30,11 @@ import java.util.Collection;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 
-abstract class SpecificFilesViewDialog<F> extends DialogWrapper {
+@ApiStatus.Internal
+public abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final JPanel myPanel;
   protected final AsyncChangesTree myView;
   protected final Project myProject;
-
-  abstract static class SpecificFilePathsViewDialog extends SpecificFilesViewDialog<FilePath> {
-    protected SpecificFilePathsViewDialog(@NotNull Project project,
-                                          @NotNull @NlsContexts.DialogTitle String title,
-                                          @NotNull DataKey<Iterable<FilePath>> shownDataKey,
-                                          @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
-      super(project, title, new MyFilePathsTree(project, shownDataKey, filesSupplier));
-    }
-
-    private static final class MyFilePathsTree extends MyChangesTree {
-      private final @NotNull DataKey<Iterable<FilePath>> myShownDataKey;
-      private final @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> myFilesSupplier;
-
-      MyFilePathsTree(@NotNull Project project,
-                      @NotNull DataKey<Iterable<FilePath>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
-        super(project);
-        myShownDataKey = key;
-        myFilesSupplier = filesSupplier;
-      }
-
-      @Override
-      protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
-        return SimpleAsyncChangesTreeModel.create(grouping -> {
-          Collection<FilePath> files = myFilesSupplier.getFiles();
-          return TreeModelBuilder.buildFromFilePaths(myProject, grouping, files);
-        });
-      }
-
-      @Override
-      public void uiDataSnapshot(@NotNull DataSink sink) {
-        super.uiDataSnapshot(sink);
-
-        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-        sink.set(myShownDataKey, treeSelection.iterateUserObjects(FilePath.class));
-        sink.set(VcsDataKeys.FILE_PATHS, treeSelection.iterateUserObjects(FilePath.class));
-      }
-    }
-  }
-
-  abstract static class SpecificVirtualFilesViewDialog extends SpecificFilesViewDialog<VirtualFile> {
-    protected SpecificVirtualFilesViewDialog(@NotNull Project project,
-                                             @NotNull @NlsContexts.DialogTitle String title,
-                                             @NotNull DataKey<Iterable<VirtualFile>> shownDataKey,
-                                             @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
-      super(project, title, new MyFilesTree(project, shownDataKey, filesSupplier));
-    }
-
-    private static final class MyFilesTree extends MyChangesTree {
-      private final @NotNull DataKey<Iterable<VirtualFile>> myShownDataKey;
-      private final @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> myFilesSupplier;
-
-      MyFilesTree(@NotNull Project project,
-                  @NotNull DataKey<Iterable<VirtualFile>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
-        super(project);
-        myShownDataKey = key;
-        myFilesSupplier = filesSupplier;
-      }
-
-      @Override
-      protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
-        return SimpleAsyncChangesTreeModel.create(grouping -> {
-          Collection<VirtualFile> files = myFilesSupplier.getFiles();
-          return TreeModelBuilder.buildFromVirtualFiles(myProject, grouping, files);
-        });
-      }
-
-      @Override
-      public void uiDataSnapshot(@NotNull DataSink sink) {
-        super.uiDataSnapshot(sink);
-        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-        sink.set(myShownDataKey, treeSelection.iterateUserObjects(VirtualFile.class));
-        sink.set(VcsDataKeys.VIRTUAL_FILES, treeSelection.iterateUserObjects(VirtualFile.class));
-      }
-    }
-  }
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
@@ -144,7 +71,6 @@ abstract class SpecificFilesViewDialog<F> extends DialogWrapper {
   protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
-
 
   private JPanel createPanel() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -188,33 +114,85 @@ abstract class SpecificFilesViewDialog<F> extends DialogWrapper {
     return myPanel;
   }
 
-  private class Expander implements TreeExpander {
-    @Override
-    public void expandAll() {
-      TreeUtil.expandAll(myView);
-    }
-
-    @Override
-    public boolean canExpand() {
-      return !myView.getGroupingSupport().isNone();
-    }
-
-    @Override
-    public void collapseAll() {
-      TreeUtil.collapseAll(myView, 1);
-      TreeUtil.expand(myView, 0);
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return !myView.getGroupingSupport().isNone();
-    }
-  }
-
   protected interface FilesSupplier<F> {
     @NotNull
     @RequiresBackgroundThread
     Collection<F> getFiles();
+  }
+
+  public abstract static class SpecificFilePathsViewDialog extends SpecificFilesViewDialog {
+    protected SpecificFilePathsViewDialog(@NotNull Project project,
+                                          @NotNull @NlsContexts.DialogTitle String title,
+                                          @NotNull DataKey<Iterable<FilePath>> shownDataKey,
+                                          @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
+      super(project, title, new MyFilePathsTree(project, shownDataKey, filesSupplier));
+    }
+  }
+
+  private static final class MyFilePathsTree extends MyChangesTree {
+    private final @NotNull DataKey<Iterable<FilePath>> myShownDataKey;
+    private final @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> myFilesSupplier;
+
+    MyFilePathsTree(@NotNull Project project,
+                    @NotNull DataKey<Iterable<FilePath>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
+      super(project);
+      myShownDataKey = key;
+      myFilesSupplier = filesSupplier;
+    }
+
+    @Override
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        Collection<FilePath> files = myFilesSupplier.getFiles();
+        return TreeModelBuilder.buildFromFilePaths(myProject, grouping, files);
+      });
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+
+      VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+      sink.set(myShownDataKey, treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(VcsDataKeys.FILE_PATHS, treeSelection.iterateUserObjects(FilePath.class));
+    }
+  }
+
+  abstract static class SpecificVirtualFilesViewDialog extends SpecificFilesViewDialog {
+    protected SpecificVirtualFilesViewDialog(@NotNull Project project,
+                                             @NotNull @NlsContexts.DialogTitle String title,
+                                             @NotNull DataKey<Iterable<VirtualFile>> shownDataKey,
+                                             @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
+      super(project, title, new MyFilesTree(project, shownDataKey, filesSupplier));
+    }
+
+    private static final class MyFilesTree extends MyChangesTree {
+      private final @NotNull DataKey<Iterable<VirtualFile>> myShownDataKey;
+      private final @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> myFilesSupplier;
+
+      MyFilesTree(@NotNull Project project,
+                  @NotNull DataKey<Iterable<VirtualFile>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
+        super(project);
+        myShownDataKey = key;
+        myFilesSupplier = filesSupplier;
+      }
+
+      @Override
+      protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+        return SimpleAsyncChangesTreeModel.create(grouping -> {
+          Collection<VirtualFile> files = myFilesSupplier.getFiles();
+          return TreeModelBuilder.buildFromVirtualFiles(myProject, grouping, files);
+        });
+      }
+
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+        sink.set(myShownDataKey, treeSelection.iterateUserObjects(VirtualFile.class));
+        sink.set(VcsDataKeys.VIRTUAL_FILES, treeSelection.iterateUserObjects(VirtualFile.class));
+      }
+    }
   }
 
   private abstract static class MyChangesTree extends AsyncChangesTree {
@@ -252,6 +230,29 @@ abstract class SpecificFilesViewDialog<F> extends DialogWrapper {
         VcsTreeModelData.mapToExactVirtualFile(exactSelection));
       sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
       sink.set(PlatformCoreDataKeys.HELP_ID, ChangesListView.HELP_ID);
+    }
+  }
+
+  private class Expander implements TreeExpander {
+    @Override
+    public void expandAll() {
+      TreeUtil.expandAll(myView);
+    }
+
+    @Override
+    public boolean canExpand() {
+      return !myView.getGroupingSupport().isNone();
+    }
+
+    @Override
+    public void collapseAll() {
+      TreeUtil.collapseAll(myView, 1);
+      TreeUtil.expand(myView, 0);
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return !myView.getGroupingSupport().isNone();
     }
   }
 }

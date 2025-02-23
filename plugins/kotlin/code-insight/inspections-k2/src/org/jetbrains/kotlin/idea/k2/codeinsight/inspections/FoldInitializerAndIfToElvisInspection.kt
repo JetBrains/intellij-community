@@ -33,15 +33,14 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+    override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         return prepareData(element)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: FoldInitializerAndIfExpressionData,
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.if.with.elvis.operator")
@@ -62,7 +61,7 @@ internal class FoldInitializerAndIfToElvisInspection :
 
             elvis.right?.textOffset?.let { updater.moveCaretTo(it) }
         }
-    })
+    }
 
     override fun getProblemDescription(element: KtIfExpression, context: FoldInitializerAndIfExpressionData) =
         KotlinBundle.message("if.null.return.break.foldable.to")

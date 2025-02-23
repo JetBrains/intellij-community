@@ -17,6 +17,8 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.toPersistentHashMap
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
 
@@ -272,19 +274,15 @@ internal class StorageSerializerUtil(
     }
   }
 
-  internal fun getEntityId2VfuSerializer(): Serializer<EntityId2Vfu> = object : Serializer<EntityId2Vfu>() {
-    override fun write(kryo: Kryo, output: Output, entityId2Vfu: EntityId2Vfu) {
-      kryo.writeClassAndObject(output, entityId2Vfu.mapKeys { it.key.toSerializableEntityId() })
+  internal fun getEntityId2VfuPersistentMapSerializer(): Serializer<PersistentMap<Long, Any>> = object : Serializer<PersistentMap<Long, Any>>() {
+    override fun write(kryo: Kryo, output: Output, entityId2VfuOld: PersistentMap<Long, Any>) {
+      kryo.writeClassAndObject(output, entityId2VfuOld.mapKeys { it.key.toSerializableEntityId() })
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun read(kryo: Kryo, input: Input, type: Class<out EntityId2Vfu>): EntityId2Vfu {
+    override fun read(kryo: Kryo, input: Input, type: Class<out PersistentMap<Long, Any>>): PersistentMap<Long, Any> {
       val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Any>
-      return EntityId2Vfu(data.size).also {
-        data.forEach(BiConsumer { key, value ->
-          it.put(key.toEntityId(classCache), value)
-        })
-      }
+      return data.mapKeys { it.key.toEntityId(classCache) }.toPersistentHashMap()
     }
   }
 

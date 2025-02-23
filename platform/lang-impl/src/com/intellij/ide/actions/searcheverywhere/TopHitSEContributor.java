@@ -106,7 +106,7 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers);
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers, null);
       return true;
     }
 

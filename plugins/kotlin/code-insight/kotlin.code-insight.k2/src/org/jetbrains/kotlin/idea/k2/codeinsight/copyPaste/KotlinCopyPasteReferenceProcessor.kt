@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestori
 /**
  * Tests: [org.jetbrains.kotlin.idea.k2.copyPaste.K2InsertImportOnPasteTestGenerated]
  */
-class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
+internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
     override fun collectTransferableData(
         file: PsiFile,
         editor: Editor,

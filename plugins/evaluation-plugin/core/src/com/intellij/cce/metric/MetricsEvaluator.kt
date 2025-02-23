@@ -34,7 +34,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
 
   private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
 
-  fun evaluate(sessions: List<Session>): List<MetricInfo> {
+  fun evaluate(sessions: List<Session>, numberOfSessions: Int): List<MetricInfo> {
     return metrics.map { metric ->
       val (overallScore, individualScores) = if (metric.supportsIndividualScores) {
         val evaluationResult = metric.evaluateWithIndividualScores(sessions)
@@ -47,7 +47,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
         name = metric.name,
         description = metric.description,
         value = overallScore,
-        confidenceInterval = metric.confidenceInterval(),
+        confidenceInterval = if (metric.shouldComputeIntervals(numberOfSessions)) metric.confidenceInterval() else null,
         evaluationType = evaluationType,
         valueType = metric.valueType,
         showByDefault = metric.showByDefault,
@@ -56,13 +56,13 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     }
   }
 
-  fun globalMetricInfos(): List<MetricInfo> {
+  fun globalMetricInfos(numberOfSessions: Int): List<MetricInfo> {
     return metrics.map {
       MetricInfo(
         name = it.name,
         description = it.description,
         value = it.value,
-        confidenceInterval = if (it.shouldComputeIntervals) it.confidenceInterval() else null,
+        confidenceInterval = if (it.shouldComputeIntervals(numberOfSessions)) it.confidenceInterval() else null,
         evaluationType = evaluationType,
         valueType = it.valueType,
         showByDefault = it.showByDefault,

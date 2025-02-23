@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//plugins/properties/properties-psi-api:psi",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",

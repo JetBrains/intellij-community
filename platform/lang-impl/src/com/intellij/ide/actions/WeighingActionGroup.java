@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -14,8 +15,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
-
+@ApiStatus.Internal
+public abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
   public static final Key<Double> WEIGHT_KEY = Key.create("WeighingActionGroup.WEIGHT");
   public static final Double DEFAULT_WEIGHT = Presentation.DEFAULT_WEIGHT;
   public static final Double HIGHER_WEIGHT = Presentation.HIGHER_WEIGHT;

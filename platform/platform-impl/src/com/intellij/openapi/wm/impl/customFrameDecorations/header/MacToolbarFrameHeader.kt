@@ -125,7 +125,9 @@ internal class MacToolbarFrameHeader(
   }
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    return InternalUICustomization.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
+    val service = InternalUICustomization.getInstanceOrNull()
+    return service?.transformGraphics(this, super.getComponentGraphics(graphics))
+           ?: super.getComponentGraphics(graphics)
   }
 
   private fun isCompactHeaderFast(): Boolean {

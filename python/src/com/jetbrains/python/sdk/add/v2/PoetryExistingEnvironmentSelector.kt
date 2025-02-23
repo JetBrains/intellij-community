@@ -7,6 +7,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
@@ -14,8 +16,6 @@ import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.asPythonResult
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -37,8 +37,8 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
   }
 
   override suspend fun detectEnvironments(modulePath: Path) {
-    val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull {
-      env -> env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version) }
+    val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull { env ->
+      env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }
     }
 
     existingEnvironments.value = existingEnvs

@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -120,21 +119,21 @@ public abstract class SdkListItem {
   public static final class SuggestedItem extends SdkListItem {
     public final @NotNull SdkType sdkType;
     public final @NlsSafe String version;
-    public final @NotNull String homePath;
-    public final @NotNull KeyFMap info;
+    @NlsSafe public final @NotNull String homePath;
+    public final @NotNull Boolean isSymlink;
 
     SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
       this.sdkType = sdkType;
       this.version = version;
       this.homePath = homePath;
-      this.info = KeyFMap.EMPTY_MAP;
+      this.isSymlink = false;
     }
 
-    SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath, @NotNull KeyFMap info) {
+    SuggestedItem(@NotNull SdkType sdkType, @NotNull SdkType.SdkEntry entry) {
       this.sdkType = sdkType;
-      this.version = version;
-      this.homePath = homePath;
-      this.info = info;
+      this.version = entry.versionString();
+      this.homePath = entry.homePath();
+      this.isSymlink = Boolean.TRUE.equals(entry.isSymlink());
     }
   }
 

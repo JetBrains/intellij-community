@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -20,6 +19,7 @@ jvm_library(
   deps = [
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/preferences",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/core:fleet-util-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

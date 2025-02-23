@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.FileModificationService
@@ -9,12 +9,14 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -76,6 +78,10 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
         ) return
 
         analyze(callableDeclaration) {
+            val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
+                .mapNotNull { (it.type as? KaTypeParameterType)?.symbol }
+                .filterTo(mutableSetOf()) { it.isReified }
+
             val receiverType = receiverTypeReference.type
             val receiverTypeSymbol = receiverType.symbol
             if (receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind == KaClassKind.COMPANION_OBJECT) return
@@ -101,7 +107,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                     if (used) return
                     element.acceptChildren(this)
 
-                    if (isUsageOfSymbol(callableSymbol, element)) {
+                    if (isUsageOfSymbol(callableSymbol, element) || isUsageOfReifiedType(usedTypeParametersInReceiver, element)) {
                         used = true
                     }
                 }
@@ -200,7 +206,7 @@ private fun typeParameters(typeReference: KtTypeReference): List<KtTypeParameter
  */
 private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
     val unusedTypeParams = typeParameters.filter { typeParameter ->
-        ReferencesSearch.search(typeParameter).none { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
+        ReferencesSearch.search(typeParameter).asIterable().none { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
     }
     if (unusedTypeParams.isEmpty()) return
     runWriteAction {
@@ -247,6 +253,19 @@ context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KaCallableSymbol.hasContextReceiverOfType(type: KaType): Boolean {
     return contextReceivers.any { type.isSubtypeOf(it.type) }
+}
+
+/**
+ * Returns whether the [element] makes use of one of the [reifiedTypes].
+ * This will only return true if the [element] is inside a function body or function expression.
+ */
+context(KaSession)
+private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, element: KtElement): Boolean {
+    val parentFunction = element.parentOfType<KtFunction>() ?: return false
+    if (element !is KtExpression) return false
+    // It is only a real use if the reified type is used in the body of the function
+    if (element.parents.none { it == parentFunction.bodyBlockExpression || it == parentFunction.bodyExpression }) return false
+    return reifiedTypes.contains(element.resolveExpression())
 }
 
 /**

@@ -228,7 +228,7 @@ private fun ChangeScope.runEffects(list: List<Effect>) {
         e.effect(this)
       }
       catch (x: Throwable) {
-        logger.error(x, "failed running effect ${e.javaClass} in offer")
+        logger.error(x, "failed running effect ${e::class} in offer")
       }
     }
   }

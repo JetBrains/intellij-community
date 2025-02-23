@@ -40,7 +40,7 @@ internal class WebSymbolsUsageSearcher : UsageSearcher {
 
 object WebSymbolUsageQueries {
 
-  fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope) =
+  fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
     (symbol.psiContext
        ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider

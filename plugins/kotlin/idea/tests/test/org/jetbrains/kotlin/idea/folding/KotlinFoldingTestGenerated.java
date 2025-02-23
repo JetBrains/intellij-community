@@ -156,6 +156,11 @@ public abstract class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTe
             runTest("testData/folding/checkCollapse/imports.kt");
         }
 
+        @TestMetadata("multilineCall.kt")
+        public void testMultilineCall() throws Exception {
+            runTest("testData/folding/checkCollapse/multilineCall.kt");
+        }
+
         @TestMetadata("multilineStrings.kt")
         public void testMultilineStrings() throws Exception {
             runTest("testData/folding/checkCollapse/multilineStrings.kt");

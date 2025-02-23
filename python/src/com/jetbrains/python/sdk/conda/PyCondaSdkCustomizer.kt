@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.conda
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PyCondaSdkCustomizer {
   val preferCondaEnvironments: Boolean
     get() = false

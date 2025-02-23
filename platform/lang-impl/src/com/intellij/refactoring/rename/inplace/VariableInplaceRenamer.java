@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -147,10 +147,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected boolean buildTemplateAndStart(final @NotNull Collection<PsiReference> refs,
+  protected boolean buildTemplateAndStart(@NotNull Collection<PsiReference> refs,
                                           @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                          final @NotNull PsiElement scope,
-                                          final @NotNull PsiFile containingFile) {
+                                          @NotNull PsiElement scope,
+                                          @NotNull PsiFile containingFile) {
     PsiFile fileCopy = (PsiFile)containingFile.copy();
     try {
       myElementInCopy = PsiTreeUtil.findSameElementInCopy(myElementToRename, fileCopy);
@@ -281,7 +281,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return new VariableInplaceRenamer(variable, editor, myProject, initialName, myOldName);
   }
 
-  protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
+  protected void performOnInvalidIdentifier(String newName, LinkedHashSet<String> nameSuggestions) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       tryRollback();
       return;
@@ -508,8 +508,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  protected boolean isRenamerFactoryApplicable(@NotNull AutomaticRenamerFactory renamerFactory,
-                                               @NotNull PsiNamedElement elementToRename) {
+  protected boolean isRenamerFactoryApplicable(@NotNull AutomaticRenamerFactory renamerFactory, @NotNull PsiNamedElement elementToRename) {
     return renamerFactory.isApplicable(elementToRename);
   }
 

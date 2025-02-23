@@ -38,7 +38,7 @@ jvm_library(
     "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/fixes-k2/tests:kotlin-code-insight-fixes-k2-tests_test_lib",
@@ -46,6 +46,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//platform/util/jdom",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
   ]
 )
 

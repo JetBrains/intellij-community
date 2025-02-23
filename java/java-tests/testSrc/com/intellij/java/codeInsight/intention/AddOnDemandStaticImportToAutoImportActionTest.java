@@ -20,10 +20,42 @@ public class AddOnDemandStaticImportToAutoImportActionTest extends LightJavaCode
   public void testAddedDefault() {
     doTest(() -> {
       myFixture.configureByText("a.java", """
-        import static java.util.Objects.*;
+        import static java.util.Objects.*<caret>;
         """);
       assertTrue(tryToAddToAutoImport("java.util.Objects"));
       assertTrue(tableContains("java.util.Objects"));
+    });
+  }
+
+  public void testAddFromCallOnDemand() {
+    doTest(() -> {
+      myFixture.configureByText("a.java", """
+        import static java.util.Objects.*;
+        
+        public class Favorite {
+            public static void a() {
+                require<caret>NonNull("a");
+            }
+        }
+        """);
+      assertTrue(tryToAddToAutoImport("java.util.Objects"));
+      assertTrue(tableContains("java.util.Objects"));
+    });
+  }
+
+  public void testAddFromCall() {
+    doTest(() -> {
+      myFixture.configureByText("a.java", """
+        import static java.util.Objects.requireNonNull;
+        
+        public class Favorite {
+            public static void a() {
+                requireNon<caret>Null("a");
+            }
+        }
+        """);
+      assertTrue(tryToAddToAutoImport("java.util.Objects.requireNonNull"));
+      assertTrue(tableContains("java.util.Objects.requireNonNull"));
     });
   }
 
@@ -33,7 +65,7 @@ public class AddOnDemandStaticImportToAutoImportActionTest extends LightJavaCode
       JavaProjectCodeInsightSettings codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(getProject());
       codeInsightSettings.includedAutoStaticNames = List.of("java.util.Objects");
       myFixture.configureByText("a.java", """
-        import static java.util.Objects.*;
+        import static java.util.Objects.*<caret>;
         """);
       assertFalse(tryToAddToAutoImport("java.util.Objects"));
     });
@@ -50,7 +82,7 @@ public class AddOnDemandStaticImportToAutoImportActionTest extends LightJavaCode
 
   private boolean tableContains(@NotNull String name) {
     JavaProjectCodeInsightSettings codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(getProject());
-    return codeInsightSettings.isStaticAutoImportClass(name);
+    return codeInsightSettings.isStaticAutoImportName(name);
   }
 
   private void doTest(@NotNull Runnable runnable) {

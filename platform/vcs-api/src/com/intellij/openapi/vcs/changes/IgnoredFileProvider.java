@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,6 +16,9 @@ import java.util.Set;
 public interface IgnoredFileProvider {
   ExtensionPointName<IgnoredFileProvider> IGNORE_FILE = new ExtensionPointName<>("com.intellij.ignoredFileProvider");
 
+  /**
+   * @see VcsIgnoreManager#isPotentiallyIgnoredFile(FilePath)
+   */
   boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath);
 
   @NotNull

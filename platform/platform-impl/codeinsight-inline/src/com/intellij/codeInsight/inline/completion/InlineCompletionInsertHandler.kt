@@ -9,12 +9,21 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.annotations.ApiStatus
 
-class InlineCompletionInsertEnvironment(
+class InlineCompletionInsertEnvironment @ApiStatus.Internal constructor(
   val editor: Editor,
   val file: PsiFile,
   val insertedRange: TextRange,
-) : UserDataHolderBase()
+
+  @ApiStatus.Internal
+  val request: InlineCompletionRequest?,
+) : UserDataHolderBase() {
+
+  @Deprecated("Do not create this class manually.")
+  @ApiStatus.ScheduledForRemoval
+  constructor(editor: Editor, file: PsiFile, insertedRange: TextRange) : this(editor, file, insertedRange, null)
+}
 
 interface InlineCompletionInsertHandler {
   @RequiresEdt

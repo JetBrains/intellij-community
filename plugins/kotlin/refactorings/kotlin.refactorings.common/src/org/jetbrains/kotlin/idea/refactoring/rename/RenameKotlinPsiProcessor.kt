@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -65,7 +65,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         element: PsiElement,
         searchParameters: KotlinReferencesSearchParameters
     ): Collection<PsiReference> {
-        val references = ReferencesSearch.search(searchParameters).toMutableSet()
+        val references = ReferencesSearch.search(searchParameters).asIterable().toMutableSet()
         if (element is KtNamedFunction || (element is KtProperty && !element.isLocal) || (element is KtParameter && element.hasValOrVar())) {
             element.toLightMethods().flatMapTo(references) { method ->
                 MethodReferencesSearch.search(
@@ -75,7 +75,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
                             acceptImportAlias = false
                         )
                     )
-                )
+                ).asIterable()
             }
         }
         return references.filter {

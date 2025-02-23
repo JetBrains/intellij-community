@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.language.preferences
 
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull

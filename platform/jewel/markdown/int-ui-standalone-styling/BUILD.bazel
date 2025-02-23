@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -35,6 +34,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
+    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
     "//libraries/compose-foundation-desktop",
   ],
   runtime_deps = [":jewel-markdown-intUiStandaloneStyling_resources"],

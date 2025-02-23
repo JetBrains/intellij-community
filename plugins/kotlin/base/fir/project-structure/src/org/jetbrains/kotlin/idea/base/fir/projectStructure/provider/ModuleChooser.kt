@@ -51,7 +51,10 @@ internal object ModuleChooser {
     }
 
     private fun getCandidatePriority(candidate: KaModule, useSiteModule: KaModule): ModulePriority? {
-        if (candidate == useSiteModule) return ModulePriority.Self
+        when (useSiteModule) {
+            candidate -> return ModulePriority.Self
+            is KaDanglingFileModule -> return getCandidatePriority(candidate, useSiteModule.contextModule)
+        }
         when (candidate) {
             is KaScriptDependencyModule -> {
                 if (useSiteModule !is KaScriptModule && useSiteModule !is KaScriptDependencyModule) {
@@ -70,7 +73,6 @@ internal object ModuleChooser {
             }
         }
         when (useSiteModule) {
-            is KaDanglingFileModule -> return getCandidatePriority(candidate, useSiteModule.contextModule)
             is KaLibraryModule, is KaLibrarySourceModule -> {
                 // libraries have no dependencies
                 return null

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -11,14 +12,15 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal open class ClassifierImportCandidatesProvider(
-    positionContext: KotlinNameReferencePositionContext,
-) : AbstractImportCandidatesProvider(positionContext) {
+    override val positionContext: KotlinNameReferencePositionContext,
+) : AbstractImportCandidatesProvider() {
 
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
         !kotlinClass.isImported() && kotlinClass.canBeImported()
@@ -36,20 +38,22 @@ internal open class ClassifierImportCandidatesProvider(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
+        name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
-        val unresolvedName = positionContext.name
         val fileSymbol = getFileSymbol()
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
 
         return buildList {
-            addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
-            addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
+            addAll(indexProvider.getKotlinClassesByName(name) { acceptsKotlinClass(it) })
+            addAll(indexProvider.getJavaClassesByName(name) { acceptsJavaClass(it) })
         }
             .map { ClassLikeImportCandidate(it) }
-            .filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it.symbol) }
+            .filter { it.classId != null && it.isVisible(visibilityChecker) && acceptsClassLikeSymbol(it.symbol) }
     }
 }
 

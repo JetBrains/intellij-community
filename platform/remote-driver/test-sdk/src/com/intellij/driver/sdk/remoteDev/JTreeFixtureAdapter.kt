@@ -3,8 +3,8 @@ package com.intellij.driver.sdk.remoteDev
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.CellRendererReader
-import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
-import com.intellij.driver.sdk.ui.components.JTreeUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTreeFixtureRef
+import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
 import java.awt.Point

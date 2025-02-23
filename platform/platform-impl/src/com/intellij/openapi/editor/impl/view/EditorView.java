@@ -10,10 +10,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorModel;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.*;
@@ -75,6 +72,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
+  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
 
@@ -589,8 +587,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return (FoldingModelImpl)myEditorModel.getFoldingModel();
   }
 
-  InlayModelImpl getInlayModel() {
-    return (InlayModelImpl)myEditorModel.getInlayModel();
+  InlayModelEx getInlayModel() {
+    return myEditorModel.getInlayModel();
   }
 
   SoftWrapModelImpl getSoftWrapModel() {
@@ -666,8 +664,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout;
   }
 
+  public float getCodePointWidth(int codePoint) {
+    return getCodePointWidth(codePoint, Font.PLAIN);
+  }
+
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
+    if (multiplier != null) {
+      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    }
+    else {
+      return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+    }
   }
 
   Insets getInsets() {
@@ -771,6 +779,22 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return true;
   }
 
+  /**
+   * Sets the strategy to differentiate between single and double width characters.
+   * <p>
+   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
+   *   is enabled.
+   *   If not set, then the character width will be guessed by its actual width in the font used.
+   *   Such heuristics generally works well for most regular characters,
+   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
+   *   which is why an explicit strategy is needed.
+   * </p>
+   * @param doubleWidthCharacterStrategy the strategy to use
+   */
+  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
+    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
+  }
+
   private void checkFontRenderContext(FontRenderContext context) {
     boolean contextUpdated = false;
     synchronized (myLock) {
@@ -812,5 +836,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
+  }
+
+  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
+    @Override
+    public boolean isDoubleWidth(int codePoint) {
+      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
+      return Math.min(2, Math.max(1, width)) == 2;
+    }
   }
 }

@@ -94,13 +94,12 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         return KotlinBundle.message("replace.with.0", "${context.replacementFunctionName} {...}")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: Replacement
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(ReplaceFix(context))
+    ): KotlinModCommandQuickFix<KtIfExpression> = ReplaceFix(context)
 
-    context(KaSession)
-    override fun prepareContext(ifExpression: KtIfExpression): Replacement? {
+    override fun KaSession.prepareContext(ifExpression: KtIfExpression): Replacement? {
         if (ifExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
         if (ifExpression.node.elementType == KtNodeTypes.ELSE) return null
         val thenExpression = ifExpression.then ?: return null
@@ -146,8 +145,8 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         val label = getTargetLabel()
 
         return if (label == null) parents.firstIsInstanceOrNull<KtLoopExpression>() == loop
-            else if (loop.parent !is KtLabeledExpression) false
-            else label.mainReference.isReferenceTo(loop) == true
+        else if (loop.parent !is KtLabeledExpression) false
+        else label.mainReference.isReferenceTo(loop) == true
     }
 
     private class ReplaceFix(@SafeFieldForPreview private val replacement: Replacement) : KotlinModCommandQuickFix<KtIfExpression>() {

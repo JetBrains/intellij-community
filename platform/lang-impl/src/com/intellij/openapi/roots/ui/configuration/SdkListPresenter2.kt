@@ -59,9 +59,15 @@ internal class SdkListPresenter2<T>(
       return panel
     }
 
-    if (listItemProducer.apply(value) is SdkListItem.GroupItem) {
+    val sdkListItem = listItemProducer.apply(value)
+
+    if (sdkListItem is SdkListItem.GroupItem) {
       myArrow.isVisible = true
       myArrow.icon = if (isSelected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
+    }
+
+    if (component is JComponent) {
+      component.toolTipText = if (sdkListItem is SdkListItem.SuggestedItem && SdkListPresenter.presentDetectedSdkPath(sdkListItem.homePath).contains("...")) sdkListItem.homePath else null
     }
 
     return component
@@ -79,7 +85,7 @@ internal class SdkListPresenter2<T>(
 
       is SdkListItem.SuggestedItem -> {
         var icon = sdkListItem.sdkType.icon
-        if (icon != null && sdkListItem.info.get(SdkType.IS_SYMLINK_KEY) == true) {
+        if (icon != null && sdkListItem.isSymlink) {
           icon = AllIcons.Nodes.Related
         }
         item.icon = icon ?: IconUtil.addIcon

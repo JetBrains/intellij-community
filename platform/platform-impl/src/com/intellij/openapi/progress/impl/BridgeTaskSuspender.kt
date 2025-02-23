@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Suppress("DEPRECATION")
 @Deprecated("Use TaskSuspenderImpl instead")
-internal class BridgeTaskSuspender(indicator: ProgressIndicator) : TaskSuspender, ProgressSuspenderTracker.IndicatorListener {
+internal class BridgeTaskSuspender(private val indicator: ProgressIndicator) : TaskSuspender, ProgressSuspenderTracker.IndicatorListener {
   private val progressSuspender = AtomicReference<ProgressSuspender?>(null)
 
   private val _isSuspendable = MutableStateFlow<TaskSuspension>(TaskSuspension.NonSuspendable)
@@ -47,6 +47,14 @@ internal class BridgeTaskSuspender(indicator: ProgressIndicator) : TaskSuspender
 
     // Tracking the appearance and disappearance of a suspender related to the indicator (suspenderAdded, suspenderRemoved)
     ProgressSuspenderTracker.getInstance().startTracking(indicator, this)
+  }
+
+  fun stop() {
+    val suspenderTracker = ProgressSuspenderTracker.getInstance()
+    suspenderTracker.stopTracking(indicator)
+
+    val suspender = ProgressSuspender.getSuspender(indicator)
+    suspender?.let { suspenderTracker.stopTracking(suspender) }
   }
 
   override fun isPaused(): Boolean {

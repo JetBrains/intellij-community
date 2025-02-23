@@ -54,8 +54,7 @@ internal class SpecifyTypeExplicitlyIntention:
         return Presentation.of(actionName)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? =
+    override fun KaSession.prepareContext(element: KtCallableDeclaration): TypeInfo? =
         if (skip(element)) {
             null
         } else {

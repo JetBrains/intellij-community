@@ -12,8 +12,8 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.yaml.backend" />
     <orderEntry type="module" module-name="intellij.yaml" />
-    <orderEntry type="module" module-name="intellij.yaml.editing" />
     <orderEntry type="module" module-name="intellij.platform.backend" />
   </component>
 </module>

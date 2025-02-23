@@ -15,11 +15,13 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class AnnotatorRunner {
+final class AnnotatorRunner {
   private static final Logger LOG = Logger.getInstance(AnnotatorRunner.class);
   private final Project myProject;
   private final PsiFile myPsiFile;
@@ -44,11 +46,9 @@ public final class AnnotatorRunner {
   private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
   private final List<HighlightInfo> results = Collections.synchronizedList(new ArrayList<>());
 
-  public AnnotatorRunner(@NotNull PsiFile psiFile,
-                  boolean batchMode,
-                  @NotNull AnnotationSession annotationSession) {
-    myProject = psiFile.getProject();
-    myPsiFile = psiFile;
+  AnnotatorRunner(@NotNull AnnotationSession annotationSession, boolean batchMode) {
+    myProject = annotationSession.getFile().getProject();
+    myPsiFile = annotationSession.getFile();
     myAnnotationSession = annotationSession;
     myDumbService = DumbService.getInstance(myProject);
     myBatchMode = batchMode;
@@ -56,7 +56,7 @@ public final class AnnotatorRunner {
 
   // run annotators on PSI elements inside/outside while running `runnable` in parallel
   @ApiStatus.Internal
-  public boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
+  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
                              @NotNull List<? extends PsiElement> outside,
                              @NotNull Runnable runnable,
                              @NotNull ResultSink resultSink) {
@@ -140,7 +140,8 @@ public final class AnnotatorRunner {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
           for (int i = sizeBefore; i < sizeAfter; i++) {
             Annotation annotation = annotationHolder.get(i);
-            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
+            Document document = PsiDocumentManager.getInstance(myProject).getDocument(InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile));
+            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
             if (myPsiFile.getViewProvider() instanceof InjectedFileViewProvider) {
               info.markFromInjection();
             }
@@ -198,7 +199,7 @@ public final class AnnotatorRunner {
         }
         return null;
       });
-      patched.registerFixes(quickFixes);
+      patched.registerFixes(quickFixes, documentWindow.getDelegate());
       patched.markFromInjection();
       outHostInfos.add(patched);
     }

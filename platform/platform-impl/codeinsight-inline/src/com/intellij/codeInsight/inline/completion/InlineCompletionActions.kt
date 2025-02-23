@@ -86,7 +86,7 @@ class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
   CancellationKeyInlineCompletionHandler(originalHandler, FinishType.ESCAPE_PRESSED)
 
 @ApiStatus.Internal
-class BackSpaceInlineCompletionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+class BackspaceDeleteInlineCompletionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
 
   private fun invokeOriginalHandler(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
@@ -109,16 +109,14 @@ class BackSpaceInlineCompletionHandler(private val originalHandler: EditorAction
       handler.hide(session.context, FinishType.BACKSPACE_PRESSED)
     }
 
-    val initialCaretOffset = editor.caretModel.offset
-    if (editor.caretModel.caretCount != 1 || editor.selectionModel.selectedText != null || initialCaretOffset == 0) {
+    if (editor.caretModel.caretCount != 1) {
       invokeOriginalHandler(editor, caret, dataContext)
       return
     }
-    val initialTextLength = editor.document.textLength
+
+    val initialModificationStamp = editor.document.modificationStamp
     invokeOriginalHandler(editor, caret, dataContext)
-    val finalCaretOffset = editor.caretModel.offset
-    val finalTextLength = editor.document.textLength
-    if (initialCaretOffset != finalCaretOffset + 1 || initialTextLength != finalTextLength + 1) {
+    if (editor.document.modificationStamp == initialModificationStamp) {
       return
     }
 

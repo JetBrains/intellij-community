@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = ["kotlin.RequiresOptIn"]
 )
 
@@ -80,6 +79,7 @@ jvm_library(
     "//plugins/terminal/completion",
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -178,6 +178,7 @@ jvm_library(
     "//plugins/terminal/completion:completion_test_lib",
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [
     ":vcs-git_resources",

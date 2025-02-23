@@ -1,31 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import com.google.devtools.build.lib.view.proto.Deps
 import com.google.devtools.build.lib.view.proto.Deps.Dependencies
-import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
-import org.jetbrains.kotlin.cli.common.messages.*
-import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
-import org.jetbrains.kotlin.cli.common.setupCommonArguments
-import org.jetbrains.kotlin.cli.jvm.compiler.configurePlugins
-import org.jetbrains.kotlin.cli.jvm.compiler.k2jvm
-import org.jetbrains.kotlin.cli.jvm.compiler.loadPlugins
-import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
-import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
-import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
-import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.messages.PlainTextMessageRenderer
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.messageCollector
-import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
-import org.jetbrains.kotlin.modules.JavaRootPath
-import java.io.BufferedInputStream
+import org.jetbrains.kotlin.config.Services
 import java.io.File
 import java.io.Writer
 import java.nio.file.Files
@@ -51,11 +39,9 @@ internal suspend fun compileKotlinForJvm(
   val outFilePath = outFile.toString()
   kotlinArgs.destination = outFilePath
 
-  val pluginConfigurations = configurePlugins(args = args, workingDir = baseDir, label = info.label)
-
   fun printOptions() {
     wrapOutput(out, info.label, classifier = "K2JVM Compiler Arguments") {
-      out.appendLine("pluginConfigurations:\n  ${pluginConfigurations.joinToString("\n  ") { it.toString() }}")
+      out.appendLine("pluginConfigurations:\n  ${getDebugInfoAboutPlugins(args, baseDir, info.label)}")
       out.appendLine(toArgumentStrings(kotlinArgs).joinToString("\n"))
     }
   }
@@ -66,83 +52,29 @@ internal suspend fun compileKotlinForJvm(
 
   require(kotlinArgs.freeArgs.isEmpty())
   kotlinArgs.freeArgs = sources.map { it.toString() }
+
+  val config = prepareCompilerConfiguration(args = args, kotlinArgs = kotlinArgs, baseDir = baseDir)
+
   val messageCollector = WriterBackedMessageCollector(verbose = context.isTracing)
-
-  val config = org.jetbrains.kotlin.cli.jvm.compiler.configTemplate.copy()
   config.put(CLIConfigurationKeys.ORIGINAL_MESSAGE_COLLECTOR_KEY, messageCollector)
-  val collector = GroupingMessageCollector(messageCollector, kotlinArgs.allWarningsAsErrors, kotlinArgs.reportAllWarnings).also {
-    config.messageCollector = it
-  }
-  config.setupCommonArguments(kotlinArgs) { version -> MetadataVersion(*version) }
-  config.setupJvmSpecificArguments(kotlinArgs)
-  if (args.boolFlag(JvmBuilderFlags.ALLOW_KOTLIN_PACKAGE)) {
-    config.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, true)
-  }
-
   config.put(JVMConfigurationKeys.OUTPUT_JAR, outFile.toFile())
+  configureModule(
+    moduleName = info.moduleName,
+    config = config,
+    outFileOrDirPath = outFilePath,
+    args = args,
+    baseDir = baseDir,
+    allSources = sources,
+    changedKotlinSources = null,
+    classPath = classPath,
+  )
 
   coroutineContext.ensureActive()
-
-  val rootDisposable = Disposer.newDisposable("Disposable for Bazel Kotlin Compiler")
-  var code = try {
-    loadPlugins(configuration = config, pluginConfigurations = pluginConfigurations)
-
-    val moduleName = info.moduleName
-    config.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
-
-    val module = ModuleBuilder(moduleName, outFilePath, "java-production")
-
-    args.optional(JvmBuilderFlags.FRIENDS)?.let { value ->
-      for (path in value) {
-        module.addFriendDir(baseDir.resolve(path).normalize().toString())
-      }
-    }
-
-    var isJava9Module =  false
-
-    val moduleInfoNameSuffix = File.separatorChar + MODULE_INFO_FILE
-    for (source in sources) {
-      val path = source.toString()
-      if (path.endsWith(".java")) {
-        module.addJavaSourceRoot(JavaRootPath(path, null))
-        config.addJavaSourceRoot(source.toFile(), null)
-        if (!isJava9Module) {
-          isJava9Module = path.endsWith(moduleInfoNameSuffix)
-        }
-      }
-      else {
-        module.addSourceFiles(path)
-        config.addKotlinSourceRoot(path = path, isCommon = false, hmppModuleName = null)
-      }
-    }
-
-    for (path in classPath) {
-      module.addClasspathEntry(path.toString())
-    }
-
-    for (file in classPath) {
-      val ioFile = file.toFile()
-      if (isJava9Module) {
-        config.add(CLIConfigurationKeys.CONTENT_ROOTS, JvmModulePathRoot(ioFile))
-      }
-      config.add(CLIConfigurationKeys.CONTENT_ROOTS, JvmClasspathRoot(ioFile))
-    }
-
-    config.addAll(JVMConfigurationKeys.MODULES, listOf(module))
-
-    k2jvm(
-      config = config,
-      rootDisposable = rootDisposable,
-      module = module,
-      messageCollector = messageCollector,
-    ).code
+  val pipeline = createJvmPipeline(config) {
+    // todo write
   }
-  finally {
-    Disposer.dispose(rootDisposable)
-    collector.flush()
-  }
-
-  if (collector.hasErrors()) {
+  var code = pipeline.execute(kotlinArgs, Services.EMPTY, messageCollector).code
+  if (messageCollector.hasErrors()) {
     code = ExitCode.COMPILATION_ERROR.code
   }
   if (code == 0 && !context.isTracing) {
@@ -176,7 +108,7 @@ private inline fun wrapOutput(out: Writer, label: String, classifier: String, ta
 
 private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): List<Path> {
   if (!args.boolFlag(JvmBuilderFlags.REDUCED_CLASSPATH_MODE)) {
-    return args.mandatory(JvmBuilderFlags.CLASSPATH).map { baseDir.resolve(it).normalize() }
+    return args.mandatory(JvmBuilderFlags.CP).map { baseDir.resolve(it).normalize() }
   }
 
   val directDependencies = args.mandatory(JvmBuilderFlags.DIRECT_DEPENDENCIES)
@@ -184,7 +116,7 @@ private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): List<
   val depsArtifacts = args.optional(JvmBuilderFlags.DEPS_ARTIFACTS) ?: return directDependencies.map { baseDir.resolve(it).normalize() }
   val transitiveDepsForCompile = LinkedHashSet<String>()
   for (jdepsPath in depsArtifacts) {
-    BufferedInputStream(Files.newInputStream(Path.of(jdepsPath))).use {
+    Files.newInputStream(Path.of(jdepsPath)).use {
       val deps = Dependencies.parseFrom(it)
       for (dep in deps.dependencyList) {
         if (dep.kind == Deps.Dependency.Kind.EXPLICIT) {

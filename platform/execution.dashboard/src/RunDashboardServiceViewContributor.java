@@ -631,16 +631,13 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public @Nullable DataProvider getDataProvider() {
-      return new DataProvider() {
-        @Override
-        public @Nullable Object getData(@NotNull String dataId) {
-          if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-            RunDashboardTypePanel typeContent =
-              ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
-            return typeContent.getTreeExpander();
-          }
-          return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
+      return dataId -> {
+        if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+          RunDashboardTypePanel typeContent =
+            ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
+          return typeContent.getTreeExpander();
         }
+        return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
       };
     }
   }

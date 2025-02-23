@@ -317,34 +317,7 @@ public final class XmlUtil {
   }
 
   public static char getCharFromEntityRef(@NonNls @NotNull String text) {
-    try {
-      if (text.charAt(1) != '#') {
-        text = text.substring(1, text.length() - 1);
-        char c = XmlTagUtil.getCharacterByEntityName(text);
-        if (c == 0) {
-          LOG.error("Unknown entity: " + text);
-        }
-        return c == 0 ? ' ' : c;
-      }
-      text = text.substring(2, text.length() - 1);
-    }
-    catch (StringIndexOutOfBoundsException e) {
-      LOG.error("Cannot parse ref: '" + text + "'", e);
-    }
-    try {
-      int code;
-      if (StringUtil.startsWithChar(text, 'x')) {
-        text = text.substring(1);
-        code = Integer.parseInt(text, 16);
-      }
-      else {
-        code = Integer.parseInt(text);
-      }
-      return (char)code;
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
+    return BasicXmlUtil.getCharFromEntityRef(text);
   }
 
   public static boolean attributeFromTemplateFramework(final @NonNls String name, final XmlTag tag) {
@@ -509,11 +482,7 @@ public final class XmlUtil {
   }
 
   public static CharSequence getLocalName(final CharSequence tagName) {
-    int pos = StringUtil.indexOf(tagName, ':');
-    if (pos == -1) {
-      return tagName;
-    }
-    return tagName.subSequence(pos + 1, tagName.length());
+    return BasicXmlUtil.getLocalName(tagName);
   }
 
   public static boolean isStubBuilding() {

@@ -176,7 +176,12 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
-    return new TextFieldWithBrowseButton(e -> doSelectHomePath());
+    TextFieldWithBrowseButton myField = new TextFieldWithBrowseButton(e -> doSelectHomePath());
+    if (mySdk.getSdkType().equals(JavaSdk.getInstance())) {
+      myField.setButtonEnabled(false);
+      myField.setButtonVisible(false);
+    }
+    return myField;
   }
 
   protected boolean showTabForType(@NotNull OrderRootType type) {

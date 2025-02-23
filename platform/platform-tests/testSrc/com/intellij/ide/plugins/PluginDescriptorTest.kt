@@ -2,10 +2,8 @@
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -25,9 +23,7 @@ import org.junit.Test
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Function
@@ -102,47 +98,6 @@ class PluginDescriptorTest {
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
     assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
-  }
-
-  @Test
-  fun testProductionPlugins() {
-    IoTestUtil.assumeMacOS()
-    assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Applications/Idea.app/Contents/plugins"))
-      .build()
-      .allPlugins
-    assertThat(descriptors).isNotEmpty()
-    assertThat(descriptors.find { it.pluginId.idString == "com.intellij.java" }).isNotNull
-  }
-
-  @Test
-  fun testProductionProductLib() {
-    IoTestUtil.assumeMacOS()
-    assumeNotUnderTeamcity()
-    val dir = Path.of("/Applications/Idea.app/Contents/lib")
-    assumeTrue(Files.exists(dir))
-
-    val urls = Files.newDirectoryStream(dir).use { stream ->
-      stream.map { it.toUri().toURL() }
-    }
-    val descriptors = testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
-    // core and com.intellij.workspace
-    assertThat(descriptors).hasSize(1)
-  }
-
-  @Test
-  fun testProduction2() {
-    IoTestUtil.assumeMacOS()
-
-    assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Volumes/data/plugins"))
-      .build()
-      .allPlugins
-    assertThat(descriptors).isNotEmpty()
-  }
-
-  private fun assumeNotUnderTeamcity() {
-    assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
   }
 
   @Test
@@ -347,8 +302,8 @@ class PluginDescriptorTest {
 
   @Test
   fun `use first plugin if both versions the same`() {
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_another"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_another"))
 
     val pluginSet = PluginSetTestBuilder(pluginDirPath).build()
     val plugins = pluginSet.enabledPlugins
@@ -444,11 +399,72 @@ class PluginDescriptorTest {
     assertEquals("This is a disabled plugin", descriptor.description)
     assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
+  
+  @Test
+  fun testUntilBuildIsHonoredOnlyIfItTargets242AndEarlier() {
+    fun addDescriptor(build: String) = writeDescriptor("p$build", """
+      <idea-plugin>
+      <id>p$build</id>
+      <version>1.0</version>
+      <idea-version since-build="$build" until-build="$build.100"/>
+      </idea-plugin>
+    """.trimIndent())
+    addDescriptor("242")
+    addDescriptor("243")
+    addDescriptor("251")
+    addDescriptor("261")
+
+    assertEnabledPluginsSetEquals(listOf("p242")) { buildNumber = "242.10" }
+    assertEnabledPluginsSetEquals(listOf("p243")) { buildNumber = "243.10" }
+    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
+    assertEnabledPluginsSetEquals(listOf("p243", "p251", "p261")) { buildNumber = "261.200" }
+  }
+
+  @Test
+  fun testBrokenPluginsIsHonoredWhileUntilBuildIsNot() {
+    writeDescriptor("p243", """
+      <idea-plugin>
+      <id>p243</id>
+      <version>1.0</version>
+      <idea-version since-build="243" until-build="243.100"/>
+      </idea-plugin>
+    """.trimIndent())
+    writeDescriptor("p251", """
+      <idea-plugin>
+      <id>p251</id>
+      <version>1.0</version>
+      <idea-version since-build="251" until-build="251.100"/>
+      </idea-plugin>
+    """.trimIndent())
+
+    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
+    assertEnabledPluginsSetEquals(listOf("p251")) {
+      buildNumber = "251.200"
+      withBrokenPlugin(PluginId.getId("p243"), "1.0")
+    }
+    assertEnabledPluginsSetEquals(listOf("p243")) {
+      buildNumber = "251.200"
+      withBrokenPlugin(PluginId.getId("p251"), "1.0")
+    }
+  }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
       .write(data.trimIndent())
+  }
+  
+  private fun assertEnabledPluginsSetEquals(enabledIds: List<String>, builder: PluginSetTestBuilder.() -> Unit) {
+    val pluginSet = PluginSetTestBuilder(pluginDirPath).apply(builder).build()
+    assertThat(pluginSet.enabledPlugins)
+      .hasSize(enabledIds.size)
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactlyInAnyOrderElementsOf(enabledIds)
+  }
+  
+  companion object {
+    internal fun assumeNotUnderTeamcity() {
+      assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
+    }
   }
 }
 

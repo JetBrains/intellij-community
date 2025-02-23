@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -43,7 +44,7 @@ class JpsGlobalEntitiesSavingTest {
       libraryTable as GlobalLibraryTableBridgeImpl
       Assert.assertEquals(0, libraryTable.libraries.size)
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance()
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList().size)
 
       val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
@@ -79,7 +80,7 @@ class JpsGlobalEntitiesSavingTest {
       val sdks = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(0, sdks.size)
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance()
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList().size)
 
       val virtualFileManager = workspaceModel.getVirtualFileUrlManager()

@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
-import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -23,6 +23,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.properties.Delegates
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with migration to coroutines and view models")
 class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
                                @Nls(capitalization = Nls.Capitalization.Sentence) private val notLoadingText: String? = null,

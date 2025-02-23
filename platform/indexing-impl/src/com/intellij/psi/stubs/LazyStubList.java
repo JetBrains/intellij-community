@@ -31,7 +31,7 @@ final class LazyStubList extends StubList {
     myStubs = new AtomicReferenceArray<>(size);
     myRootSerializer = rootSerializer;
     myStubs.set(0, root);
-    root.myStubList = this;
+    root.setStubList(this);
   }
 
   @Override
@@ -115,7 +115,6 @@ final class LazyStubList extends StubList {
       myData = data;
     }
   }
-
 }
 
 final class LazyStubData {

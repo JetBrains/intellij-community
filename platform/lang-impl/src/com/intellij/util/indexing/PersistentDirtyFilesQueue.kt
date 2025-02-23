@@ -15,7 +15,10 @@ import java.io.EOFException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 
 
 @ApiStatus.Internal
@@ -140,6 +143,10 @@ class ProjectDirtyFilesQueue(val fileIds: Collection<Int>, val lastSeenIndexInOr
 
 @ApiStatus.Internal
 class OrphanDirtyFilesQueue(val fileIds: List<Int>, val untrimmedSize: Long) {
+  init {
+    thisLogger().assertTrue(untrimmedSize >= fileIds.size, "untrimmedSize must be larger or equal to number of files in orphan queue. fileIds.size=${fileIds.size}, untrimmedSize=$untrimmedSize")
+  }
+
   fun store(vfsVersion: Long) {
     PersistentDirtyFilesQueue.storeIndexingQueue(getQueueFile(), fileIds, untrimmedSize, vfsVersion)
   }

@@ -71,18 +71,17 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         return element.left
             ?.expressionType
             ?.let { it.isBooleanType && it.nullability.isNullable }
             ?.asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
@@ -101,7 +100,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
                 parentWithNegation.replaceElvisWithBooleanEqualityOperation(lhs, rhs, hasNegation = true)
             }
         }
-    })
+    }
 
     /**
      * To be a target of the nullable boolean elvis inspection,

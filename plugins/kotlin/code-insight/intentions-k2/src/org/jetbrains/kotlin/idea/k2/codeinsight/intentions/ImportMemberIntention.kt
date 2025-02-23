@@ -49,8 +49,7 @@ internal class ImportMemberIntention :
         // Ignore simple name expressions or already imported names.
         element.getQualifiedElement() != element && !element.isInImportDirective()
 
-    context(KaSession)
-    override fun prepareContext(element: KtNameReferenceExpression): Context? {
+    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
         val symbol = element.mainReference.resolveToSymbol() ?: return null
         return computeContext(element, symbol)
     }

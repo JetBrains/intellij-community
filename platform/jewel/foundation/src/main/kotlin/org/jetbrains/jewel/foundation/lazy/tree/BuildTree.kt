@@ -10,14 +10,57 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
     public sealed class Element<T> {
         public abstract val id: Any?
 
-        @GenerateDataFunctions public class Leaf<T>(public val data: T, override val id: Any?) : Element<T>()
+        @GenerateDataFunctions
+        public class Leaf<T>(public val data: T, override val id: Any?) : Element<T>() {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Leaf<*>
+
+                if (data != other.data) return false
+                if (id != other.id) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = data?.hashCode() ?: 0
+                result = 31 * result + (id?.hashCode() ?: 0)
+                return result
+            }
+
+            override fun toString(): String = "Leaf(data=$data, id=$id)"
+        }
 
         @GenerateDataFunctions
         public class Node<T>(
             public val data: T,
             override val id: Any?,
             public val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
-        ) : Element<T>()
+        ) : Element<T>() {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Node<*>
+
+                if (data != other.data) return false
+                if (id != other.id) return false
+                if (childrenGenerator != other.childrenGenerator) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = data?.hashCode() ?: 0
+                result = 31 * result + (id?.hashCode() ?: 0)
+                result = 31 * result + childrenGenerator.hashCode()
+                return result
+            }
+
+            override fun toString(): String = "Node(data=$data, id=$id, childrenGenerator=$childrenGenerator)"
+        }
     }
 
     private val heads = mutableListOf<Element<T>>()
@@ -132,7 +175,30 @@ public interface TreeGeneratorScope<T> {
 }
 
 public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
-    @GenerateDataFunctions public class ParentInfo<T>(public val data: T, public val depth: Int, public val index: Int)
+    @GenerateDataFunctions
+    public class ParentInfo<T>(public val data: T, public val depth: Int, public val index: Int) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ParentInfo<*>
+
+            if (depth != other.depth) return false
+            if (index != other.index) return false
+            if (data != other.data) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = depth
+            result = 31 * result + index
+            result = 31 * result + (data?.hashCode() ?: 0)
+            return result
+        }
+
+        override fun toString(): String = "ParentInfo(data=$data, depth=$depth, index=$index)"
+    }
 
     public val parent: ParentInfo<T> by lazy {
         ParentInfo(parentElement.data, parentElement.depth, parentElement.childIndex)

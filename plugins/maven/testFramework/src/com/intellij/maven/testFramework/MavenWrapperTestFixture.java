@@ -12,8 +12,7 @@ import org.jetbrains.idea.maven.project.MavenInSpecificPath;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
 import java.io.File;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class MavenWrapperTestFixture {
     try {
       return installer.createDist(configuration);
     }
-    catch (SocketException | SocketTimeoutException e) {
+    catch (IOException e) {
       ExternalResourcesChecker.reportUnavailability("Maven Wrapper", e);
 
       throw new IllegalStateException(); // should never happen

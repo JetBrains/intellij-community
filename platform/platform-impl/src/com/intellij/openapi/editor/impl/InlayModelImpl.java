@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -34,7 +35,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 //@ApiStatus.Internal
-public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
+public final class InlayModelImpl implements InlayModel, InlayModelEx, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
 
   private static final Comparator<InlineInlayImpl<?>> INLINE_ELEMENTS_COMPARATOR = Comparator
@@ -302,6 +303,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   }
 
   @ApiStatus.Internal
+  @Override
   public int getHeightOfBlockElementsBeforeVisualLine(int visualLine, int startOffset, int prevFoldRegionIndex) {
     if (visualLine < 0 || !hasBlockElements()) return 0;
     int visibleLineCount = myEditor.getVisibleLineCount();
@@ -330,6 +332,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
    * Unlike {@link #getElementsInRange}, this method does not allocate and sort an array
    */
   @ApiStatus.Internal
+  @Override
   public @Nullable Inlay<?> getWidestVisibleBlockInlay() {
     AtomicInteger maxWidth = new AtomicInteger(-1);
     Ref<Inlay<?>> inlayRef = new Ref<>(null);

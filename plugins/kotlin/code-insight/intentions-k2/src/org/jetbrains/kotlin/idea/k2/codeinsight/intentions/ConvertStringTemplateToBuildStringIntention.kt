@@ -24,8 +24,7 @@ internal class ConvertStringTemplateToBuildStringIntention :
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
         element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression) {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression) {
     }
 
     override fun invoke(

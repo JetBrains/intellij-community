@@ -1,31 +1,44 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.bazel.jvm
 
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
-//fun getExceptionAttributes(e: Throwable): Attributes {
-//  return Attributes.of(
-//    ExceptionAttributes.EXCEPTION_MESSAGE, e.message ?: "",
-//    ExceptionAttributes.EXCEPTION_STACKTRACE, e.stackTraceToString()
-//  )
-//}
+class OpenTelemetryContextElement(
+  @JvmField val context: Context,
+) : AbstractCoroutineContextElement(OpenTelemetryContextElement) {
+  companion object Key : CoroutineContext.Key<OpenTelemetryContextElement>
+}
 
-inline fun <T> SpanBuilder.use(block: (Span) -> T): T {
+suspend inline fun <T> Tracer.span(name: String, crossinline block: suspend (Span) -> T): T {
+  return spanBuilder(name).use(block)
+}
+
+suspend inline fun <T> SpanBuilder.use(crossinline block: suspend (Span) -> T): T {
+  val telemetryContext = requireNotNull(coroutineContext.get(OpenTelemetryContextElement)) {
+    "You must set OpenTelemetryContextElement for the root coroutine scope"
+  }.context
+  setParent(telemetryContext)
   val span = startSpan()
   try {
-    return block(span)
+    return withContext(OpenTelemetryContextElement(telemetryContext.with(span))) {
+      block(span)
+    }
   }
   catch (e: CancellationException) {
-    span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     span.setStatus(StatusCode.ERROR)
     throw e
   }

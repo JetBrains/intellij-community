@@ -29,14 +29,14 @@ fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
     .getOrNull()
 }
 
-fun resolveIdeHomeVariable(path: String, ideHome: String) =
+fun resolveIdeHomeVariable(path: String, ideHome: String): String =
   path
     .replace("\$APP_PACKAGE", ideHome)
     .replace("\$IDE_HOME", ideHome)
     .replace("%IDE_HOME%", ideHome)
     .replace("Contents/Contents", "Contents")
     .let { entry ->
-      val (_, value) = entry.split("=")
+      val value = entry.split("=").getOrNull(1) ?: entry
       when {
         runCatching { Path(value).exists() }.getOrElse { false } -> entry
         else -> entry.replace("/Contents", "")

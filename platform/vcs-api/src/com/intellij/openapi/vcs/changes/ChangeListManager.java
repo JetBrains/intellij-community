@@ -24,14 +24,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   }
 
   /**
-   * Schedule an update for file statuses.
-   *
-   * @deprecated Method does nothing by itself, use {@link VcsDirtyScopeManager} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void scheduleUpdate();
-
-  /**
    * Invoke callback when current CLM refresh is completed, without any visible progress.
    * <p/>
    * WARNING: This callback WILL NOT wait for async unchanged files update if VCS is using a custom {@link VcsManagedFilesHolder}.

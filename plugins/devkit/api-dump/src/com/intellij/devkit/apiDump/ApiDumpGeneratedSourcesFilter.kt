@@ -11,8 +11,11 @@ internal class ApiDumpGeneratedSourcesFilter : GeneratedSourcesFilter() {
 
   override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project) &&
-           ApiDumpUtil.isApiDumpFile(file) || ApiDumpUtil.isApiDumpUnreviewedFile(file) ||
-           ApiDumpUtil.isExposedThirdPartyFile(file) || ApiDumpUtil.isExposedPrivateApiFile(file)
+           ApiDumpUtil.isApiDumpFile(file) ||
+           ApiDumpUtil.isApiDumpUnreviewedFile(file) ||
+           ApiDumpUtil.isApiDumpExperimentalFile(file) ||
+           ApiDumpUtil.isExposedThirdPartyFile(file) ||
+           ApiDumpUtil.isExposedPrivateApiFile(file)
   }
 
   override fun getNotificationText(file: VirtualFile, project: Project): @NlsContexts.LinkLabel String? {

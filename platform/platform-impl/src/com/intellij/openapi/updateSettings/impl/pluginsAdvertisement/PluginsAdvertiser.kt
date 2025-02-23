@@ -13,12 +13,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.PlatformUtils
 import com.intellij.util.PlatformUtils.isIdeaUltimate
 
 private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.suggested.ide"
 
 internal var isIgnoreIdeSuggestion: Boolean
-  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)
+  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION) || PlatformUtils.isJetBrainsClient()
   set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
 
 @Deprecated("Use `getPluginSuggestionNotificationGroup()`")

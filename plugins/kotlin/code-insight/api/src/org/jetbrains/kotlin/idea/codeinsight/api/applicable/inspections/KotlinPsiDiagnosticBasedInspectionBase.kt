@@ -27,6 +27,8 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
 
     protected abstract val diagnosticType: KClass<D>
 
+    open val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS
+
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
@@ -34,16 +36,14 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
      *
      * @param element a physical PSI
      */
-    context(KaSession)
-    abstract fun prepareContextByDiagnostic(
+    abstract fun KaSession.prepareContextByDiagnostic(
         element: E,
         diagnostic: D,
     ): C?
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    final override fun prepareContext(element: E): C? =
-        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+    final override fun KaSession.prepareContext(element: E): C? =
+        element.diagnostics(filter = diagnosticFilter)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }
             ?.let { prepareContextByDiagnostic(element, it) }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.util.Key
 
 interface IntelliJKotlinNewProjectWizardData : IntelliJNewProjectWizardData, KotlinOnboardingProjectWizardData, BuildSystemKotlinNewProjectWizardData {
@@ -11,6 +12,14 @@ interface IntelliJKotlinNewProjectWizardData : IntelliJNewProjectWizardData, Kot
     val useCompactProjectStructureProperty: GraphProperty<Boolean>
 
     var useCompactProjectStructure: Boolean
+
+    @Deprecated("Use addSampleCodeProperty instead")
+    override val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+        get() = addSampleCodeProperty
+
+    @Deprecated("Use addSampleCode instead")
+    override val generateOnboardingTips: Boolean
+        get() = addSampleCode
 
     companion object {
 

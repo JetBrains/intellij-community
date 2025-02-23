@@ -4507,6 +4507,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("classField.kt")
+            public void testClassField() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/classField.kt");
+            }
+
             @TestMetadata("collected.kt")
             public void testCollected() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/collected.kt");
@@ -4540,6 +4545,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("nestedUsed.kt")
             public void testNestedUsed() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/nestedUsed.kt");
+            }
+
+            @TestMetadata("operatorFun.kt")
+            public void testOperatorFun() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/operatorFun.kt");
             }
 
             @TestMetadata("passedToFunction.kt")
@@ -7080,9 +7090,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/kotlinUnreachableCode/simple.kt");
+        @TestMetadata("afterInfiniteLoop.kt")
+        public void testAfterInfiniteLoop() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterInfiniteLoop.kt");
+        }
+
+        @TestMetadata("afterReturnInFunction.kt")
+        public void testAfterReturnInFunction() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterReturnInFunction.kt");
+        }
+
+        @TestMetadata("afterThrow.kt")
+        public void testAfterThrow() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterThrow.kt");
         }
     }
 
@@ -16000,6 +16020,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/basic.kt");
         }
 
+        @TestMetadata("fqn.kt")
+        public void testFqn() throws Exception {
+            runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/fqn.kt");
+        }
+
         @TestMetadata("nullable.kt")
         public void testNullable() throws Exception {
             runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/nullable.kt");
@@ -17706,6 +17731,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reified.kt");
         }
 
+        @TestMetadata("reifiedUsedParameter.kt")
+        public void testReifiedUsedParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedUsedParameter.kt");
+        }
+
         @TestMetadata("reifiedWithClassLiteral.kt")
         public void testReifiedWithClassLiteral() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral.kt");
@@ -17905,6 +17935,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("annotationWithUseSiteTarget.kt")
             public void testAnnotationWithUseSiteTarget() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
+            }
+
+            @TestMetadata("arrayAccessOperator.kt")
+            public void testArrayAccessOperator() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");
             }
 
             @TestMetadata("asDefaultConstructorParameter.kt")
@@ -18172,6 +18207,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/nonPrivateFields.kt");
             }
 
+            @TestMetadata("operatorParameters.kt")
+            public void testOperatorParameters() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/operatorParameters.kt");
+            }
+
             @TestMetadata("overrideProperty.kt")
             public void testOverrideProperty() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");
@@ -18215,6 +18255,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("primaryConstructorParameterDataClass.kt")
             public void testPrimaryConstructorParameterDataClass() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/primaryConstructorParameterDataClass.kt");
+            }
+
+            @TestMetadata("privateDestructuringArrayComponentDeclaration.kt")
+            public void testPrivateDestructuringArrayComponentDeclaration() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/privateDestructuringArrayComponentDeclaration.kt");
+            }
+
+            @TestMetadata("privateDestructuringArrayComponentUnusedDeclaration.kt")
+            public void testPrivateDestructuringArrayComponentUnusedDeclaration() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/privateDestructuringArrayComponentUnusedDeclaration.kt");
+            }
+
+            @TestMetadata("privateDestructuringListComponentDeclaration.kt")
+            public void testPrivateDestructuringListComponentDeclaration() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/privateDestructuringListComponentDeclaration.kt");
             }
 
             @TestMetadata("privateFunction.kt")
@@ -18280,6 +18335,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("secondaryConstructorCalledByTypeAlias.kt")
             public void testSecondaryConstructorCalledByTypeAlias() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByTypeAlias.kt");
+            }
+
+            @TestMetadata("secondaryConstructorCalledFromSubclassSecondaryConstructor.kt")
+            public void testSecondaryConstructorCalledFromSubclassSecondaryConstructor() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledFromSubclassSecondaryConstructor.kt");
             }
 
             @TestMetadata("secondaryConstructorUnused.kt")

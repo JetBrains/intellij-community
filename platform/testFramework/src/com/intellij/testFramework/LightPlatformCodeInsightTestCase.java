@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -708,14 +708,23 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_COMMENT_LINE);
   }
 
+  /**
+   * @see IdeActions
+   */
   protected void executeAction(@NonNls @NotNull String actionId) {
     executeAction(actionId, getEditor());
   }
 
+  /**
+   * @see IdeActions
+   */
   protected void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor) {
     executeAction(actionId, editor, getProject());
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor, @Nullable Project project) {
     CommandProcessor.getInstance()
       .executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());

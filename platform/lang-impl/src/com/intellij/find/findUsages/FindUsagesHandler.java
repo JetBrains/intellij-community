@@ -105,7 +105,7 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
     }
 
     @Override
-    public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
       throw new IncorrectOperationException();
     }
 

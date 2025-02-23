@@ -14,8 +14,7 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpression, Unit>(KtIfExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.if.with.when")
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression) {}
+    override fun KaSession.prepareContext(element: KtIfExpression) {}
 
     override fun invoke(
         actionContext: ActionContext,

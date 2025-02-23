@@ -74,12 +74,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
+import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isTrackLibraryDependenciesEnabled;
 
 @SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
 public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
-  private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
+  private static final MethodHandles.Lookup ourLookup = MethodHandles.lookup();
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   // CLASSPATH_INDEX_FILE_NAME cannot be used because IDEA on run creates CLASSPATH_INDEX_FILE_NAME only if some module class is loaded,
@@ -473,14 +474,18 @@ public final class IncProjectBuilder {
   private void runBuild(@NotNull CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project; isRebuild:" +
-             JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) +
-             "; isMake:" +
-             context.isMake() +
-             " parallel compilation:" +
-             isParallelBuild() +
-             "; dependency graph enabled:" +
-             isDepGraphEnabled());
+    LOG.info(
+      "Building project; isRebuild:" +
+        JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) +
+        "; isMake:" +
+        context.isMake() +
+        " parallel compilation:" +
+        isParallelBuild() +
+        "; dependency graph enabled:" +
+        isDepGraphEnabled() +
+        "; library dependencies tracking enabled:" +
+        isTrackLibraryDependenciesEnabled()
+    );
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
@@ -1359,7 +1364,7 @@ public final class IncProjectBuilder {
             }
           }
         }
-        final MethodHandle mh = lookup.unreflect(method);
+        final MethodHandle mh = ourLookup.unreflect(method);
         return args == null? mh.invoke(context) : mh.bindTo(context).asSpreader(Object[].class, args.length).invoke(args);
       }
     });
@@ -1447,10 +1452,13 @@ public final class IncProjectBuilder {
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
     boolean nextPassRequired;
+    int roundCount = -1;
+    boolean isFullRebuild = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context);
     ChunkBuildOutputConsumerImpl outputConsumer = new ChunkBuildOutputConsumerImpl(context);
     try {
       do {
         nextPassRequired = false;
+        roundCount += 1;
         myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
 
         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolderBase<>(context) {
@@ -1460,7 +1468,7 @@ public final class IncProjectBuilder {
             FSOperations.processFilesToRecompile(context, chunk, processor);
           }
         };
-        if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+        if (!isFullRebuild) {
           Map<ModuleBuildTarget, Map<Path, List<Path>>> cleanedSources =
             BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
           for (Map.Entry<ModuleBuildTarget, Map<Path, List<Path>>> entry : cleanedSources.entrySet()) {
@@ -1498,22 +1506,51 @@ public final class IncProjectBuilder {
                 processDeletedPaths(context, chunk.getTargets());
                 long start = System.nanoTime();
                 int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
-                final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-                storeBuilderStatistics(builder, System.nanoTime() - start,
-                                       outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+                ErrorsCapture errCapture = null;
+                ModuleLevelBuilder.ExitCode buildResult = ModuleLevelBuilder.ExitCode.NOTHING_DONE;
+                try {
+                  buildResult = builder.build(roundCount == 0 && !isFullRebuild? errCapture = ErrorsCapture.wrap(context) : context, chunk, dirtyFilesHolder, outputConsumer);
+                }
+                catch (StopBuildException e) {
+                  if (errCapture != null) {
+                    buildResult = ModuleLevelBuilder.ExitCode.ABORT;
+                  }
+                  else {
+                    throw e;
+                  }
+                }
+                finally {
+                  storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+                  doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+                }
 
-                doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+                context.checkCanceled();
+
+                if (errCapture != null && (errCapture.hasErrors() || buildResult == ModuleLevelBuilder.ExitCode.ABORT)) {
+                  // attempt recovery
+                  if (JavaBuilderUtil.updateMappingsOnRoundCompletion(errCapture, dirtyFilesHolder, chunk)) {
+                    // mark current dirty files for the next round
+                    dirtyFilesHolder.processDirtyFiles((target, file, root) -> {
+                      FSOperations.markDirty(context, CompilationRound.NEXT, file);
+                      return true;
+                    });
+                    nextPassRequired = true;
+                    break BUILDER_CATEGORY_LOOP;
+                  }
+                  else { // no additional files were marked
+                    errCapture.reportErrors(); // report postponed errors
+                  }
+                }
 
                 if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-                  throw new StopBuildException(
-                    JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
+                  throw new StopBuildException(JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
                 }
-                context.checkCanceled();
+
                 if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
                   nextPassRequired = true;
                 }
                 else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-                  if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+                  if (!rebuildFromScratchRequested && !isFullRebuild) {
                     notifyChunkRebuildRequested(context, chunk, builder);
                     // allow rebuild from scratch only once per chunk
                     rebuildFromScratchRequested = true;
@@ -1571,6 +1608,57 @@ public final class IncProjectBuilder {
     }
 
     return doneSomething;
+  }
+
+  private interface ErrorsCapture extends CompileContext {
+    boolean hasErrors();
+
+    boolean reportErrors();
+
+    static ErrorsCapture wrap(CompileContext delegate) {
+      List<CompilerMessage> capturedErrors = new SmartList<>();
+      return (ErrorsCapture)Proxy.newProxyInstance(ErrorsCapture.class.getClassLoader(), new Class[] {ErrorsCapture.class}, (proxy, method, args) -> {
+        Class<?> declaringClass = method.getDeclaringClass();
+
+        if (ErrorsCapture.class.equals(declaringClass)) { // self implementation
+          boolean empty = capturedErrors.isEmpty();
+          if ("hasErrors".equals(method.getName())) {
+            return !empty;
+          }
+          // reportErrors impl
+          if (empty) {
+            return false;
+          }
+          for (CompilerMessage error : capturedErrors) {
+            delegate.processMessage(error);
+          }
+          capturedErrors.clear();
+          return true;
+        }
+
+        if (MessageHandler.class.equals(declaringClass)) { // capture implementation
+          for (Object arg : args) {
+            if (arg instanceof CompilerMessage) {
+              CompilerMessage compilerMessage = (CompilerMessage)arg;
+              if (compilerMessage.getKind() == BuildMessage.Kind.ERROR) {
+                capturedErrors.add(compilerMessage);
+                return null;
+              }
+            }
+          }
+        }
+
+        if (UserDataHolder.class.equals(declaringClass) && args != null && args.length == 1 && !Void.class.equals(method.getReturnType()) && Utils.ERRORS_DETECTED_KEY.equals(args[0]) ) {
+          // UserDataHolder.getUserData(ERRORS_DETECTED_KEY)
+          if (!capturedErrors.isEmpty()) {
+            return true;
+          }
+        }
+
+        MethodHandle mh = ourLookup.unreflect(method).bindTo(delegate);
+        return args == null? mh.invoke() : mh.asSpreader(Object[].class, args.length).invoke(args);  // delegate further
+      });
+    }
   }
 
   private static <T extends BuildRootDescriptor> void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException{
@@ -1725,7 +1813,7 @@ public final class IncProjectBuilder {
       new Class[]{CompileContext.class},
       (proxy, method, args) -> {
         if (args == null) {
-          return lookup.unreflect(method).invoke(delegate);
+          return ourLookup.unreflect(method).invoke(delegate);
         }
 
         final Class<?> declaringClass = method.getDeclaringClass();
@@ -1759,7 +1847,7 @@ public final class IncProjectBuilder {
             Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
           }
         }
-        return lookup.unreflect(method).bindTo(delegate).asSpreader(Object[].class, args.length)
+        return ourLookup.unreflect(method).bindTo(delegate).asSpreader(Object[].class, args.length)
           .invoke(args);
       });
   }

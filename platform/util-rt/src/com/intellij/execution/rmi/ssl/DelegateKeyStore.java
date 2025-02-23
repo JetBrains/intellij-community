@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,8 @@ import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.Enumeration;
 
-class DelegateKeyStore extends KeyStoreSpi {
+@ApiStatus.Internal
+public class DelegateKeyStore extends KeyStoreSpi {
   protected static Provider ourProvider = new Provider("IDEA", 1, "IDEA Key Store") {{
     Security.addProvider(this);
   }};

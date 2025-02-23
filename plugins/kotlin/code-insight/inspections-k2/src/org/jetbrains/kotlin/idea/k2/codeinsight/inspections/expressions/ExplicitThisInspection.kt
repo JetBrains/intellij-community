@@ -42,8 +42,7 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         return hasShortening.asUnit
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtThisExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtThisExpression): Unit? {
         val parent = element.parent ?: return null
 
         if (parent is KtCallableReferenceExpression) {
@@ -60,10 +59,10 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         return checkShortening(element)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtThisExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtThisExpression>> = arrayOf(ExplicitThisExpressionFix(element.text))
+    ): KotlinModCommandQuickFix<KtThisExpression> = ExplicitThisExpressionFix(element.text)
 }
 
 internal class ExplicitThisExpressionFix(private val text: String) : KotlinModCommandQuickFix<KtThisExpression>() {

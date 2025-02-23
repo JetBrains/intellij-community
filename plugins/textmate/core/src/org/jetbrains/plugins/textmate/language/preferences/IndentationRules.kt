@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.textmate.language.preferences
 
+import kotlin.jvm.JvmStatic
+
 data class IndentationRules(
   val increaseIndentPattern: String?,
   val decreaseIndentPattern: String?,

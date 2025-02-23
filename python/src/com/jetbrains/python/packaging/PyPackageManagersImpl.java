@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.packaging.common.PackageManagerHolder;
+import com.jetbrains.python.packaging.management.PythonPackageManagerService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -89,7 +89,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    return project.getService(PackageManagerHolder.class).bridgeForSdk(project, sdk);
+    return project.getService(PythonPackageManagerService.class).bridgeForSdk(project, sdk);
   }
 
   @Override

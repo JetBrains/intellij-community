@@ -18,8 +18,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.nio.file.Paths;
-
 @TestDataPath("$CONTENT_ROOT/testData/refactoring/renameInspection")
 public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   @Override

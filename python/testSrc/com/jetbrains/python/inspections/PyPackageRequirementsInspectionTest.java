@@ -7,8 +7,8 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.packaging.PyRequirement;
-import com.jetbrains.python.packaging.common.PackageManagerHolder;
-import com.jetbrains.python.packaging.mocks.MockPackageManagerHolder;
+import com.jetbrains.python.packaging.management.PythonPackageManagerService;
+import com.jetbrains.python.packaging.management.TestPythonPackageManagerService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
@@ -31,8 +31,8 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
 
     ServiceContainerUtil.replaceService(
       myFixture.getProject(),
-      PackageManagerHolder.class,
-      new MockPackageManagerHolder(),
+      PythonPackageManagerService.class,
+      new TestPythonPackageManagerService(),
       myFixture.getProject()
     );
   }

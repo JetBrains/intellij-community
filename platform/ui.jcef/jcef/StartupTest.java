@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 final class StartupTest {
   private static final Logger LOG = Logger.getInstance(StartupTest.class);
   private static final Boolean IS_DISABLED = Utils.getBoolean("ide.browser.jcef.out-of-process.startup_test.disabled");
-  private static final int LOAD_TIMEOUT_SEC = Utils.getInteger("ide.browser.jcef.out-of-process.startup_test.timeout_sec", 15);
+  private static final int LOAD_TIMEOUT_SEC = Utils.getInteger("ide.browser.jcef.out-of-process.startup_test.timeout_sec", 60);
 
   @SuppressWarnings("HttpUrlsUsage")
   private static final String TEST_URL = "http://test.com/test.html";
@@ -133,6 +133,8 @@ final class StartupTest {
           latch.await(LOAD_TIMEOUT_SEC, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
           LOG.error(e);
+        } finally {
+          client.dispose();
         }
         if (latch.getCount() > 0) {
           LOG.error(String.format("Startup JCEF test is failed (lc=%d), out-of-process mode is disabled.", (int)latch.getCount()));

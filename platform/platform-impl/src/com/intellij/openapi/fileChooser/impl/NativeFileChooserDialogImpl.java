@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -79,7 +78,8 @@ final class NativeFileChooserDialogImpl implements FileChooserDialog, PathChoose
 
     var selectedFiles = myFileDialog.getFiles();
     if (selectedFiles.length != 0) {
-      var selectedPaths = Stream.of(selectedFiles).map(File::toPath).toList();
+      @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+      var selectedPaths = Stream.of(selectedFiles).map(java.io.File::toPath).toList();
       myChosenFiles = myHelper.selectedFiles(selectedPaths, myParent, myTitle);
       if (myChosenFiles.length != 0) {
         FileChooserUsageCollector.log(this, myDescriptor, myChosenFiles);

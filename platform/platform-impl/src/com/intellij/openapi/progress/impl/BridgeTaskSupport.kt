@@ -74,6 +74,7 @@ internal class BridgeTaskSupport(private val coroutineScope: CoroutineScope) {
           // so we won't stop showing the progress bar if the job has been canceled, but the indicator is yet to finish.
           withContext(NonCancellable) {
             indicatorFinished.await()
+            taskSuspender.stop()
           }
         }
       }

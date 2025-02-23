@@ -466,7 +466,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   /**
-   * Runs code cleanup on the specified scope with the specified profile
+   * Runs code cleanup on the specified scope with the specified profile.
    *
    * @param project  project from which to use the inspection profile
    * @param runnable  will be run after completion of the cleanup
@@ -476,19 +476,20 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
    */
   public static void cleanupElements(@NotNull Project project,
                                      @Nullable Runnable runnable,
-                                     Predicate<? super ProblemDescriptor> shouldApplyFix,
-                                     @NotNull InspectionProfile profile,
+                                     @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix,
+                                     @Nullable InspectionProfile profile,
                                      PsiElement @NotNull ... scope) {
+    final var activeProfile = profile == null ? InspectionProjectProfileManager.getInstance(project).getCurrentProfile() : profile;
     List<PsiElement> psiElements = Stream.of(scope).filter(e -> e != null && e.isPhysical()).toList();
     if (psiElements.isEmpty()) return;
     GlobalInspectionContextBase globalContext =
       (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
     AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
-    globalContext.codeCleanup(analysisScope, profile, null, runnable, false, shouldApplyFix);
+    globalContext.codeCleanup(analysisScope, activeProfile, null, runnable, false, shouldApplyFix);
   }
 
   /**
-   * Runs code cleanup on the specified scope
+   * Runs code cleanup on the specified scope with the project current profile.
    *
    * @param project  project from which to use the inspection profile
    * @param runnable  will be run after completion of the cleanup
@@ -497,9 +498,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
    */
   public static void cleanupElements(@NotNull Project project,
                                      @Nullable Runnable runnable,
-                                     Predicate<? super ProblemDescriptor> shouldApplyFix,
+                                     @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix,
                                      PsiElement @NotNull ... scope) {
-    cleanupElements(project, runnable, shouldApplyFix, InspectionProjectProfileManager.getInstance(project).getCurrentProfile(), scope);
+    cleanupElements(project, runnable, shouldApplyFix, null, scope);
   }
 
   public void close(boolean noSuspiciousCodeFound) {

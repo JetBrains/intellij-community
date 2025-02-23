@@ -4,7 +4,6 @@ package com.jetbrains.python
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
-import java.lang.Exception
 
 /**
  * Operation result to be used as `Maybe` instead of checked exceptions.

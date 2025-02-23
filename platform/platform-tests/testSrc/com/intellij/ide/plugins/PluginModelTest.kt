@@ -13,7 +13,7 @@ class PluginModelTest {
   @Test
   fun check() {
     val communityPath = PlatformTestUtil.getCommunityPath()
-    val validator = validatePluginModel(Path.of(communityPath))
+    val validator = validatePluginModel(Path.of(communityPath), skipUnresolvedOptionalContentModules = true)
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
       val out = Path.of(communityPath, System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
       validator.writeGraph(out)
@@ -24,12 +24,12 @@ class PluginModelTest {
   }
 }
 
-fun validatePluginModel(homePath: Path): PluginModelValidator {
+fun validatePluginModel(homePath: Path, skipUnresolvedOptionalContentModules: Boolean = false): PluginModelValidator {
   val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath.toString())
     .modules
     .map { ModuleWrap(it) }
 
-  val validator = PluginModelValidator(modules)
+  val validator = PluginModelValidator(modules, skipUnresolvedOptionalContentModules = skipUnresolvedOptionalContentModules)
   val errors = validator.errorsAsString
   if (!errors.isEmpty()) {
     System.err.println(errors)

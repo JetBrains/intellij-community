@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -205,7 +205,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     List<PsiNewExpression> newUsages = new ArrayList<>();
     List<PsiElement> otherUsages = new ArrayList<>();
 
-    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false)) {
+    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false).asIterable()) {
       PsiElement element = reference.getElement();
 
       if (element.getParent() instanceof PsiNewExpression newExpression) {

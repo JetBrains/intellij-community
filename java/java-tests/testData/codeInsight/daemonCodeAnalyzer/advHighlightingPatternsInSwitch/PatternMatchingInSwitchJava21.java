@@ -241,8 +241,11 @@ class Main {
         System.out.println("ok");
     };
 
+    str = switch (d) {
+      case MONDAY, TUESDAY -> <error descr="Bad type in switch expression: void cannot be converted to java.lang.String">System.out.println("ok")</error>;
+    };
     str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
-      case MONDAY, TUESDAY -> System.out.println("ok");
+      case MONDAY, TUESDAY -> "ok";
     };
     str = switch (d) {
       case MONDAY, TUESDAY, WEDNESDAY -> "ok";

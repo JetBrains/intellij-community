@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
-import kotlinx.io.IOException
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.server.AddArtifactResponse
@@ -15,6 +14,7 @@ import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
@@ -41,7 +41,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
   private val group2Artifacts = ConcurrentHashMap<String, MutableSet<String>>()
   private val mavenIds2Versions = ConcurrentHashMap<String, MutableSet<String>>()
   private val repoFile = Paths.get(repo.url)
-  private val mutex = Mutex();
+  private val mutex = Mutex()
 
   override fun close(releaseIndexContext: Boolean) {
     mavenIds2Versions.clear()

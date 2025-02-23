@@ -177,7 +177,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+  protected boolean isClassDefinitelyPositivelyImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
     GrImportStatement[] importList = ((GroovyFile)containingFile).getImportStatements();
     if (importList == null) return false;
     String classQualifiedName = classToImport.getQualifiedName();

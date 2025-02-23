@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.sources
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.jarFinder.InternetAttachSourceProvider.attachSourceJar
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -21,9 +21,9 @@ import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
+import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleLibraryDownloader
 import org.jetbrains.plugins.gradle.util.isValidJar
 import java.nio.file.Path
 import java.util.*
@@ -67,7 +67,7 @@ object GradleLibrarySourcesDownloader {
       attachSources(cachedSourcesPath, orderEntries)
       return cachedSourcesPath
     }
-    val path = GradleLibraryDownloader.downloadLibrary(
+    val path = GradleArtifactDownloader.downloadArtifact(
       project,
       GradleBundle.message("gradle.action.download.sources"),
       sourceArtifactNotation,
@@ -78,12 +78,12 @@ object GradleLibrarySourcesDownloader {
   }
 
   private suspend fun attachSources(sourcesJar: Path, orderEntries: List<LibraryOrderEntry>) {
-    writeAction {
+    edtWriteAction {
       val libraries = HashSet<Library>()
       orderEntries.forEach {
         ContainerUtil.addIfNotNull(libraries, it.library)
       }
-      attachSourceJar(sourcesJar.toFile(), libraries)
+      attachSourceJar(sourcesJar, libraries)
     }
   }
 

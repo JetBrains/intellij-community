@@ -4,33 +4,36 @@ package com.intellij.openapi.options.newEditor.settings
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
-import com.intellij.openapi.fileTypes.ex.FakeFileType
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ex.SingleConfigurableEditor
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
+import com.intellij.openapi.options.ex.ConfigurableVisitor
+import com.intellij.openapi.options.newEditor.OptionsEditorColleague
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsEditor
-import com.intellij.openapi.options.newEditor.SingleSettingEditor
-import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.Icon
 
 @ApiStatus.Internal
 @Service(Level.PROJECT)
@@ -49,19 +52,13 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       val settingsVirtualFile = settingsFileRef.get()
 
       if (settingsVirtualFile != null) {
-        val editor = settingsVirtualFile.dialog.editor
-        if (toSelect != null && editor is SettingsEditor) {
+        val editor = settingsVirtualFile.getOrCreateDialog().editor as? SettingsEditor
+        if (editor != null && toSelect != null) {
           editor.select(toSelect)
         }
         return@withContext settingsVirtualFile
       }
-      val settingsDialog: SettingsDialog = initializer.invoke()
-      val newVirtualFile = SettingsVirtualFile(settingsDialog, project)
-      Disposer.register(settingsDialog.disposable, Disposable {
-        val fileEditorManager = FileEditorManager.getInstance(newVirtualFile.project) as FileEditorManagerEx;
-        fileEditorManager.closeFile(newVirtualFile)
-        settingsFileRef.set(null)
-      })
+      val newVirtualFile = SettingsVirtualFile(project, initializer)
       settingsFileRef.compareAndSet(null, newVirtualFile)
       return@withContext newVirtualFile
     }
@@ -73,46 +70,99 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     return settingsFileRef.getAndSet(null)
   }
 
-  class SettingsVirtualFile(val dialog: SettingsDialog, val project: Project) :
-    LightVirtualFile(CommonBundle.settingsTitle(), SettingFileType(), ""), OptionallyIncluded {
+  class SettingsVirtualFile(val project: Project, private val initializer: () -> SettingsDialog) :
+    LightVirtualFile(CommonBundle.settingsTitle(), SettingsFileType, ""), OptionallyIncluded {
+    private val wasModified = AtomicBoolean()
+
+    private val dialogLazy = SynchronizedClearableLazy {
+      val dialog = initializer()
+      Disposer.register(dialog.disposable, Disposable {
+        val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
+        fileEditorManager.closeFile(this)
+        wasModified.set(false)
+        val manager = project.getServiceIfCreated(FileStatusManager::class.java)
+        manager?.fileStatusChanged(this@SettingsVirtualFile)
+      })
+
+      val settingsEditor = dialog.editor as? SettingsEditor
+      settingsEditor?.addOptionsListener(object : OptionsEditorColleague.Adapter() {
+        override fun onModifiedAdded(configurable: Configurable?): Promise<in Any> {
+          updateIsModified()
+          return resolvedPromise()
+        }
+
+        override fun onModifiedRemoved(configurable: Configurable?): Promise<in Any> {
+          updateIsModified()
+          return resolvedPromise()
+        }
+
+        private fun updateIsModified() {
+          val modified = settingsEditor.isModified
+          if (wasModified.get() != modified) {
+            wasModified.set(modified)
+            val manager = project.getServiceIfCreated(FileStatusManager::class.java)
+            manager?.fileStatusChanged(this@SettingsVirtualFile)
+          }
+        }
+      })
+
+      dialog
+    }
 
     init {
       putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+      putUserData(FileDocumentManagerBase.TRACK_NON_PHYSICAL, true)
     }
 
-    override fun isIncludedInEditorHistory(project: Project): Boolean = false
+    fun getOrCreateDialog(): SettingsDialog = dialogLazy.value
+
+    fun isModified(): Boolean {
+      val dialog = dialogLazy.valueIfInitialized ?: return false
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return false
+      return settingsEditor.isModified
+    }
+
+    override fun isIncludedInEditorHistory(project: Project): Boolean = true
+    override fun isPersistedInEditorHistory() = false
 
     override fun shouldSkipEventSystem() = true
+
+    fun disposeDialog() {
+      dialogLazy.valueIfInitialized?.apply {
+        Disposer.dispose( this.disposable )
+      }
+      dialogLazy.drop()
+    }
+
+    fun getConfigurableId(): String? {
+      val dialog = dialogLazy.valueIfInitialized ?: return null
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return null
+      return settingsEditor.selectedConfigurableId
+    }
+
+    fun setConfigurableId(configurableId: String?) {
+      if (configurableId == null) {
+        return
+      }
+      val dialog = dialogLazy.valueIfInitialized ?: return
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return
+
+      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
+        .takeIf { !it.configurables.isEmpty() }
+      val configurableToSelect = ConfigurableVisitor.findById(configurableId, listOf(group)) ?: return
+      settingsEditor.setNavigatingNow();
+      settingsEditor.select(configurableToSelect)
+    }
   }
 
-  private class SettingFileType : FakeFileType() {
+  private object SettingsFileType : FileType {
     override fun getName(): @NonNls String = CommonBundle.settingsTitle()
 
     override fun getDescription(): @NlsContexts.Label String = CommonBundle.settingsTitle()
+    override fun getDefaultExtension() = ""
 
-    override fun getIcon(): Icon? = AllIcons.General.Settings
-
-    override fun isMyFileType(file: VirtualFile): Boolean {
-      return file is SettingsVirtualFile
-    }
-  }
-}
-
-private class CloseSettingsAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-  override fun update(e: AnActionEvent) {
-    val project = e.project ?: run {
-      e.presentation.isEnabled = false
-      return
-    }
-    e.presentation.isEnabled = SettingsVirtualFileHolder.getInstance(project).virtualFileExists()
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val fileEditor = (PlatformDataKeys.FILE_EDITOR.getData(e.dataContext)
-                      ?: PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(e.dataContext)) as? SettingsFileEditor ?: return
-    val settingsVirtualFile = fileEditor.file as? SettingsVirtualFile ?: return
-    settingsVirtualFile.dialog.doCancelAction(e.inputEvent)
+    override fun getIcon() = AllIcons.General.Settings
+    override fun isBinary(): Boolean = true
+    override fun isReadOnly(): Boolean = true
   }
 }

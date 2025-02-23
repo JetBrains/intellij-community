@@ -29,6 +29,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -44,7 +45,8 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.createConfigurablesListPanel;
 
-class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
+@ApiStatus.Internal
+public class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
   private final MergingUpdateQueue queue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this, Alarm.ThreadToUse.SWING_THREAD, coroutineScope);
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
@@ -63,11 +65,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myResetAction = new AbstractAction(UIBundle.message("configurable.reset.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      if (configurable != null) {
-        ConfigurableCardPanel.reset(configurable);
-        updateCurrent(configurable, true);
-        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(configurable);
-      }
+      reset();
     }
   };
   private Configurable configurable;
@@ -131,6 +129,14 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     // do not apply changes of a single configurable if it is not modified
     updateIfCurrent(configurable);
     return setError(apply(myApplyAction.isEnabled() ? configurable : null));
+  }
+
+  protected void reset() {
+    if (configurable != null) {
+      ConfigurableCardPanel.reset(configurable);
+      updateCurrent(configurable, true);
+      FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(configurable);
+    }
   }
 
   @Override
@@ -316,7 +322,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Nullable
-  Configurable getConfigurable() {
+  public Configurable getConfigurable() {
     return configurable;
   }
 

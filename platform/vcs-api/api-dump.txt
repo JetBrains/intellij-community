@@ -57,6 +57,7 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - getDiffProvider():com.intellij.openapi.vcs.diff.DiffProvider
 - a:getDisplayName():java.lang.String
 - getEditFileProvider():com.intellij.openapi.vcs.EditFileProvider
+- getForcedCommitMode():com.intellij.vcs.commit.CommitMode
 - getIntegrateEnvironment():com.intellij.openapi.vcs.update.UpdateEnvironment
 - f:getKeyInstanceMethod():com.intellij.openapi.vcs.VcsKey
 - getMergeProvider():com.intellij.openapi.vcs.merge.MergeProvider
@@ -87,7 +88,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - isUpdateActionDisabled():Z
 - isVcsBackgroundOperationsAllowed(com.intellij.openapi.vfs.VirtualFile):Z
 - isVersionedDirectory(com.intellij.openapi.vfs.VirtualFile):Z
-- isWithCustomLocalChanges():Z
 - isWithCustomMenu():Z
 - isWithCustomShelves():Z
 - loadRevisions(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsRevisionNumber):com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
@@ -1049,7 +1049,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:reopenFiles(java.util.List):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- a:scheduleUpdate():V
 - a:setFilesToIgnore(com.intellij.openapi.vcs.changes.IgnoredFileBean[]):V
 com.intellij.openapi.vcs.changes.ChangeListManagerGate
 - a:addChangeList(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
@@ -1160,7 +1159,6 @@ com.intellij.openapi.vcs.changes.CommitSession
 - canExecute(java.util.Collection,java.lang.String):Z
 - a:execute(java.util.Collection,java.lang.String):V
 - executionCanceled():V
-- getAdditionalConfigurationUI():javax.swing.JComponent
 - getAdditionalConfigurationUI(java.util.Collection,java.lang.String):javax.swing.JComponent
 - getHelpId():java.lang.String
 - validateFields():com.intellij.openapi.ui.ValidationInfo
@@ -1229,6 +1227,7 @@ f:com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 - s:ignoreFile(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:ignoreUnderDirectory(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:withMask(java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
+- s:withMask(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
 f:com.intellij.openapi.vcs.changes.IgnoredFileBean
 - com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 - equals(java.lang.Object):Z
@@ -1368,6 +1367,7 @@ a:com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 - a:filesDirty(java.util.Collection,java.util.Collection):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 - a:markEverythingDirty():V
+- a:rootDirty(com.intellij.openapi.vfs.VirtualFile):V
 - a:whatFilesDirty(java.util.Collection):java.util.Collection
 com.intellij.openapi.vcs.changes.VcsIgnoreManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsIgnoreManager
@@ -2271,6 +2271,29 @@ com.intellij.vcs.commit.CommitMessageUi
 - a:setText(java.lang.String):V
 - a:startLoading():V
 - a:stopLoading():V
+com.intellij.vcs.commit.CommitMode
+- disableDefaultCommitAction():Z
+- hideLocalChangesTab():Z
+- a:useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$ModalCommitMode
+- com.intellij.vcs.commit.CommitMode
+- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$ModalCommitMode
+- useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- com.intellij.vcs.commit.CommitMode
+- <init>(Z):V
+- f:component1():Z
+- f:copy(Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- bs:copy$default(com.intellij.vcs.commit.CommitMode$NonModalCommitMode,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:isToggleMode():Z
+- useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
+- com.intellij.vcs.commit.CommitMode
+- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
+- disableDefaultCommitAction():Z
+- useCommitToolWindow():Z
 com.intellij.vcs.commit.CommitWorkflowHandler
 - a:execute(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:getAmendCommitHandler():com.intellij.vcs.commit.AmendCommitHandler

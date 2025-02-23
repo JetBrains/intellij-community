@@ -3,10 +3,11 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
-import com.intellij.openapi.editor.impl.InlayModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
@@ -29,7 +30,7 @@ final class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
-  private final InlayModelImpl myInlayModel;
+  private final InlayModelEx myInlayModel;
   private final SoftWrapModelImpl mySoftWrapModel;
 
   EditorCoordinateMapper(EditorView view) {
@@ -196,8 +197,17 @@ final class EditorCoordinateMapper {
       }
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
-      if (delayedResult != null && minColumn != maxColumn) {
-        return delayedInlay ? delayedResult.leanForward(fragment.getCurrentInlay() == null) : delayedResult;
+      if (delayedResult != null) {
+        LogicalPosition possibleResult = delayedInlay ? delayedResult.leanForward(fragment.getCurrentInlay() == null) : delayedResult;
+        if (minColumn != maxColumn) {
+          return possibleResult;
+        }
+        // Please see documentation of FoldingKeys.ADDITIONAL_CARET_POSITION_FOR_EMPTY_PLACEHOLDER
+        if (column == minColumn && foldRegion != null && !foldRegion.isExpanded() && foldRegion.getPlaceholderText().isEmpty()) {
+          if (foldRegion.getUserData(FoldingKeys.ADDITIONAL_CARET_POSITION_FOR_EMPTY_PLACEHOLDER) != null) {
+            return possibleResult;
+          }
+        }
       }
       if (column < minColumn || column == minColumn && !pos.leansRight && minColumn != maxColumn) {
         return offsetToLogicalPosition(offset);

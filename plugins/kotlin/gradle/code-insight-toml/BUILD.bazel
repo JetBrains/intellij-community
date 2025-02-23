@@ -20,7 +20,7 @@ jvm_library(
     "//platform/core-impl",
     "//uast/uast-common:uast",
     "//platform/util",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/gradle/java",
     "//plugins/toml",

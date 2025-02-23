@@ -22,6 +22,8 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor;
+import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +47,7 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import com.sun.jdi.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +60,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
@@ -255,8 +259,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   public static XValuePresentation createPresentation(ValueDescriptorImpl descriptor) {
     Renderer lastLabelRenderer = descriptor.getLastLabelRenderer();
-    if (lastLabelRenderer instanceof XValuePresentationProvider) {
-      return ((XValuePresentationProvider)lastLabelRenderer).getPresentation(descriptor);
+    if (lastLabelRenderer instanceof XValuePresentationProvider presentationProvider) {
+      return presentationProvider.getPresentation(descriptor);
     }
     return new JavaValuePresentation(descriptor);
   }
@@ -462,7 +466,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeSourcePosition(final @NotNull XNavigatable navigatable) {
-    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, navigatable, false);
+    AtomicBoolean computed = new AtomicBoolean(false);
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, false, xPos -> {
+      if (computed.compareAndSet(false, true)) {
+        navigatable.setSourcePosition(xPos);
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
@@ -471,7 +481,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     if (myValueDescriptor instanceof FieldDescriptor && myParent != null && !(myParent.myValueDescriptor instanceof ThisDescriptorImpl)) {
       return ThreeState.NO;
     }
-    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, callback::computed, true);
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, true, xPos -> {
+      callback.computed(xPos);
+      return Unit.INSTANCE;
+    });
     return ThreeState.YES;
   }
 
@@ -505,6 +518,21 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             .executeSynchronously();
         }
       }
+    });
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
+    return myValueDescriptor.getInitFuture().thenApply(ignored -> {
+      Value value = myValueDescriptor.getValue();
+      JavaValueObjectReferenceInfo objectReferenceInfo = null;
+      if (value instanceof ObjectReference ref) {
+        objectReferenceInfo = new JavaValueObjectReferenceInfo(ref.referenceType().name(), ref.virtualMachine().canGetInstanceInfo());
+      }
+      return new JavaValueDescriptor(
+        myValueDescriptor.isString(),
+        objectReferenceInfo
+      );
     });
   }
 
@@ -584,9 +612,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public @Nullable String getValueText() {
-    if (myValueDescriptor.getLastLabelRenderer() instanceof XValuePresentationProvider) {
-      return null;
-    }
     return myValueDescriptor.getValueText();
   }
 

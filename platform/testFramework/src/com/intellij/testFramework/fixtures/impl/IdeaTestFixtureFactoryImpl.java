@@ -8,7 +8,6 @@ import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
-                                                                         @NotNull TestFixtureProjectPathProvider projectPathProvider,
+                                                                         @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
                                                                          boolean isDirectoryBasedProject) {
     return new HeavyTestFixtureBuilderImpl(
       new HeavyIdeaTestFixtureImpl(name, projectPathProvider, isDirectoryBasedProject),

@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.DataManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.rename.RenamerFactory
@@ -59,13 +57,9 @@ internal abstract class MoveMemberIntention(textGetter: () -> @IntentionName Str
                 }
             }
 
-            override fun performPsiSpoilingRefactoring() {
-                super.performPsiSpoilingRefactoring()
-
-                ApplicationManager.getApplication().invokeLater({
-                    if (declarationWithAddedParameters?.isValid != true) return@invokeLater
-                    declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
-                }, ModalityState.nonModal())
+            override fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+                if (declarationWithAddedParameters?.isValid != true) return
+                declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
             }
         }
 

@@ -4,10 +4,10 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.userScaledProjectIconSize
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -29,7 +30,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
-import com.intellij.util.PathUtil
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -89,7 +90,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
         val action = (value as PopupFactoryImpl.ActionItem).action
-        if (action is ReopenProjectAction) {
+        if (action is ProjectToolbarWidgetPresentable) {
           widgetRenderer.getListCellRendererComponent(list = list,
                                                       value = value,
                                                       index = index,
@@ -156,37 +157,54 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
   }
 
   private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
-    val action = value.action as ReopenProjectAction
-    val projectPath = action.projectPath
+    val action = value.action as ProjectToolbarWidgetPresentable
     lateinit var nameLbl: JLabel
-    lateinit var pathLbl: JLabel
+    var providerPathLbl: JLabel? = null
+    var projectPathLbl: JLabel? = null
 
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20))
+          icon(IconUtil.downscaleIconToSize(action.projectIcon, userScaledProjectIconSize(), userScaledProjectIconSize()))
             .align(AlignY.TOP)
             .customize(UnscaledGaps(right = 8))
 
           panel {
+            val textGaps = UnscaledGaps(bottom = 4, top = 4)
             row {
-              nameLbl = label(action.projectNameToDisplay ?: "")
-                .customize(UnscaledGaps(bottom = 4))
+              nameLbl = label(action.projectNameToDisplay)
+                .customize(textGaps.copy(top = 0))
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
             }
-            row {
-              pathLbl = label(FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false))
-                .applyToComponent {
-                  font = JBFont.smallOrNewUiMedium()
-                  foreground = UIUtil.getLabelInfoForeground()
-                }.component
+            val providerPath = action.providerPathToDisplay
+            if (providerPath != null) {
+              row {
+                providerPathLbl = label(providerPath)
+                  .customize(textGaps)
+                  .applyToComponent {
+                    icon = AllIcons.Nodes.Console
+                    font = JBFont.smallOrNewUiMedium()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
+            }
+            val projectPathToDisplay = action.projectPathToDisplay
+            if (projectPathToDisplay != null) {
+              row {
+                projectPathLbl = label(projectPathToDisplay)
+                  .customize(textGaps)
+                  .applyToComponent {
+                    font = JBFont.smallOrNewUiMedium()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
             }
             action.branchName?.let {
               row {
                 label(it)
-                  .customize(UnscaledGaps(bottom = 4, top = 4))
+                  .customize(textGaps)
                   .applyToComponent {
                     icon = AllIcons.Vcs.Branch
                     font = JBFont.smallOrNewUiMedium()
@@ -208,8 +226,8 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
       result.selectionColor = ListPluginComponent.SELECTION_COLOR
     }
 
-    AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
-    AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
+    AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", providerPathLbl, " - ", projectPathLbl)
+    AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", providerPathLbl, " - ", projectPathLbl)
 
     if (separator == null) {
       return result
@@ -239,4 +257,14 @@ private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JCompo
   panel.add(res)
 
   return panel
+}
+
+
+interface ProjectToolbarWidgetPresentable {
+  val projectNameToDisplay: @NlsSafe String
+  val providerPathToDisplay: @NlsSafe String? get() = null
+  val projectPathToDisplay: @NlsSafe String?
+  val branchName: @NlsSafe String?
+  val projectIcon: Icon
+  val activationTimestamp: Long?
 }

@@ -105,7 +105,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * Is called inside atomic action.
    */
   @ApiStatus.OverrideOnly
-  public abstract UsageInfo @NotNull [] findUsages();
+  protected abstract UsageInfo @NotNull [] findUsages();
 
   /**
    * is called when usage search is re-run.
@@ -121,7 +121,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * @return true if preprocessed successfully
    */
   @ApiStatus.OverrideOnly
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     prepareSuccessful();
     return true;
   }
@@ -130,12 +130,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * Is called inside atomic action.
    */
   @ApiStatus.OverrideOnly
-  public boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     return myIsPreviewUsages;
   }
 
   @ApiStatus.Internal
-  public boolean isPreviewUsages() {
+  protected boolean isPreviewUsages() {
     return myIsPreviewUsages;
   }
 
@@ -330,8 +330,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     execute(usages);
   }
 
-  @ApiStatus.Internal
-  public void execute(final UsageInfo @NotNull [] usages) {
+  @ApiStatus.OverrideOnly
+  protected void execute(final UsageInfo @NotNull [] usages) {
     long executeStart = System.currentTimeMillis();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));

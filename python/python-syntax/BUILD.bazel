@@ -16,7 +16,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//python/python-parser:parser",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//python/python-syntax-core:syntax-core",
     "//platform/platform-impl:ide-impl",
     "//python/python-ast:ast",

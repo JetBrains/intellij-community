@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.plist
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import kotlin.test.assertFailsWith

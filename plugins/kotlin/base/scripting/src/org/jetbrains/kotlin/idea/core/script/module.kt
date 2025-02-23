@@ -37,7 +37,7 @@ fun getUpdatedStorage(
     val updatedFactory = LibraryDependencyFactory(fileUrlManager, updatedStorage)
 
     for ((scriptFile, configurationWithSdk) in configurationsData) {
-        val configuration = configurationWithSdk.scriptConfiguration?.valueOrNull() ?: continue
+        val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
         val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
 
         val basePath = projectPath.toFile()

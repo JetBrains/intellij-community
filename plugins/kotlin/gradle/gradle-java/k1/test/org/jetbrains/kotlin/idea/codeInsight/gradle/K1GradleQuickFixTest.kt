@@ -8,12 +8,13 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
+import java.io.File
 
 class K1GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
-    override fun checkUnexpectedErrors(ktFile: KtFile) {
+    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
         DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 

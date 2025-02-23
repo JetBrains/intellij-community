@@ -168,6 +168,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     LOG.assertTrue(myFlushingTask == null);
     LOG.assertTrue(myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty());
     LOG.assertTrue(myTransactionMap.isEmpty());
+    LOG.info("Dropping registered indexes");
 
     myRegisteredIndexes = null;
   }
@@ -179,6 +180,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ReadWriteLock lock = new ReentrantReadWriteLock();
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();
+
+    // we preload this service, as it may be attempted to initialize latre
+    FileTypeManager.getInstance();
 
     myFileDocumentManager = FileDocumentManager.getInstance();
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -412,6 +416,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public synchronized void loadIndexes() {
     if (myRegisteredIndexes == null) {
+      LOG.info("Loading indexes");
+
       super.loadIndexes();
 
       LOG.assertTrue(myRegisteredIndexes == null);
@@ -422,6 +428,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // capture VFS creation time. It will be used to identify VFS epoch for dirty files queue.
       // at the moment when we write the queue, VFS might have already been disposed via shutdown hook (in the case on emergency shutdown)
       vfsCreationStamp = ManagingFS.getInstance().getCreationTimestamp();
+    }
+    else {
+      LOG.info("Indexes are already loaded");
     }
   }
 
@@ -1919,8 +1928,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> containingProjects);
     Project projectForFile = ContainerUtil.getFirstItem(containingProjects);
-    if (LOG.isTraceEnabled() && containingProjects.size() > 1) {
-      LOG.trace("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
+    if (TRACE_STUB_INDEX_UPDATES && containingProjects.size() > 1) {
+      LOG.info("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
                 "Indexing in " + projectForFile.getLocationHash());
     }
 
@@ -2015,20 +2024,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file,
-                                     @NotNull ID<?, ?> indexId,
-                                     @NotNull FileIndexingStamp indexingStamp) {
+  FileIndexingStateWithExplanation getIndexingState(@NotNull IndexedFile file,
+                                                    @NotNull ID<?, ?> indexId,
+                                                    @NotNull FileIndexingStamp indexingStamp) {
     return getIndexingState(file, getIndex(indexId), indexingStamp);
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file,
-                                     @NotNull UpdatableIndex<?, ?, ?, ?> index,
-                                     @NotNull FileIndexingStamp indexingStamp) {
+  FileIndexingStateWithExplanation getIndexingState(@NotNull IndexedFile file,
+                                                    @NotNull UpdatableIndex<?, ?, ?, ?> index,
+                                                    @NotNull FileIndexingStamp indexingStamp) {
     VirtualFile virtualFile = file.getFile();
-    if (isMock(virtualFile)) return FileIndexingState.NOT_INDEXED;
+    if (isMock(virtualFile)) return FileIndexingStateWithExplanation.notIndexed();
     if (IndexingFlag.isFileChanged(file.getFile(), indexingStamp) == IsFileChangedResult.YES) {
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("File has changed according to IndexingFlag");
     }
     return index.getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
   }

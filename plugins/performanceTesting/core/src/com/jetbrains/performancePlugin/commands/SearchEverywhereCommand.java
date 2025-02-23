@@ -25,6 +25,7 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -231,7 +232,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
   }
 
-  private @NotNull String computeActionId() {
+  private @NotNull @Language("devkit-action-id") String computeActionId() {
     String actionId;
     switch (myOptions.tab) {
       case "text" -> actionId = "TextSearchAction";

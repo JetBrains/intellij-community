@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.java.library.JavaLibraryModificationTracker;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -14,14 +16,11 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Methods to operate on Java contracts
@@ -30,8 +29,9 @@ public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
   /**
-   * JetBrains contract annotation fully-qualified name
+   * @deprecated To support contracts from different libraries please use {@link JvmContractAnnotationProvider}
    */
+  @Deprecated
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
 
   /**
@@ -103,8 +103,29 @@ public final class JavaMethodContractUtil {
     boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
     String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
     String resultValue = StreamEx.of(contracts).joining("; ");
-    Project project = annotation.getProject();
-    return DefaultInferredAnnotationProvider.createContractAnnotation(project, pure, resultValue, mutates);
+    String attributes = createAttributesText(pure, resultValue, mutates);
+    if (attributes.isEmpty()) return null;
+    return JavaPsiFacade.getElementFactory(annotation.getProject())
+      .createAnnotationFromText("@" + annotation.getQualifiedName() + "(" + attributes + ")", annotation);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String createAttributesText(boolean pure, String contracts, String mutates) {
+    @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
+    if (!contracts.isEmpty()) {
+      attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
+    }
+    if (pure) {
+      attrMap.put("pure", "true");
+    }
+    else if (!mutates.trim().isEmpty()) {
+      attrMap.put("mutates", StringUtil.wrapWithDoubleQuote(mutates));
+    }
+    if (attrMap.isEmpty()) {
+      return "";
+    }
+    return attrMap.keySet().equals(Collections.singleton("value")) ?
+           attrMap.get("value") : EntryStream.of(attrMap).join(" = ").joining(", ");
   }
 
   static class ContractInfo {
@@ -207,13 +228,24 @@ public final class JavaMethodContractUtil {
   }
 
   /**
-   * Returns a contract annotation for given method, checking the hierarchy
+   * Returns a contract annotation for a given method, checking the hierarchy
+   *
+   * @param method a method
+   * @param skipExternal to skip external annotations
+   * @return a found annotation (null if not found)
+   */
+  public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method, boolean skipExternal) {
+    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), skipExternal);
+  }
+
+  /**
+   * Returns a contract annotation for a given method, checking the hierarchy
    *
    * @param method a method
    * @return a found annotation (null if not found)
    */
   public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
-    return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
+    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), false);
   }
 
   /**

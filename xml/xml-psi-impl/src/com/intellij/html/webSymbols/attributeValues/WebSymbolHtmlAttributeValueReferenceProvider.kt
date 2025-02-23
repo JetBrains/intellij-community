@@ -7,21 +7,18 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
-import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
-import com.intellij.webSymbols.references.WebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 
-class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<XmlAttributeValue>() {
-  override fun getSymbolNameOffset(psiElement: XmlAttributeValue): Int =
+class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvider<XmlAttributeValue> {
+  override fun getReferencedSymbolNameOffset(psiElement: XmlAttributeValue): Int =
     psiElement.valueTextRange.startOffset - psiElement.startOffset
 
-  override fun getSymbol(psiElement: XmlAttributeValue): WebSymbol? {
+  override fun getReferencedSymbol(psiElement: XmlAttributeValue): WebSymbol? {
     val attribute = psiElement.parentOfType<XmlAttribute>()
     val attributeDescriptor = attribute?.descriptor?.asSafely<WebSymbolAttributeDescriptor>() ?: return null
     val type = attributeDescriptor.symbol.attributeValue
@@ -52,7 +49,6 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
           && !it.hasOnlyExtensions()
         }
         ?.asSingleSymbol()
-      ?: WebSymbolMatch.create(name, WebSymbol.HTML_ATTRIBUTE_VALUES, WebSymbolOrigin.empty(),
-                               WebSymbolNameSegment.create(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL))
+      ?: PsiWebSymbolReferenceProvider.unresolvedSymbol(WebSymbol.HTML_ATTRIBUTE_VALUES, name)
   }
 }

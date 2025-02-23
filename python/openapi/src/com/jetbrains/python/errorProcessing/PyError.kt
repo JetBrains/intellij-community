@@ -11,12 +11,12 @@ sealed class PyError(val message: @NlsSafe String) {
   /**
    * Some "business" error: just a message to be displayed to a user
    */
-  class Message(message: @NlsSafe String) : PyError(message)
+  open class Message(message: @NlsSafe String) : PyError(message)
 
   /**
    * Some process can't be executed. To be displayed specially.
    */
-  data class ExecException(val execFailure: PyExecutionFailure) : PyError(execFailure.userMessage)
+  open class ExecException(val execFailure: PyExecutionFailure) : PyError(execFailure.userMessage)
 
   override fun toString(): String = message
 }

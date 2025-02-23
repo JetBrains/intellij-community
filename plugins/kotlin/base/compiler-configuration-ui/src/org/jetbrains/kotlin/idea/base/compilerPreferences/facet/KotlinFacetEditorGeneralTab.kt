@@ -462,6 +462,7 @@ class KotlinFacetEditorGeneralTab(
     override fun apply() {
         validateOnce {
             editor.compilerConfigurable.apply()
+            configuration.settings.compilerArguments = editor.compilerConfigurable.commonCompilerArguments
             with(configuration.settings) {
                 useProjectSettings = editor.useProjectSettingsCheckBox.isSelected
                 editor.getChosenPlatform()?.let {

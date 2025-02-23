@@ -510,7 +510,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - pf:myProductionModulesForTestModules:java.util.Map
 - pf:myUserData:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - <init>(com.intellij.openapi.project.Project):V
-- commit():V
 - createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
 - createLibrary(java.lang.String,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.libraries.Library
 - dispose():V
@@ -521,7 +520,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - findIdeLibrary(com.intellij.openapi.externalSystem.model.project.LibraryData):com.intellij.openapi.roots.libraries.Library
 - findIdeModule(java.lang.String):com.intellij.openapi.module.Module
 - findModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- findModuleByPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):java.lang.String
 - getAllDependentModules(com.intellij.openapi.module.Module):java.util.List
 - getAllLibraries():com.intellij.openapi.roots.libraries.Library[]
 - getContentRoots(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile[]
@@ -534,25 +532,24 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - getModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - a:getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - getModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
-- getModifiableWorkspace():com.intellij.openapi.externalSystem.service.project.ModifiableWorkspace
 - getModules():com.intellij.openapi.module.Module[]
 - getOrderEntries(com.intellij.openapi.module.Module):com.intellij.openapi.roots.OrderEntry[]
 - getProductionModuleName(com.intellij.openapi.module.Module):java.lang.String
 - getSourceRoots(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile[]
 - getSourceRoots(com.intellij.openapi.module.Module,Z):com.intellij.openapi.vfs.VirtualFile[]
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
-- isSubstituted(java.lang.String):Z
 - newModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
 - newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
-- registerModulePublication(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
 - removeLibrary(com.intellij.openapi.roots.libraries.Library):V
 - setTestModuleProperties(com.intellij.openapi.module.Module,java.lang.String):V
-- trySubstitute(com.intellij.openapi.module.Module,com.intellij.openapi.roots.LibraryOrderEntry,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):com.intellij.openapi.roots.ModuleOrderEntry
-- p:updateSubstitutions():V
 pc:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - com.intellij.openapi.util.UserDataHolderBase
 - p:<init>():V
+f:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:findModuleNode(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.DataNode
+- sf:findModuleNode(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.externalSystem.model.DataNode
 f:com.intellij.openapi.externalSystem.service.project.ExternalSystemOperationDescriptor
 - java.io.Serializable
 - sf:OPERATION_DESCRIPTOR_KEY:com.intellij.openapi.externalSystem.model.Key
@@ -592,11 +589,7 @@ c:com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvide
 - p:doGetModifiableLibraryModel(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.roots.libraries.Library$ModifiableModel
 - p:doGetModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - p:doGetModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
-- forceUpdateSubstitutions():V
 - getActualStorageBuilder():com.intellij.platform.workspace.storage.MutableEntityStorage
-- getModifiableFacetModels():java.util.Map
-- getModifiableLibraryModels():java.util.Map
-- getModifiableModels():com.intellij.util.containers.ClassMap
 - getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - newModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
 - newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
@@ -709,6 +702,11 @@ f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrus
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator
+- com.intellij.ide.trustedProjects.TrustedProjectsLocator
+- <init>():V
+- getProjectRoots(com.intellij.openapi.project.Project):java.util.List
+- getProjectRoots(java.nio.file.Path,com.intellij.openapi.project.Project):java.util.List
 a:com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder
 - p:<init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.settings.ExternalProjectSettings):V

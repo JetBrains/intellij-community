@@ -151,7 +151,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
       for (MemberInfo memberInfo : myMemberInfos) {
         final PsiMember member = memberInfo.getMember();
-        for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true)) {
+        for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
@@ -224,7 +224,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   @Override
-  public boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts)), 

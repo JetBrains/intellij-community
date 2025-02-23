@@ -73,9 +73,7 @@ class DatasetTransformerTest {
                 "features": [],
                 "additional": {
                   "prompt": "add method to check email string",
-                  "file_property_regex_1": "static.*boolean.*mail.*String",
-                  "file_changed_lines_1": "5-6",
-                  "file_unchanged_lines_1": "1-3"
+                  "file_validations": "[{\"path\":\"src/main/java/com/jetbrains/eval/Utils.java\",\"patterns\":[\"static.*boolean.*mail.*String\"],\"changedLines\":[\"5-6\"],\"unchangedLines\":[\"1-3\"]}]"
                 }
               },
               "type": "CALL_FEATURE"
@@ -101,9 +99,7 @@ class DatasetTransformerTest {
                 "features": [],
                 "additional": {
                   "prompt": "add method to check email string",
-                  "file_property_regex_1": "static.*boolean.*mail.*String",
-                  "file_changed_lines_1": "5-6",
-                  "file_unchanged_lines_1": "1-3"
+                  "file_validations": "[{\"path\":\"src/main/java/com/jetbrains/eval/Utils.java\",\"patterns\":[\"static.*boolean.*mail.*String\"],\"changedLines\":[\"5-6\"],\"unchangedLines\":[\"1-3\"]}]"
                 }
               },
               "type": "CALL_FEATURE"

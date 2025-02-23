@@ -24,6 +24,30 @@ public class MenuStyle(
     public val metrics: MenuMetrics,
     public val icons: MenuIcons,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuStyle
+
+        if (isDark != other.isDark) return false
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (icons != other.icons) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = isDark.hashCode()
+        result = 31 * result + colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + icons.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "MenuStyle(isDark=$isDark, colors=$colors, metrics=$metrics, icons=$icons)"
+
     public companion object
 }
 
@@ -35,6 +59,37 @@ public class MenuColors(
     public val shadow: Color,
     public val itemColors: MenuItemColors,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuColors
+
+        if (background != other.background) return false
+        if (border != other.border) return false
+        if (shadow != other.shadow) return false
+        if (itemColors != other.itemColors) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + border.hashCode()
+        result = 31 * result + shadow.hashCode()
+        result = 31 * result + itemColors.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MenuColors(" +
+            "background=$background, " +
+            "border=$border, " +
+            "shadow=$shadow, " +
+            "itemColors=$itemColors" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -115,6 +170,88 @@ public class MenuItemColors(
             )
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuItemColors
+
+        if (background != other.background) return false
+        if (backgroundDisabled != other.backgroundDisabled) return false
+        if (backgroundFocused != other.backgroundFocused) return false
+        if (backgroundPressed != other.backgroundPressed) return false
+        if (backgroundHovered != other.backgroundHovered) return false
+        if (content != other.content) return false
+        if (contentDisabled != other.contentDisabled) return false
+        if (contentFocused != other.contentFocused) return false
+        if (contentPressed != other.contentPressed) return false
+        if (contentHovered != other.contentHovered) return false
+        if (iconTint != other.iconTint) return false
+        if (iconTintDisabled != other.iconTintDisabled) return false
+        if (iconTintFocused != other.iconTintFocused) return false
+        if (iconTintPressed != other.iconTintPressed) return false
+        if (iconTintHovered != other.iconTintHovered) return false
+        if (keybindingTint != other.keybindingTint) return false
+        if (keybindingTintDisabled != other.keybindingTintDisabled) return false
+        if (keybindingTintFocused != other.keybindingTintFocused) return false
+        if (keybindingTintPressed != other.keybindingTintPressed) return false
+        if (keybindingTintHovered != other.keybindingTintHovered) return false
+        if (separator != other.separator) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + backgroundDisabled.hashCode()
+        result = 31 * result + backgroundFocused.hashCode()
+        result = 31 * result + backgroundPressed.hashCode()
+        result = 31 * result + backgroundHovered.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + contentDisabled.hashCode()
+        result = 31 * result + contentFocused.hashCode()
+        result = 31 * result + contentPressed.hashCode()
+        result = 31 * result + contentHovered.hashCode()
+        result = 31 * result + iconTint.hashCode()
+        result = 31 * result + iconTintDisabled.hashCode()
+        result = 31 * result + iconTintFocused.hashCode()
+        result = 31 * result + iconTintPressed.hashCode()
+        result = 31 * result + iconTintHovered.hashCode()
+        result = 31 * result + keybindingTint.hashCode()
+        result = 31 * result + keybindingTintDisabled.hashCode()
+        result = 31 * result + keybindingTintFocused.hashCode()
+        result = 31 * result + keybindingTintPressed.hashCode()
+        result = 31 * result + keybindingTintHovered.hashCode()
+        result = 31 * result + separator.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MenuItemColors(" +
+            "background=$background, " +
+            "backgroundDisabled=$backgroundDisabled, " +
+            "backgroundFocused=$backgroundFocused, " +
+            "backgroundPressed=$backgroundPressed, " +
+            "backgroundHovered=$backgroundHovered, " +
+            "content=$content, " +
+            "contentDisabled=$contentDisabled, " +
+            "contentFocused=$contentFocused, " +
+            "contentPressed=$contentPressed, " +
+            "contentHovered=$contentHovered, " +
+            "iconTint=$iconTint, " +
+            "iconTintDisabled=$iconTintDisabled, " +
+            "iconTintFocused=$iconTintFocused, " +
+            "iconTintPressed=$iconTintPressed, " +
+            "iconTintHovered=$iconTintHovered, " +
+            "keybindingTint=$keybindingTint, " +
+            "keybindingTintDisabled=$keybindingTintDisabled, " +
+            "keybindingTintFocused=$keybindingTintFocused, " +
+            "keybindingTintPressed=$keybindingTintPressed, " +
+            "keybindingTintHovered=$keybindingTintHovered, " +
+            "separator=$separator" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -130,6 +267,49 @@ public class MenuMetrics(
     public val itemMetrics: MenuItemMetrics,
     public val submenuMetrics: SubmenuMetrics,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuMetrics
+
+        if (cornerSize != other.cornerSize) return false
+        if (menuMargin != other.menuMargin) return false
+        if (contentPadding != other.contentPadding) return false
+        if (offset != other.offset) return false
+        if (shadowSize != other.shadowSize) return false
+        if (borderWidth != other.borderWidth) return false
+        if (itemMetrics != other.itemMetrics) return false
+        if (submenuMetrics != other.submenuMetrics) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cornerSize.hashCode()
+        result = 31 * result + menuMargin.hashCode()
+        result = 31 * result + contentPadding.hashCode()
+        result = 31 * result + offset.hashCode()
+        result = 31 * result + shadowSize.hashCode()
+        result = 31 * result + borderWidth.hashCode()
+        result = 31 * result + itemMetrics.hashCode()
+        result = 31 * result + submenuMetrics.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MenuMetrics(" +
+            "cornerSize=$cornerSize, " +
+            "menuMargin=$menuMargin, " +
+            "contentPadding=$contentPadding, " +
+            "offset=$offset, " +
+            "shadowSize=$shadowSize, " +
+            "borderWidth=$borderWidth, " +
+            "itemMetrics=$itemMetrics, " +
+            "submenuMetrics=$submenuMetrics" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -146,18 +326,90 @@ public class MenuItemMetrics(
     public val iconSize: Dp,
     public val minHeight: Dp,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuItemMetrics
+
+        if (selectionCornerSize != other.selectionCornerSize) return false
+        if (outerPadding != other.outerPadding) return false
+        if (contentPadding != other.contentPadding) return false
+        if (separatorPadding != other.separatorPadding) return false
+        if (keybindingsPadding != other.keybindingsPadding) return false
+        if (separatorThickness != other.separatorThickness) return false
+        if (separatorHeight != other.separatorHeight) return false
+        if (iconSize != other.iconSize) return false
+        if (minHeight != other.minHeight) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = selectionCornerSize.hashCode()
+        result = 31 * result + outerPadding.hashCode()
+        result = 31 * result + contentPadding.hashCode()
+        result = 31 * result + separatorPadding.hashCode()
+        result = 31 * result + keybindingsPadding.hashCode()
+        result = 31 * result + separatorThickness.hashCode()
+        result = 31 * result + separatorHeight.hashCode()
+        result = 31 * result + iconSize.hashCode()
+        result = 31 * result + minHeight.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MenuItemMetrics(" +
+            "selectionCornerSize=$selectionCornerSize, " +
+            "outerPadding=$outerPadding, " +
+            "contentPadding=$contentPadding, " +
+            "separatorPadding=$separatorPadding, " +
+            "keybindingsPadding=$keybindingsPadding, " +
+            "separatorThickness=$separatorThickness, " +
+            "separatorHeight=$separatorHeight, " +
+            "iconSize=$iconSize, " +
+            "minHeight=$minHeight" +
+            ")"
+    }
+
     public companion object
 }
 
 @Stable
 @GenerateDataFunctions
 public class SubmenuMetrics(public val offset: DpOffset) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SubmenuMetrics
+
+        return offset == other.offset
+    }
+
+    override fun hashCode(): Int = offset.hashCode()
+
+    override fun toString(): String = "SubmenuMetrics(offset=$offset)"
+
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class MenuIcons(public val submenuChevron: IconKey) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuIcons
+
+        return submenuChevron == other.submenuChevron
+    }
+
+    override fun hashCode(): Int = submenuChevron.hashCode()
+
+    override fun toString(): String = "MenuIcons(submenuChevron=$submenuChevron)"
+
     public companion object
 }
 

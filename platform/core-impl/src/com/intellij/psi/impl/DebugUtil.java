@@ -655,7 +655,16 @@ public final class DebugUtil {
     int fileLength = file.getTextLength();
     int docLength = document.getTextLength();
     if (fileLength != docLength) {
-      return "file/doc text length different, " + fileDiagnostics + " file.length=" + fileLength + "; doc.length=" + docLength;
+      int maxTextLength = 100;
+      String fileText = StringUtil.trimMiddle(file.getText(), maxTextLength);
+      String docText = StringUtil.trimMiddle(document.getText(), maxTextLength);
+
+      return "file/doc text length different, " + fileDiagnostics +
+                      " file.length=" + fileLength +
+                      "; file.isPhysical=" + file.isPhysical() +
+                      "; doc.length=" + docLength +
+                      "\nfile.text:\n" + fileText +
+                      "\ndocument.text:\n" + docText;
     }
 
     return "unknown inconsistency in " + fileDiagnostics;

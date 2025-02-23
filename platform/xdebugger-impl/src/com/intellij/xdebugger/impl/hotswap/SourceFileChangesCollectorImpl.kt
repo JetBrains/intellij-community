@@ -41,9 +41,6 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
   private val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Document changed: ${event.document}")
-      }
       queueSizeEstimate.incrementAndGet()
       coroutineScope.launch(documentChangeDispatcher) {
         try {
@@ -78,18 +75,21 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
   private suspend fun onDocumentChange(document: Document) = coroutineScope {
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@coroutineScope
+    if (logger.isDebugEnabled) {
+      logger.debug("Document changed: ${virtualFile}")
+    }
     val filteredCollectors = collectors
       .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
       .filter { it.second.await() }
       .map { it.first }
     if (filteredCollectors.isEmpty()) {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change skipped as filtered: $document")
+        logger.debug("Document change skipped as filtered: $virtualFile")
       }
       return@coroutineScope
     }
     if (logger.isDebugEnabled) {
-      logger.debug("Document change processing: $document")
+      logger.debug("Document change processing: $virtualFile")
     }
     val contentHash = Strings.stringHashCode(document.immutableCharSequence)
     val groupedByTimeStamp = filteredCollectors.groupBy { it.lastResetTimeStamp }
@@ -183,13 +183,13 @@ class SourceFileChangesCollectorImpl(
     val isEmpty = currentChanges.isEmpty()
     if (isEmpty) {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change reverted previous changes: $document")
+        logger.debug("Document change reverted previous changes: $file")
       }
       listener.onChangesCanceled()
     }
     else {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change active: $document")
+        logger.debug("Document change active: $file")
       }
       listener.onNewChanges()
     }

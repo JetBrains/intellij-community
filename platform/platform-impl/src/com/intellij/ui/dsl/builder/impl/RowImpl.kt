@@ -23,13 +23,15 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.IconUtil
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
@@ -384,10 +386,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return comboBox(DefaultComboBoxModel(Vector(items)), renderer)
   }
 
-  override fun customize(customRowGaps: VerticalGaps): Row {
-    return customize(UnscaledGapsY(JBUI.unscale(customRowGaps.top), JBUI.unscale(customRowGaps.bottom)))
-  }
-
   override fun customize(customRowGaps: UnscaledGapsY): Row {
     internalTopGap = customRowGaps.top
     internalBottomGap = customRowGaps.bottom
@@ -402,7 +400,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   private fun <T> createDefaultComboBoxRenderer(): ListCellRenderer<in T?> {
-    // todo turn on useComboBoxNewRenderer by default and remove useComboBoxNewRenderer related code
+    // todo remove useComboBoxNewRenderer and related code. Use default ComboBox renderer, which should support round selection etc
     return if (dialogPanelConfig.useComboBoxNewRenderer) textListCellRenderer("") { it.toString() }
     else SimpleListCellRenderer.create("") { it.toString() }
   }

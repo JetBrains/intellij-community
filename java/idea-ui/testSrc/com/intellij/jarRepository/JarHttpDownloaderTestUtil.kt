@@ -3,12 +3,14 @@ package com.intellij.jarRepository
 
 import com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider.AuthenticationData
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.request.authorization
 import io.ktor.server.request.uri
@@ -25,8 +27,8 @@ import java.util.*
 object JarHttpDownloaderTestUtil {
   private const val LOCALHOST = "127.0.0.1"
 
-  class TestHttpServerExtension(private val init: (ApplicationEngine) -> Unit = {}) : BeforeEachCallback, AfterEachCallback {
-    lateinit var server: ApplicationEngine
+  class TestHttpServerExtension(private val init: (EmbeddedServer<out ApplicationEngine, out ApplicationEngine.Configuration>) -> Unit = {}) : BeforeEachCallback, AfterEachCallback {
+    lateinit var server: EmbeddedServer<out ApplicationEngine, out ApplicationEngine.Configuration>
     private val logBuffer: StringBuffer = StringBuffer()
     val log: String
       get() = logBuffer.toString()
@@ -47,7 +49,7 @@ object JarHttpDownloaderTestUtil {
     }
   }
 
-  fun ApplicationEngine.createContext(
+  fun Application.createContext(
     path: String,
     httpStatusCode: HttpStatusCode,
     log: (String) -> Unit = {},
@@ -55,7 +57,7 @@ object JarHttpDownloaderTestUtil {
     auth: AuthenticationData? = null,
     delayMs: Long = 0,
   ) {
-    application.routing {
+    routing {
       get(path) {
         delay(delayMs)
 

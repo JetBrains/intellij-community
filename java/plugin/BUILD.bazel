@@ -17,6 +17,8 @@ java_library(
     "//java/compiler/charts:java-compiler-charts",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/shared:java-debugger-impl-shared",
+    "//java/debugger/frontend:java-debugger-impl-frontend",
+    "//java/debugger/backend:java-debugger-impl-backend",
     "//xml/dom-impl",
     "//java/debugger/memory-agent:java-debugger-memory-agent",
     "//java/execution/impl:java-execution-impl",
@@ -32,7 +34,7 @@ java_library(
     "//java/typeMigration",
     "//resources:java-resources",
     "//resources-en:java-resources-en",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//java/performancePlugin",
     "//java/vcs",
   ]

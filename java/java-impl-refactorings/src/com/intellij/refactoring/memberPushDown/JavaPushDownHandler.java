@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -35,7 +35,7 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
-    return ClassInheritorsSearch.search(psiClass).iterator().hasNext();
+    return ClassInheritorsSearch.search(psiClass).asIterable().iterator().hasNext();
   }
 
   @Override

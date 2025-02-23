@@ -92,6 +92,10 @@ final class KJvmUtils {
     return node instanceof JVMClassNode? (KotlinMeta)find(((JVMClassNode<?, ?>)node).getMetadata(), mt -> mt instanceof KotlinMeta) : null;
   }
 
+  static boolean isInlinable(KmProperty prop) {
+    return Attributes.isConst(prop) || Attributes.isInline(prop.getGetter()) || (prop.getSetter() != null && Attributes.isInline(prop.getSetter()));
+  }
+
   static boolean isPrivate(KmProperty prop) {
     return isPrivate(Attributes.getVisibility(prop));
   }

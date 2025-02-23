@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.plugins.UIComponentFileEditor
 import com.intellij.ide.plugins.UIComponentVirtualFile
-import com.intellij.ide.plugins.UIComponentVirtualFile.Content
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project

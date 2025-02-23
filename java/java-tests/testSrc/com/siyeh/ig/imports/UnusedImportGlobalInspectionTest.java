@@ -391,6 +391,71 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  public void testStaticMethodInInterface() {
+    myFixture.addClass("""
+      package org.example;
+      
+      public interface Any {
+          static void fromAny() {
+          }
+      }
+      """);
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child implements Any {
+          public static void fromChild(){}
+      }""");
+    myFixture.addFileToProject("Test.java", """
+      package org.test;
+      
+      import static org.example.Any.*;
+      import static org.example.Child.*;
+      
+      public class Test {
+          public static void main(String[] args) {
+              fromChild();
+              fromAny();
+          }
+      }
+      """);
+    doTest();
+  }
+
+  public void testDoubleStaticSameMethodInheritance() {
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child2 extends Child {
+      }""");
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child extends Any {
+          public static void test(){
+              Any.test();
+          }
+      }""");
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Any {
+          public static void test() {
+          }
+      }""");
+    myFixture.addFileToProject("Test.java", """
+      package org.test;
+      
+      import static org.example.Child2.*;
+      
+      public class Test {
+          public static void main(String[] args) {
+              test();
+          }
+      }""");
+    doTest();
+  }
+
   private void doTest(String classText) {
     myFixture.addClass(classText);
 

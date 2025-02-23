@@ -1,6 +1,5 @@
 package staticImportCanBeUsed;
 
-import java.util.Arrays;
 import static java.util.Arrays.sort;
 
 class Foo {

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
@@ -13,7 +14,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
+  private val logger = thisLogger()
   abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager
@@ -42,7 +47,15 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
-    installPackageCommand(specification, options).onFailure { return Result.failure(it) }
+    logger.info("install $specification: start")
+
+    val result = installPackageCommand(specification, options)
+    result.onFailure {
+      logger.info("install $specification: error. Output: \n${it.stackTraceToString()}")
+      return Result.failure(it)
+    }
+
+    logger.info("install $specification: finish")
     refreshPaths()
     return reloadPackages()
   }
@@ -54,15 +67,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
+    logger.info("Uninstall package $pkg: start")
     uninstallPackageCommand(pkg).onFailure { return Result.failure(it) }
+    logger.info("Uninstall package $pkg: finished")
     refreshPaths()
     return reloadPackages()
   }
 
   open suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    logger.info("Reload packages: start")
     val packages = reloadPackagesCommand().getOrElse {
       return Result.failure(it)
     }
+    logger.info("Reload packages: finish")
 
     installedPackages = packages
     ApplicationManager.getApplication().messageBus.apply {
@@ -73,13 +90,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return Result.success(packages)
   }
 
-  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String>
-  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String>
-  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String>
+  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit>
+  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit>
+  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
   internal suspend fun refreshPaths() {
-    writeAction {
+    edtWriteAction {
       // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
       // Temporary folders can't be deleted on Windows due to that.
       // That breaks tests.
@@ -93,9 +110,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-      val packageManagerHolder = project.service<PackageManagerHolder>()
-      val manager = packageManagerHolder.forSdk(project, sdk)
-      packageManagerHolder.getServiceScope().launch(Dispatchers.IO) {
+      val pythonPackageManagerService = project.service<PythonPackageManagerService>()
+      val manager = pythonPackageManagerService.forSdk(project, sdk)
+      pythonPackageManagerService.getServiceScope().launch(Dispatchers.IO) {
         manager.repositoryManager.initCaches()
       }
       return manager

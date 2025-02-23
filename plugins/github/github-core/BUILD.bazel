@@ -3,6 +3,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "vcs-github_resources",
+  files = glob(["gen-resources/**/*"]),
+  strip_prefix = "gen-resources"
+)
+
+jvm_resources(
+  name = "vcs-github_resources_1",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
@@ -33,7 +39,7 @@ jvm_library(
     "@lib//:miglayout-swing",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/diff-impl",
     "//platform/statistics",
     "//platform/built-in-server:builtInServer-impl",
@@ -58,7 +64,10 @@ jvm_library(
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:gson",
   ],
-  runtime_deps = [":vcs-github_resources"]
+  runtime_deps = [
+    ":vcs-github_resources",
+    ":vcs-github_resources_1",
+  ]
 )
 
 jvm_library(
@@ -97,7 +106,7 @@ jvm_library(
     "@lib//:miglayout-swing",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/diff-impl",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -129,8 +138,15 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:gson",
+    "@lib//:classgraph",
+    "@lib//:assert_j",
+    "@lib//:kotlin-reflect",
+    "@lib//:vcs-github-apollographql-apollo-ast-jvm",
   ],
-  runtime_deps = [":vcs-github_resources"]
+  runtime_deps = [
+    ":vcs-github_resources",
+    ":vcs-github_resources_1",
+  ]
 )
 
 jvm_test(

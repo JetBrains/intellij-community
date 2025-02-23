@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -34,6 +34,8 @@ import org.jetbrains.plugins.terminal.block.prompt.renderer.ShellPromptRenderer
 import org.jetbrains.plugins.terminal.block.prompt.renderer.TerminalPromptRenderer
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.ui.getDisposed
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 
 internal class TerminalPromptModelImpl(
   override val editor: EditorEx,
@@ -106,7 +108,7 @@ internal class TerminalPromptModelImpl(
     else {
       renderer.calculateRenderingInfo(state)
     }
-    runInEdt {
+    invokeLater(editor.getDisposed(), ModalityState.any()) {
       doUpdatePrompt(updatedInfo)
       promptState = state
       renderingInfo = updatedInfo

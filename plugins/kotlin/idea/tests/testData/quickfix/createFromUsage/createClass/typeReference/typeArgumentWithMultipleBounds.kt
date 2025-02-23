@@ -1,5 +1,6 @@
 // "Create class 'Foo'" "true"
 // K2 TODO: improve generated class type arguments when "expected type" is fixed
+// K2_AFTER_ERROR: Type argument is not within its bounds: must be subtype of 'I & A'.
 open class A
 interface I
 

@@ -142,7 +142,7 @@ class SwitcherVirtualFile(
   override var mainText: String = ""
 
   override var statusText: String = ""
-  
+
   override var pathText: String = ""
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {

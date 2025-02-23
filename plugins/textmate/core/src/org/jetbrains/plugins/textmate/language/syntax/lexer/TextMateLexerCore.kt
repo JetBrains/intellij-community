@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import fleet.fastutil.ints.IntArrayList
-import fleet.fastutil.ints.isEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.plugins.textmate.Constants
@@ -12,10 +10,9 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.rep
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
-import org.jetbrains.plugins.textmate.regex.RegexUtil.byteOffsetByCharOffset
 import org.jetbrains.plugins.textmate.regex.TextMateRange
 import org.jetbrains.plugins.textmate.regex.TextMateString
-import org.jetbrains.plugins.textmate.regex.TextMateString.Companion.fromCharSequence
+import org.jetbrains.plugins.textmate.regex.byteOffsetByCharOffset
 import kotlin.math.min
 
 class TextMateLexerCore(
@@ -28,7 +25,7 @@ class TextMateLexerCore(
   private var myCurrentOffset: Int = 0
   private var myText: CharSequence = ""
   private var myCurrentScope: TextMateScope = TextMateScope.EMPTY
-  private var myNestedScope = IntArrayList.of()
+  private var myNestedScope = ArrayDeque<Int>()
   private var myStates = persistentListOf<TextMateLexerState>()
 
   fun getCurrentOffset(): Int {
@@ -39,9 +36,9 @@ class TextMateLexerCore(
     myText = text
     myCurrentOffset = startOffset
 
-    myStates = persistentListOf<TextMateLexerState>(notMatched(languageDescriptor.rootSyntaxNode))
+    myStates = persistentListOf(notMatched(languageDescriptor.rootSyntaxNode))
     myCurrentScope = TextMateScope(languageDescriptor.scopeName, null)
-    myNestedScope = IntArrayList.of(1)
+    myNestedScope = ArrayDeque<Int>().also { it.addLast(1) }
   }
 
   fun advanceLine(checkCancelledCallback: Runnable?): MutableList<TextmateToken> {
@@ -95,7 +92,7 @@ class TextMateLexerCore(
     val matchBeginString = lineStartOffset == 0 && linePosition == 0
     var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
 
-    val string = fromCharSequence(line)
+    val string = mySyntaxMatcher.createStringToMatch(line)
 
     var whileStates = states
     while (!whileStates.isEmpty()) {
@@ -157,7 +154,7 @@ class TextMateLexerCore(
         }
         states = states.removeAt(states.size - 1)
 
-        val endRange = endMatch.charRange(line, string.bytes)
+        val endRange = endMatch.charRange(string)
         endPosition = endRange.start
         val startPosition = endPosition
         closeScopeSelector(output, startPosition + lineStartOffset) // closing content scope
@@ -178,7 +175,7 @@ class TextMateLexerCore(
       else if (currentMatch.matched) {
         anchorByteOffset = currentMatch.byteOffset().end
 
-        val currentRange = currentMatch.charRange(line, string.bytes)
+        val currentRange = currentMatch.charRange(string)
         val startPosition = currentRange.start
         endPosition = currentRange.end
 
@@ -267,7 +264,7 @@ class TextMateLexerCore(
         continue
       }
 
-      val captureRange = matchData.charRange(line, string.bytes, group)
+      val captureRange = matchData.charRange(string, group)
 
       while (!activeCaptureRanges.isEmpty() && activeCaptureRanges.last().end <= captureRange.start) {
         closeScopeSelector(output, startLineOffset + activeCaptureRanges.removeLast().end)
@@ -300,7 +297,7 @@ class TextMateLexerCore(
       }
       else if (capture is TextMateCapture.Rule) {
         val capturedString = line.subSequence(0, captureRange.end)
-        val capturedTextMateString = fromCharSequence(capturedString)
+        val capturedTextMateString = mySyntaxMatcher.createStringToMatch(capturedString)
         val captureState = TextMateLexerState(syntaxRule = capture.node,
                                               matchData = matchData,
                                               priorityMatch = TextMateWeigh.Priority.NORMAL,
@@ -338,7 +335,7 @@ class TextMateLexerCore(
       }
     }
     myCurrentScope = myCurrentScope.add(name?.subSequence(prevIndexOfSpace, name.length))
-    myNestedScope.add(count + 1)
+    myNestedScope.addLast(count + 1)
   }
 
   private fun closeScopeSelector(output: MutableList<TextmateToken>, position: Int) {
@@ -346,9 +343,8 @@ class TextMateLexerCore(
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position)
     }
-    if (!myNestedScope.isEmpty()) {
-      val nested = myNestedScope.removeAt(myNestedScope.size - 1)
-      repeat(nested) {
+    myNestedScope.removeLastOrNull()?.let { nestingLevel ->
+      repeat(nestingLevel) {
         myCurrentScope = myCurrentScope.parent ?: myCurrentScope
       }
     }
@@ -359,7 +355,7 @@ class TextMateLexerCore(
     if (position > myCurrentOffset) {
       var restartable = myCurrentScope.parent == null
       val wsStart = myCurrentOffset
-      while (myStripWhitespaces && position > myCurrentOffset && Character.isWhitespace(myText[myCurrentOffset])) {
+      while (myStripWhitespaces && position > myCurrentOffset && myText[myCurrentOffset].isWhitespace()) {
         myCurrentOffset++
       }
 
@@ -372,7 +368,7 @@ class TextMateLexerCore(
       }
 
       var wsEnd = position
-      while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText[wsEnd - 1])) {
+      while (myStripWhitespaces && wsEnd > myCurrentOffset && myText[wsEnd - 1].isWhitespace()) {
         wsEnd--
       }
 

@@ -13,7 +13,6 @@ import com.intellij.psi.SyntheticElement
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
 
 private class PsiSourcedWebSymbolRenameHandler : RenameHandler {
 

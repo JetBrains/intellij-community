@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -28,7 +29,7 @@ private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.i
 private typealias InspectionFactory = () -> InspectionToolWrapper<*, *>?
 
 @Service
-class InspectionToolRegistrar : InspectionToolsSupplier() {
+class InspectionToolRegistrar(coroutineScope: CoroutineScope) : InspectionToolsSupplier() {
   companion object {
     @JvmStatic
     fun getInstance(): InspectionToolRegistrar = service<InspectionToolRegistrar>()
@@ -40,9 +41,9 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     val app = ApplicationManager.getApplication()
     val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
     val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
-    registerToolProviders(result)
-    registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
-    registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
+    registerToolProviders(result, coroutineScope)
+    registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION, coroutineScope)
+    registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION, coroutineScope)
     toolFactories = result.values
   }
 
@@ -58,13 +59,14 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     app: Application,
     shortNames: MutableMap<String, InspectionEP>,
     extensionPointName: ExtensionPointName<T>,
+    coroutineScope: CoroutineScope,
   ) {
     val isInternal = app.isInternal
     for (extension in extensionPointName.extensionList) {
       registerInspection(extension, shortNames, isInternal, factories)
     }
 
-    extensionPointName.addExtensionPointListener(object : ExtensionPointListener<T> {
+    extensionPointName.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<T> {
       override fun extensionAdded(inspection: T, pluginDescriptor: PluginDescriptor) {
         fireToolAdded(registerInspection(inspection, shortNames, isInternal, factories) ?: return)
       }
@@ -73,14 +75,14 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
         unregisterInspectionOrProvider(inspection, factories)
         shortNames.remove(inspection.getShortName())
       }
-    }, null)
+    })
   }
 
-  private fun registerToolProviders(factories: MutableMap<Any, MutableList<InspectionFactory>>) {
+  private fun registerToolProviders(factories: MutableMap<Any, MutableList<InspectionFactory>>, coroutineScope: CoroutineScope) {
     EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       registerToolProvider(provider, pluginDescriptor, factories, null)
     }
-    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider> {
+    EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<InspectionToolProvider> {
       override fun extensionAdded(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         val added = mutableListOf<InspectionFactory>()
         registerToolProvider(extension, pluginDescriptor, factories, added)
@@ -92,7 +94,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
       override fun extensionRemoved(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         unregisterInspectionOrProvider(extension, factories)
       }
-    }, null)
+    })
   }
 
   private fun fireToolAdded(factory: InspectionFactory) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -447,7 +447,7 @@ public class InstrumentationClassFinder {
     InputStream getInputStream() throws IOException;
   }
 
-  static class ClassFinderClasspath {
+  public static final class ClassFinderClasspath {
     private final Queue<URL> myUrls;
     private final List<Loader> myLoaders = new ArrayList<>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<>();
@@ -533,7 +533,7 @@ public class InstrumentationClassFinder {
     }
 
 
-    abstract static class Loader {
+    public abstract static class Loader {
       protected static final String JAR_PROTOCOL = "jar";
       protected static final String FILE_PROTOCOL = "file";
       protected static final String JRT_PROTOCOL = "jrt";

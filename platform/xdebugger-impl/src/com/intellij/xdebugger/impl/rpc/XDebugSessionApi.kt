@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor

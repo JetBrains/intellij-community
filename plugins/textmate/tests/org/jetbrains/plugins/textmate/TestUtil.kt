@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
-import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 
 fun TextMateSyntaxTableBuilder.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
   val matchers = HashMap<TextMateFileNameMatcher, CharSequence>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class HtmlUnknownAttributeInspection extends HtmlUnknownAttributeInspectionBase {
+public final class HtmlUnknownAttributeInspection extends HtmlUnknownAttributeInspectionBase {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(

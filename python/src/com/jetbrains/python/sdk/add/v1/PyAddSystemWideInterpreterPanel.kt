@@ -30,7 +30,6 @@ import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.setup
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
-import java.awt.Container
 import java.util.function.Supplier
 
 open class PyAddSystemWideInterpreterPanel(private val _project: Project?,

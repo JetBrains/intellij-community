@@ -60,17 +60,16 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
     }
 
     // The LHS of the binary expression must be nullable.
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? =
         element.left
             ?.expressionType
             ?.isMarkedNullable
             ?.asUnit
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.elvis.return.null.text")
@@ -83,5 +82,5 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
             val left = element.left ?: return
             element.replace(left)
         }
-    })
+    }
 }

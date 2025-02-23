@@ -164,8 +164,11 @@ internal class ImageCollector(
         break
       }
 
+      val excludeDirectories = moduleConfig?.excludePackages
+        ?.map { rootDir.resolve(it.replace('.', '/')) }?.toSet() ?: emptySet()
+
       if (rootDir.fileName.toString() != "compatibilityResources") {
-        processRoot(sourceRoot, rootDir)
+        processRoot(sourceRoot, rootDir, excludeDirectories)
       }
       else if (java.lang.Boolean.getBoolean("remove.extra.icon.robots.files")) {
         // under flag because not required for regular usage (to avoid FS call)
@@ -181,7 +184,7 @@ internal class ImageCollector(
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
     collectMappingFile(sourceRoot.path)
-    processRoot(sourceRoot, sourceRoot.path.resolve(name))
+    processRoot(sourceRoot, sourceRoot.path.resolve(name), emptySet())
     val result = icons.values.toMutableList()
     if (includePhantom) {
       result.addAll(phantomIcons.values)
@@ -195,7 +198,7 @@ internal class ImageCollector(
     }
   }
 
-  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path) {
+  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path, excludeDirectories: Set<Path>) {
     val rootRobotData = upToProjectHome(rootDir)
     if (rootRobotData.isSkipped(rootDir)) {
       return
@@ -214,7 +217,8 @@ internal class ImageCollector(
       isDirectory = attributes.isDirectory,
       common = null,
       robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
-      level = 0
+      level = 0,
+      excludeDirectories = excludeDirectories,
     ) ?: return
     val robotData = rootRobotData.fork(iconRoot, rootDir)
 
@@ -288,7 +292,7 @@ internal class ImageCollector(
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int, excludeDirectories: Set<Path>): Path? {
     if (robotData.isSkipped(file) || robotData.mergeToRoot) {
       return common
     }
@@ -300,11 +304,15 @@ internal class ImageCollector(
         }
       }
 
+      if (excludeDirectories.contains(file)) {
+        return common
+      }
+
       val childRobotData = robotData.fork(file, root)
       var childCommon = common
       Files.newDirectoryStream(file).use { stream ->
         for (it in stream) {
-          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1)
+          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1, excludeDirectories)
         }
       }
       return childCommon

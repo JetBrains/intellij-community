@@ -297,9 +297,8 @@ public final class LocalRefUseInfo {
         // in JSP, XmlAttributeValue may contain java references
         try {
           for (PsiReference reference : element.getReferences()) {
-            JavaResolveResult result = HighlightVisitorImpl.resolveJavaReference(reference);
-            if (result != null) {
-              registerReference(reference, result);
+            if (reference instanceof PsiJavaReference psiJavaReference) {
+              registerReference(reference, psiJavaReference.advancedResolve(false));
             }
           }
         }

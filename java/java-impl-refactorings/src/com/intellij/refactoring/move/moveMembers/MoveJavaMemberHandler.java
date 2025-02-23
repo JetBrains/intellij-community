@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -306,7 +306,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       final List<PsiField> beforeFields = new ArrayList<>();
-      for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
+      for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass)).asIterable()) {
         final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
         if (fieldWithReference != null && !afterFields.contains(fieldWithReference) && fieldWithReference.getContainingClass() == targetClass) {
           beforeFields.add(fieldWithReference);

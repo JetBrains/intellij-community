@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManager;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -209,9 +210,20 @@ public final class JVMNameUtil {
       // If there are more than one available, try to match by name
       if (allClasses.size() > 1) {
         String name = ReadAction.compute(() -> getClassVMName(getClassAt(mySourcePosition)));
-        for (ReferenceType aClass : allClasses) {
+        if (name != null) {
+          for (ReferenceType aClass : allClasses) {
           if (Objects.equals(aClass.name(), name)) {
-            return name;
+              return name;
+            }
+          }
+        }
+        else { // most probably local class - prefer a class with a longer name :)
+          String matchingTypeName = allClasses.stream()
+            .map(ReferenceType::name)
+            .max(Comparator.comparing(String::length))
+            .orElse(null);
+          if (matchingTypeName != null) {
+            return matchingTypeName;
           }
         }
       }

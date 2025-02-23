@@ -76,7 +76,7 @@ class NotebookBelowCellDelimiterPanel(
 
   private fun createExecutionLabel(): JLabel {
     return JLabel().apply {
-      font = EditorUtil.getEditorFont()
+      font = EditorUtil.getEditorFont().deriveFont(EditorUtil.getEditorFont().size2D - 1)
       foreground = UIUtil.getLabelInfoForeground()
     }
   }
@@ -135,12 +135,9 @@ class NotebookBelowCellDelimiterPanel(
         toolTipText = tooltipText
       }
     }
-    else {  // temporary measure to fit the drag icon, see PY-65433
-      getOrCreateExecutionLabel().apply {
-        text = ""
-        icon = AllIcons.Empty
-        toolTipText = null
-      }
+    else {
+      executionLabel?.let { remove(it) }
+      executionLabel = null
     }
   }
 

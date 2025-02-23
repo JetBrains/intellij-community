@@ -4,6 +4,7 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.*
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import java.nio.file.Path
 
 /**
  * Implementation of [PathResolver] which can load module descriptors not only from the main plugin JAR file, unlike [PluginXmlPathResolver]
@@ -42,6 +43,11 @@ internal class ModuleBasedPluginXmlPathResolver(
       return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path, readInto = readInto)
+  }
+
+  override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
+    return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 
   override fun loadXIncludeReference(

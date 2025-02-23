@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -73,7 +74,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   /**
    * Toggle whether hyperlinks are underlined when hovered.
-   *
+   * <p>
    * This is useful if another implementation needs to apply a different style
    * to hyperlinks when hovered (this can be done by adding a {@link HyperlinkListener}
    * to the {@link JEditorPane}).
@@ -225,30 +226,73 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
     @Override
     public ParserCallback getReader(int pos) {
-      ParserCallback reader = super.getReader(pos);
+      Object desc = getProperty(StreamDescriptionProperty);
+      if (desc instanceof URL) {
+        setBase((URL)desc);
+      }
+      ParserCallback reader = new JBHtmlReader(pos);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     @Override
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
-      ParserCallback reader = super.getReader(pos, popDepth, pushDepth, insertTag);
+      Object desc = getProperty(StreamDescriptionProperty);
+      if (desc instanceof URL) {
+        setBase((URL)desc);
+      }
+      HTMLReader reader = new JBHtmlReader(pos, popDepth, pushDepth, insertTag);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     public void tryRunUnderWriteLock(Runnable runnable) {
       if (getCurrentWriter() == Thread.currentThread()) {
         runnable.run();
-      } else {
+      }
+      else {
         try {
           writeLock();
-        } catch (IllegalStateException e) {
+        }
+        catch (IllegalStateException e) {
           // ignore, wrong thread
           return;
         }
         try {
           runnable.run();
-        } finally {
+        }
+        finally {
           writeUnlock();
+        }
+      }
+    }
+
+    private final class JBHtmlReader extends HTMLReader {
+
+      private JBHtmlReader(int offset) {
+        super(offset);
+      }
+
+      private JBHtmlReader(int offset, int popDepth, int pushDepth, HTML.Tag insertTag) {
+        super(offset, popDepth, pushDepth, insertTag);
+      }
+
+      @Override
+      protected void addSpecialElement(HTML.Tag t, MutableAttributeSet a) {
+        int lastSize = parseBuffer.size();
+        super.addSpecialElement(t, a);
+        if (lastSize != parseBuffer.size()) {
+          if (t == HTML.Tag.BR) {
+            var elementSpec = parseBuffer.lastElement();
+            parseBuffer.set(parseBuffer.size() - 1, new ElementSpec(
+              elementSpec.getAttributes(), ElementSpec.ContentType, new char[]{'\n'}, 0, 1));
+          }
+          else if ("wbr".equals(t.toString())) {
+            var elementSpec = parseBuffer.lastElement();
+            // Swing HTML control does not accept elements with no text.
+            // Use zero-width space. It needs to be removed in `getSelectedText()`
+            // to avoid this char showing up while copy/pasting.
+            parseBuffer.set(parseBuffer.size() - 1, new ElementSpec(
+              elementSpec.getAttributes(), ElementSpec.ContentType, new char[]{'\u200B'}, 0, 1));
+          }
         }
       }
     }

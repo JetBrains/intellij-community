@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -37,10 +38,11 @@ object OverrideAccessorFunctionFixFactory {
 
         val containingClassOrObject = property.parent.parent as? KtClassOrObject ?: return@ModCommandBased emptyList()
         analyze(containingClassOrObject) {
-            val classSymbol = containingClassOrObject.symbol as KaClassLikeSymbol
+            val classSymbol = containingClassOrObject.symbol as? KaClassLikeSymbol ?: return@ModCommandBased emptyList()
             for (superType in classSymbol.defaultType.allSupertypes) {
-                val callables = superType.expandedSymbol?.declaredMemberScope
-                    ?.callables?.filterIsInstance<KaFunctionSymbol>() ?: return@analyze false
+                val symbol = superType.expandedSymbol?.takeIf { it.origin.isJavaSourceOrLibrary() } ?: continue
+                val callables = symbol.declaredMemberScope
+                    .callables.filterIsInstance<KaFunctionSymbol>()
                 val overridden = buildList {
                     addIfNotNull(callables.firstOrNull { it.name in getterIdentifiers && it.valueParameters.isEmpty() })
                     addIfNotNull(callables.firstOrNull { it.name in setterIdentifiers && it.valueParameters.size == 1 })

@@ -1,14 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.library.JpsTypedLibrary
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsTestModuleProperties
+import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
@@ -75,7 +80,9 @@ internal fun generateDeps(
 
       if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
           dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
+          dependencyModuleName == "intellij.android.adt.ui.compose" ||
           dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
+          dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
           dependencyModuleName == "intellij.platform.jewel.foundation") {
         plugins.add("@lib//:compose-plugin")
       }
@@ -171,9 +178,9 @@ internal fun generateDeps(
       owner = context.addMavenLibrary(
         MavenLibrary(
           mavenCoordinates = "${data.groupId}:${data.artifactId}:${data.version}",
-          jars = lib.getPaths(JpsOrderRootType.COMPILED),
-          sourceJars = lib.getPaths(JpsOrderRootType.SOURCES),
-          javadocJars = lib.getPaths(JpsOrderRootType.DOCUMENTATION),
+          jars = lib.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(lib, it) },
+          sourceJars = lib.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(lib, it) },
+          javadocJars = lib.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(lib, it) },
           lib = Library(targetName = targetName, owner = owner),
         ),
         isProvided = isProvided,
@@ -207,10 +214,9 @@ internal fun generateDeps(
 
       val libName = element.libraryReference.libraryName
       if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
-          libName == "jetbrains.kotlin.compose.compiler.plugin") {
+          libName == "jetbrains.kotlin.compose.compiler.plugin" ||
+          libName == "jetbrains-compose-ui-test-junit4-desktop") {
         plugins.add("@lib//:compose-plugin")
-        // poko fails with "java.lang.NoSuchMethodError: 'org.jetbrains.kotlin.com.intellij.psi.PsiElement org.jetbrains.kotlin.js.resolve.diagnostics.SourceLocationUtilsKt.findPsi(org.jetbrains.kotlin.descriptors.DeclarationDescriptor)'"
-        //plugins.add("@lib//:poko-plugin")
       }
     }
   }
@@ -224,6 +230,25 @@ internal fun generateDeps(
     }
   }
   return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
+}
+
+private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
+  require(jar.isAbsolute) {
+    "jar path must be absolute: $jar"
+  }
+
+  require(jar == jar.normalize()) {
+    "jar path must not contain redundant . and .. segments: $jar"
+  }
+
+  val libraryDescriptor = lib.properties.data
+  for (verification in libraryDescriptor.artifactsVerification) {
+    if (JpsPathUtil.urlToNioPath(verification.url) == jar) {
+      return MavenFileDescription(path = jar, sha256checksum = verification.sha256sum)
+    }
+  }
+
+  return MavenFileDescription(path = jar, sha256checksum = null)
 }
 
 private fun isTestFriend(

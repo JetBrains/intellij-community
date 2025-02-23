@@ -7,6 +7,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -55,15 +56,15 @@ internal sealed class GHLoginDialog(
   override fun doValidateAll(): List<ValidationInfo> = loginPanel.doValidateAll()
 
   override fun doOKAction() {
-    cs.launch(Dispatchers.Main.immediate + ModalityState.stateForComponent(rootPane).asContextElement()) {
+    cs.launch(Dispatchers.EDT + ModalityState.stateForComponent(rootPane).asContextElement()) {
       try {
         val (login, token) = loginPanel.acquireLoginAndToken()
         model.saveLogin(loginPanel.getServer(), login, token)
-        close(OK_EXIT_CODE, true)
+        close(OK_EXIT_CODE, true, ExitActionType.OK)
       }
       catch (e: Exception) {
         if (e is CancellationException) {
-          close(CANCEL_EXIT_CODE, false)
+          close(CANCEL_EXIT_CODE, false, ExitActionType.CANCEL)
           throw e
         }
         setError(e)

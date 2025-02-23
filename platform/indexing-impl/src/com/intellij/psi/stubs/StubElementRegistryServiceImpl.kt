@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.Language
@@ -9,8 +9,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
+import org.jetbrains.annotations.ApiStatus
 
-internal class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
+@ApiStatus.Internal
+open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
   @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>
@@ -89,10 +91,10 @@ internal class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceIm
 }
 
 @JvmField
-internal val STUB_DEFINITION_EP = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
+internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
 
 @JvmField
-internal val STUB_REGISTRY_EP = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
+internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
 
 private class StubRegistryImpl(
   private val factories: MutableMap<IElementType, StubElementFactory<*, *>>,
@@ -123,4 +125,6 @@ private class LanguageStubDescriptorImpl(
   override val fileElementType: IFileElementType,
   override val stubDefinition: LanguageStubDefinition,
   override val fileElementSerializer: ObjectStubSerializer<*, *>,
-) : LanguageStubDescriptor
+) : LanguageStubDescriptor {
+  override fun toString(): String = "LanguageStubDescriptorImpl(language=$language)"
+}

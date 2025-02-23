@@ -39,21 +39,6 @@ public class PyUnusedImportTest extends PyTestCase {
 
   public void testUnresolvedModule() {
     doTest("test.py");
-    //myFixture.configureByText("test.py", """
-    //  <warning descr="Unused import statement 'import unresolved1'">import <error descr="No module named 'unresolved1'">unresolved1</error></warning>
-    //  <warning descr="Unused import statement 'import unresolved2'">import <error descr="No module named 'unresolved2'">unresolved2</error></warning>
-    //  <warning descr="Unused import statement 'import unresolved3'">import <error descr="No module named 'unresolved3'">unresolved3</error></warning>
-    //  """);
-    //myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    //
-    //
-    //final ExpectedHighlightingData data = new ExpectedHighlightingData(myFixture.getEditor().getDocument(), true, true, false);
-    //data.init();
-    //
-    //myFixture.type("\n");
-    //myFixture.type("\b");
-    //
-    //((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
   }
 
   //PY-20075

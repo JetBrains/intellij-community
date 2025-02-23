@@ -17,7 +17,10 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_DECL;
+import static com.intellij.psi.xml.XmlElementType.XML_ENTITY_DECL;
+
+public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   public XmlEntityDeclImpl() {
     super(XML_ENTITY_DECL);
   }
@@ -67,7 +70,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     if (nameElement != null) {
       return ElementManipulators.handleContentChange(
         nameElement,
-        new TextRange(0,nameElement.getTextLength()),
+        new TextRange(0, nameElement.getTextLength()),
         name
       );
     }
@@ -75,8 +78,8 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   }
 
   @Override
-  public PsiElement parse(PsiFile baseFile, EntityContextType contextType, final XmlEntityRef originalElement) {
-    PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
+  public PsiElement parse(PsiFile baseFile, XmlEntityContextType contextType, final XmlEntityRef originalElement) {
+    PsiElement dep = DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
     if (dependsOnElement instanceof XmlAttributeValue attributeValue) {
@@ -90,7 +93,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     DtdParsing dtdParsing = new DtdParsing(value, XML_ELEMENT_DECL, contextType, baseFile);
     PsiElement generated = dtdParsing.parse().getPsi().getFirstChild();
-    if (contextType == EntityContextType.ELEMENT_CONTENT_SPEC && generated instanceof XmlElementContentSpec) {
+    if (contextType == XmlEntityContextType.ELEMENT_CONTENT_SPEC && generated instanceof XmlElementContentSpec) {
       generated = generated.getFirstChild();
     }
     setDependsOnElement(generated, dependsOnElement);
@@ -100,7 +103,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   private static PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
     PsiElement e = generated;
     while (e != null) {
-      e.putUserData(XmlElement.DEPENDING_ELEMENT, dependsOnElement);
+      e.putUserData(DEPENDING_ELEMENT, dependsOnElement);
       e = e.getNextSibling();
     }
     return generated;
@@ -109,7 +112,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   private static PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
     PsiElement e = element;
     while (e != null) {
-      e.putUserData(XmlElement.INCLUDING_ELEMENT, (XmlElement)valueElement);
+      e.putUserData(INCLUDING_ELEMENT, (XmlElement)valueElement);
       e = e.getNextSibling();
     }
     return element;

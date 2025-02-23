@@ -145,7 +145,7 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
       else {
-        val message = DiagnosticBundle.message("error.report.failed.message", e.message)
+        val message = DiagnosticBundle.message("error.report.failed.message", e.message ?: e.javaClass.name)
         val title = DiagnosticBundle.message("error.report.failed.title")
         val result = MessageDialogBuilder.yesNo(title, message).ask(project)
         if (!result || !submit(project, errorBean, parentComponent, callback)) {

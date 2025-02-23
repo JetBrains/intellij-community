@@ -56,7 +56,7 @@ public final class CommonBundle {
   /**
    * @deprecated use {@link AbstractBundle#messageOrNull(ResourceBundle, String, Object...)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable @Nls String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return AbstractBundle.messageOrNull(bundle, key, params);
   }

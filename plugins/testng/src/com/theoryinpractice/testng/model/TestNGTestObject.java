@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.model;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -146,7 +146,7 @@ public abstract class TestNGTestObject {
       if (testAnnotation == null) {
         return;
       }
-      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
+      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope).asIterable()) {
         final PsiClass containingClass = psiMember.getContainingClass();
         if (containingClass == null) continue;
         if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;

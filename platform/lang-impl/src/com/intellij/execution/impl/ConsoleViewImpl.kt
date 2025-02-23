@@ -516,9 +516,11 @@ open class ConsoleViewImpl protected constructor(
 
   protected open fun disposeEditor() {
     UIUtil.invokeAndWaitIfNeeded {
-      val editor = editor
-      if (!editor!!.isDisposed) {
-        EditorFactory.getInstance().releaseEditor(editor)
+      ApplicationManager.getApplication().runWriteIntentReadAction<Unit, Exception> {
+        val editor = editor
+        if (!editor!!.isDisposed) {
+          EditorFactory.getInstance().releaseEditor(editor)
+        }
       }
     }
   }
@@ -913,7 +915,7 @@ open class ConsoleViewImpl protected constructor(
                   val additionalAttributes = additionalHighlight.getTextAttributes(null)
                   val hyperlinks = getHyperlinks()!!
                   if (additionalAttributes == null) {
-                    hyperlinks.highlightHyperlinks(additionalHighlight, 0)
+                    hyperlinks.highlightHyperlinks(additionalHighlight)
                   }
                   else {
                     val item = additionalHighlight.resultItems[0]

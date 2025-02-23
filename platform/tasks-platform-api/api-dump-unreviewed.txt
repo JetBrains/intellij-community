@@ -26,7 +26,7 @@ com.intellij.tasks.CommitPlaceholderProvider
 - a:getPlaceholderDescription(java.lang.String):java.lang.String
 - a:getPlaceholderValue(com.intellij.tasks.LocalTask,java.lang.String):java.lang.String
 - a:getPlaceholders(com.intellij.tasks.TaskRepository):java.lang.String[]
-c:com.intellij.tasks.CustomTaskState
+f:com.intellij.tasks.CustomTaskState
 - <init>():V
 - <init>(java.lang.String,java.lang.String):V
 - asPredefined():com.intellij.tasks.TaskState

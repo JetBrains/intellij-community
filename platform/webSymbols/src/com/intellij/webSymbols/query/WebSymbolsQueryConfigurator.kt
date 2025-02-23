@@ -31,7 +31,7 @@ interface WebSymbolsQueryConfigurator {
 
     @TestOnly
     @Internal
-    val EP_NAME = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
+    val EP_NAME: ExtensionPointName<WebSymbolsQueryConfigurator> = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
 
   }
 

@@ -136,3 +136,9 @@ internal fun checkForNonsenseBounds(name: String, bounds: Rectangle?) {
     IDE_FRAME_EVENT_LOG.warn(Throwable("The frame bounds '$name' are suspiciously small: $bounds"))
   }
 }
+
+internal fun checkForNonsenseBounds(name: String, height: Int, width: Int) {
+  if (height < 100 || width < 100) {
+    IDE_FRAME_EVENT_LOG.warn(Throwable("The frame bounds '$name' are suspiciously small: ${height}x${width}"))
+  }
+}

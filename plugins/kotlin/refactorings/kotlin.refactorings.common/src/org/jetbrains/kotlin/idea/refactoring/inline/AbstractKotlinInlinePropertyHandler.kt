@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.HelpID
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.findSimpleNameReference
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 abstract class AbstractKotlinInlinePropertyHandler(protected val withPrompt: Boolean = true) : KotlinInlineActionHandler() {
     override val helpId: String get() = HelpID.INLINE_VARIABLE
@@ -74,7 +75,7 @@ abstract class AbstractKotlinInlinePropertyHandler(protected val withPrompt: Boo
             try {
                 dialog.doAction()
             } finally {
-                dialog.close(DialogWrapper.OK_EXIT_CODE, true)
+                dialog.close(DialogWrapper.OK_EXIT_CODE, true, ExitActionType.OK)
             }
         }
     }

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.io.*
-import org.junit.Assert.assertEquals
 import org.junit.ComparisonFailure
 import java.io.File
 import java.io.IOException
@@ -16,9 +15,11 @@ import java.util.*
 import java.util.jar.JarFile
 import java.util.jar.Manifest
 import java.util.zip.Deflater
-import kotlin.io.path.*
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 import kotlin.io.path.readBytes
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
@@ -185,16 +186,19 @@ internal fun assertContentUnderFileMatches(file: Path,
                                            filePathFilter: (String) -> Boolean,
                                            customErrorReporter: ContentMismatchReporter?,
                                            expectedDataIsInSpec: Boolean) {
+  val errorReporter = customErrorReporter ?: ContentMismatchReporter { _, error -> throw error }
   if (spec is DirectorySpecBase) {
     val actualSpec = createSpecByPath(file, file)
     if (actualSpec is DirectorySpecBase) {
       val specString = spec.toString(filePathFilter)
       val dirString = actualSpec.toString(filePathFilter)
       val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
-      assertEquals(expected, actual)
+      if (actual != expected) {
+        val message = "Expected equal strings: expected <$expected>, but got: <${actual}>"
+        errorReporter.reportError(".", FileComparisonFailedError(message, expected, actual))
+      }
     }
   }
-  val errorReporter = customErrorReporter ?: ContentMismatchReporter { _, error -> throw error }
   assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
 }
 

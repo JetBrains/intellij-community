@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,18 +17,19 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-abstract class StubTreeSerializerBase<SerializationState> {
+@ApiStatus.Internal
+public abstract class StubTreeSerializerBase<SerializationState> {
   static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
   private static final boolean useStubStringInterner = Boolean.parseBoolean(System.getProperty("idea.use.stub.string.interner", "false"));
 
   private final @Nullable UnaryOperator<String> stubStringInterner;
 
-  StubTreeSerializerBase() {
+  public StubTreeSerializerBase() {
     stubStringInterner = useStubStringInterner ? StubStringInterner.getInstance() : UnaryOperator.identity();
   }
 
   @NotNull
-  Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
+  public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
 
@@ -67,7 +69,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     return baseStub;
   }
 
-  void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
+  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     @NotNull SerializationState serializationState = createSerializationState();
@@ -168,7 +170,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
                              @NotNull SerializationState state) throws IOException {
     serializeSelf(root, out, state);
     if (root instanceof StubBase<?> base) {
-      StubList stubList = base.myStubList;
+      StubList stubList = base.getStubList();
       if (root != stubList.get(0)) {
         throw new IllegalArgumentException("Serialization is supported only for root stubs");
       }

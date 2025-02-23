@@ -36,7 +36,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import com.intellij.testFramework.fixtures.TestFixtureProjectPathProvider;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -65,14 +65,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String mySanitizedName;
-  private final @Nullable TestFixtureProjectPathProvider myProjectPathProvider;
+  private @Nullable HeavyIdeaTestFixturePathProvider myProjectPathProvider;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
   HeavyIdeaTestFixtureImpl(@NotNull String name,
-                           @Nullable TestFixtureProjectPathProvider projectPathProvider,
+                           @Nullable HeavyIdeaTestFixturePathProvider projectPathProvider,
                            boolean isDirectoryBasedProject) {
     mySanitizedName = FileUtil.sanitizeFileName(name, false);
     myProjectPathProvider = projectPathProvider;
@@ -89,6 +89,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
     initApplication();
     projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
+
     setUpProject();
 
     EncodingManager.getInstance(); // adds listeners
@@ -162,6 +163,12 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         myThreadTracker.checkLeak();
       }
     });
+    actions.add(() -> {
+      HeavyIdeaTestFixturePathProvider provider = myProjectPathProvider;
+      if (provider != null) {
+        provider.afterTest(mySanitizedName);
+      }
+    });
     actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
     actions.add(() -> {
       if (mySdkLeakTracker != null) {
@@ -205,9 +212,13 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private @NotNull Path generateProjectPath() {
     Path tempDirectory;
+    HeavyIdeaTestFixturePathProvider pathProvider = myProjectPathProvider;
+    if (pathProvider == null) {
+      pathProvider = myProjectPathProvider = ApplicationManager.getApplication().getService(HeavyIdeaTestFixturePathProvider.class);
+    }
     Path projectPath = null;
-    if (myProjectPathProvider != null) {
-      projectPath = myProjectPathProvider.get();
+    if (pathProvider != null) {
+      projectPath = pathProvider.get(mySanitizedName, getTestRootDisposable());
     }
     if (projectPath == null) {
       tempDirectory = TemporaryDirectory.generateTemporaryPath(mySanitizedName);

@@ -3,4 +3,4 @@
     level = DeprecationLevel.ERR<caret>OR
 )
 val p = 0
-// REF: (kotlin.DeprecationLevel.ERROR) ERROR
+// REF: (kotlin.DeprecationLevel.ERROR @ jar://kotlin-stdlib-sources.jar!/commonMain/kotlin/Annotations.kt) ERROR

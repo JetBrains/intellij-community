@@ -83,8 +83,7 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         return isReachableByDelegationFrom(delegatedConstructor, visited + constructor)
     }
 
-    context(KaSession)
-    override fun prepareContext(secondaryConstructor: KtSecondaryConstructor): SecondaryConstructorContext? {
+    override fun KaSession.prepareContext(secondaryConstructor: KtSecondaryConstructor): SecondaryConstructorContext? {
         val klass = secondaryConstructor.containingClassOrObject ?: return null
 
         for (constructorDescriptor in klass.secondaryConstructors) {
@@ -179,10 +178,10 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         return rightTarget to leftTarget
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtSecondaryConstructor,
         elementContext: SecondaryConstructorContext
-    ): Array<KotlinModCommandQuickFix<KtSecondaryConstructor>> = arrayOf(object : KotlinModCommandQuickFix<KtSecondaryConstructor>() {
+    ): KotlinModCommandQuickFix<KtSecondaryConstructor> = object : KotlinModCommandQuickFix<KtSecondaryConstructor>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.primary.constructor")
         override fun applyFix(
             project: Project,
@@ -265,5 +264,5 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
                 propertyCommentSaver?.restore(addedParameter)
             }
         }
-    })
+    }
 }

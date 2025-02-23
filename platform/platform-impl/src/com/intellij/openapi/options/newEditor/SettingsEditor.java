@@ -1,22 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.MutableConfigurableGroup;
-import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Splitter;
@@ -26,9 +28,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -46,11 +48,16 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.paneWithCorner;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
@@ -63,25 +70,46 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final SettingsSearch search;
   private final SettingsFilter filter;
   private final SettingsTreeView treeView;
-  private final ConfigurableEditor editor;
+  public final ConfigurableEditor editor;
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
-  private final @NotNull Banner myBanner;
+  private final @NotNull ConfigurableEditorBanner myBanner;
   private final History myHistory = new History(this);
+  private volatile boolean myNavigatingNow = false;
+  private final boolean myIsModal;
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
+
+  private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
+    protected int getFontStyle(Crumb crumb) {
+      return Font.BOLD;
+    }
+  };
+  private final JLabel myHeaderLabel = new JLabel();
+
+
+  private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      reset();
+    }
+  };
+
 
   SettingsEditor(@NotNull Disposable parent,
                  @NotNull Project project,
                  @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
-                 String filter,
+                 @Nullable String filter,
+                 @Nullable Supplier<JButton> helpButtonSupplier,
+                 boolean isModal,
                  @NotNull ISettingsTreeViewFactory factory,
                  @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
-
+    myIsModal = isModal;
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -126,7 +154,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     };
 
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
-    searchPanel.add(VerticalLayout.CENTER, search);
+    if (myIsModal) {
+      searchPanel.add(VerticalLayout.CENTER, search);
+    }
     this.filter = new SettingsFilter(project, groups, search, coroutineScope) {
       @Override
       protected Configurable getConfigurable(SimpleNode node) {
@@ -155,7 +185,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           properties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
-          myHistory.pushQueryPlace();
+          if (!myIsModal) {
+            if (!myNavigatingNow && oldConfigurable != null) { // don't add to IdeDocumentHistory if just opened
+              IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
+              CommandProcessor.getInstance().executeCommand(project, () -> {
+                documentHistory.onSelectionChanged();
+              }, "ConfigurableChange", null);
+            }
+            myNavigatingNow = false;
+          } else {
+            myHistory.pushQueryPlace();
+          }
           loadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
@@ -241,28 +281,50 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         settings.select(configurable);
       }
     };
-    editor.setPreferredSize(JBUI.size(800, 600));
+
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
-    myBanner = new Banner(editor.getResetAction());
+    myBanner = new ConfigurableEditorBanner(editor.getResetAction(), myIsModal ? myBreadcrumbs : myHeaderLabel);
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
-    left.add(BorderLayout.NORTH, searchPanel);
     left.add(BorderLayout.CENTER, treeView);
-    JComponent right = new JPanel(new BorderLayout());
-    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
+    left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
+    left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
+    left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
+    JPanel right = new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
     mySplitter.setFirstComponent(left);
-    mySplitter.setSecondComponent(right);
 
-    if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
-      mySplitter.getDivider().setOpaque(false);
+    if (!myIsModal) {
+      if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
+        mySplitter.getDivider().setOpaque(false);
+      }
+      if (helpButtonSupplier != null) {
+        JButton helpButton = helpButtonSupplier.get();
+        mySplitter.setSecondComponent(paneWithCorner(this, right, helpButton));
+      } else {
+        mySplitter.setSecondComponent(right);
+      }
+      RelativeFont.HUGE.install(myHeaderLabel);
+      RelativeFont.BOLD.install(myHeaderLabel);
+      myHeaderLabel.setAlignmentY(CENTER_ALIGNMENT);
+      myHeaderLabel.setBorder(JBUI.Borders.empty(8));
+      right.add(BorderLayout.NORTH, myBanner);
+      myBanner.setBorder(JBUI.Borders.empty(8, 5));
+      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      add(BorderLayout.CENTER, createWrapperPanel(this, mySplitter));
+    } else {
+      mySplitter.setSecondComponent(right);
+      right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
+      left.add(BorderLayout.NORTH, searchPanel);
+      editor.setPreferredSize(JBUI.size(800, 600));
+      add(BorderLayout.CENTER, mySplitter);
     }
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
@@ -272,7 +334,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
       return Unit.INSTANCE;
     });
-    add(BorderLayout.CENTER, mySplitter);
 
     if (configurable == null) {
       String id = properties.getValue(SELECTED_CONFIGURABLE);
@@ -306,9 +367,21 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     updateController(configurable);
   }
 
+  boolean isSidebarVisible() {
+    return mySplitter.getFirstComponent().isVisible();
+  }
+
+  void setSidebarVisible(boolean visible) {
+    mySplitter.getFirstComponent().setVisible(visible);
+  }
+
   @ApiStatus.Internal
   public @NotNull SettingsTreeView getTreeView() {
     return treeView;
+  }
+
+  SettingsSearch getSearch() {
+    return search;
   }
 
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
@@ -396,7 +469,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(History.KEY, myHistory);
+    if (myIsModal) {
+      sink.set(History.KEY, myHistory);
+    }
     sink.set(Settings.KEY, settings);
     sink.set(SearchTextField.KEY, search);
   }
@@ -414,7 +489,15 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected Action getResetAction() {
-    return null;
+    return myResetAllAction;
+  }
+
+  private void reset() {
+    checkModified(filter.context.getCurrentConfigurable());
+    for (Configurable configurable : filter.context.getModified()) {
+      filter.context.fireReset(configurable);
+      configurable.reset();
+    }
   }
 
   @Override
@@ -452,6 +535,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return treeView != null ? treeView.getTree() : editor;
   }
 
+  void setHelpTooltip(@NotNull JButton helpButton) {
+    //noinspection SpellCheckingInspection
+    if (UISettings.isIdeHelpTooltipEnabled()) {
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    }
+  }
+
+
   @Nullable
   Collection<@NlsContexts.ConfigurableName String> getPathNames() {
     return treeView == null ? null : treeView.getPathNames(filter.context.getCurrentConfigurable());
@@ -465,7 +556,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     filter.updateSpotlight(configurable == null);
     if (editor != null) {
       ConfigurationException exception = filter.context.getErrors().get(configurable);
-      editor.getApplyAction().setEnabled(!filter.context.getModified().isEmpty());
+      boolean isModified = isModified();
+      editor.getApplyAction().setEnabled(isModified);
+      myResetAllAction.setEnabled(isModified);
       editor.getResetAction().setEnabled(filter.context.isModified(configurable) || exception != null);
       editor.setError(exception);
       editor.revalidate();
@@ -479,10 +572,35 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     }
   }
 
+  public boolean isModified() {
+    return !filter.context.getModified().isEmpty();
+  }
+
+  public void setNavigatingNow() {
+    myNavigatingNow = true;
+  }
+
+  public String getSelectedConfigurableId() {
+    Configurable configurable = editor.getConfigurable();
+    if (configurable == null) {
+      return null;
+    }
+    return ConfigurableVisitor.getId(configurable);
+  }
+
   private void updateController(@Nullable Configurable configurable) {
     Project project = treeView.findConfigurableProject(configurable);
     myBanner.setProjectText(project != null ? getProjectText(project) : null);
-    myBanner.setText(treeView.getPathNames(configurable));
+    Collection<@NlsContexts.ConfigurableName String> pathNames = treeView.getPathNames(configurable);
+    List<Crumb> crumbs = new ArrayList<>();
+    if (!pathNames.isEmpty()) {
+      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> pathNames);
+      for (@NlsContexts.ConfigurableName String name : pathNames) {
+        crumbs.add(new Crumb.Impl(null, name, null, actions));
+      }
+    }
+    myBreadcrumbs.setCrumbs(crumbs);
+    myHeaderLabel.setText(configurable==null ? "" : configurable.getDisplayName());
 
     if (lastController != null) {
       lastController.setBanner(null);

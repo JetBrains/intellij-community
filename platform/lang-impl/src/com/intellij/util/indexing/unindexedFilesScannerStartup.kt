@@ -204,8 +204,8 @@ private suspend fun clearIndexesForDirtyFiles(project: Project,
 private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): GetNotSeenDirtyFileIdsResult {
   if (projectQueue.lastSeenIndexInOrphanQueue > untrimmedSize) {
     LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
-              "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.lastId=${untrimmedSize}, " +
-              "project=$project")
+              "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.untrimmedSize=${untrimmedSize}, " +
+              "orphanQueue.fileIds.size=${fileIds.size}, project=$project")
     return ProjectDirtyFilesQueuePointsToIncorrectPosition
   }
 

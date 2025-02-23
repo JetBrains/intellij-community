@@ -16,16 +16,19 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private const val DEFAULT_FILE_NAME = "Main.java"
-private const val DEFAULT_TEMPLATE_NAME = "SampleCode"
 private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "SampleCodeWithRenderedOnboardingTips.java"
 
 object AssetsJava {
 
-  fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String {
-    return when {
-      !generateOnboardingTips -> DEFAULT_TEMPLATE_NAME
-      shouldRenderOnboardingTips() -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME
+  @Deprecated("The onboarding tips generated unconditionally")
+  fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
+    getJavaSampleTemplateName()
+
+  @ApiStatus.Internal
+  fun getJavaSampleTemplateName(): String {
+    return when (shouldRenderOnboardingTips()) {
+      true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME
       else -> DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME
     }
   }
@@ -39,65 +42,80 @@ object AssetsJava {
     pathJoiner.add(fileName)
     return pathJoiner.toString()
   }
+
+  @ApiStatus.Internal
+  fun prepareJavaSampleOnboardingTips(project: Project, fileName: String) {
+    AssetsOnboardingTips.prepareOnboardingTips(project, fileName) { charSequence ->
+      charSequence.indexOf("System.out.println").takeIf { it >= 0 }
+    }
+  }
 }
 
-fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
-  sourceRootPath: String,
-  packageName: String?,
-  generateOnboardingTips: Boolean,
-) {
-  val templateName = AssetsJava.getJavaSampleTemplateName(generateOnboardingTips)
+@Deprecated("The onboarding tips generated unconditionally")
+fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
+  val templateName = AssetsJava.getJavaSampleTemplateName()
   val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
-  withJavaSampleCodeAsset(sourcePath, templateName, packageName, generateOnboardingTips)
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 }
 
+@Deprecated("The onboarding tips generated unconditionally")
+fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourcePath: String, templateName: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
+  project: Project,
+  sourceRootPath: String,
+  packageName: String? = null,
+  fileName: String = DEFAULT_FILE_NAME,
+  templateName: String = AssetsJava.getJavaSampleTemplateName(),
+) {
+  val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
+  AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+}
+
+private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourcePath: String,
-  templateName: String,
   packageName: String?,
-  generateOnboardingTips: Boolean,
+  templateName: String,
 ) {
   addTemplateAsset(sourcePath, templateName, buildMap {
     if (packageName != null) {
       put("PACKAGE_NAME", packageName)
     }
-    if (generateOnboardingTips) {
-      val tipsContext = object : KeymapTextContext() {
-        override fun isSimplifiedMacShortcuts(): Boolean = ClientSystemInfo.isMac()
-      }
-      if (shouldRenderOnboardingTips()) {
-        //@formatter:off
-          put("RunComment1", JavaStartersBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
-          put("RunComment2", JavaStartersBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
+    val tipsContext = object : KeymapTextContext() {
+      override fun isSimplifiedMacShortcuts(): Boolean = ClientSystemInfo.isMac()
+    }
+    if (shouldRenderOnboardingTips()) {
+      //@formatter:off
+      put("RunComment1", JavaStartersBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
+      put("RunComment2", JavaStartersBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
 
-          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.1", shortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
-          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.2", ApplicationNamesInfo.getInstance().fullProductName))
+      put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.1", shortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+      put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.2", ApplicationNamesInfo.getInstance().fullProductName))
 
-          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_DEBUGGER), icon("AllIcons.Debugger.Db_set_breakpoint")))
-          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.render.2", shortcut(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
-          //@formatter:on
-      }
-      else {
-        //@formatter:off
-          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", "Shift"))
-          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+      put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_DEBUGGER), icon("AllIcons.Debugger.Db_set_breakpoint")))
+      put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.render.2", shortcut(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+      //@formatter:on
+    }
+    else {
+      //@formatter:off
+      put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", "Shift"))
+      put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
 
-          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
-          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+      put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+      put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
 
-          put("RunComment", JavaStartersBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
+      put("RunComment", JavaStartersBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
 
-          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
-          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", tipsContext.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
-          //@formatter:on
-      }
+      put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
+      put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", tipsContext.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+      //@formatter:on
     }
   })
   addFilesToOpen(sourcePath)
 }
 
-fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project) {
-  prepareOnboardingTips(project, DEFAULT_FILE_NAME) { charSequence ->
-    charSequence.indexOf("System.out.println").takeIf { it >= 0 }
-  }
-}
+@Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
+fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project): Unit =
+  AssetsJava.prepareJavaSampleOnboardingTips(project, DEFAULT_FILE_NAME)

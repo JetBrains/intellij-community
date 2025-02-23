@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "pycharm-community-ide-impl-promotion_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "pycharm-community-ide-impl-promotion",
@@ -17,6 +23,7 @@ jvm_library(
     "//platform/statistics",
     "@lib//:http-client",
     "//platform/core-ui",
-  ]
+  ],
+  runtime_deps = [":pycharm-community-ide-impl-promotion_resources"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end

@@ -61,6 +61,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/codeserver/core:java-codeserver-core",
   ]
 )
 ### auto-generated section `build kotlin.core` end

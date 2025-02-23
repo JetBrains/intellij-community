@@ -94,6 +94,7 @@
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
       <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
+      <action id="Tree-selectAll" class="com.intellij.ui.TreeActions$SelectAll" use-shortcut-of="$SelectAll"/>
       <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
         <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
       </action>
@@ -124,18 +125,17 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="SwitcherAndRecentFiles">
-      <action id="Switcher" class="com.intellij.ide.actions.Switcher"/>
-      <action id="SwitcherForward" class="com.intellij.ide.actions.ShowSwitcherForwardAction"/>
-      <action id="SwitcherBackward" class="com.intellij.ide.actions.ShowSwitcherBackwardAction"/>
-      <action id="SwitcherRecentEditedChangedToggleCheckBox" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction"/>
-      <action id="SwitcherIterateItems" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction"/>
-      <action id="SwitcherNextProblem" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
-      <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError"
-              class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
-      <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-      <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
-      <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
+    <group id="SwitcherAndRecentFilesFallback">
+      <action id="SwitcherFallback" class="com.intellij.ide.actions.Switcher" use-shortcut-of="Switcher"/>
+      <action id="SwitcherForwardFallback" class="com.intellij.ide.actions.ShowSwitcherForwardAction" use-shortcut-of="SwitcherForward"/>
+      <action id="SwitcherBackwardFallback" class="com.intellij.ide.actions.ShowSwitcherBackwardAction" use-shortcut-of="SwitcherBackward"/>
+      <action id="SwitcherRecentEditedChangedToggleCheckBoxFallback" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction" use-shortcut-of="SwitcherRecentEditedChangedToggleCheckBox"/>
+      <action id="SwitcherIterateItemsFallback" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction" use-shortcut-of="SwitcherIterateItems"/>
+      <action id="SwitcherNextProblemFallback" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
+      <action id="SwitcherPreviousProblemFallback" use-shortcut-of="GotoPreviousError" class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFilesFallback" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="RecentFilesFallback" class="com.intellij.ide.actions.ShowRecentFilesAction" use-shortcut-of="RecentFiles"/>
+      <action id="RecentChangedFilesFallback" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction" use-shortcut-of="RecentChangedFiles"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -445,8 +445,6 @@
       <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
     </group>
 
-    <action id="CloseSettings" class="com.intellij.openapi.options.newEditor.settings.CloseSettingsAction" use-shortcut-of="CloseDiffEditor"/>
-
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -555,6 +553,7 @@
           <reference ref="SelectNextOccurrence"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
           <reference ref="ToggleFindInSelection"/>
+          <action id="ToggleScrollToResultsDuringTypingAction" class="com.intellij.find.editorHeaderActions.ToggleScrollToResultsDuringTypingAction"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
@@ -641,7 +640,11 @@
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <group id="ChangeMainMenuModeActionGroup"
-                   class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true"/>
+                   class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true">
+              <action id="MainMenuUnderHamburgerButtonToolbarAction" class="com.intellij.ide.actions.MainMenuUnderHamburgerButtonToolbarAction"/>
+              <action id="MergeMainMenuAction" class="com.intellij.ide.actions.MergeMainMenuAction"/>
+              <action id="MainMenuInSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuInSeparateToolbarAction"/>
+            </group>
             <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
             <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
             <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
@@ -662,10 +665,10 @@
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">
-          <reference ref="RecentFiles"/>
-          <reference ref="SwitcherRecentEditedChangedToggleCheckBox"/>
-          <reference ref="SwitcherIterateItems"/>
-          <reference ref="RecentChangedFiles"/>
+          <reference ref="RecentFilesFallback"/>
+          <reference ref="SwitcherRecentEditedChangedToggleCheckBoxFallback"/>
+          <reference ref="SwitcherIterateItemsFallback"/>
+          <reference ref="RecentChangedFilesFallback"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
         <separator/>
@@ -941,7 +944,7 @@
     </group>
 
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
-      <reference ref="RecentFiles"/>
+      <reference ref="RecentFilesFallback"/>
       <reference ref="RecentLocations"/>
       <separator/>
       <reference ref="CloseAllEditors"/>
@@ -986,7 +989,6 @@
         <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
       </group>
       <group id="MainToolbarRight" searchable="false">
-        <action id="TrialStateWidget" class="com.intellij.ui.components.trialState.TrialStateWidget"/>
         <reference ref="SearchEverywhere"/>
         <reference ref="SettingsEntryPoint"/>
       </group>
@@ -1074,6 +1076,7 @@
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
           <reference ref="Forward"/>
+          <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
           <separator text="type.large"/>
         </group>
         <group id="TouchBarDefault_cmd.alt">
@@ -1285,6 +1288,7 @@
       <group id="Internal.WorkspaceModel" popup="true">
         <action id="PrintModulesAndEntitySources" internal="true" class="com.intellij.internal.PrintModulesAndEntitySources"/>
       </group>
+      <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction">
         <synonym text="Exit Dumb Mode"/>
@@ -1612,9 +1616,7 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction">
-      <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
-    </action>
+    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction" internal="true"/>
 
     <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 
@@ -1767,7 +1769,7 @@
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
     <action id="PaintEditorLineStripeComponentAction" class="com.intellij.codeInsight.editorLineStripeHint.PaintEditorLineStripeHintComponentAction" internal="true"/>
-
+    
     <group id="CustomizeMainToolbarGroup" popup="true" searchable="false">
       <action id="CustomizeMainToolbarAction" class="com.intellij.ide.actions.CustomizeMainToolbarAction"/>
       <separator key="group.MainToolbarQuickActions.text"/>

@@ -2,14 +2,23 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
@@ -34,9 +43,29 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
     * Check unexpected diagnostics in the file.
     * Called from a read action.
     */
-    protected abstract fun checkUnexpectedErrors(ktFile: KtFile)
+    protected abstract fun checkUnexpectedErrors(mainFile: File,ktFile: KtFile, fileText: String)
 
     private lateinit var afterDirectory: Path
+
+    override fun configureJdkTable() {
+        cleanJdkTable()
+
+        val roots = mutableSetOf<String>()
+        val jdk8Home = System.getenv("JDK_18") ?: System.getenv("JAVA8_HOME")
+        jdk8Home?.let { roots += it }
+
+        val jdk11Home = System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME")
+        jdk11Home?.let { roots += it }
+
+        val javaHome = System.getenv("JAVA_HOME") ?: error("env JAVA_HOME is not set")
+        roots += javaHome
+        VfsRootAccess.allowRootAccess(testRootDisposable, *roots.toTypedArray())
+
+        val javaSdk = JavaSdk.getInstance()
+        val gradle = javaSdk.createJdk("Gradle JDK", jdk11Home ?: jdk8Home ?: javaHome)
+
+        populateJdkTable(listOf(gradle))
+    }
 
     @OptIn(ExperimentalPathApi::class)
     override fun setUp() {
@@ -127,7 +156,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
             readActionBlocking {
                 DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
-                checkUnexpectedErrors(ktFile)
+                checkUnexpectedErrors(mainFilePath.toFile(), ktFile, mainFileText)
             }
         }
     }

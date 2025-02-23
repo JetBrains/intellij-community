@@ -18,8 +18,9 @@ import java.util.Objects;
  * @author gregsh
  */
 public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Serializable {
-  public static final int MAX_ARRAY_SIZE = 100;
   public final long length;
+
+  private boolean isFullyReloaded;
 
   private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     @Override
@@ -34,6 +35,14 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
 
   public boolean isTruncated() {
     return length != getLoadedDataLength();
+  }
+
+  public boolean isFullyReloaded() {
+      return isFullyReloaded;
+  }
+
+  public void setFullyReloaded(boolean fullyReloaded) {
+    this.isFullyReloaded = fullyReloaded;
   }
 
   public abstract long getLoadedDataLength();

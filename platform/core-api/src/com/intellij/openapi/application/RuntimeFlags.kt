@@ -11,11 +11,21 @@ import org.jetbrains.annotations.ApiStatus
 val isMessageBusThrowsWhenDisposed: Boolean = System.getProperty("ijpl.message.bus.throws.when.disposed", "true").toBoolean()
 
 /**
- * - `false` means no implicit write-intent lock for activities and coroutines
- * - `true` means `IdeEventQueue` will wrap activities with the write-intent lock
+ * - `false` means no implicit write-intent lock for coroutines
+ * - `true` means `IdeEventQueue` will wrap coroutines with the write-intent lock
  */
 @get:ApiStatus.Internal
 val isCoroutineWILEnabled: Boolean = System.getProperty("ide.coroutine.write.intent.lock", "true").toBoolean()
+
+/**
+ * - `false` means no implicit write-intent lock for runnables scheduled by Swing facilities.
+ * As for now, this _includes_ coroutines from Dispatchers.EDT.
+ * - `true` means `IdeEventQueue` will wrap activities with the write-intent lock
+ *
+ * If this flag gets no usages, then it should be dropped in 2025.2 (approx. June)
+ */
+@get:ApiStatus.Internal
+val isPureSwingEventWilEnabled: Boolean = System.getProperty("ide.pure.swing.events.write.intent.lock", "false").toBoolean()
 
 /**
  * - `false` means exceptions from [com.intellij.util.messages.Topic] subscribers are being logged
@@ -24,29 +34,6 @@ val isCoroutineWILEnabled: Boolean = System.getProperty("ide.coroutine.write.int
  */
 @get:ApiStatus.Internal
 val isMessageBusErrorPropagationEnabled: Boolean = System.getProperty("ijpl.message.bus.rethrows.errors.from.subscribers", "false").toBoolean()
-
-/**
- * - `false` means that lock permits are bound only to threads
- * - `true` means that lock permits also stored in coroutine contexts
- */
-@get:ApiStatus.Internal
-val isLockStoredInContext: Boolean = System.getProperty("ide.store.lock.in.context", "true").toBoolean()
-
-/**
- * - `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread
- * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
- */
-@ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
-
-/**
- * - `false` means wrong action chains are ignored and not reported
- * - `true` means chains of actions like `WriteIntentReadAction -> ReadAction -> WriteAction` will be reported as warnings
- *
- *  Such reporting fails tests as I/O takes too much time and tests timeouts.
- */
-@get:ApiStatus.Internal
-val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
 
 /**
  * - `false` means `Application.invokeLater()` calls with implicit `ModalityState.any()` are not reported

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.analysis.bytecode
 
 import com.intellij.openapi.components.service
@@ -33,8 +33,10 @@ interface JvmBytecodeAnalysis {
    * Creates a new instance of [ClassFileAnalyzer] which will process both declarations and references in *.class files.
    */
   @Contract(pure = true)
-  fun createDeclarationAndReferencesAnalyzer(declarationProcessor: JvmBytecodeDeclarationProcessor, 
-                                             referenceProcessor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer
+  fun createDeclarationAndReferencesAnalyzer(
+    declarationProcessor: JvmBytecodeDeclarationProcessor?,
+    referenceProcessor: JvmBytecodeReferenceProcessor?,
+  ): ClassFileAnalyzer
 }
 
 /**
@@ -46,6 +48,8 @@ interface JvmBytecodeAnalysis {
 interface ClassFileAnalyzer {
   @Throws(IOException::class)
   fun processFile(path: Path)
+
+  fun processData(data: ByteArray)
   
   @Throws(IOException::class)
   fun processInputStream(inputStream: InputStream)

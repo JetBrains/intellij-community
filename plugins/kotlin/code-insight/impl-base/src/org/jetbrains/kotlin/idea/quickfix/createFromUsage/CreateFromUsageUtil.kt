@@ -25,7 +25,7 @@ object CreateFromUsageUtil {
     fun <D : KtNamedDeclaration> placeDeclarationInContainer(
       declaration: D,
       container: PsiElement,
-      anchor: PsiElement,
+      anchor: PsiElement?,
       fileToEdit: PsiFile = container.containingFile
     ): D {
         val psiFactory = KtPsiFactory(container.project)
@@ -57,7 +57,7 @@ object CreateFromUsageUtil {
                 } ?: fileToEdit.add(declaration) as D
             }
 
-            actualContainer.isAncestor(anchor, true) -> {
+            anchor != null && actualContainer.isAncestor(anchor, true) -> {
                 val insertToBlock = container is KtBlockExpression
                 if (insertToBlock) {
                     val parent = container.parent

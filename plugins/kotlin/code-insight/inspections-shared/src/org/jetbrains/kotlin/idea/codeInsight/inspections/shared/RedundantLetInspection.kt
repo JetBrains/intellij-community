@@ -33,8 +33,7 @@ internal sealed class RedundantLetInspection :
     final override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
         if (!element.isCalling(sequenceOf(KOTLIN_LET_FQ_NAME))) return null
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
         val parameterName = lambdaExpression.getParameterName() ?: return null
@@ -56,10 +55,10 @@ internal sealed class RedundantLetInspection :
         parameterName: String,
     ): Boolean
 
-    final override fun createQuickFixes(
+    final override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.let.call")
@@ -73,7 +72,7 @@ internal sealed class RedundantLetInspection :
                 updater.moveCaretTo(it)
             }
         }
-    })
+    }
 
     final override fun buildVisitor(
         holder: ProblemsHolder,

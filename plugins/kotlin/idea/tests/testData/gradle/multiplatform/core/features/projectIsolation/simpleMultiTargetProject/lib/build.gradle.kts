@@ -3,9 +3,7 @@ plugins {
 }
 
 kotlin {
-    jvm() {
-        withJava()
-    }
+    jvm()
     macosArm64()
     macosX64()
 }

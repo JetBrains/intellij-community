@@ -299,10 +299,6 @@ org.jetbrains.ide.UpdateActionsListener
 - a:actionReceived(com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction):V
 f:org.jetbrains.ide.UpdateActionsListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
-f:org.jetbrains.ide.UploadLogsService
-- org.jetbrains.ide.RestService
-- <init>():V
-- execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
 a:org.jetbrains.io.CustomPortServerManagerBase
 - org.jetbrains.ide.CustomPortServerManager
 - p:manager:org.jetbrains.ide.CustomPortServerManager$CustomPortService

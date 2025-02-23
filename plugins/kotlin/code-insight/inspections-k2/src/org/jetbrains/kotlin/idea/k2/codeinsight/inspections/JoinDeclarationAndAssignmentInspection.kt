@@ -69,9 +69,8 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Context? {
+    override fun KaSession.prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
 
@@ -135,10 +134,10 @@ internal class JoinDeclarationAndAssignmentInspection :
                 && element.receiverTypeReference == null
                 && element.name != null
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtProperty,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtProperty>> = arrayOf(object : KotlinModCommandQuickFix<KtProperty>() {
+    ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("join.declaration.and.assignment")
@@ -187,7 +186,7 @@ internal class JoinDeclarationAndAssignmentInspection :
                 updater.update(newProperty, context.canOmitDeclaredType)
             }
         }
-    })
+    }
 
     context(KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
@@ -351,7 +350,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = element.symbol?.name.toString()
+        val declarationName = element.symbol.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }

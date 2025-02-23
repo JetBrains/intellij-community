@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
-import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -11,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -149,7 +149,6 @@ internal class TrustedProjectStartupDialog(
                   if (it.isSelected) {
                     windowsDefender.set(false)
                   }
-
                   if (trustAction != null) {
                     val trustButton = getButton(trustAction!!)
                     val text = if (it.isSelected) {
@@ -164,20 +163,18 @@ internal class TrustedProjectStartupDialog(
                 }
             }
           }
-          row {
-            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }
-
-                                                                       , 18, 0, true)
-            val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
-            windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
-              .bindSelected(windowsDefender)
-              .apply {
-                component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
-                comment(IdeBundle.message("untrusted.project.location.comment"))
-                visible(pathsToExclude.isNotEmpty())
-                if (pathsToExclude.isNotEmpty()) WindowsDefenderStatisticsCollector.checkboxShownInTrustDialog()
-              }
+          if (pathsToExclude.isNotEmpty()) {
+            row {
+              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }, 18, 0, true)
+              val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
+              windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
+                .bindSelected(windowsDefender)
+                .apply {
+                  component.toolTipText = null
+                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
+                  comment(IdeBundle.message("untrusted.project.location.comment"))
+                }
+            }
           }
         }.align(AlignX.FILL + AlignY.FILL)
       }
@@ -231,17 +228,27 @@ internal class TrustedProjectStartupDialog(
       val option = options[i]
       val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
+          val exitActionType: ExitActionType
           userChoice = when (option) {
-            trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
-            distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-            cancelButtonText -> OpenUntrustedProjectChoice.CANCEL
+            trustButtonText -> {
+              exitActionType = ExitActionType.YES
+              OpenUntrustedProjectChoice.TRUST_AND_OPEN
+            }
+            distrustButtonText -> {
+              exitActionType = ExitActionType.NO
+              OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
+            }
+            cancelButtonText -> {
+              exitActionType = ExitActionType.CANCEL
+              OpenUntrustedProjectChoice.CANCEL
+            }
             else -> {
               logger<TrustedProjects>().error("Illegal choice $option")
               close(i, false)
               return
             }
           }
-          close(i, userChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN)
+          close(i, userChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN, exitActionType)
         }
       }
       if (option == trustButtonText) trustAction = action

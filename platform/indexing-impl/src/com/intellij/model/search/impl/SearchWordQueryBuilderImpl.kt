@@ -78,7 +78,7 @@ internal data class SearchWordQueryBuilderImpl(
     return scope
   }
 
-  override fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<T>): Query<out T> = SearchWordQuery(
+  override fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<out T>): Query<out T> = SearchWordQuery(
     Parameters(
       myProject,
       myWord,

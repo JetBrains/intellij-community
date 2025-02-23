@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
@@ -27,9 +26,8 @@ import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProj
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
-@ApiStatus.Internal
 @Order(GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR)
-class GradleContentRootSyncContributor : GradleSyncContributor {
+internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
   override val name: String = "Gradle Content Root"
 

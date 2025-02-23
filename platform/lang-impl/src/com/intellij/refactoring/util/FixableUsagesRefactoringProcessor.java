@@ -41,7 +41,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
 
 
   @Override
-  public final UsageInfo @NotNull [] findUsages() {
+  protected final UsageInfo @NotNull [] findUsages() {
     final List<FixableUsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     findUsages(usages);
     return usages.toArray(new FixableUsageInfo[0]);

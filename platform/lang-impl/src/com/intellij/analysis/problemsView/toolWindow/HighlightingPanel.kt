@@ -173,6 +173,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     val file = getCurrentFile() ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = getCurrentDocument() ?: return statusAnalyzing(file)
+
+    // todo ijpl-339 it's not safe to take a random editor anymore
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)
     val model = editor.markupModel as? EditorMarkupModel ?: return statusAnalyzing(file)
     val status = model.errorStripeRenderer?.status ?: return statusComplete(file)

@@ -7,6 +7,9 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.StaticImportCanBeUsedInspection;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +40,44 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
     addStaticAutoImport("java.util.Arrays");
     doTest();
     cleanupTest();
+  }
+
+  public void testSimpleWithOnDemand() {
+    addStaticAutoImport("java.util.Arrays");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    PackageEntry entry = new PackageEntry(true, "java.util.Arrays", false);
+    PackageEntryTable onDemand = javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
+    int onDemandLength = onDemand.getEntries().length;
+    onDemand.addEntry(entry);
+    try {
+      doTest();
+      cleanupTest();
+    }
+    finally {
+      onDemand.removeEntryAt(onDemandLength);
+    }
+  }
+
+  public void testSimpleMethod() {
+    addStaticAutoImport("java.util.Arrays.sort");
+    doTest();
+    cleanupTest();
+  }
+
+  public void testSimpleMethodOnDemand() {
+    addStaticAutoImport("java.util.Arrays.sort");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    PackageEntry entry = new PackageEntry(true, "java.util.Arrays", false);
+    PackageEntryTable onDemand = javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
+    int onDemandLength = onDemand.getEntries().length;
+    onDemand.addEntry(entry);
+    try {
+      doTest();
+      cleanupTest();
+    }
+    finally {
+      onDemand.removeEntryAt(onDemandLength);
+    }
   }
 
   public void testWithConflicts() {
@@ -101,8 +142,6 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
     doTest();
     cleanupTest();
   }
-
-  //todo test for inner class and for field
 
   private void cleanupTest() {
     IntentionAction intention = myFixture.getAvailableIntention(AnalysisBundle.message("cleanup.in.file"));

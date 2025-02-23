@@ -1,14 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.fmap;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class ArrayBackedFMap<K, V> implements FMap<K, V> {
-
-  static final int ARRAY_THRESHOLD = 8;
+@ApiStatus.Internal
+public final class ArrayBackedFMap<K, V> implements FMap<K, V> {
+  public static final int ARRAY_THRESHOLD = 8;
 
   private final @NotNull Object @NotNull [] myData; // array of alternating pairs: K,V,K,V...
 

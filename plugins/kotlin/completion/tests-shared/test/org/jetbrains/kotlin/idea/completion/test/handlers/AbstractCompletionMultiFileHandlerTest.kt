@@ -34,8 +34,8 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testClassWithClassObject() = doTest()
     fun testGlobalFunctionImportInLambda() = doTest()
     fun testObjectInStringTemplate() = doTest()
-    fun testPropertyFunctionConflict() = doTest(tailText = "(i: Int) (a.b)")
-    fun testPropertyFunctionConflict2() = doTest(tailText = " { Int, Int -> ... } (i: (Int, Int) -> Unit) (a.b)")
+    fun testPropertyFunctionConflict() = doTest { tailText == "(i: Int) (a.b)" }
+    fun testPropertyFunctionConflict2() = doTest { tailText == " { Int, Int -> ... } (i: (Int, Int) -> Unit) (a.b)" }
     fun testExclCharInsertImport() = doTest('!')
     fun testPropertyKeysWithPrefixEnter() = doTest('\n', "TestBundle.properties")
     fun testPropertyKeysWithPrefixTab() = doTest('\t', "TestBundle.properties")
@@ -45,16 +45,21 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
     fun testClassInRootPackage() = doTest()
-    fun testInImportEscaped() = doTest(tailText = " (`foo bar`)")
+    fun testInImportEscaped() = doTest { tailText == " (`foo bar`)" }
     fun testPackageDirective() = doTest()
     fun testPackageInImportDirective() = doTest()
     fun testJavaEnumCompletionEntry() = doTest(extraFileNames = arrayOf("JavaEnum.java"))
+    fun testKTIJ_32792() = doTest { tailText == " -> " && typeText == "(Int, String)" }
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 
     protected fun getDependencyFileName(): String = "${getTestName(false)}-2.kt"
 
-    open fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
+    open fun doTest(
+        completionChar: Char = '\n',
+        vararg extraFileNames: String,
+        predicate: LookupElementPresentation.() -> Boolean = { true },
+    ) {
         val defaultFiles = listOf(getTestFileName(), getDependencyFileName())
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }
 
@@ -65,20 +70,19 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
 
         testWithAutoCompleteSetting(File(testDataDirectory, getTestFileName()).readText()) {
             val items = complete(CompletionType.BASIC, 2)
-
             if (items != null) {
-                val item = if (tailText == null)
-                    items.singleOrNull() ?: error("Multiple items in completion")
-                else {
-                    val presentation = LookupElementPresentation()
-                    items.first {
-                        it.renderElement(presentation)
-                        presentation.tailText == tailText
+                val item = try {
+                    items.single { element ->
+                        val presentation = LookupElementPresentation.renderElement(element)
+                        predicate(presentation)
                     }
+                } catch (_: NoSuchElementException) {
+                    error("Multiple items in completion")
                 }
 
                 CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
             }
+
             myFixture.checkResultByFile("${getTestName(false)}.kt.after")
         }
     }

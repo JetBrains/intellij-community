@@ -2,13 +2,13 @@
 package com.intellij.platform.feedback.impl.state
 
 import com.intellij.openapi.components.*
+import com.intellij.platform.feedback.FeedbackSurveyConfig
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "CommonFeedbackSurveyService", storages = [Storage("CommonFeedbackSurveyService.xml", roamingType = RoamingType.DISABLED)])
 class CommonFeedbackSurveyService : PersistentStateComponent<CommonFeedbackSurveysState> {
   companion object {
-
     @JvmStatic
     fun getNumberShowsOfFeedbackSurvey(surveyId: String): Int {
       return getInstance().state.feedbackSurveyToNumberNotificationShows.getOrDefault(surveyId, 0)
@@ -52,6 +52,13 @@ class CommonFeedbackSurveyService : PersistentStateComponent<CommonFeedbackSurve
     @JvmStatic
     fun checkIsFeedbackSurveyAnswerSent(surveyId: String): Boolean {
       return getInstance().state.answeredFeedbackSurveys.contains(surveyId)
+    }
+
+    @JvmStatic
+    fun checkIsFeedbackSurveyAnswerSent(config: FeedbackSurveyConfig): Boolean {
+      if (config.isIndefinite) return false
+
+      return checkIsFeedbackSurveyAnswerSent(config.surveyId)
     }
 
     @JvmStatic

@@ -23,13 +23,12 @@ import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
 public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
-  private volatile CancellablePromise<?> myComputation;
+  private volatile Job myComputation;
   private volatile Job scheduledCleanup;
   private volatile boolean myInactive = false;
   private final DebuggerStateManager myManager;
@@ -41,7 +40,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     updateFromSettings();
   }
 
-  void setComputation(CancellablePromise<?> computation) {
+  void setComputation(Job computation) {
     myComputation = computation;
   }
 
@@ -99,7 +98,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
       return;
     }
     if (event == DebuggerSession.Event.RESUME) {
-      cancelComputation();
+      cancelAllSceduledJobs();
       scheduledCleanup = EdtScheduler.getInstance().schedule(CLEANUP_DELAY_MILLIS, this::cleanUp);
     }
     if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
@@ -126,20 +125,24 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     cleanUp();
   }
 
-  private void cancelComputation() {
-    CancellablePromise<?> promise = myComputation;
-    if (promise != null) {
-      promise.cancel();
-    }
-    Job cleanup = scheduledCleanup;
-    if (cleanup != null) {
-      cleanup.cancel(null);
+  void cancelComputation() {
+    safeCancelJob(myComputation);
+  }
+
+  private void cancelAllSceduledJobs() {
+    cancelComputation();
+    safeCancelJob(scheduledCleanup);
+  }
+
+  private static void safeCancelJob(Job computation) {
+    if (computation != null) {
+      computation.cancel(null);
     }
   }
 
   @Override
   protected void cleanUp() {
-    cancelComputation();
+    cancelAllSceduledJobs();
     super.cleanUp();
   }
 

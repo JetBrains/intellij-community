@@ -73,7 +73,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
    * @return destinations (so user would be able to choose if she wants to move member to a certain place or not)
    */
   @Override
-  public final PyUsageInfo @NotNull [] findUsages() {
+  protected final PyUsageInfo @NotNull [] findUsages() {
     final List<PyUsageInfo> result = new ArrayList<>(myTo.length);
     for (final PyClass pyDestinationClass : myTo) {
       result.add(new PyUsageInfo(pyDestinationClass));

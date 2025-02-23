@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -6,16 +6,16 @@ import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
@@ -51,8 +51,10 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
-    return InlayHintsUtils.computeCodeVisionUnderReadAction {
-      if (DumbService.isDumb(project)) return@computeCodeVisionUnderReadAction CodeVisionState.NotReady
+    return InlayHintsUtils.computeCodeVisionUnderReadAction(expectsIndicator = true) ra@{
+      if (DumbService.isDumb(project)) {
+        return@ra CodeVisionState.NotReady
+      }
       recomputeLenses(editor, project, stamp, cacheService)
     }
   }
@@ -63,7 +65,9 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
                               stamp: Long?,
                               cacheService: CodeVisionCacheService): CodeVisionState {
     if (DumbService.isDumb(project)) return CodeVisionState.READY_EMPTY
-    val file = FileDocumentManager.getInstance().getFile(editor.document)?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
+
+    val mainContext = EditorContextManager.getEditorContext(editor, project)
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document, mainContext) ?: return CodeVisionState.READY_EMPTY
 
     if (file.project.isDefault) return CodeVisionState.READY_EMPTY
     if (!acceptsFile(file)) return CodeVisionState.READY_EMPTY

@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.Set;
 
-class TMHAssertionGenerator2 implements TMHAssertionGenerator {
+@ApiStatus.Internal
+public final class TMHAssertionGenerator2 implements TMHAssertionGenerator {
 
   private static final String THREAD_ASSERTIONS_CLASS_NAME = "com/intellij/util/concurrency/ThreadingAssertions";
   private static final String GENERATE_ASSERTION_PARAMETER = "generateAssertion";

@@ -13,6 +13,7 @@
 // ACTION: Introduce local variable
 // ACTION: Rename reference
 // ERROR: Unresolved reference: CoroutineImpl
+// K2_AFTER_ERROR: Unresolved reference 'CoroutineImpl'.
 
 fun some() {
     CoroutineImpl<caret>::class

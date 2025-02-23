@@ -1036,7 +1036,18 @@ private class NotificationComponent(val project: Project,
             actionPanel.add(createAction(actions[1]))
           }
           else if (actionsSize > 2) {
-            actionPanel.add(MoreAction(this, actions))
+            if (notification.isAddExtraAction) {
+              actionPanel.add(createAction(actions[1]))
+              if (actionsSize == 3) {
+                actionPanel.add(createAction(actions[2]))
+              }
+              else {
+                actionPanel.add(MoreAction(this, actions, 2))
+              }
+            }
+            else {
+              actionPanel.add(MoreAction(this, actions, 1))
+            }
           }
         }
       }
@@ -1415,13 +1426,13 @@ private class PreferredSizeCache(private val mySuperSize: () -> Dimension) {
   }
 }
 
-private class MoreAction(val notificationComponent: NotificationComponent, actions: List<AnAction>) :
+private class MoreAction(val notificationComponent: NotificationComponent, actions: List<AnAction>, startIndex: Int) :
   NotificationsManagerImpl.DropDownAction(null, null) {
   val group = DefaultActionGroup()
 
   init {
     val size = actions.size
-    for (i in 1..<size) {
+    for (i in startIndex..<size) {
       group.add(actions[i])
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
@@ -111,7 +111,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
         ) return null
 
         // Recursive call, skip labels
-        if (ReferencesSearch.search(singleFunction, LocalSearchScope(bodyExpression)).
+        if (ReferencesSearch.search(singleFunction, LocalSearchScope(bodyExpression)).asIterable().
             any { it.element !is KtLabelReferenceExpression }) {
             return null
         }
@@ -156,7 +156,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
             val parameters = singleFunction.valueParameters
 
             val needParameters =
-                parameters.count() > 1 || parameters.any { parameter -> ReferencesSearch.search(parameter, LocalSearchScope(body)).any() }
+                parameters.count() > 1 || parameters.any { parameter -> ReferencesSearch.search(parameter, LocalSearchScope(body)).asIterable().any() }
             if (needParameters) {
                 parameters.forEachIndexed { index, parameter ->
                     if (index > 0) {

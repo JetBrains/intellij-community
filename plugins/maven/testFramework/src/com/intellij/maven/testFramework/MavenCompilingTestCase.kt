@@ -92,6 +92,7 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
         for (message in messages) {
           if (message.category === CompilerMessageCategory.ERROR) {
             fail("Compilation failed with error: " + message.message)
+
           }
         }
       }

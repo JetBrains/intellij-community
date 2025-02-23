@@ -36,7 +36,7 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
                        "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = dir.resolve("__repo").toString()
+      repositoryPath = dir.resolve("__repo")
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
@@ -71,7 +71,7 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
                        "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = dir.resolve("__repo").toString()
+      repositoryPath = dir.resolve("__repo")
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 

@@ -57,9 +57,8 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
         val symbol = element.symbol as? KaPropertySymbol ?: return null

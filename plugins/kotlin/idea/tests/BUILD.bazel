@@ -5,7 +5,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -61,7 +60,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
     "//plugins/kotlin/base/fe10/kdoc:kotlin-base-fe10-kdoc",
     "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/repl",
@@ -137,7 +136,6 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-    "//plugins/kotlin/code-insight/postfix-templates-k1:kotlin-code-insight-postfix-templates-k1",
     "//plugins/kotlin/code-insight/structural-search-k1:kotlin-code-insight-structural-search-k1",
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/j2k/k1.old.post-processing:kotlin-j2k-k1-old-post-processing",
@@ -165,6 +163,9 @@ jvm_library(
     "@lib//:junit5Params",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
+    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1",
   ],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",

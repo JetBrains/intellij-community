@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -369,7 +369,7 @@ public final class CommonActionsPanel extends JPanel {
     protected abstract boolean isEnabled(int size, int min, int max);
   }
 
-  static class AddButton extends MyActionButton {
+  static final class AddButton extends MyActionButton {
     AddButton(Listener listener, @NlsContexts.Button String name, Icon icon) {
       super(Buttons.ADD, listener, name, icon);
     }
@@ -385,7 +385,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  static class RemoveButton extends MyActionButton {
+  static final class RemoveButton extends MyActionButton {
     RemoveButton(Listener listener, @NlsContexts.Button String name, Icon icon) {
       super(Buttons.REMOVE, listener, name, icon);
     }
@@ -401,7 +401,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  static class EditButton extends MyActionButton {
+  static final class EditButton extends MyActionButton {
     EditButton(Listener listener, @NlsContexts.Button String name, Icon icon) {
       super(Buttons.EDIT, listener, name, icon);
     }
@@ -433,7 +433,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  static class UpButton extends MyActionButton {
+  static final class UpButton extends MyActionButton {
     UpButton(Listener listener, @NlsContexts.Button String name, Icon icon) {
       super(Buttons.UP, listener, name, icon);
     }
@@ -449,7 +449,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  static class DownButton extends MyActionButton {
+  static final class DownButton extends MyActionButton {
     DownButton(Listener listener, @NlsContexts.Button String name, Icon icon) {
       super(Buttons.DOWN, listener, name, icon);
     }
@@ -475,7 +475,8 @@ public final class CommonActionsPanel extends JPanel {
     };
   }
 
-  interface ListenerFactory {
+  @ApiStatus.Internal
+  public interface ListenerFactory {
     @NotNull
     Listener createListener(@NotNull CommonActionsPanel panel);
   }

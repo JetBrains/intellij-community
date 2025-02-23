@@ -4,11 +4,13 @@
 interface A {
     fun foo() {}
     fun bar() {}
+    fun baz()
 }
 
 open class B {
     open fun foo() {}
     open fun bar() {}
+    open fun baz() {}
 }
 
 class C : A, B() {

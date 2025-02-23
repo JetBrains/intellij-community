@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -182,7 +182,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CodeStyle.getSettings(myProject).AUTODETECT_INDENTS = true;
-      notifyIndentOptionsChanged(myProject);
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
       myNotification.expire();
     }
   }
@@ -217,7 +217,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               ApplicationBundle.message("code.style.indent.detector.reject", projectOptionsTip),
               e -> {
                 disableForFile(virtualFile, indentOptions);
-                notifyIndentOptionsChanged(project, virtualFile);
+                CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
               }));
           final var reindentActionText = ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip);
           actions.add(
@@ -232,7 +232,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                          .getIndentOptionsByFile(project, virtualFile, null, true, null);
                                        indentOptsWithoutDetected.associateWithDocument(document);
                                      }
-                                     notifyIndentOptionsChanged(project, virtualFile);
+                                     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
                                      CommandProcessor.getInstance().executeCommand(
                                        project,
                                        () -> ApplicationManager.getApplication().runWriteAction(
@@ -241,12 +241,12 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                            UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
                                              @Override
                                              public void undo() {
-                                               notifyIndentOptionsChanged(project, virtualFile);
+                                               CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
                                              }
 
                                              @Override
                                              public void redo() {
-                                               notifyIndentOptionsChanged(project, virtualFile);
+                                               CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
                                              }
                                            });
                                          }),
@@ -270,7 +270,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               e -> {
                 myDiscardedOptions.remove(virtualFile);
                 discardedOptions.associateWithDocument(document);
-                notifyIndentOptionsChanged(project, virtualFile);
+                CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
               }));
           actions.add(Separator.getInstance());
         }
@@ -285,7 +285,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         e -> {
           CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
           myDiscardedOptions.clear();
-          notifyIndentOptionsChanged(project);
+          CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
           showDisabledDetectionNotification(project);
         });
     }

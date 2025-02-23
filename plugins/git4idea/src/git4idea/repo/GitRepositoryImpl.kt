@@ -57,7 +57,7 @@ class GitRepositoryImpl private constructor(
 
   /**
    * @see [git4idea.repo.GitRepositoryImpl.createInstance]
-   * @see [git4idea.repo.GitRepositoryImpl.installListeners]
+   * @see [git4idea.repo.GitRepositoryUpdater.installListeners]
    */
   init {
     stagingAreaHolder = GitStagingAreaHolder(this)

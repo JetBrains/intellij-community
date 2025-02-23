@@ -25,6 +25,10 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<IOException>, EelSendC
     val OK_NOT_EOF = ResultOkImpl(ReadResult.NOT_EOF)
   }
 
+  @Volatile
+  override var closed: Boolean = false
+    private set
+
   private val channel = Channel<Triple<ByteBuffer, CompletableDeferred<Unit>, Boolean>>()
 
   /**
@@ -127,6 +131,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<IOException>, EelSendC
       deferred.complete(Unit)
     }
     sendLocks.clear()
+    closed = true
   }
 }
 

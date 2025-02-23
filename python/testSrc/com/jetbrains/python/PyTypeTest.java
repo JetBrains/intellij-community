@@ -46,6 +46,16 @@ public class PyTypeTest extends PyTestCase {
     doTest("str",
            "t = ('a', 2)\n" +
            "expr = t[0]");
+    doTest("List[bool]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[2]):
+                 expr = t[i]""");
+    doTest("Union[int, List[bool]]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[0, -1]):
+                 expr = t[i]""");
   }
 
   public void testTupleAssignmentType() {
@@ -3569,13 +3579,19 @@ public class PyTypeTest extends PyTestCase {
                "from typing_extensions import Final\n" +
                "expr: Final[int] = undefined");
 
-        doTest("int",
+        doTest("Literal[5]",
                "from typing_extensions import Final\n" +
                "expr: Final = 5");
 
         doTest("int",
                "from typing_extensions import Final\n" +
                "expr: Final[int]");
+
+        doTest("List[int]",
+               """
+                 from typing_extensions import Final
+                 expr: Final = [1, 2]
+                 """);
       }
     );
 
@@ -3583,7 +3599,7 @@ public class PyTypeTest extends PyTestCase {
            "from typing_extensions import Final\n" +
            "expr = undefined  # type: Final[int]");
 
-    doTest("int",
+    doTest("Literal[5]",
            "from typing_extensions import Final\n" +
            "expr = 5  # type: Final");
   }
@@ -3858,6 +3874,23 @@ public class PyTypeTest extends PyTestCase {
                      x: int
                  a: A = {'x': 42}
                  expr = a['x']""");
+        doTest("str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                 def foo(v: TD, k: Literal['b']):
+                     expr = v[k]""");
+        doTest("bool | str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                     c: bool
+                 def foo(v: TD, k: Literal['c', 'b']):
+                     expr = v[k]""");
       }
     );
   }

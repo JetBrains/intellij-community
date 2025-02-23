@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -16,13 +16,12 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.util.*;
 
-import static org.jetbrains.jps.model.java.JavaSourceRootType.SOURCE;
-
-class ModuleNode implements Comparable<ModuleNode> {
+final class ModuleNode implements Comparable<ModuleNode> {
   private final @Nullable Module myModule;
   private final @NotNull Set<String> myDeclaredPackages;
   private final @NotNull Set<String> myRequiredPackages;
@@ -146,7 +145,7 @@ class ModuleNode implements Comparable<ModuleNode> {
 
   private static boolean isSourceFolder(@NotNull SourceFolder folder) {
     final JpsModuleSourceRoot sourceRoot = folder.getJpsElement();
-    if (sourceRoot.getRootType() != SOURCE) return false;
+    if (sourceRoot.getRootType() != JavaSourceRootType.SOURCE) return false;
     if (!(sourceRoot.getProperties() instanceof JavaSourceRootProperties javaProperties)) return false;
     return !javaProperties.isForGeneratedSources();
   }

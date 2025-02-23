@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,15 +38,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtils.class);
-  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
   public static final Set<String> ourPrimitiveTypeNames = Set.of(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
   );
@@ -69,80 +64,11 @@ public abstract class DebuggerUtils {
     return Registry.is("debugger.new.suspend.state.tracking");
   }
 
-  public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
-    debugProcess.putUserData(TO_STRING_METHOD_KEY, null);
+  public static @NonNls String getValueAsString(@NotNull EvaluationContext evaluationContext, @Nullable Value value) throws EvaluateException {
+    return getInstance().getValueAsStringImpl(evaluationContext, value);
   }
 
-  public static @NonNls String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
-    try {
-      if (value == null) {
-        return "null";
-      }
-      if (value instanceof StringReference) {
-        ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
-        return ((StringReference)value).value();
-      }
-      if (isInteger(value)) {
-        return String.valueOf(((PrimitiveValue)value).longValue());
-      }
-      if (value instanceof FloatValue) {
-        return String.valueOf(((FloatValue)value).floatValue());
-      }
-      if (value instanceof DoubleValue) {
-        return String.valueOf(((DoubleValue)value).doubleValue());
-      }
-      if (value instanceof BooleanValue) {
-        return String.valueOf(((PrimitiveValue)value).booleanValue());
-      }
-      if (value instanceof CharValue) {
-        return String.valueOf(((PrimitiveValue)value).charValue());
-      }
-      if (value instanceof ObjectReference objRef) {
-        // We can not pretty print arrays here, otherwise evaluation may fail unexpectedly, check IDEA-358202
-        //if (value instanceof ArrayReference arrayRef) {
-        //  final StringJoiner joiner = new StringJoiner(",", "[", "]");
-        //  for (final Value element : arrayRef.getValues()) {
-        //    joiner.add(getValueAsString(evaluationContext, element));
-        //  }
-        //  return joiner.toString();
-        //}
-
-        final DebugProcess debugProcess = evaluationContext.getDebugProcess();
-        Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
-        if (toStringMethod == null || !toStringMethod.virtualMachine().equals(objRef.virtualMachine())) {
-          try {
-            ReferenceType refType = getObjectClassType(objRef.virtualMachine());
-            toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
-            debugProcess.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
-          }
-          catch (Exception ignored) {
-            throw EvaluateExceptionUtil.createEvaluateException(
-              JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
-          }
-        }
-        if (toStringMethod == null) {
-          throw EvaluateExceptionUtil.createEvaluateException(
-            JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
-        }
-        Method finalToStringMethod = toStringMethod;
-        return getInstance().processCollectibleValue(
-          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
-          result -> {
-            // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
-            // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-            if (result == null) {
-              return "null";
-            }
-            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
-          },
-          evaluationContext);
-      }
-      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
-    }
-    catch (ObjectCollectedException ignored) {
-      throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
-    }
-  }
+  protected abstract @NonNls String getValueAsStringImpl(@NotNull EvaluationContext evaluationContext, @Nullable Value value) throws EvaluateException;
 
   @ApiStatus.Internal
   public abstract <R, T> R processCollectibleValue(
@@ -382,7 +308,7 @@ public abstract class DebuggerUtils {
     return getSuperTypeInt(subType, superType);
   }
 
-  private static ReferenceType getObjectClassType(VirtualMachine virtualMachine) {
+  protected static ReferenceType getObjectClassType(VirtualMachine virtualMachine) {
     return ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_OBJECT));
   }
 

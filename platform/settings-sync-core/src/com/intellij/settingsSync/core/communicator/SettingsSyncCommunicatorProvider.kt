@@ -21,6 +21,11 @@ interface SettingsSyncCommunicatorProvider {
    */
   fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator?
 
+  /**
+   * Indicates whether provider is available. Allows to control provider availability inside the plugin
+   */
+  fun isAvailable(): Boolean = true
+
   companion object {
     @JvmField
     val PROVIDER_EP = ExtensionPointName.create<SettingsSyncCommunicatorProvider>("com.intellij.settingsSync.communicatorProvider")

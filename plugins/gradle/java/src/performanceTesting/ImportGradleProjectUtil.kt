@@ -2,7 +2,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.performanceTesting
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -27,7 +27,7 @@ internal fun importProject(project: Project) {
       }
     }
 
-    writeAction {
+    edtWriteAction {
       val projectDir = project.guessProjectDir()
       if (projectDir == null) throw IllegalStateException("No project dir")
 
@@ -47,7 +47,7 @@ internal fun importProject(project: Project) {
       }
     }
 
-    writeAction {
+    edtWriteAction {
       ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, GradleConstants.SYSTEM_ID))
     }
   }

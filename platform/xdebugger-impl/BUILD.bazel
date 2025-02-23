@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/project/shared:project",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
   ],
   runtime_deps = [":debugger-impl_resources"]
 )
@@ -88,6 +89,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/project/shared:project",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
   ],
   runtime_deps = [":debugger-impl_resources"]
 )

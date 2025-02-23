@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.configurationStore.Property;
@@ -10,10 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
 
-/**
- * @author Dmitry Batkovich
- */
-public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
+public final class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
   public static final char[] DELIMITERS = new char[]{'=', ':', ' '};
 
   public PropertiesCodeStyleSettings(CodeStyleSettings container) {

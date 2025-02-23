@@ -19,7 +19,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 private class SerializationContext(val streamDescriptors: MutableList<StreamDescriptor>,

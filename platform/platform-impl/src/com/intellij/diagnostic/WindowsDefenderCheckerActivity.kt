@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.WindowsDefenderChecker.TaskType
+import com.intellij.diagnostic.WindowsDefenderChecker.ProjectStatus
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
@@ -26,41 +25,34 @@ import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   @Suppress("CompanionObjectInExtension")
   companion object {
     private val LOG = logger<WindowsDefenderCheckerActivity>()
 
-    @JvmOverloads
-    fun runAndNotify(checker: WindowsDefenderChecker, paths: List<Path>, project: Project?, projectPath: Path? = null) {
+    fun runAndNotify(project: Project?, process: () -> Boolean) {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         val success = if (project != null) {
           @Suppress("DialogTitleCapitalization")
           withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), cancellable = false) {
-            checker.excludeProjectPaths(project, paths)
+            process()
           }
         }
-        else if (projectPath != null) {
-          checker.excludeProjectPaths(project, projectPath, paths)
-        } else {
-          LOG.error("Failed to exclude paths from Windows Defender: no project or project path provided")
-          return@launch
+        else {
+          process()
         }
 
         WindowsDefenderStatisticsCollector.configured(project, success)
 
+        // otherwise, the notification will be shown on project opening
         if (project != null) {
-          notify(success, project)
-        } else if (projectPath != null) {
-          ProjectUtil.getOpenProjects().find { it.basePath == projectPath.invariantSeparatorsPathString}
-            ?.let { notify(success, it) } ?: checker.schedule(projectPath, TaskType.toTaskType(success))
+          notify(project, success)
         }
       }
     }
 
-    fun notify(success: Boolean, project: Project) {
+    private fun notify(project: Project, success: Boolean) {
       if (success) {
         Notification("WindowsDefender", DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
           .notify(project)
@@ -83,15 +75,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
 
-    val taskType = checker.popScheduledPaths(project)
-    if (taskType != null) {
-      when (taskType) {
-        TaskType.NOTIFY_SUCCESS, TaskType.NOTIFY_FAILURE -> {
-          LOG.info("notification for excluded paths sent")
-          notify(success = TaskType.toBoolean(taskType)!!, project)
-        }
-        TaskType.SKIP_NOTIFICATION -> LOG.info("Windows Defender notification was skipped for the current run as it was already displayed in the trust dialog")
-      }
+    val projectStatus = checker.isAlreadyProcessed(project)
+    if (projectStatus == ProjectStatus.SKIPPED) {
+      LOG.info("status check is skipped for this run")
+      return
+    }
+    if (projectStatus == ProjectStatus.SUCCEED || projectStatus == ProjectStatus.FAILED) {
+      LOG.info("requested from the \"trust project\" dialog; status=${projectStatus}")
+      notify(project, success = projectStatus == ProjectStatus.SUCCEED)
       return
     }
 
@@ -144,7 +135,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
-    runAndNotify(checker, paths, project)
+    runAndNotify(project) { checker.excludeProjectPaths(project, paths) }
     WindowsDefenderStatisticsCollector.auto(project)
   }
 

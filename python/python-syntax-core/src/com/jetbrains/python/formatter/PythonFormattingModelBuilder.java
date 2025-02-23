@@ -79,6 +79,28 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .afterInside(LBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_AFTER_LEFT_BRACE)
       .beforeInside(RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
 
+      .betweenInside(COMMA, RBRACKET, LIST_LITERAL_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_BRACKETS || commonSettings.SPACE_AFTER_COMMA, pySettings.LIST_NEW_LINE_BEFORE_RIGHT_BRACKET)
+      .beforeInside(RBRACKET, LIST_LITERAL_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_BRACKETS, pySettings.LIST_NEW_LINE_BEFORE_RIGHT_BRACKET)
+      .afterInside(LBRACKET, LIST_LITERAL_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_BRACKETS, pySettings.LIST_NEW_LINE_AFTER_LEFT_BRACKET)
+
+      .betweenInside(COMMA, RBRACE, SET_LITERAL_EXPRESSION)
+      .spaceIf(pySettings.SPACE_WITHIN_BRACES || commonSettings.SPACE_AFTER_COMMA, pySettings.SET_NEW_LINE_BEFORE_RIGHT_BRACE)
+      .beforeInside(RBRACE, SET_LITERAL_EXPRESSION)
+      .spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.SET_NEW_LINE_BEFORE_RIGHT_BRACE)
+      .afterInside(LBRACE, SET_LITERAL_EXPRESSION)
+      .spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.SET_NEW_LINE_AFTER_LEFT_BRACE)
+
+
+      .betweenInside(COMMA, RPAR, PARENTHESIZED_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_PARENTHESES || commonSettings.SPACE_AFTER_COMMA, pySettings.SET_NEW_LINE_BEFORE_RIGHT_BRACE)
+      .betweenInside(LPAR, TUPLE_EXPRESSION, PARENTHESIZED_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_PARENTHESES, pySettings.TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS)
+      .betweenInside(TUPLE_EXPRESSION, RPAR, PARENTHESIZED_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_PARENTHESES, pySettings.TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
+
       .between(COMMA, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES || commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
 

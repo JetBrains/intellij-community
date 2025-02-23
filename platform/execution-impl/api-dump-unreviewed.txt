@@ -103,11 +103,9 @@ a:com.intellij.execution.ConsoleFolding
 - <init>():V
 - getNestingPriority():I
 - getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
-- getPlaceholderText(java.util.List):java.lang.String
 - isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z
 - shouldBeAttachedToThePreviousLine():Z
 - shouldFoldLine(com.intellij.openapi.project.Project,java.lang.String):Z
-- shouldFoldLine(java.lang.String):Z
 com.intellij.execution.DisplayDescriptorChooser
 - sf:Companion:com.intellij.execution.DisplayDescriptorChooser$Companion
 - a:chooseDescriptor(java.util.List,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
@@ -305,27 +303,17 @@ a:com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 - com.intellij.ui.popup.NumericMnemonicItem
 - p:<init>(java.lang.Object):V
 - p:<init>(java.lang.Object,Z):V
-- addSeparatorAbove():Z
 - available(com.intellij.execution.Executor):Z
 - canBeDeleted():Z
-- digitMnemonicsEnabled():Z
 - equals(java.lang.Object):Z
-- a:getIcon():javax.swing.Icon
-- getMnemonic():I
-- getMnemonicChar():java.lang.Character
 - getNextStep(com.intellij.openapi.project.Project,com.intellij.execution.actions.ChooseRunConfigurationPopup):com.intellij.openapi.ui.popup.PopupStep
-- a:getText():java.lang.String
 - getType():com.intellij.execution.configurations.ConfigurationType
 - getValue():java.lang.Object
 - hasActions():Z
 - hashCode():I
-- isChecked():Z
 - isDynamic():Z
 - a:perform(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.openapi.actionSystem.DataContext):V
-- setChecked(Z):V
 - setDynamic(Z):V
-- setMnemonic(I):V
-- p:setMnemonicsEnabled(Z):V
 - s:wrap(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings):com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 - s:wrap(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,Z):com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 c:com.intellij.execution.actions.ChooseRunConfigurationPopupAction
@@ -779,7 +767,6 @@ c:com.intellij.execution.impl.RunConfigurable
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.Configurable
 - sf:Companion:com.intellij.execution.impl.RunConfigurable$Companion
-- sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project):V
 - p:addRunConfigurationsToModel(javax.swing.tree.DefaultMutableTreeNode):V
 - apply():V
@@ -1123,7 +1110,6 @@ f:com.intellij.execution.impl.SingleConfigurationConfigurable
 - getHelpTopic():java.lang.String
 - getNameText():java.lang.String
 - getNameTextField():javax.swing.JTextField
-- isModified():Z
 - isStoredInFile():Z
 - isValid():Z
 - reset():V
@@ -2067,6 +2053,7 @@ f:com.intellij.execution.util.ProgramParametersUtil
 - s:expandPathAndMacros(java.lang.String,com.intellij.openapi.module.Module,com.intellij.openapi.project.Project):java.lang.String
 - s:getModule(com.intellij.execution.CommonProgramRunConfigurationParameters):com.intellij.openapi.module.Module
 - s:getWorkingDir(com.intellij.execution.CommonProgramRunConfigurationParameters,com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):java.lang.String
+- s:getWorkingDirectoryByModule(com.intellij.execution.configurations.ModuleBasedConfiguration):java.lang.String
 f:com.intellij.execution.util.ScriptFileUtil
 - s:copyToTempFile(java.lang.String):java.io.File
 - s:findScriptFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile

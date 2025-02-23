@@ -207,6 +207,13 @@ com.intellij.xdebugger.impl.XWatch
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:isPaused():Z
 - a:setPaused(Z):V
+a:com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:performAction(com.intellij.xdebugger.breakpoints.XBreakpointManager,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 - <init>():V
@@ -287,6 +294,9 @@ c:com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher
 - com.intellij.xdebugger.attach.XAttachRecentItemsMatcher
 - <init>():V
 - getMatchingAttachItems(com.intellij.xdebugger.impl.actions.AttachToProcessActionBase$RecentItem,java.util.List,Z,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder):java.util.List
+f:com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction
+- com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
+- <init>():V
 c:com.intellij.xdebugger.impl.actions.EditBreakpointAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - com.intellij.openapi.project.DumbAware
@@ -328,6 +338,9 @@ c:com.intellij.xdebugger.impl.actions.PauseAction
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - p:isHidden(com.intellij.openapi.actionSystem.AnActionEvent):Z
+f:com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction
+- com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
+- <init>():V
 c:com.intellij.xdebugger.impl.actions.ResumeAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - com.intellij.openapi.project.DumbAware
@@ -384,15 +397,6 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - pa:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
-c:com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
-- com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
-- <init>():V
-- s:getDisplayText(com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.openapi.editor.Document):java.lang.String
-- s:getExpressionText(com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.openapi.editor.Document):java.lang.String
-- s:getExpressionText(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):org.jetbrains.concurrency.Promise
-- s:getSelectedTextAsync(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.actionSystem.DataContext):org.jetbrains.concurrency.Promise
-- p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
-- p:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
 c:com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider
 - com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - <init>():V
@@ -677,7 +681,7 @@ a:com.intellij.xdebugger.impl.frame.XDebugView
 - getMainComponent():javax.swing.JComponent
 - s:getSession(java.awt.Component):com.intellij.xdebugger.XDebugSession
 - ps:getSession(java.util.EventObject):com.intellij.xdebugger.XDebugSession
-- a:processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
+- processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
 - pf:requestClear():V
 e:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
 - java.lang.Enum
@@ -1035,6 +1039,7 @@ f:com.intellij.xdebugger.impl.ui.XDebugSessionTabNewUIKt
 - sf:addDebugToolwindowActions(com.intellij.openapi.project.Project):V
 a:com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - com.intellij.ui.Expandable
+- sf:XDEBUGGER_EDITOR_KEY:com.intellij.openapi.util.Key
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.evaluation.EvaluationMode,java.lang.String,com.intellij.xdebugger.XSourcePosition):V
 - p:addChooser(javax.swing.JComponent):javax.swing.JComponent
 - addCollapseButton(java.lang.Runnable):V
@@ -1878,7 +1883,6 @@ a:com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor
 - p:<init>(java.lang.String,java.lang.Class):V
 - getColumnClass():java.lang.Class
 - getName():java.lang.String
-- a:getValue(I):java.lang.Object
 com.intellij.xdebugger.memory.utils.InstancesProvider
 - a:getInstances(I):java.util.List
 c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay

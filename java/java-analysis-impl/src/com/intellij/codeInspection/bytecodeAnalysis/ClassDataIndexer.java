@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
@@ -48,7 +50,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * Based on <a href="http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf">"Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values"</a> 
  * by Ilya Klyuchnikov.
  */
-public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
+public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
 
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
@@ -60,7 +62,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
   private static final int VERSION = 19; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
+  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
+    BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion()))
+      .collect(Collectors.joining("-")));
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new BytecodeAnalysisIndex.EquationsExternalizer(), new ClassDataIndexer());
 
@@ -101,7 +105,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
            // Methods of GenericModel.class in Play framework throw UnsupportedOperationException
            // However, it looks like they are replaced with something meaningful during compilation/runtime
            // See IDEA-285334.
-           path.endsWith("!/play/db/jpa/GenericModel.class");
+           path.endsWith("!/play/db/jpa/GenericModel.class") ||
+           ContainerUtil.exists(BytecodeAnalysisSuppressor.EP_NAME.getExtensionList(), ep -> ep.shouldSuppress(file));
   }
   
   private static final Pattern ANDROID_JAR_PATH = Pattern.compile(

@@ -16,8 +16,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.PythonHelpersLocator.*;
-import static com.jetbrains.python.VenvHelperKt.VIRTUALENV_ZIPAPP_NAME;
 
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),

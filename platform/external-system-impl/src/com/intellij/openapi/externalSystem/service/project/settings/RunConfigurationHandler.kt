@@ -49,7 +49,7 @@ internal class RunConfigurationHandler : ConfigurationHandler {
       try {
         importer.process(project, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>, modelsProvider)
         if (!isDefaults) {
-          runnerAndConfigurationSettings.folderName = cfg["folderName"] as? String ?: ""
+          runnerAndConfigurationSettings.folderName = (cfg["folderName"] as? String)?.ifEmpty { null }
           runManager.addConfiguration(runnerAndConfigurationSettings)
         }
 

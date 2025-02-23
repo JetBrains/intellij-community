@@ -51,23 +51,23 @@ class JarHttpDownloaderJpsTest {
   @RegisterExtension
   @JvmField
   internal val serverExtension = TestHttpServerExtension { server ->
-    server.createContext("/", HttpStatusCode.NotFound)
+    server.application.createContext("/", HttpStatusCode.NotFound)
 
-    server.createContext(
+    server.application.createContext(
       path = "/org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar",
       httpStatusCode = HttpStatusCode.OK,
       response = "fake sources jar content",
       auth = JarRepositoryAuthenticationDataProvider.AuthenticationData(authUsername, authPassword),
     )
 
-    server.createContext(
+    server.application.createContext(
       path = "/org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar",
       httpStatusCode = HttpStatusCode.OK,
       response = "fake jar content",
       auth = JarRepositoryAuthenticationDataProvider.AuthenticationData(authUsername, authPassword),
     )
   }
-  private val server: ApplicationEngine get() = serverExtension.server
+  private val server: ApplicationEngine get() = serverExtension.server.engine
 
   private val disposable = Disposer.newDisposable(javaClass.name)
 

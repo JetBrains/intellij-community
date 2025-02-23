@@ -15,6 +15,26 @@ import org.jetbrains.jewel.ui.component.ListItemState
 
 @GenerateDataFunctions
 public class SimpleListItemStyle(public val colors: SimpleListItemColors, public val metrics: SimpleListItemMetrics) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SimpleListItemStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "SimpleListItemStyle(colors=$colors, metrics=$metrics)"
+
     public companion object
 }
 
@@ -52,6 +72,49 @@ public class SimpleListItemColors(
             }
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SimpleListItemColors
+
+        if (background != other.background) return false
+        if (backgroundActive != other.backgroundActive) return false
+        if (backgroundSelected != other.backgroundSelected) return false
+        if (backgroundSelectedActive != other.backgroundSelectedActive) return false
+        if (content != other.content) return false
+        if (contentActive != other.contentActive) return false
+        if (contentSelected != other.contentSelected) return false
+        if (contentSelectedActive != other.contentSelectedActive) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + backgroundActive.hashCode()
+        result = 31 * result + backgroundSelected.hashCode()
+        result = 31 * result + backgroundSelectedActive.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + contentActive.hashCode()
+        result = 31 * result + contentSelected.hashCode()
+        result = 31 * result + contentSelectedActive.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "SimpleListItemColors(" +
+            "background=$background, " +
+            "backgroundActive=$backgroundActive, " +
+            "backgroundSelected=$backgroundSelected, " +
+            "backgroundSelectedActive=$backgroundSelectedActive, " +
+            "content=$content, " +
+            "contentActive=$contentActive, " +
+            "contentSelected=$contentSelected, " +
+            "contentSelectedActive=$contentSelectedActive" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -63,6 +126,37 @@ public class SimpleListItemMetrics(
     public val selectionBackgroundCornerSize: CornerSize,
     public val iconTextGap: Dp,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SimpleListItemMetrics
+
+        if (innerPadding != other.innerPadding) return false
+        if (outerPadding != other.outerPadding) return false
+        if (selectionBackgroundCornerSize != other.selectionBackgroundCornerSize) return false
+        if (iconTextGap != other.iconTextGap) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = innerPadding.hashCode()
+        result = 31 * result + outerPadding.hashCode()
+        result = 31 * result + selectionBackgroundCornerSize.hashCode()
+        result = 31 * result + iconTextGap.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "SimpleListItemMetrics(" +
+            "innerPadding=$innerPadding, " +
+            "outerPadding=$outerPadding, " +
+            "selectionBackgroundCornerSize=$selectionBackgroundCornerSize, " +
+            "iconTextGap=$iconTextGap" +
+            ")"
+    }
+
     public companion object
 }
 

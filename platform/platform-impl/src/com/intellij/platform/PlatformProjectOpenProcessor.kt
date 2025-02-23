@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.checkTrustedState
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
@@ -416,6 +417,9 @@ suspend fun attachToProjectAsync(
   processor: ProjectAttachProcessor? = null,
   callback: ProjectOpenedCallback? = null
 ): Boolean {
+  if (!checkTrustedState(projectDir)) {
+    return false
+  }
   if (processor != null) {
     return attachImpl(processor, projectToClose, projectDir, callback)
   }

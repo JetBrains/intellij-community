@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.plist
 
-import java.util.*
-
 data class PListValue(val value: Any?, val type: PlistValueType) {
   val plist: Plist
     get() = when {
@@ -48,10 +46,6 @@ data class PListValue(val value: Any?, val type: PlistValueType) {
 
     fun real(value: Double?): PListValue {
       return value(value, PlistValueType.REAL)
-    }
-
-    fun date(value: Date?): PListValue {
-      return value(value, PlistValueType.DATE)
     }
 
     fun array(value: List<PListValue?>?): PListValue {

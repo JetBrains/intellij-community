@@ -49,6 +49,12 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
     }
   }
 
+  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = applyKt {
+    call("mavenLocal") {
+      assign("url", url)
+    }
+  }
+
   override fun generate(): String {
     return GroovyScriptBuilder().generate(generateTree())
   }

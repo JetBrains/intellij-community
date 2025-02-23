@@ -44,8 +44,7 @@ internal class RemoveExplicitTypeIntention :
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean = canExplicitTypeBeRemoved(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtDeclaration): Unit? = when {
+    override fun KaSession.prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnitType
         element is KtNamedFunction && element.isRecursive() -> false

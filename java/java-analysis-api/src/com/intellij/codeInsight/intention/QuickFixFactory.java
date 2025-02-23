@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -436,7 +436,12 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  public abstract @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement);
+  /**
+   * @param file ignored, can be null
+   * @param defaultElement switch default element
+   * @return fix to delete default element
+   */
+  public abstract @NotNull IntentionAction createDeleteDefaultFix(@Nullable PsiFile file, @NotNull PsiElement defaultElement);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 
@@ -516,4 +521,6 @@ public abstract class QuickFixFactory {
 
   @ApiStatus.Experimental
   public abstract @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiImplicitClass implicitClass);
+
+  public abstract @NotNull ModCommandAction createReplaceOnDemandImport(@NotNull PsiImportModuleStatement importModuleStatement, @NotNull @Nls String text);
 }

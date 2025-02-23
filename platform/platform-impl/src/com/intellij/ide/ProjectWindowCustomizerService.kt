@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.Service
@@ -26,8 +25,10 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
-import com.intellij.ui.*
+import com.intellij.ui.ColorHexUtil
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
@@ -54,18 +55,19 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
-private class ProjectWindowCustomizerIconCache(private val project: Project) {
+private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
   val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
-    val busConnection = project.messageBus.simpleConnect()
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+    val projectConnection = project.messageBus.connect(coroutineScope)
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    projectConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    appConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
+    projectConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
       override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
@@ -75,7 +77,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
     val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = size, name = project.name)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
 
@@ -372,11 +374,13 @@ class ProjectWindowCustomizerService : Disposable {
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
     val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
-      ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
+      it.text == project.name
+    } ?: ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
+      it.text == project.name
     }
     val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f
     val offset = projectComboBtn?.let {
-      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
+      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent.rootPane).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
     if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null

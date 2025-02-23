@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -271,7 +271,7 @@ public final class JavaIntroduceParameterObjectDelegate
         @Override
         public void fixUsage() throws IncorrectOperationException {
           final PsiClass psiClass = descriptor.getExistingClass();
-          for (PsiReference reference : ReferencesSearch.search(method)) {
+          for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
             final PsiElement place = reference.getElement();
             VisibilityUtil.escalateVisibility(psiClass, place);
             for (PsiMethod constructor : psiClass.getConstructors()) {

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.scratch
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchFromHereAction
+import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchFromHereAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

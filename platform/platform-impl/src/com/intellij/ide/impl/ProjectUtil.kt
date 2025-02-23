@@ -648,7 +648,7 @@ object ProjectUtil {
       runInAutoSaveDisabledMode {
         saveSettings(componentManager = project, forceSavingAllSettings = true)
       }
-      writeAction {
+      edtWriteAction {
         Disposer.dispose(project)
       }
       projectFile = file

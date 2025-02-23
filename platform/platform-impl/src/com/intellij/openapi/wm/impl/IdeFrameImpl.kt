@@ -70,6 +70,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
 
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null
+  private var boundsInitialized = false
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -255,6 +256,15 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @Suppress("OVERRIDE_DEPRECATION") // just for debugging, because all other methods delegate to this one
   override fun reshape(x: Int, y: Int, width: Int, height: Int) {
     super.reshape(x, y, width, height)
+    // Only start checking bounds after they first become sensible,
+    // because a frame always starts with zero width / height,
+    // and that would produce unnecessary error messages in the log.
+    if (!boundsInitialized) {
+      boundsInitialized = width > 0 || height > 0
+    }
+    if (boundsInitialized) {
+      checkForNonsenseBounds("reshape", width, height)
+    }
     IDE_FRAME_EVENT_LOG.traceThrowable {
       Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }

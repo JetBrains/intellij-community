@@ -15,7 +15,7 @@ import com.intellij.microservices.url.references.UrlPathContext
 import com.intellij.microservices.url.references.resolveTargets
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
@@ -125,7 +125,7 @@ class ClientGeneratorOpenInScratchService(private val project: Project, private 
     val language = (fileType as? LanguageFileType)?.language
 
     val fileService = ScratchFileService.getInstance()
-    val scratchFile = writeAction {
+    val scratchFile = edtWriteAction {
       runCatching {
         fileService.findFile(RootType.findById("scratches"), fileName, ScratchFileService.Option.create_new_always)
       }.getOrNull()

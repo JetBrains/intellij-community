@@ -3,10 +3,12 @@ package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.dto.GraphQLFragment
 
+@GraphQLFragment("/graphql/fragment/reactions.graphql")
 interface GHReactable {
   val reactions: ReactionConnection
 
-  class ReactionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHReaction>)
+  class ReactionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHReaction> = listOf())
     : GraphQLConnectionDTO<GHReaction>(pageInfo, nodes)
 }

@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,7 +103,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
       if (field == startField ||
           (!field.hasModifierProperty(PsiModifier.STATIC) &&
            field.hasModifierProperty(PsiModifier.FINAL) &&
-           !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) &&
+           !ControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) &&
            (constructors.isEmpty() || ContainerUtil.exists(constructors, ctr -> !isFieldAssignedInConstructor(field, ctr))))) {
         fields.add(field);
       }

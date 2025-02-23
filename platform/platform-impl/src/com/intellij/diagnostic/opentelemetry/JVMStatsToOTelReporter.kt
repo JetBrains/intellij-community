@@ -45,16 +45,6 @@ private class JVMStatsToOTelReporter : ProjectActivity {
       val ramPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.ramPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
       val fileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.fileMappingsRamBytes").ofLongs().buildObserver()
 
-      val avgRamGauge = otelMeter.gaugeBuilder("MEM.avgRamBytes").ofLongs().buildObserver()
-      val avgRamMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamMinusFileMappingsBytes").ofLongs().buildObserver()
-      val avgRamPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
-      val avgFileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.avgFileMappingsRamBytes").ofLongs().buildObserver()
-      val avgMemUsageProvider = if (ApplicationManagerEx.isInIntegrationTest()) {
-        AvgMemoryUsageProvider(cs)
-      } else {
-        null
-      }
-
       //JVM memory metrics
       val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
       val committedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.committedHeapBytes").ofLongs().buildObserver()
@@ -101,13 +91,6 @@ private class JVMStatsToOTelReporter : ProjectActivity {
             ramMinusFileMappingsGauge.record(memStats.ramMinusFileMappings)
             ramPlusSwapMinusFileMappingsGauge.record(memStats.ramPlusSwapMinusFileMappings)
             fileMappingsRamGauge.record(memStats.fileMappingsRam)
-          }
-          val avgMemStats = avgMemUsageProvider?.getAvgCurrentProcessMemoryStats()
-          if (avgMemStats != null) {
-            avgRamGauge.record(avgMemStats.ram)
-            avgRamMinusFileMappingsGauge.record(avgMemStats.ramMinusFileMappings)
-            avgRamPlusSwapMinusFileMappingsGauge.record(avgMemStats.ramPlusSwapMinusFileMappings)
-            avgFileMappingsRamGauge.record(avgMemStats.fileMappingsRam)
           }
 
           //Memory (heap/off-heap):
@@ -156,7 +139,6 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         },
 
         ramGauge, ramMinusFileMappingsGauge, ramPlusSwapMinusFileMappingsGauge, fileMappingsRamGauge,
-        avgRamGauge, avgRamMinusFileMappingsGauge, avgRamPlusSwapMinusFileMappingsGauge, avgFileMappingsRamGauge,
 
         usedHeapMemoryGauge, committedHeapMemoryGauge, maxHeapMemoryGauge,
         usedNativeMemoryGauge, totalDirectByteBuffersGauge,
@@ -171,6 +153,27 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         totalSafepointCounter, totalTimeToSafepointsCounterMs, totalTimeAtSafepointsCounterMs
       )
 
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        val avgRamGauge = otelMeter.gaugeBuilder("MEM.avgRamBytes").ofLongs().buildObserver()
+        val avgRamMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamMinusFileMappingsBytes").ofLongs().buildObserver()
+        val avgRamPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
+        val avgFileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.avgFileMappingsRamBytes").ofLongs().buildObserver()
+        val avgMemUsageProvider = AvgMemoryUsageProvider(cs)
+
+        otelMeter.batchCallback(
+          {
+            val avgMemStats = avgMemUsageProvider.getAvgCurrentProcessMemoryStats()
+            if (avgMemStats != null) {
+              avgRamGauge.record(avgMemStats.ram)
+              avgRamMinusFileMappingsGauge.record(avgMemStats.ramMinusFileMappings)
+              avgRamPlusSwapMinusFileMappingsGauge.record(avgMemStats.ramPlusSwapMinusFileMappings)
+              avgFileMappingsRamGauge.record(avgMemStats.fileMappingsRam)
+            }
+          },
+          avgRamGauge, avgRamMinusFileMappingsGauge, avgRamPlusSwapMinusFileMappingsGauge, avgFileMappingsRamGauge,
+        )
+      }
+
       //We intentionally don't unregister batchCallback registered above -- because we register OTel.shutdown()
       // in a ShutDownTracker, and expect it to squeeze the last reading from all Metrics registered at the very
       // end of app lifecycle. If we unregister the callback here -- it prevents this batchCallback from participate
@@ -183,11 +186,12 @@ private class JVMStatsToOTelReporter : ProjectActivity {
   private class AvgMemoryUsageProvider(cs: CoroutineScope) {
     @Volatile
     private var counters: Counters = Counters()
+    private val provider = PlatformMemoryUtil.getInstance().newMemoryStatsProvider()
 
     init {
       cs.launch(CoroutineName("JVMStatsToOTelReporter.AvgMemoryUsageProvider")) {
         while (isActive) {
-          val memStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats()
+          val memStats = provider.getCurrentProcessMemoryStats()
           if (memStats != null) {
             val prev = counters
             counters = Counters(

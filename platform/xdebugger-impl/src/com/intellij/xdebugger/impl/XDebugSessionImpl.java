@@ -42,6 +42,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
@@ -384,6 +385,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     assertSessionTabInitialized();
     assert mySessionTab != null;
     return mySessionTab.getUi();
+  }
+
+  @Override
+  public boolean isMixedMode() {
+    return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
   }
 
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
@@ -928,6 +934,10 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
+    if (handlePositionReaching(suspendContext, attract)) {
+      return;
+    }
+
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -1072,7 +1082,11 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    ProcessHandler processHandler = myDebugProcess == null ? null : myDebugProcess.getProcessHandler();
+    stop(myDebugProcess);
+  }
+
+  private void stop(XDebugProcess process) {
+    ProcessHandler processHandler = process == null ? null : process.getProcessHandler();
     if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
@@ -1203,5 +1217,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     else {
       XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
+  }
+
+  private boolean handlePositionReaching(@NotNull XSuspendContext context, boolean attract) {
+    return isMixedMode() && ((XMixedModeCombinedDebugProcess)myDebugProcess).handlePositionReached(context, attract);
   }
 }

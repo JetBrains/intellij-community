@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
@@ -30,7 +30,7 @@ class KotlinInlineAnonymousFunctionProcessor(
     editor: Editor?,
     project: Project,
 ) : AbstractKotlinDeclarationInlineProcessor<KtFunction>(function, editor, project) {
-    override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
+    protected override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         performRefactoring(usage, editor)

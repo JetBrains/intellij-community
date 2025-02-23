@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.ui
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Inlay renderer with an empty width and the height specified by [heightSupplier].
@@ -11,7 +12,8 @@ import com.intellij.util.ui.JBUI
  *
  * @param heightSupplier should return unscaled height if the inlay.
  */
-internal class VerticalSpaceInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
+@ApiStatus.Internal
+class VerticalSpaceInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
   /**
    * @param height unscaled height of the inlay.
    */

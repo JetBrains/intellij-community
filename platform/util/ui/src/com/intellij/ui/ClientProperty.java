@@ -12,7 +12,6 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.List;
 
 public final class ClientProperty {
   private ClientProperty() { }

@@ -59,8 +59,7 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
         return listOf(TextRange(enumKeyword.startOffset, nameIdentifier.endOffset).relativeTo(element))
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtClass): Context? {
+    override fun KaSession.prepareContext(element: KtClass): Context? {
         val enumClassName = element.name ?: return null
         if (enumClassName.isEmpty()) return null
 

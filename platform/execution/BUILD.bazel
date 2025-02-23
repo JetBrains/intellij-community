@@ -24,7 +24,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/util/concurrency",
     "//platform/projectModel-api:projectModel",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/analysis-api:analysis",
     "@lib//:kotlinx-coroutines-core",

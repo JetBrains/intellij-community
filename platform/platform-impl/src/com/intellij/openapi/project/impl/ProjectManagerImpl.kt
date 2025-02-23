@@ -624,7 +624,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     try {
       coroutineScope {
-        val initHelper = ProjectInitHelper(this, frameAllocator)
+        val initScope = this
+        val initHelper = ProjectInitHelper(initScope, frameAllocator)
         val backgroundJob = launch {
           frameAllocator.runInBackground(initHelper)
         }
@@ -632,6 +633,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         launch {
           launch {
             frameAllocator.run(initHelper)
+          }.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              initScope.cancel(cause)
+            }
           }
 
           launch {
@@ -690,6 +695,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               runInitProjectActivities(project)
             }
             initHelper.projectInitTimestamp = System.nanoTime()
+          }.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              initScope.cancel(cause)
+            }
           }
         }.invokeOnCompletion {
           backgroundJob.cancel()
@@ -1345,7 +1354,7 @@ private suspend fun initProject(
     try {
       withContext(NonCancellable) {
         project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
-        writeAction {
+        edtWriteAction {
           Disposer.dispose(project)
         }
       }
@@ -1475,7 +1484,7 @@ interface ProjectServiceContainerCustomizer {
  *
  * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+internal suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   val locatedProject = TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null)
   if (TrustedProjects.isProjectTrusted(locatedProject)) {
     // the trusted state of this project path is already known => proceed with opening

@@ -156,7 +156,9 @@ elements:
                   requirement:
                     required: yes
                   #language=Markdown
-                  description: A major version in a special number format.
+                  description: |
+                    A major version in a specific number format, for example, `20242` for the 2024.2 major release.<br/>
+                    See [`release-version` constraints](https://plugins.jetbrains.com/docs/marketplace/versioning-of-paid-plugins.html#release-version-constraints) for more details.
               - attribute:
                   name: optional
                   requirement:
@@ -799,12 +801,15 @@ elements:
                     - attribute:
                         name: id
                         requirement:
-                          required: yes
+                          required: no
+                          details:
+                            - defaults to the action class short name if not specified
                         #language=Markdown
                         description: |
                           A unique action identifier.
-                          The action identifier must be unique between different plugins.
-                          Thus, it is recommended to prepend it with the value of the plugin [`<id>`](#element:idea-plugin__id).
+                          It is recommended to specify the `id` attribute explicitly.<br/>
+                          The action identifier must be unique across different plugins.
+                          To ensure uniqueness, consider prepending it with the value of the plugin's [`<id>`](#element:idea-plugin__id).
                     - attribute:
                         name: class
                         requirement:

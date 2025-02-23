@@ -186,15 +186,15 @@ value class Index private constructor(
   @Suppress("IMPLICIT_CAST_TO_ANY")
   fun <T> queryIndex(indexQuery: IndexQuery<T>): T =
     when (indexQuery) {
-      is IndexQuery.Column<*> -> column(indexQuery)
+      is IndexQuery.Column<*> -> column(indexQuery as IndexQuery.Column<Any>)
       is IndexQuery.Entity -> entity(indexQuery)
-      is IndexQuery.GetMany<*> -> getMany(indexQuery)
-      is IndexQuery.GetOne<*> -> getOne(indexQuery)
-      is IndexQuery.LookupMany<*> -> lookupMany(indexQuery)
-      is IndexQuery.LookupUnique<*> -> lookupUnique(indexQuery)
+      is IndexQuery.GetMany<*> -> getMany(indexQuery as IndexQuery.GetMany<Any>)
+      is IndexQuery.GetOne<*> -> getOne(indexQuery as IndexQuery.GetOne<Any>)
+      is IndexQuery.LookupMany<*> -> lookupMany(indexQuery as IndexQuery.LookupMany<Any>)
+      is IndexQuery.LookupUnique<*> -> lookupUnique(indexQuery as IndexQuery.LookupUnique<Any>)
       is IndexQuery.RefsTo -> refsTo(indexQuery)
       is IndexQuery.All -> all(indexQuery)
-      is IndexQuery.Contains<*> -> contains(indexQuery)
+      is IndexQuery.Contains<*> -> contains(indexQuery as IndexQuery.Contains<Any>)
     } as T
 
   data class Partition internal constructor(

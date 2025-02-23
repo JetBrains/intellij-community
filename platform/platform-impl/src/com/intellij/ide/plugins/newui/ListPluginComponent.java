@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.internal.inspector.PropertyBean;
@@ -27,6 +28,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -53,6 +55,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
+
 @ApiStatus.Internal
 public final class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
@@ -67,7 +71,9 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private final boolean myIsEssential;
+  private final boolean myIsNotFreeInFreeMode;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private final @Nullable IdeaPluginDescriptor myUltimatePlugin;
   private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
@@ -75,7 +81,7 @@ public final class ListPluginComponent extends JPanel {
   public IdeaPluginDescriptor myUpdateDescriptor;
   IdeaPluginDescriptor myInstalledDescriptorForMarketplace;
 
-  private final JLabel myNameComponent = new JLabel();
+  private final JBLabel myNameComponent = new JBLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
   JButton myRestartButton;
@@ -113,6 +119,9 @@ public final class ListPluginComponent extends JPanel {
                          : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
+    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(plugin.getPluginId(), idMap);
+    myUltimatePlugin = idMap.get(PluginManagerCore.ULTIMATE_PLUGIN_ID);
     pluginModel.addComponent(this);
 
     setOpaque(true);
@@ -124,6 +133,7 @@ public final class ListPluginComponent extends JPanel {
     myLayout.setIconComponent(myIconComponent);
 
     myNameComponent.setText(myPlugin.getName());
+    updateNameComponentIcon();
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
     createTag();
@@ -348,7 +358,7 @@ public final class ListPluginComponent extends JPanel {
 
     myLayout.addButtonComponent(myEnableDisableButton);
     myEnableDisableButton.setOpaque(false);
-    myEnableDisableButton.setEnabled(!myIsEssential);
+    myEnableDisableButton.setEnabled(!myIsEssential && !myIsNotFreeInFreeMode);
     myEnableDisableButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"));
   }
@@ -650,14 +660,15 @@ public final class ListPluginComponent extends JPanel {
   public void updateErrors() {
     IdeaPluginDescriptor plugin = getDescriptorForActions();
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getErrors(plugin);
-    boolean hasErrors = !errors.isEmpty();
-    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable);
+    boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
+    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
+    updateNameComponentIcon();
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null || myAfterUpdate);
     }
 
-    if (hasErrors) {
+    if (hasErrors || myIsNotFreeInFreeMode) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
       if (myErrorPanel == null) {
@@ -670,8 +681,15 @@ public final class ListPluginComponent extends JPanel {
         myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
-      myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
-
+      if (!myIsNotFreeInFreeMode) {
+        myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
+      }
+      else {
+        HelpTooltip helpTooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
+        if (helpTooltip != null) {
+          helpTooltip.installOn(this);
+        }
+      }
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);
       }
@@ -683,11 +701,16 @@ public final class ListPluginComponent extends JPanel {
     }
 
     if (myLicensePanel != null) {
-      myLicensePanel.setVisible(!hasErrors);
+      myLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
     if (myUpdateLicensePanel != null) {
-      myUpdateLicensePanel.setVisible(!hasErrors);
+      myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
+  }
+
+  private void updateNameComponentIcon() {
+    Icon icon = myIsNotFreeInFreeMode ? AllIcons.Nodes.Padlock : null;
+    myNameComponent.setIcon(icon);
   }
 
   private void updateIcon(boolean errors, boolean disabled) {
@@ -880,6 +903,10 @@ public final class ListPluginComponent extends JPanel {
 
   public boolean isMarketplace() {
     return myMarketplace;
+  }
+
+  boolean isNotFreeInFreeMode() {
+    return myIsNotFreeInFreeMode;
   }
 
   public boolean isEssential() {

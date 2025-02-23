@@ -15,6 +15,7 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
@@ -37,9 +38,13 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
   protected abstract suspend fun navigateToSource(project: Project, value: XValue): Boolean
 
   companion object {
+    private val NAVIGATION_TIMEOUT = 10.seconds
+
     /**
      * Starts computing [XSourcePosition] by [navigationRequest], when it is calculated, navigates to it.
      * [XSourcePosition] has to be returned to the [XNavigatable] callback, otherwise the suspend function will be stuck.
+     *
+     * @see NAVIGATION_TIMEOUT
      */
     @ApiStatus.Internal
     suspend fun navigateByNavigatable(project: Project, navigationRequest: (XNavigatable) -> Unit): Boolean {
@@ -49,7 +54,10 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
       }
       navigationRequest(navigatable)
 
-      val sourcePosition = xSourceDeferred.await() ?: return false
+      val sourcePosition = withTimeoutOrNull(NAVIGATION_TIMEOUT) {
+        xSourceDeferred.await()
+      } ?: return false
+
       withContext(Dispatchers.EDT) {
         sourcePosition.createNavigatable(project).navigate(true)
       }

@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,8 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public abstract class AbstractLogProcessor extends AbstractClassProcessor {
-  enum LoggerInitializerParameter {
+  @ApiStatus.Internal
+  public enum LoggerInitializerParameter {
     TYPE,
     NAME,
     TOPIC,

@@ -42,15 +42,6 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
 
   private @Nullable ProjectViewDirectoryExpandDurationMeasurer expandMeasurer;
 
-  /**
-   * @deprecated use another constructor instead
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  protected ProjectViewTree(Project project, TreeModel model) {
-    this(model);
-  }
-
   public ProjectViewTree(TreeModel model) {
     super((TreeModel)null);
 

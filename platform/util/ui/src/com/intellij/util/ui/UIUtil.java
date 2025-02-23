@@ -315,17 +315,6 @@ public final class UIUtil {
 
   /**
    * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
-   * @return the property value from the specified component or {@code null}
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
-  }
-
-  /**
-   * @param component a Swing component that may hold a client property value
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Component component, @NotNull Class<T> type) {
@@ -994,14 +983,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Aqua Look-n-Feel is not supported anymore
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
-  }
-
-  /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated(forRemoval = true)
@@ -1040,11 +1021,6 @@ public final class UIUtil {
 
   public static boolean isUnderIntelliJLaF() {
     return StartupUiUtil.isUnderIntelliJLaF();
-  }
-
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {

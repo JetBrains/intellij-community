@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -31,10 +31,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -43,6 +40,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,6 +60,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.*;
+import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -1048,7 +1047,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement) {
+  public @NotNull IntentionAction createDeleteDefaultFix(@Nullable PsiFile file, @NotNull PsiElement defaultElement) {
     return new UnnecessaryDefaultInspection.DeleteDefaultFix().asIntention();
   }
 
@@ -1149,5 +1148,30 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiImplicitClass implicitClass) {
     return new AddMainMethodFix(implicitClass).asIntention();
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReplaceOnDemandImport(@NotNull PsiImportModuleStatement importModuleStatement, @NotNull @Nls String text) {
+    return new ReplaceOnDemandImportAction(importModuleStatement, text);
+  }
+
+  private static class ReplaceOnDemandImportAction extends PsiUpdateModCommandAction<PsiImportModuleStatement> {
+    @NlsSafe private final String text;
+
+    private ReplaceOnDemandImportAction(PsiImportModuleStatement element, @NlsSafe String text) {
+      super(element);
+      this.text = text;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return text;
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiImportModuleStatement element, @NotNull ModPsiUpdater updater) {
+      element = updater.getWritable(element);
+      ReplaceOnDemandImportIntention.replaceOnDemand(element);
+    }
   }
 }

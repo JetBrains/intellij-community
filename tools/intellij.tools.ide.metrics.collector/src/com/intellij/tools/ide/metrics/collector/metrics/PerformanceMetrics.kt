@@ -3,7 +3,6 @@ package com.intellij.tools.ide.metrics.collector.metrics
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
 import java.time.OffsetDateTime
-import kotlin.time.Duration
 
 data class PerformanceMetrics(
   val buildNumber: BuildNumber,

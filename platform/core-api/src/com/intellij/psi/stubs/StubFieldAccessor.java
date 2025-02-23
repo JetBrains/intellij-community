@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
-final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
-  final String externalId;
+@ApiStatus.Internal
+public final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
+  public final String externalId;
   private final Field myField;
   private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 

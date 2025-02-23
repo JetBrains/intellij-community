@@ -82,11 +82,11 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @ApiStatus.Internal
   public static void switchLafAndUpdateUI(@NotNull LafManager lafManager,
-                                          @NotNull UIThemeLookAndFeelInfo lf,
+                                          @NotNull UIThemeLookAndFeelInfo laf,
                                           boolean async,
                                           boolean force,
                                           boolean lockEditorScheme) {
-    QuickChangeLookAndFeelService.switchLafAndUpdateUI(lafManager, lf, async, force, lockEditorScheme);
+    QuickChangeLookAndFeelService.switchLafAndUpdateUI(lafManager, laf, async, force, lockEditorScheme);
   }
 
   @Override

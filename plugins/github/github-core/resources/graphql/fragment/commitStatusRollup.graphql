@@ -1,0 +1,30 @@
+fragment commitStatusRollup on StatusCheckRollup {
+  contexts(first: $pageSize, after: $cursor) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      __typename
+      ... on CheckRun {
+        checkSuite {
+          workflowRun {
+            workflow {
+              name
+            }
+          }
+        }
+        name
+        title
+        status
+        conclusion
+        url
+      }
+      ... on StatusContext {
+        context
+        description
+        state
+        targetUrl
+      }
+    }
+  }
+}

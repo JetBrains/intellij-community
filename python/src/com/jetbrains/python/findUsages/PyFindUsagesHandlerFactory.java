@@ -44,8 +44,8 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
         }
 
         @Override
-        public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-          return base.isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
+        protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+          return FindUsagesHelper.isSearchForTextOccurrencesAvailable(base, psiElement, isSingleFile);
         }
 
         @Override
@@ -92,7 +92,7 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
   /**
    * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
    */
-  static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
     PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
     }

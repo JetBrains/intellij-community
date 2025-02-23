@@ -12,6 +12,7 @@ import fleet.util.logging.KLogger
 import fleet.util.logging.logger
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.IntOpenHashSet
+import fleet.util.computeIfAbsentShim
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
@@ -137,7 +138,7 @@ private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartit
     val memoizedEIDs = HashMap<UID, EID>()
     applySnapshotNew(snapshotWithPartitions.snapshot) { uid ->
       val partition = snapshotWithPartitions.partitions[uid]!!
-      memoizedEIDs.computeIfAbsent(uid) { EidGen.freshEID(partition) }
+      memoizedEIDs.computeIfAbsentShim(uid) { EidGen.freshEID(partition) }
     }
 
     val attrIdents = snapshotWithPartitions.snapshot.entities.flatMapTo(HashSet()) { e -> e.attrs.keys }

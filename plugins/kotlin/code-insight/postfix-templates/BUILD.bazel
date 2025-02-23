@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
 )
@@ -65,6 +64,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-code-insight-live-templates-k2",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-code-insight-live-templates-k2_test_lib",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",

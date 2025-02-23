@@ -116,22 +116,34 @@ class IjentWslNioFsToggleStrategy(
   }
 
   fun unregisterAll() {
+    val service = EelNioBridgeService.getInstanceSync()
+
     enabledInDistros.forEachGuaranteed { distro ->
-      val descriptor = WslEelDescriptor(distro)
-      val service = EelNioBridgeService.getInstanceSync()
-      service.deregister(descriptor)
+      service.deregister(WslEelDescriptor(distro))
     }
   }
 }
 
-private fun FileSystemProvider.getLocalFileSystem(): FileSystem =
-  getFileSystem(URI.create("file:/"))
+private fun FileSystemProvider.getLocalFileSystem(): FileSystem = getFileSystem(URI.create("file:/"))
 
 private val LOG = logger<IjentWslNioFsToggleStrategy>()
 
-private fun recomputeEel(distro: WSLDistribution, action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?) {
+private const val wslLegacyPrefix = "wsl$"
+private const val wslPrefix = "wsl.localhost"
+
+private val WSLDistribution.roots: Set<String>
+  get() = getWindowsPath("/").let { base ->
+    setOf(base, base.replace(wslPrefix, wslLegacyPrefix), base.replace(wslLegacyPrefix, wslPrefix))
+  }
+
+private fun recomputeEel(
+  distro: WSLDistribution,
+  action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?,
+) {
   val service = EelNioBridgeService.getInstanceSync()
-  val localRoot = distro.getWindowsPath("/")
   val descriptor = WslEelDescriptor(distro)
-  service.register(localRoot, descriptor, distro.id, false, false, action)
+
+  distro.roots.forEachGuaranteed { localRoot ->
+    service.register(localRoot, descriptor, distro.id, false, false, action)
+  }
 }

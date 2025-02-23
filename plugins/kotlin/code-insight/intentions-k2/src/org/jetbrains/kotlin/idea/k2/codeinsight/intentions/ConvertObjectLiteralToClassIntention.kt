@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -60,7 +61,7 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
             project,
             KotlinBundle.message("progress.title.analyze.extraction.data")
         ) {
-            val classNames =
+            val classNames = readAction {
                 analyze(element) {
                     val validator: (String) -> Boolean = { nameValidator.validate(it) }
 
@@ -72,16 +73,19 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
                         }
                         .takeIf { it.isNotEmpty() } ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
                 }
+            }
 
-            val targetSibling = element.parentsWithSelf.first { it.parent == targetParent }
-            val hasMemberReference = containingClass?.body?.allChildren?.any {
-                (it is KtProperty || it is KtNamedFunction) &&
-                        ReferencesSearch.search(it, element.useScope).findFirst() != null
-            } ?: false
+            readAction {
+                val targetSibling = element.parentsWithSelf.first { it.parent == targetParent }
+                val hasMemberReference = containingClass?.body?.allChildren?.any {
+                    (it is KtProperty || it is KtNamedFunction) &&
+                            ReferencesSearch.search(it, element.useScope).findFirst() != null
+                } ?: false
 
-            val data = ExtractionData(element.containingKtFile, element.toRange(), targetSibling)
+                val data = ExtractionData(element.containingKtFile, element.toRange(), targetSibling)
 
-            Holder(classNames, hasMemberReference, data)
+                Holder(classNames, hasMemberReference, data)
+            }
         }
 
         val className = holder.classNames.first()
@@ -110,7 +114,11 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
                     val descriptor = runWithModalProgressBlocking(
                         project,
                         KotlinBundle.message("progress.title.analyze.extraction.data")
-                    ) { descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className)) }
+                    ) {
+                        readAction {
+                            descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
+                        }
+                    }
                     doRefactor(
                         ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
                         onFinish

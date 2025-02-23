@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.textmate.joni` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "joni",
+  module_name = "intellij.textmate.joni",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/textmate/core",
+    "@lib//:joni",
+    "@lib//:slf4j-api",
+  ]
+)
+
+jvm_library(
+  name = "joni_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":joni"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/textmate/core",
+    "//plugins/textmate/core:core_test_lib",
+    "@lib//:joni",
+    "@lib//:slf4j-api",
+    "@lib//:junit5",
+  ]
+)
+
+jvm_test(
+  name = "joni_test",
+  runtime_deps = [":joni_test_lib"]
+)
+### auto-generated section `build intellij.textmate.joni` end

@@ -576,7 +576,8 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
 
     DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics stat = firstStatistics.get();
     assertNotNull(stat);
-    assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')", stat.firstAnnotation.toString());
+    assertEquals("comment", stat.firstAnnotation.getMessage());
+    assertEquals(HighlightSeverity.INFORMATION, stat.firstAnnotation.getSeverity());
     assertSame(stat.firstAnnotation, stat.lastAnnotation);
     assertTrue(stat.annotatorStartStamp > 0);
     assertTrue(stat.firstAnnotationStamp >= stat.annotatorStartStamp);

@@ -7,7 +7,6 @@ import fleet.util.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.reflect.KClass
 
 /**
  * [f] will be invoked each time when it's return value may be changed.
@@ -98,7 +97,7 @@ suspend fun waitFor(p: () -> Boolean) {
   val result = queryAsFlow { p() }.firstOrNull { it }
   // query could be terminated before our coroutine, null means we are in shutdown
   if (result == null) {
-    throw CancellationException()
+    throw CancellationException("Query was terminated")
   }
 }
 
@@ -108,7 +107,7 @@ private object Logger {
 
 suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long = 30000L, p: () -> T?): T {
   return waitForNotNullWithTimeoutOrNull(timeMillis, p) ?: run {
-    Logger.logger.error(Throwable("Timed out waiting for ${p.javaClass} to return not null, $timeMillis ms"))
+    Logger.logger.error(Throwable("Timed out waiting for ${p::class} to return not null, $timeMillis ms"))
     throw CancellationException("$p is null, after ${timeMillis}ms")
   }
 }

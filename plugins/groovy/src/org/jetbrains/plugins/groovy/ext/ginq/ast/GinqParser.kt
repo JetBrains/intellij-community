@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.openapi.util.Key
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
-fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
+internal fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
   return getTopParsedGinqInfo(root).second?.asSafely<GinqExpression>()
 }
 
@@ -35,7 +35,7 @@ fun getTopShutdownGinq(root: GinqRootPsiElement): GinqShutdown? {
   return getTopParsedGinqInfo(root).second?.asSafely<GinqShutdown>()
 }
 
-fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
+internal fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
   val top = getTopParsedGinqTree(root) ?: return null
   return ginqParents(root, top).firstOrNull()
 }
@@ -357,7 +357,7 @@ internal fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORM
 
 internal fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
 
-fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
+internal fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
     if (parent == root) {
       yield(topExpr)
@@ -370,7 +370,7 @@ fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): S
 
 typealias ParsingError = Pair<PsiElement, @Nls String>
 
-fun getOrdering(expr: GrExpression): Ordering {
+internal fun getOrdering(expr: GrExpression): Ordering {
   if (expr is GrBinaryExpression && expr.operationTokenType == KW_IN) {
     val rightOperand = expr.rightOperand
     val (orderKw, nullsKw) = if (rightOperand is GrReferenceExpression) {

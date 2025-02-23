@@ -18,7 +18,7 @@ jvm_library(
     "//plugins/dev/intellij.dev.codeInsight:codeInsight",
     "//java/debugger/openapi:java-debugger",
     "//platform/core-api:core",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",

@@ -32,6 +32,10 @@ public final class IgnoredBeanFactory {
   }
 
   public static @NotNull IgnoredFileBean withMask(@NotNull @NonNls String mask) {
-    return new IgnoredFileBean(mask);
+    return new IgnoredFileBean(mask, null);
+  }
+
+  public static @NotNull IgnoredFileBean withMask(@NotNull @NonNls String mask, @NotNull String path) {
+    return new IgnoredFileBean(mask, path);
   }
 }

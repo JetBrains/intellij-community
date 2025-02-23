@@ -75,7 +75,7 @@ public final class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key declarations, in .env files, Dockerfile, docker-compose.yml, etc
      */
-    public static @NotNull PsiElement[] getKeyDeclarations(Project project, String key) {
+    public static PsiElement @NotNull [] getKeyDeclarations(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
         List<PsiElement> secondaryTargets = new ArrayList<>();
 
@@ -105,8 +105,8 @@ public final class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key usages, like getenv('KEY')
      */
-    public static @NotNull PsiElement[] getKeyUsages(Project project, String key) {
-        List<PsiElement> targets = new ArrayList<>();
+    public static PsiElement @NotNull [] getKeyUsages(Project project, String key) {
+        Set<PsiElement> targets = new HashSet<>();
 
         PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 

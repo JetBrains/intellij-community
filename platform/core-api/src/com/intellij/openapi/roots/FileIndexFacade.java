@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Provides information about which part of the project configuration a file belongs. It's supposed to be used only inside a stripped 
@@ -37,6 +38,11 @@ public abstract class FileIndexFacade {
   public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
   public abstract boolean isExcludedFile(@NotNull VirtualFile file);
   public abstract boolean isUnderIgnored(@NotNull VirtualFile file);
+  
+  @ApiStatus.Internal
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
+    return isInSource(file);
+  }
 
   public abstract @Nullable Module getModuleForFile(@NotNull VirtualFile file);
 

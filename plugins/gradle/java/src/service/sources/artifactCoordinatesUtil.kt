@@ -6,6 +6,7 @@ package org.jetbrains.plugins.gradle.service.sources
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.function.Predicate
 
@@ -22,6 +23,7 @@ fun LibraryOrderEntry.getArtifactCoordinates(): String? {
   }
 }
 
+@VisibleForTesting
 fun parseArtifactCoordinates(artifactCoordinates: String, artifactIdChecker: Predicate<String>): String {
   val rawCoordinates = artifactCoordinates.split(":").let {
     when {

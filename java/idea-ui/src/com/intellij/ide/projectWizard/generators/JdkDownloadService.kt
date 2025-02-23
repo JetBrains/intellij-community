@@ -2,7 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -60,7 +60,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
   fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
     return scheduleDownloadJdk(sdkDownloadTask) {
-      writeAction {
+      edtWriteAction {
         ProjectRootManager.getInstance(project).projectSdk = it
       }
     }

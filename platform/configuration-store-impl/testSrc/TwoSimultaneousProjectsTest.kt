@@ -2,7 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.Module
@@ -41,13 +41,13 @@ class TwoSimultaneousProjectsTest {
       testFixture(name) {
         val project = this@persistentModuleFixture.init()
         val manager = ModuleManager.getInstance(project)
-        val module = writeAction {
+        val module = edtWriteAction {
           val projectDir = project.guessProjectDir()?.toNioPath() ?: throw RuntimeException("Cannot guess project dir for $project")
           assumeThat(projectDir).isNotNull().exists()
           manager.newModule(projectDir.resolve("$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"), "")
         }
         initialized(module) {
-          writeAction {
+          edtWriteAction {
             manager.disposeModule(module)
           }
         }
@@ -61,7 +61,7 @@ class TwoSimultaneousProjectsTest {
     val originalModuleAFile = checkModuleAndGetFile(moduleA)
     val originalModuleBFile = checkModuleAndGetFile(moduleB)
     val newName = "$SHARED_NAME.v2"
-    writeAction {
+    edtWriteAction {
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(originalModuleAFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     }
     assertModuleFileRenamed(moduleA, newName, originalModuleAFile)

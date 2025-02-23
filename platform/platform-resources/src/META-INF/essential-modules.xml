@@ -17,10 +17,12 @@
     <module name="intellij.platform.clouds"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.serviceView"/>
-
-    <module name="intellij.platform.vcs.impl.backend"/>
-    <module name="intellij.platform.vcs.impl.frontend"/>
-    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.searchEverywhere.backend"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.editor.backend"/>
+    <module name="intellij.platform.editor.frontend"/>
 
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
@@ -31,5 +33,9 @@
     <module name="intellij.platform.frontend"/>
 
     <module name="intellij.platform.inline.completion"/>
+
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.recentFiles.backend"/>
   </content>
 </idea-plugin>

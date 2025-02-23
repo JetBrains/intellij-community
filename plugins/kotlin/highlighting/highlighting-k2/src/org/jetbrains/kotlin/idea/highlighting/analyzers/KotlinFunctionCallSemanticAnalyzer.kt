@@ -47,18 +47,16 @@ internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, s
 
     private fun highlightCallExpression(expression: KtCallExpression) {
         val callee = expression.calleeExpression ?: return
+        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
+
         with(session) {
             val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
-            if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
             val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
                 ?: getDefaultHighlightInfoTypeForCall(call)
                 ?: return
             holder.add(HighlightingFactory.highlightName(callee, highlightInfoType)?.create())
         }
     }
-
-    private fun KaSession.getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KaCall): HighlightInfoType? =
-        KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(callee, call) }
 
     private fun getDefaultHighlightInfoTypeForCall(call: KaCall): HighlightInfoType? {
         if (call !is KaSimpleFunctionCall) return null
@@ -86,5 +84,11 @@ internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, s
     companion object {
         private val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID =
             CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
+
+        internal fun KaSession.getHighlightInfoTypeForCallFromExtension(expression: KtExpression, call: KaCall): HighlightInfoType? {
+            val highlightInfoType =
+                KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(expression, call) }
+            return highlightInfoType
+        }
     }
 }

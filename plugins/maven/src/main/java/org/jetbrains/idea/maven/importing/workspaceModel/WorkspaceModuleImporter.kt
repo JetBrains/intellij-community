@@ -108,7 +108,7 @@ internal class WorkspaceModuleImporter(
     moduleEntity: ModuleEntity,
     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
   ) {
-    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext, workspaceConfigurators)
+    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext, workspaceConfigurators, project)
     val outputFolders = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
                                                                stats)
 

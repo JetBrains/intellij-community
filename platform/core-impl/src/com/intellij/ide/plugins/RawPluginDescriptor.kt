@@ -18,6 +18,9 @@ class RawPluginDescriptor {
 
   @JvmField internal var version: String? = null
   @JvmField internal var sinceBuild: String? = null
+
+  @Deprecated("Deprecated since 2025.1, the value is disregarded if its major part is at least 243. " +
+              "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
   @JvmField internal var untilBuild: String? = null
 
   @JvmField var `package`: String? = null

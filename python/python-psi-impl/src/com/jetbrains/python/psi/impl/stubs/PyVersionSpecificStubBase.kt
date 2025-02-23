@@ -53,7 +53,7 @@ internal fun evaluateVersionsForElement(element: PsiElement): ImmutableRangeSet<
 private fun evaluateVersionRangeForIfStatementPart(ifStatement: PyIfStatement, ifStatementPart: PsiElement): RangeSet<Version>? {
   assert(ifStatementPart is PyIfPart || ifStatementPart is PyElsePart)
   val result = if (ifStatementPart is PyIfPart) {
-    val versionRanges = ifStatementPart.condition?.let(PyVersionCheck::convertToVersionRanges) ?: return null
+    val versionRanges = PyVersionCheck.convertToVersionRanges(ifStatementPart) ?: return null
     TreeRangeSet.create(versionRanges)
   }
   else {
@@ -61,7 +61,7 @@ private fun evaluateVersionRangeForIfStatementPart(ifStatement: PyIfStatement, i
   }
   val ifParts = sequenceOf(ifStatement.ifPart) + ifStatement.elifParts.asSequence()
   for (ifPart in ifParts.takeWhile { it !== ifStatementPart }) {
-    val versionRanges = ifPart.condition?.let(PyVersionCheck::convertToVersionRanges) ?: return null
+    val versionRanges = PyVersionCheck.convertToVersionRanges(ifPart) ?: return null
     result.removeAll(versionRanges)
   }
   return result

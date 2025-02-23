@@ -117,7 +117,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                                  newName != null ? newName : method.getName(),
                                  newType, genParams.genParams(method), genExceptions.genExceptions(method)) {
       @Override
-      public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+      protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
         try {
           return super.preprocessUsages(refUsages);
         }

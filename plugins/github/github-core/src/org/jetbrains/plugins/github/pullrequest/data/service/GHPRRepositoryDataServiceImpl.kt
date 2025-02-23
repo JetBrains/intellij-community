@@ -120,7 +120,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadTemplate(): String? {
-    return templatesRequest.await().find { it.body.isNotBlank() }?.body
+    return templatesRequest.await().find { it.body != null && it.body.isNotBlank() }?.body
   }
 
   override fun resetData() {

@@ -18,8 +18,13 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kaml",
-    "@lib//:okhttp",
+    "@lib//:hash4j",
+    "@rules_jvm//zip:build-zip",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
   ],
-  runtime_deps = ["//jps/model-impl"]
+  runtime_deps = [
+    "//jps/model-impl",
+    "@lib//:okhttp",
+  ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.bazel` end

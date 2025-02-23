@@ -538,6 +538,25 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/changeVisibility")
+    public static class ChangeVisibility extends AbstractHighLevelQuickFixMultiModuleTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actual")
+        public void testActual() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/changeVisibility/actual/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/createActual")
     public static class CreateActual extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
@@ -650,11 +669,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/function/");
         }
 
-        @TestMetadata("functionK2")
-        public void testFunctionK2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/functionK2/");
-        }
-
         @TestMetadata("functionSameFile")
         public void testFunctionSameFile() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/functionSameFile/");
@@ -703,11 +717,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("property")
         public void testProperty() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/property/");
-        }
-
-        @TestMetadata("propertyK2")
-        public void testPropertyK2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/propertyK2/");
         }
 
         @TestMetadata("sealed")
@@ -1430,6 +1439,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("createVarInExpectClass")
         public void testCreateVarInExpectClass() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/createVarInExpectClass/");
+        }
+
+        @TestMetadata("expectNoImplementAsConstructorParam")
+        public void testExpectNoImplementAsConstructorParam() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/expectNoImplementAsConstructorParam/");
         }
 
         @TestMetadata("functionTypeParameterToReceiverByHeader")

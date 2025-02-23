@@ -318,11 +318,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
           if (baseName != null) {
             Predicate<PsiVariable> canReuseVariable = var -> PsiTreeUtil.isAncestor(ifStatement, var, false);
             String nameToBeReplacedWith = manager.suggestUniqueVariableName(baseName, ifStatement, canReuseVariable);
-            for (PsiReference reference : ReferencesSearch.search(thenVariable, new LocalSearchScope(ifStatement))) {
+            for (PsiReference reference : ReferencesSearch.search(thenVariable, new LocalSearchScope(ifStatement)).asIterable()) {
               PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
               referenceToNewName.put(expression, nameToBeReplacedWith);
             }
-            for (PsiReference reference : ReferencesSearch.search(elseVariable, new LocalSearchScope(ifStatement))) {
+            for (PsiReference reference : ReferencesSearch.search(elseVariable, new LocalSearchScope(ifStatement)).asIterable()) {
               PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
               referenceToNewName.put(expression, nameToBeReplacedWith);
             }

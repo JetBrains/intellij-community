@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -62,7 +62,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
   private val cache = Caffeine.newBuilder()
     .weakValues()
-    .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
+    .build(CacheLoader<Key, GitIndexVirtualFile?> { key ->
       createIndexVirtualFile(key)
     })
 
@@ -90,20 +90,17 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   fun findFile(
     root: VirtualFile, filePath: FilePath,
   ): GitIndexVirtualFile? {
-    val indexFile = cache.get(Key(root, filePath))
-
-    if (indexFile.isValid()) return indexFile
-
-    return null
+    return cache.get(Key(root, filePath))?.takeIf { it.isValid }
   }
 
   @RequiresBackgroundThread
   fun createFile(
     root: VirtualFile, filePath: FilePath,
   ): GitIndexVirtualFile? {
-    val indexFile = cache.get(Key(root, filePath))
-
-    if (indexFile.data != null) return indexFile
+    val indexFile = cache.get(Key(root, filePath)) ?: return null
+    if (indexFile.data != null) {
+      return indexFile
+    }
 
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
@@ -114,7 +111,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun createIndexVirtualFile(key: Key): GitIndexVirtualFile? {
-    if (isShutDown) return null
+    if (isShutDown) {
+      return null
+    }
 
     val indexFile = GitIndexVirtualFile(project, key.root, key.filePath)
     OutsidersPsiFileSupport.markFile(indexFile, key.filePath)
@@ -123,9 +122,14 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
   fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
     val filesToRefresh = cache.asMap().values
+      .asSequence()
+      .filterNotNull()
       .filter { it.data != null }
       .filter(condition)
-    if (filesToRefresh.isEmpty()) return
+      .toList()
+    if (filesToRefresh.isEmpty()) {
+      return
+    }
     refreshImpl(filesToRefresh)
   }
 
@@ -311,8 +315,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   ) {
     val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, -1, 0, 0, oldLength, newLength)
 
-    fun isOutdated() = file.data != null &&
-                       file.data?.hash != oldData?.hash
+    fun isOutdated() = file.data != null && file.data?.hash != oldData?.hash
 
     fun apply() {
       LOG.debug("Refreshing $file")
@@ -342,9 +345,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     private fun reloadCachedPropertiesFiles() {
-      val virtualFiles = cache.asMap().values.filter { FileTypeRegistry.getInstance().isFileOfType(it, StdFileTypes.PROPERTIES) }
+      val virtualFiles = cache.asMap().values.filter { it != null && FileTypeRegistry.getInstance().isFileOfType(it, StdFileTypes.PROPERTIES) }
       for (file in virtualFiles) {
-        val document = FileDocumentManager.getInstance().getCachedDocument(file)
+        val document = FileDocumentManager.getInstance().getCachedDocument(file!!)
         if (document != null) FileDocumentManager.getInstance().saveDocument(document)
 
         file.setCharset(null)

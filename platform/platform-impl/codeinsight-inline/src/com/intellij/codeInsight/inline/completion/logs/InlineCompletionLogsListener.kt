@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINAL_PROPOSAL_LENGTH
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINAL_PROPOSAL_LINE
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINISH_TYPE
@@ -19,6 +20,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSER
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.EDITOR_TYPE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.FILE_LANGUAGE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_PROVIDER
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_EVENT
@@ -26,8 +28,12 @@ import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import java.time.Duration
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionFilteringEventListener(),
                                                                           InlineCompletionInvalidationListener {
@@ -40,6 +46,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
    * Fields inside [Holder] are not thread-safe, please access them only on EDT.
    */
   private class Holder() {
+    var requestId: Long = 0
     var lastInvocationTimestamp: Long = 0
     var showStartTime: Long = 0
     var wasShown: Boolean = false
@@ -50,6 +57,9 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     var totalInsertedLines: Int = 0
     var potentiallySelectedIndex: Int? = null
     val variantStates = mutableMapOf<Int, VariantState>()
+    var trackedStartOffset: Int? = null
+    var trackedEndOffset: Int? = null
+    var trackedLanguage: Language? = null
   }
 
   override fun isApplicable(requestEvent: InlineCompletionEventType.Request): Boolean {
@@ -59,11 +69,13 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   override fun onRequest(event: InlineCompletionEventType.Request) {
     holder = Holder()
     holder.lastInvocationTimestamp = System.currentTimeMillis()
+    holder.requestId = event.request.requestId
 
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.addProject(event.request.editor.project)
     container.add(REQUEST_ID with event.request.requestId)
     container.add(REQUEST_EVENT with event.request.event.javaClass)
+    container.add(EDITOR_TYPE with InlineCompletionEditorType.get(event.request.editor))
     container.add(INLINE_API_PROVIDER with event.provider)
     event.request.event.toRequest()?.file?.language?.let { container.add(FILE_LANGUAGE with it) }
     container.addAsync {
@@ -95,10 +107,20 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   }
 
   override fun onInsert(event: InlineCompletionEventType.Insert) {
-    val textToInsert = InlineCompletionContext.getOrNull(editor)?.textToInsert() ?: return
+    val context = InlineCompletionContext.getOrNull(editor)
+    val textToInsert = context?.textToInsert() ?: return
     holder.totalInsertedLength += textToInsert.length
     holder.totalInsertedLines += textToInsert.lines().size
     holder.fullInsertActions++
+    holder.trackedStartOffset = context.startOffset()
+    holder.trackedEndOffset = context.endOffset()
+    holder.trackedLanguage = context.language
+  }
+
+  override fun onAfterInsert(event: InlineCompletionEventType.AfterInsert) {
+    startTracking()
+    // we can clean up now
+    holder = Holder()
   }
 
   override fun onChange(event: InlineCompletionEventType.Change) {
@@ -151,17 +173,47 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
       }
     }
     container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
+
+    // `SELECTED` case is handled in the afterInsert case
+    if (event.finishType != InlineCompletionUsageTracker.ShownEvents.FinishType.SELECTED) {
+      holder = Holder()
+    }
   }
 
   private class VariantState {
     var initialSuggestion: String = ""
     var finalSuggestion: String = ""
   }
+
+  private fun startTracking() {
+    val selectedIndex = holder.potentiallySelectedIndex ?: return
+    val selectedVariant = holder.variantStates[selectedIndex] ?: return
+    val insertOffset = holder.trackedStartOffset ?: return
+    val endOffset = holder.trackedEndOffset ?: return
+    service<InsertedStateTracker>().trackV2(
+      holder.requestId,
+      holder.trackedLanguage,
+      editor,
+      endOffset,
+      insertOffset,
+      selectedVariant.finalSuggestion,
+      getDurations(),
+    )
+  }
+
+  private fun getDurations(): List<Duration> =
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
+    }
+    else {
+      listOf(Duration.ofSeconds(10), Duration.ofSeconds(30), Duration.ofMinutes(1), Duration.ofMinutes(5))
+    }
 }
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val REQUEST_ID = registerBasic(EventFields.Long("request_id", "Unique request id for the inline completion session"))
   val REQUEST_EVENT = register(EventFields.Class("request_event", "Type of the event that caused the request for the inline completion session"))
+  val EDITOR_TYPE = registerBasic(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
   val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
   val FILE_LANGUAGE = registerBasic(EventFields.Language("file_language", "Language of the file that was opened for the request"))
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -87,7 +87,7 @@ fun KtFile.packageMatchesDirectoryOrImplicit() =
     packageFqName == getFqNameByDirectory() || packageFqName == parent?.getFqNameWithImplicitPrefix()
 
 private fun getWritableModuleDirectory(vFiles: Query<VirtualFile>, module: Module, manager: PsiManager): PsiDirectory? {
-    for (vFile in vFiles) {
+    for (vFile in vFiles.asIterable()) {
         if (ModuleUtil.findModuleForFile(vFile, module.project) !== module) continue
         val directory = manager.findDirectory(vFile)
         if (directory != null && directory.isValid && directory.isWritable) {

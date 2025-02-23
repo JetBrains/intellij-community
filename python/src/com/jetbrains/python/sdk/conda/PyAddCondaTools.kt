@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.conda
 
 import com.intellij.execution.Platform
@@ -9,7 +9,7 @@ import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -20,7 +20,8 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.failure
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v1.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
@@ -48,9 +49,11 @@ internal val condaSupportedLanguages: List<LanguageLevel>
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
  */
-suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaEnvIdentity,
-                                                         existingSdks: List<Sdk>,
-                                                         project: Project?): Sdk {
+suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
+  condaIdentity: PyCondaEnvIdentity,
+  existingSdks: List<Sdk>,
+  project: Project?,
+): Sdk {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor.getInstance())
 
@@ -66,7 +69,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
   sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).getOrThrow()
-  writeAction {
+  edtWriteAction {
     sdkModificator.commitChanges()
   }
   saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
@@ -78,19 +81,23 @@ private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executabl
 /**
  * @return path to Conda interpreter binary on target
  */
-private suspend fun getCondaPythonBinaryPath(project: Project?,
-                                             condaEnv: PyCondaEnv,
-                                             targetConfig: TargetEnvironmentConfiguration?): Result<FullPathOnTarget> =
+private suspend fun getCondaPythonBinaryPath(
+  project: Project?,
+  condaEnv: PyCondaEnv,
+  targetConfig: TargetEnvironmentConfiguration?,
+): Result<FullPathOnTarget> =
   getCondaInterpreterOutput(project, condaEnv, EmptyProgressIndicator(), PRINT_SYS_EXECUTABLE_SCRIPT, targetConfig).map { it.trim() }
 
 /**
  * Runs python [command] and returns stdout or error
  */
-private suspend fun getCondaInterpreterOutput(project: Project?,
-                                              condaEnv: PyCondaEnv,
-                                              indicator: ProgressIndicator,
-                                              command: String,
-                                              targetConfig: TargetEnvironmentConfiguration?): Result<String> {
+private suspend fun getCondaInterpreterOutput(
+  project: Project?,
+  condaEnv: PyCondaEnv,
+  indicator: ProgressIndicator,
+  command: String,
+  targetConfig: TargetEnvironmentConfiguration?,
+): Result<String> {
   val targetEnvRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
 
   val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
@@ -108,11 +115,13 @@ private suspend fun getCondaInterpreterOutput(project: Project?,
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
  */
-suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCondaEnvRequest,
-                                                         uiContext: CoroutineContext,
-                                                         existingSdks: List<Sdk>,
-                                                         project: Project,
-                                                         reporter: RawProgressReporter? = null): Result<Sdk> {
+suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
+  newCondaEnvInfo: NewCondaEnvRequest,
+  uiContext: CoroutineContext,
+  existingSdks: List<Sdk>,
+  project: Project,
+  reporter: RawProgressReporter? = null,
+): Result<Sdk> {
   val process = PyCondaEnv.createEnv(this, newCondaEnvInfo).getOrElse { return Result.failure(it) }
   val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, reporter)
 
@@ -190,12 +199,12 @@ private fun String.asCommandInShell(targetPlatform: TargetPlatform): List<String
  */
 private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: FullPathOnTarget): FullPathOnTarget? = withContext(
   Dispatchers.IO) {
-  val expandedPath = executeShellCommand("echo $file").thenApply(ProcessOutput::getStdout).thenApply(String::trim).await()
   if (isLocalMachineExecutor) {
+    val expandedPath = expandPathLocally(file)
     return@withContext if (Path.of(expandedPath).isExecutable()) expandedPath else null
   }
   else {
-
+    val expandedPath = executeShellCommand("echo $file").thenApply(ProcessOutput::getStdout).thenApply(String::trim).await()
     // TODO: Should we test with browsable target as well?
 
     if (targetPlatform.await().platform == Platform.WINDOWS) {

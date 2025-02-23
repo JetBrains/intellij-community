@@ -26,11 +26,7 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   public static final String JAVA_DISPLAY_GRAYED = "--java-display-grayed";
   public static final String JAVA_DISPLAY_PARAMETER = "--java-display-parameter";
   public static final String JAVA_DISPLAY_ERROR = "--java-display-error";
-  
-  public JavaCompilationError {
-    kind.validate(psi, context);
-  }
-  
+
   public @NotNull Project project() {
     return psi.getProject();
   }
@@ -39,7 +35,7 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
    * @return a desired anchor to put the error message at
    */
   public @NotNull PsiElement anchor() {
-    return kind.anchor(psi, context);
+    return kind.anchor(psi);
   }
 
   /**
@@ -92,6 +88,26 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
       if (errorKind.equals(kind)) {
         //noinspection unchecked
         return Optional.of((WantedPsi)psi);
+      }
+    }
+    return Optional.empty();
+  } 
+
+  /**
+   * A helper method to match the wanted error message and cast it safely.
+   * 
+   * @param kinds wanted error kinds
+   * @return an optional containing this object typed, if it matches one of wanted kinds; empty optional otherwise
+   * @param <WantedPsi> the common context type of wanted kinds
+   * @param <WantedContext> the common context type of wanted kinds
+   */
+  @SafeVarargs
+  public final <WantedPsi extends PsiElement, WantedContext> @NotNull Optional<JavaCompilationError<WantedPsi, WantedContext>> 
+  forKind(JavaErrorKind<? extends WantedPsi, ? extends WantedContext>... kinds) {
+    for (JavaErrorKind<? extends WantedPsi, ? extends WantedContext> errorKind : kinds) {
+      if (errorKind.equals(kind)) {
+        //noinspection unchecked
+        return Optional.of((JavaCompilationError<WantedPsi, WantedContext>)this);
       }
     }
     return Optional.empty();

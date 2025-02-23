@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
+import com.intellij.vcs.commit.CommitMode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -143,13 +144,12 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Allows to hide 'Local Changes' toolwindow tab, as well as disable changelists.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
-   * @return true if 'Local Changes' tab should be hidden.
+   * @return the commit mode to enforce for this VCS, or null to apply the project's default
    */
-  public boolean isWithCustomLocalChanges() {
-    return false;
+  public @Nullable CommitMode getForcedCommitMode() {
+    return null;
   }
 
   /**

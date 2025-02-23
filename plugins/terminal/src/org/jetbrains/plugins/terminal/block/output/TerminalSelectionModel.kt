@@ -3,10 +3,12 @@ package org.jetbrains.plugins.terminal.block.output
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
-internal class TerminalSelectionModel(outputModel: TerminalOutputModel) {
+@ApiStatus.Internal
+class TerminalSelectionModel(outputModel: TerminalOutputModel) {
   /** Expected, that last element in the list is primary selection */
   var selectedBlocks: List<CommandBlock> by Delegates.observable(emptyList()) { _, oldValue, newValue ->
     if (newValue != oldValue) {

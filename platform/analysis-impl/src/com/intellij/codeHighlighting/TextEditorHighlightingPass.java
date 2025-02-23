@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -46,6 +48,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private volatile int myId;
   private volatile boolean myDumb;
   private EditorColorsScheme myColorsScheme;
+  private volatile CodeInsightContext myContext;
 
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document, boolean runIntentionPassAfter) {
     myDocument = document;
@@ -100,7 +103,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     }
 
     if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    CodeInsightContext codeInsightContext = getContext();
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument, codeInsightContext);
     PsiElement context;
     return file != null
            && file.isValid()
@@ -121,7 +125,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public void markUpToDateIfStillValid() {
     ThreadingAssertions.assertEventDispatchThread();
     if (isValid()) {
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getContext(), getId());
     }
   }
 
@@ -150,6 +154,22 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public @NotNull Document getDocument() {
     return myDocument;
+  }
+
+  @ApiStatus.Internal
+  public void setContext(@NotNull CodeInsightContext context) {
+    assert myContext == null : "context is already assigned";
+    myContext = context;
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull CodeInsightContext getContext() {
+    if (myContext == null) {
+      // todo ijpl-339 report an error here once all the highlighting passes are ready
+      //      LOG.error("context was not set");
+      return CodeInsightContextKt.anyContext();
+    }
+    return myContext;
   }
 
   public final int @NotNull [] getStartingPredecessorIds() {

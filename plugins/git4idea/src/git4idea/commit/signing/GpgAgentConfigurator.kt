@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
 import com.intellij.CommonBundle
@@ -87,6 +87,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
         isGpgSignEnabledCached(repository)
         && getGpgSignKeyCached(repository) != null
       }
+
+    @JvmStatic
+    fun getInstance(project: Project): GpgAgentConfigurator = project.service()
   }
 
   private val updateLauncherFlow = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
@@ -126,6 +129,15 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     val config = GpgAgentConfig.readConfig(gpgAgentPaths.gpgAgentConf) ?: return true
 
     return !isPinentryConfigured(gpgAgentPaths, config)
+  }
+
+  @RequiresBackgroundThread
+  fun isConfigured(): Boolean {
+    val executable = GitExecutableManager.getInstance().getExecutable(project)
+    val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return false
+    val config = GpgAgentConfig.readConfig(gpgAgentPaths.gpgAgentConf) ?: return false
+
+    return isPinentryConfigured(gpgAgentPaths, config)
   }
 
   private fun isPinentryConfigured(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig): Boolean {
@@ -399,7 +411,7 @@ internal data class GpgAgentPaths(
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-      project.service<GpgAgentConfigurator>().init()
+      GpgAgentConfigurator.getInstance(project).init()
       project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
     }
   }

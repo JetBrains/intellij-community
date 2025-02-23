@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.toolbar.floating
 
-import com.intellij.codeInsight.daemon.impl.HintRenderer.Companion.BACKGROUND_ALPHA
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataContext
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator
 import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.SHOWING_TIME_MS
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.createExtensionDisposable
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.OverrideOnly
@@ -21,7 +21,7 @@ interface FloatingToolbarProvider {
     get() = 0
 
   val backgroundAlpha: Float
-    get() = BACKGROUND_ALPHA
+    get() = JBUI.CurrentTheme.FloatingToolbar.DEFAULT_BACKGROUND_ALPHA
 
   val showingTime: Int
     get() = SHOWING_TIME_MS
@@ -40,6 +40,9 @@ interface FloatingToolbarProvider {
   fun isApplicable(dataContext: DataContext): Boolean = true
 
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
+
+  @ApiStatus.Internal
+  fun onHiddenByEsc(dataContext: DataContext) {}
 
   companion object {
 

@@ -8,7 +8,9 @@
     <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" scope="RUNTIME" />
   </component>
 </module>

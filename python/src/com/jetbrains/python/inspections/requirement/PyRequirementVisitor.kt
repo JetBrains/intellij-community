@@ -23,13 +23,11 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -93,12 +91,6 @@ class PyRequirementVisitor(
     ignoredPackages: Set<String?>,
   ): List<PyRequirement> {
     val requirements = getRequirements(module) ?: return emptyList()
-    val serviceScope = PyPackagingToolWindowService.getInstance(module.project).serviceScope
-
-    serviceScope.launch {
-      manager.reloadPackages()
-    }
-
     val installedPackages = manager.installedPackages.toPyPackages()
     val modulePackages = collectPackagesInModule(module)
 
@@ -152,6 +144,7 @@ class PyRequirementVisitor(
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
     val packageManager = PythonPackageManager.forSdk(module.project, sdk)
     val requirements = getRequirementsInclTransitive(packageManager, module)
+    if (requirements == null) return
 
     if (isPackageSatisfied(packageName, possiblePyPIPackageNames, requirements) || isLocalModule(packageReferenceExpression, module)) return
 
@@ -203,25 +196,22 @@ class PyRequirementVisitor(
     return ModuleUtilCore.moduleContainsFile(module, virtualFile, false)
   }
 
-  private fun getRequirementsInclTransitive(packageManager: PythonPackageManager, module: Module): Set<PyRequirement> {
+  /**
+   * `null` means: no `requirements.txt` at all
+   */
+  private fun getRequirementsInclTransitive(packageManager: PythonPackageManager, module: Module): Set<PyRequirement>? {
     val requirements = getListedRequirements(module)
-    if (requirements.isEmpty()) return emptySet()
+    if (requirements == null) return null
 
     val packages = packageManager.installedPackages
-    return HashSet(getTransitiveRequirements(packages.toPyPackages(), requirements, HashSet())) + requirements
+    return getTransitiveRequirements(packages.toPyPackages(), requirements, HashSet()) + requirements
   }
 
-
-  private fun getListedRequirements(module: Module): List<PyRequirement> {
-    val requirements = getRequirements(module).orEmpty()
+  private fun getListedRequirements(module: Module): Set<PyRequirement>? {
+    val requirements = getRequirements(module) ?: return null
     val extrasRequirements = getExtrasRequirements(module)
 
-    return if (requirements.isEmpty() && extrasRequirements.isEmpty()) {
-      emptyList()
-    }
-    else {
-      requirements + extrasRequirements
-    }
+    return (requirements + extrasRequirements).toSet()
   }
 
   private fun getExtrasRequirements(module: Module): List<PyRequirement> =

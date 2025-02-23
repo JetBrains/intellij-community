@@ -16,9 +16,14 @@ public interface EssentialContributor {
   }
 
   static boolean checkEssential(SearchEverywhereContributor<?> contributor) {
-    return (contributor instanceof EssentialContributor ic) && ic.isEssential();
+    Boolean isEssentialByMl = checkEssentialByMl(contributor);
+    if (isEssentialByMl != null) {
+      return isEssentialByMl;
+    }
+    else {
+      return (contributor instanceof EssentialContributor ic) && ic.isEssential();
+    }
   }
-
   /**
    * Uses machine learning (through ML in Search Everywhere plugin) to determine if a contribution is essential or not.
    * May return null if the plugin is unavailable.

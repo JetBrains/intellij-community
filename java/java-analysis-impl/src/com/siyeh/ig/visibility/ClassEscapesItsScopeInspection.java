@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -69,7 +69,7 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
       if (file instanceof PsiJavaFile javaFile && PsiUtil.isAvailable(JavaFeature.MODULES, javaFile)) {
-        PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
+        PsiJavaModule psiModule = JavaPsiModuleUtil.findDescriptorByElement(file);
         if (psiModule != null) {
           VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {

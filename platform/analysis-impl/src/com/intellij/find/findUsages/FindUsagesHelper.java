@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.application.ReadAction;
@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -89,5 +90,12 @@ public final class FindUsagesHelper {
         return true;
       }
     }, searchScope);
+  }
+
+  @ApiStatus.Internal
+  public static boolean isSearchForTextOccurrencesAvailable(@NotNull FindUsagesHandlerBase handler,
+                                                            @NotNull PsiElement psiElement,
+                                                            boolean isSingleFile) {
+    return handler.isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
   }
 }

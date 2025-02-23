@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAndWriteScope
 import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Runs given [action] as a [write command][com.intellij.openapi.command.WriteCommandAction].
  *
- * @see com.intellij.openapi.application.writeAction
+ * @see com.intellij.openapi.application.edtWriteAction
  */
 @ApiStatus.Experimental
 suspend fun <T> writeCommandAction(project: Project, @NlsContexts.Command commandName: String, action: () -> T): T {
@@ -31,7 +30,7 @@ suspend fun <T> writeCommandAction(project: Project, @NlsContexts.Command comman
 /**
  * Runs given [action] with [write command][com.intellij.openapi.command.WriteCommandAction] described via the receiver builder.
  *
- * @see com.intellij.openapi.application.writeAction
+ * @see com.intellij.openapi.application.edtWriteAction
  */
 @ApiStatus.Experimental
 suspend fun <T> WriteCommandAction.Builder.execute(action: () -> T): T {

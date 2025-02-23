@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -206,7 +206,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
 
       final List<PsiExpression> expressions = new ArrayList<>();
-      for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
+      for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile())).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
         if (expr != null) {

@@ -1,3 +1,5 @@
+// ITEMS args, myList, o, str
+// K2_ITEMS myList, str
 import java.io.InputStream
 import java.util.ArrayList
 import java.io.FileInputStream

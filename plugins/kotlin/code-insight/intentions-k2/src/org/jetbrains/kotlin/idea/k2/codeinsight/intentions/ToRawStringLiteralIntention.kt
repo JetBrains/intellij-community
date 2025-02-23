@@ -20,8 +20,7 @@ internal class ToRawStringLiteralIntention :
     override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression) {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression) {
     }
 
     override fun invoke(

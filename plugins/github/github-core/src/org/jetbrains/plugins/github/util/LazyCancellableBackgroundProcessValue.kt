@@ -4,9 +4,6 @@ package org.jetbrains.plugins.github.util
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.cancellationOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,10 +11,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.EventDispatcher
 import com.intellij.collaboration.ui.SimpleEventListener
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please migrate to coroutines")
 abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   : ClearableLazyValue<CompletableFuture<T>>() {

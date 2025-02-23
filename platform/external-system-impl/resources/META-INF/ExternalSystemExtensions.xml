@@ -75,14 +75,12 @@
                  description="Invalidate caches invalidates the cache data imported from external systems"/>
     <registryKey key="external.system.remote.debugger.dispatch.host" defaultValue="0"
                  description="Set binding address for server socket listening incoming requests for debugger clients. 0 means address of the first found remote network interface will be used."/>
-    <registryKey key="external.system.map.jps.to.gav" defaultValue="false"
-                 description="Provide assignment of groupId/artifactId/version for JPS modules"/>
     <registryKey key="external.system.pause.indexing.during.sync" defaultValue="false"
                  description="Suspend indexing and scanning during sync with external build system"/>
     <registryKey key="external.system.incomplete.dependencies.state.during.sync" defaultValue="true"
                  description="Indicates project state as incomplete during sync with external build system"/>
 
-    <registryKey key="external.system.substitute.library.dependencies" defaultValue="false"
+    <registryKey key="external.system.substitute.library.dependencies" defaultValue="true"
                  description="Replace library dependencies with module dependencies imported from external build systems like Maven/Gradle"/>
 
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
@@ -131,8 +129,6 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemJdkProvider"/>
 
     <!--Experimental-->
-    <externalSystemWorkspaceContributor implementation="com.intellij.openapi.externalSystem.importing.JpsDependencyContributor"/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>

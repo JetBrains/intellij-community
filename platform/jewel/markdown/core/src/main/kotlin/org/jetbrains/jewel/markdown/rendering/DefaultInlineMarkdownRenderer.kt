@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.markdown.rendering
 
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
@@ -9,11 +8,15 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
+import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
 @ExperimentalJewelApi
-public open class DefaultInlineMarkdownRenderer(private val rendererExtensions: List<MarkdownRendererExtension>) :
+public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<MarkdownRendererExtension>) :
     InlineMarkdownRenderer {
+    protected val delimitedNodeRendererExtensions: List<MarkdownDelimitedInlineRendererExtension> =
+        rendererExtensions.mapNotNull { it.delimitedInlineRenderer }
+
     public override fun renderAsAnnotatedString(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
@@ -77,24 +80,23 @@ public open class DefaultInlineMarkdownRenderer(private val rendererExtensions: 
                 }
 
                 is InlineMarkdown.Image -> {
-                    appendInlineContent(
-                        INLINE_IMAGE,
-                        buildString {
-                            appendLine(child.source)
-                            append(child.alt)
-                            if (!child.title.isNullOrBlank()) {
-                                appendLine()
-                                append(child.title)
-                            }
-                        },
-                    )
+                    // TODO not supported yet — see JEWEL-746
                 }
 
-                is InlineMarkdown.CustomNode ->
-                    rendererExtensions
-                        .find { it.inlineRenderer?.canRender(child) == true }
-                        ?.inlineRenderer
-                        ?.render(child, inlineRenderer = this@DefaultInlineMarkdownRenderer, enabled)
+                is InlineMarkdown.CustomDelimitedNode -> {
+                    val delimitedNodeRendererExtension =
+                        delimitedNodeRendererExtensions.find { it.canRender(child) } ?: continue
+
+                    append(
+                        delimitedNodeRendererExtension.render(
+                            node = child,
+                            inlineRenderer = this@DefaultInlineMarkdownRenderer,
+                            inlinesStyling = styling,
+                            enabled = enabled,
+                            onUrlClicked = onUrlClicked,
+                        )
+                    )
+                }
             }
         }
     }
@@ -118,9 +120,5 @@ public open class DefaultInlineMarkdownRenderer(private val rendererExtensions: 
         action(node)
 
         pop(popTo)
-    }
-
-    public companion object {
-        internal const val INLINE_IMAGE = "inline_image"
     }
 }

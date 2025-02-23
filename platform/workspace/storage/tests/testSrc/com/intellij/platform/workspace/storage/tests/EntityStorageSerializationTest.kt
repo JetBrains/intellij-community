@@ -385,7 +385,6 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-  it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
   com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
   java.util.List
   java.util.Set
@@ -419,6 +418,8 @@ private val expectedKryoRegistration = """
   java.util.LinkedHashSet
   com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+  kotlinx.collections.immutable.implementations.immutableMap.PersistentHashMap
+  kotlinx.collections.immutable.implementations.immutableSet.PersistentHashSet
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
   java.util.Arrays#ArrayList

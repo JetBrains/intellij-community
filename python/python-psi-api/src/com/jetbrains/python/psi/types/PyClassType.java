@@ -20,4 +20,9 @@ public interface PyClassType extends PyClassLikeType, UserDataHolder {
   default boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
     return true;
   }
+
+  @Override
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyClassType(this);
+  }
 }

@@ -3,10 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -218,7 +218,7 @@ public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspect
           }
           if (PsiUtil.isJvmLocalVariable(var)) {
             PsiElement scope = PsiUtil.getVariableCodeBlock(var, null);
-            if (scope != null && HighlightControlFlowUtil.isEffectivelyFinal(var, scope, null)) {
+            if (scope != null && ControlFlowUtil.isEffectivelyFinal(var, scope)) {
               return var;
             }
           }

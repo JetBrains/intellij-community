@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
@@ -152,9 +152,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     ): Sequence<PsiElement> = when (element) {
         is KtClass -> if (searchDeeply) element.findAllInheritors(searchScope) else DirectKotlinClassInheritorsSearch.search(
             element, searchScope
-        ).asSequence()
+        ).asIterable().asSequence()
 
-        is PsiClass -> ClassInheritorsSearch.search(element, searchScope, searchDeeply).asSequence()
+        is PsiClass -> ClassInheritorsSearch.search(element, searchScope, searchDeeply).asIterable().asSequence()
 
         else -> emptySequence()
     }

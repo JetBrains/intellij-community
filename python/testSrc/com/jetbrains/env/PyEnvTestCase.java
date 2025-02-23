@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.openapi.Disposable;
@@ -6,13 +6,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
+import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.tools.PyEnvTestSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -25,7 +27,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static com.jetbrains.python.tools.EnvTagsKt.loadEnvTags;
 
 /**
  * <p>
@@ -92,6 +93,7 @@ public abstract class PyEnvTestCase {
    */
   protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+    TestApplicationManager.getInstance(); // init app explicitly
   }
 
   public static String norm(String testDataPath) {
@@ -123,12 +125,8 @@ public abstract class PyEnvTestCase {
   @BeforeClass
   public static void collectTagsForEnvs() {
     for (final String pythonRoot : getDefaultPythonRoots()) {
-      envTags.put(pythonRoot, loadEnvTags(Path.of(pythonRoot)).stream().toList());
+      envTags.put(pythonRoot, EnvTagsKt.loadEnvTags(Path.of(pythonRoot)).stream().toList());
     }
-  }
-
-  protected boolean runInDispatchThread() {
-    return false;
   }
 
   /**

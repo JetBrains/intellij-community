@@ -25,6 +25,8 @@ def setup_tables_modules():
                 if sys.version_info < (3, 0) and 'polars' in file:
                     # we don't need to test polars for python 2.7
                     continue
+                if 'image' in file: # we don't have tests for view as image at the moment
+                    continue
                 tables_files.append(file)
                 module_name = '_pydevd_bundle.tables.' + file.replace('.py', '')
                 tables_modules.append(importlib.import_module(module_name))

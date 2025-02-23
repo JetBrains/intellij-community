@@ -5,11 +5,11 @@ import com.intellij.execution.wsl.WslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
+import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate.Companion.getError
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -71,36 +70,6 @@ import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
 
-/**
- * Represents an intent to set up a JDK:
- *
- * - [NoJdk] - Create the project without selecting a JDK.
- * - [DownloadJdk] - Download a JDK on project creation.
- * - [ExistingJdk] - Use a JDK already configured, or from a location selected by the user.
- * - [DetectedJdk] - Configure a JDK detected by the IDE.
- */
-sealed class ProjectWizardJdkIntent {
-  data object NoJdk : ProjectWizardJdkIntent()
-
-  data class DownloadJdk(val task: SdkDownloadTask) : ProjectWizardJdkIntent()
-
-  data class ExistingJdk(val jdk: Sdk) : ProjectWizardJdkIntent()
-
-  data object AddJdkFromPath : ProjectWizardJdkIntent()
-
-  data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
-
-  data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String, val isSymlink: Boolean) : ProjectWizardJdkIntent()
-
-  fun isAtLeast(version: Int): Boolean = when (this) {
-    is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
-    is ExistingJdk -> if (jdk.versionString == null) true
-                      else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
-    is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
-    else -> false
-  } ?: true
-}
-
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   sdkProperty: GraphProperty<Sdk?>,
@@ -126,6 +95,7 @@ fun projectWizardJdkComboBox(
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
+  jdkPredicate: ProjectWizardJdkPredicate = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
   val sdkPropertyId = StdModuleTypes.JAVA
   val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
@@ -151,7 +121,13 @@ fun projectWizardJdkComboBox(
         commentCell.comment?.let { it.text = component.comment }
       }
     }
-    .validationInfo { validateJdkVersion(it) }
+    .validationInfo {
+      val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@validationInfo null
+      val version = intent.versionString ?: return@validationInfo null
+      val name = intent.name
+      val error = jdkPredicate.getError(version, name ?: version) ?: return@validationInfo null
+      warning(error)
+    }
     .validationOnApply {
       val intent = it.selectedItem
 
@@ -204,22 +180,6 @@ private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): Valid
     null -> error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
     else -> null
   }
-}
-
-private fun ValidationInfoBuilder.validateJdkVersion(combo: ProjectWizardJdkComboBox): ValidationInfo? {
-  val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return null
-
-  val versionString = when (intent) {
-    is ExistingJdk -> intent.jdk.versionString
-    is DetectedJdk -> intent.version
-    else -> null
-  } ?: return null
-
-  if (!intent.isAtLeast(8)) {
-    return warning(JavaBundle.message("unsupported.jdk.notification.content", versionString))
-  }
-
-  return null
 }
 
 private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, location: () -> String): ValidationInfo? {
@@ -622,12 +582,11 @@ private fun findExistingJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk>
   val jdks = JavaHomeFinder.findJdks(eelDescriptor, false)
 
   return jdks.mapNotNull {
-    val path = it.get(SdkType.HOMEPATH_KEY) ?: return@mapNotNull null
-    val version = it.get(JavaHomeFinder.JDK_VERSION_KEY)
-    val symlink = it.get(SdkType.IS_SYMLINK_KEY) ?: containsSymbolicLink(path)
+    val version = it.versionInfo
+    val symlink = containsSymbolicLink(it.path)
 
     when {
-      version != null && javaSdk.isValidSdkHome(path) -> DetectedJdk(version.displayVersionString(), path, symlink)
+      version != null && javaSdk.isValidSdkHome(it.path) -> DetectedJdk(version.displayVersionString(), it.path, symlink)
       else -> null
     }
   }

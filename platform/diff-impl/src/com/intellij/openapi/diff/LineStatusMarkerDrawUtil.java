@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ex.ChangedLines;
 import com.intellij.openapi.vcs.ex.ChangesBlock;
 import com.intellij.openapi.vcs.ex.Range;
@@ -139,7 +140,7 @@ public final class LineStatusMarkerDrawUtil {
         Color gutterColor = colorScheme.getColor(editor, change.type);
         int line = gutter.getHoveredFreeMarkersLine();
         if (isRangeHovered(editor, line, x, start, end)) {
-          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+          paintRect(g, gutterColor, null, x - JBUI.scale(3), start, endX, end);
         }
         else {
           paintRect(g, gutterColor, null, x, start, endX, end);
@@ -217,9 +218,12 @@ public final class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
-      x += 1; // leave 1px for brace highlighters
-      x += 2; //IDEA-286352
-      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4)), editor);
+      int width = Registry.intValue("gutter.vcs.changes.width", 4, 4, 6);
+      x += JBUI.scale(1); // leave 1px for brace highlighters
+      if (width < 5) {
+        x += JBUI.scale(2); //IDEA-286352
+      }
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", width)), editor);
       return new IntPair(x, x + areaWidth);
     }
     else {

@@ -58,7 +58,7 @@ final class UnindexedFilesFinder {
     final @NotNull FileIndexingResult.ApplicationMode applicationMode;
     boolean indexInfrastructureExtensionInvalidated = false;
     boolean mayMarkFileIndexed = true;
-    @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
+    @Nullable ArrayList<Pair<FileIndexingStateWithExplanation, ID<?, ?>>> unindexedStates;
 
     UnindexedFileStatusBuilder(@NotNull FileIndexingResult.ApplicationMode applicationMode) {
       this.applicationMode = applicationMode;
@@ -78,7 +78,7 @@ final class UnindexedFilesFinder {
       return appliers.add(applier);
     }
 
-    void addUnindexedState(FileIndexingState state, ID<?, ?> id) {
+    void addUnindexedState(FileIndexingStateWithExplanation state, ID<?, ?> id) {
       if (unindexedStates == null) unindexedStates = new ArrayList<>();
       unindexedStates.add(new Pair<>(state, id));
     }
@@ -112,18 +112,18 @@ final class UnindexedFilesFinder {
       return !appliers.isEmpty() || !removers.isEmpty();
     }
 
-    private @NotNull String getAppliersAndRemoversLogString(IndexedFile indexedFile) {
-      return "Scanner has updated file " + indexedFile.getFileName() +
+    private @NotNull String getAppliersAndRemoversLogString(@NotNull IndexedFile indexedFile) {
+      return "Scanner has updated file " + getLogString(indexedFile) +
              " with appliers: " + appliers +
              " and removers: " + removers + "; ";
     }
 
-    private String getIndexingReasonLogString(IndexedFile indexedFile) {
+    private String getIndexingReasonLogString(@NotNull IndexedFile indexedFile) {
       StringBuilder sb = new StringBuilder("Scheduling indexing of ");
-      sb.append(indexedFile.getFileName());
+      sb.append(getLogString(indexedFile));
       sb.append(" by request of indexes: [");
       if (unindexedStates != null) {
-        for (Pair<FileIndexingState, ID<?, ?>> state : unindexedStates) {
+        for (Pair<FileIndexingStateWithExplanation, ID<?, ?>> state : unindexedStates) {
           sb.append(state.second).append("->").append(state.first).append(",");
         }
       }
@@ -137,6 +137,16 @@ final class UnindexedFilesFinder {
       }
       return sb.toString();
     }
+  }
+
+  @NotNull
+  private static String getLogString(@NotNull IndexedFile indexedFile) {
+    StringBuilder sb = new StringBuilder(indexedFile.getFileName());
+    VirtualFile file = indexedFile.getFile();
+    if (file instanceof VirtualFileWithId fileWithId) {
+      sb.append(" (id=").append(fileWithId.getId()).append(")");
+    }
+    return sb.toString();
   }
 
   UnindexedFilesFinder(@NotNull Project project,
@@ -237,12 +247,14 @@ final class UnindexedFilesFinder {
       Ref<Runnable> finalization = new Ref<>();
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
         boolean isDirectory = file.isDirectory();
-        FileIndexingState fileTypeIndexState = null;
+        FileIndexingStateWithExplanation fileTypeIndexState = null;
         boolean shouldCheckContentIndexes;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
-          if ((fileTypeIndexState = myFileBasedIndex.getIndexingState(indexedFile, myFileTypeIndex, indexingStamp)) == FileIndexingState.OUT_DATED) {
+          fileTypeIndexState = myFileBasedIndex.getIndexingState(indexedFile, myFileTypeIndex, indexingStamp);
+          if (fileTypeIndexState.isIndexedButOutdated()) {
             if (FileBasedIndexEx.doTraceIndexUpdates()) {
-              LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
+              LOG.info("Scheduling full indexing of " + getLogString(indexedFile) + " because file type index is outdated. " +
+                       fileTypeIndexState.getExplanationAsString());
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             fileStatusBuilder.shouldIndex = true;
@@ -255,7 +267,7 @@ final class UnindexedFilesFinder {
         else {
           shouldCheckContentIndexes = false;
         }
-        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && !fileTypeIndexState.updateRequired();
+        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && fileTypeIndexState.isUpToDate();
         Set<ID<?, ?>> appliedIndexes = myFileBasedIndex.getAppliedIndexes(inputId);
         List<ID<?, ?>> requiredIndexes = myFileBasedIndex.getRequiredIndexes(indexedFile);
 
@@ -328,15 +340,15 @@ final class UnindexedFilesFinder {
     }
 
     try {
-      FileIndexingState fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId, indexingStamp);
-      if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+      FileIndexingStateWithExplanation fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId, indexingStamp);
+      if (fileIndexingState.isUpToDate() && myShouldProcessUpToDateFiles) {
         fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder, indexingStamp);
       }
       if (fileIndexingState.updateRequired()) {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
           FileBasedIndexImpl.LOG.info(
-            "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
-            (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+            "Scheduling indexing of " + getLogString(indexedFile) + " by request of index " + indexId +
+            (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : ";") +
             ("indexing state = " + fileIndexingState));
         }
 
@@ -362,17 +374,17 @@ final class UnindexedFilesFinder {
     }
   }
 
-  private FileIndexingState processUpToDateFileByInfrastructureExtensions(IndexedFileImpl indexedFile,
-                                                                          int inputId,
-                                                                          ID<?, ?> indexId,
-                                                                          UnindexedFileStatusBuilder fileStatusBuilder,
-                                                                          @NotNull FileIndexingStamp indexingStamp) {
+  private FileIndexingStateWithExplanation processUpToDateFileByInfrastructureExtensions(IndexedFileImpl indexedFile,
+                                                                                         int inputId,
+                                                                                         ID<?, ?> indexId,
+                                                                                         UnindexedFileStatusBuilder fileStatusBuilder,
+                                                                                         @NotNull FileIndexingStamp indexingStamp) {
     // quick path: shared indexes do not have data for contentless indexes
-    if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingState.UP_TO_DATE;
+    if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingStateWithExplanation.upToDate();
 
     long nowTime = System.nanoTime();
     try {
-      FileIndexingState ret = FileIndexingState.UP_TO_DATE;
+      FileIndexingStateWithExplanation ret = FileIndexingStateWithExplanation.upToDate();
       for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
         if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
           fileStatusBuilder.indexInfrastructureExtensionInvalidated = true;
@@ -464,7 +476,7 @@ final class UnindexedFilesFinder {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         myFileBasedIndex.getIndex(indexId).setIndexedStateForFile(inputId, fileContent, true);
         if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
-          LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
+          LOG.info("File " + getLogString(fileContent) + " indexed using extension for " + indexId + " without content");
         }
         return true;
       }

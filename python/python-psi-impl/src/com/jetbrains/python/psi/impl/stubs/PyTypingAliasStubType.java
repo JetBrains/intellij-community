@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +110,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     return typeHintText.equals("TypeAlias") || typeHintText.endsWith(".TypeAlias");
   }
 
-  private static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
+  @ApiStatus.Internal
+  public static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);

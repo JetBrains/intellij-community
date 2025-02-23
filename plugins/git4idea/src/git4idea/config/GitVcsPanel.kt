@@ -39,7 +39,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
@@ -50,7 +49,6 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
-import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.ui.isStashTabAvailable
@@ -197,7 +195,6 @@ internal class GitVcsPanel(private val project: Project) :
     group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
-          .enabledIf(StagingAreaAvailablePredicate(project, disposable!!))
       }
       row {
         checkBox(cdWarnAboutCrlf(project))
@@ -379,18 +376,6 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   }
 
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
-}
-
-class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
-      override fun settingsChanged() {
-        listener(invoke())
-      }
-    })
-  }
-
-  override fun invoke(): Boolean = canEnableStagingArea()
 }
 
 class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {

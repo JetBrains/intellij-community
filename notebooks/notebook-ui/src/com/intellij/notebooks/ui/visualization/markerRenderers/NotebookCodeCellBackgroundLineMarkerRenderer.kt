@@ -1,6 +1,5 @@
 package com.intellij.notebooks.ui.visualization.markerRenderers
 
-import com.intellij.notebooks.ui.visualization.NotebookUtil.paintCaretRow
 import com.intellij.notebooks.ui.visualization.NotebookUtil.paintNotebookCellBackgroundGutter
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -24,11 +23,8 @@ class NotebookCodeCellBackgroundLineMarkerRenderer(
 ) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
-    val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
     val (top, height) = boundsProvider(editor)
 
-    paintNotebookCellBackgroundGutter(editor, g, r, top, height, presentationModeMasking) {
-      paintCaretRow(editor, g, lines)
-    }
+    paintNotebookCellBackgroundGutter(editor, g, r, top, height, presentationModeMasking)
   }
 }

@@ -9,6 +9,7 @@ import ru.adelf.idea.dotenv.psi.impl.*;
 public interface DotEnvTypes {
 
   IElementType KEY = new DotEnvElementType("KEY");
+  IElementType NESTED_VARIABLE_KEY = new DotEnvElementType("NESTED_VARIABLE_KEY");
   IElementType PROPERTY = new DotEnvElementType("PROPERTY");
   IElementType VALUE = new DotEnvElementType("VALUE");
 
@@ -16,6 +17,8 @@ public interface DotEnvTypes {
   IElementType CRLF = new DotEnvTokenType("CRLF");
   IElementType EXPORT = new DotEnvTokenType("EXPORT");
   IElementType KEY_CHARS = new DotEnvTokenType("KEY_CHARS");
+  IElementType NESTED_VARIABLE_END = new DotEnvTokenType("NESTED_VARIABLE_END");
+  IElementType NESTED_VARIABLE_START = new DotEnvTokenType("NESTED_VARIABLE_START");
   IElementType QUOTE = new DotEnvTokenType("QUOTE");
   IElementType SEPARATOR = new DotEnvTokenType("SEPARATOR");
   IElementType VALUE_CHARS = new DotEnvTokenType("VALUE_CHARS");
@@ -25,6 +28,9 @@ public interface DotEnvTypes {
       IElementType type = node.getElementType();
       if (type == KEY) {
         return new DotEnvKeyImpl(node);
+      }
+      else if (type == NESTED_VARIABLE_KEY) {
+        return new DotEnvNestedVariableKeyImpl(node);
       }
       else if (type == PROPERTY) {
         return new DotEnvPropertyImpl(node);

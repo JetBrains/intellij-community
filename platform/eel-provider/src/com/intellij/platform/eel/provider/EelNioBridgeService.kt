@@ -33,7 +33,7 @@ interface EelNioBridgeService {
   /**
    * @return `null`  if the Eel API for [eelDescriptor] does not have a corresponding [java.nio.file.FileSystem]
    */
-  fun tryGetNioRoot(eelDescriptor: EelDescriptor): Path?
+  fun tryGetNioRoots(eelDescriptor: EelDescriptor): Set<Path>?
 
   /**
    * @return The `internalName` from [register] that was provided alongside [eelDescriptor].
@@ -73,7 +73,8 @@ fun EelPath.asNioPathOrNull(): Path? {
     return Path.of(toString())
   }
   val service = EelNioBridgeService.getInstanceSync()
-  val root = service.tryGetNioRoot(descriptor) ?: return null
+  val root = service.tryGetNioRoots(descriptor)?.firstOrNull() // FIXME: dirty. which root we should select?
+             ?: return null
   return parts.fold(root, Path::resolve)
 }
 
@@ -90,7 +91,7 @@ fun Path.asEelPath(): EelPath {
   }
   val service = EelNioBridgeService.getInstanceSync()
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
-  val root = service.tryGetNioRoot(descriptor) ?: error("unreachable") // since the descriptor is not null, the root should be as well
+  val root = service.tryGetNioRoots(descriptor)?.firstOrNull { this.startsWith(it) } ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
   if (descriptor.operatingSystem == EelPath.OS.UNIX) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
@@ -100,7 +101,7 @@ fun Path.asEelPath(): EelPath {
   }
 }
 
-fun EelDescriptor.routingPrefix(): Path {
-  return EelNioBridgeService.getInstanceSync().tryGetNioRoot(this)
+fun EelDescriptor.routingPrefixes(): Set<Path> {
+  return EelNioBridgeService.getInstanceSync().tryGetNioRoots(this)
          ?: throw IllegalArgumentException("Failure of obtaining prefix: could not convert $this to EelPath. The path does not belong to the default NIO FileSystem")
 }

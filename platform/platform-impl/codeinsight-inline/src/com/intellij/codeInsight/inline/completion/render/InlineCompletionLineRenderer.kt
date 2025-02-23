@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.ui.paint.RectanglePainter2D
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -35,14 +36,21 @@ open class InlineCompletionLineRenderer(
     listOf(InlineCompletionRenderTextBlock(text, attributes))
   )
 
-  val suffix: String
-    @Deprecated("Use blocks")
-    @ApiStatus.ScheduledForRemoval
-    get() = blocks.joinToString("") { it.text }
+  private var isDirty = false
 
-  val blocks: List<InlineCompletionRenderTextBlock> = run {
-    val tabSize = editor.settings.getTabSize(editor.project)
-    initialBlocks.filter { it.text.isNotEmpty() }.map { InlineCompletionRenderTextBlock(it.text.formatTabs(tabSize), it.attributes) }
+  var blocks: List<InlineCompletionRenderTextBlock> = formatTabs(initialBlocks)
+    internal set(newBlocks) {
+      ThreadingAssertions.assertEventDispatchThread()
+      isDirty = true
+      field = newBlocks
+    }
+
+  fun updateIfNeeded(inlay: Inlay<out InlineCompletionLineRenderer>) {
+    ThreadingAssertions.assertEventDispatchThread()
+    check(inlay.renderer === this)
+    if (isDirty) {
+      inlay.update()
+    }
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
@@ -132,5 +140,10 @@ open class InlineCompletionLineRenderer(
   private fun getFont(attributes: TextAttributes, text: String): Font {
     val original = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(attributes.fontType))
     return UIUtil.getFontWithFallbackIfNeeded(original, text)
+  }
+
+  private fun formatTabs(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
+    val tabSize = editor.settings.getTabSize(editor.project)
+    return blocks.filter { it.text.isNotEmpty() }.map { it.copy(text = it.text.formatTabs(tabSize)) }
   }
 }

@@ -12,8 +12,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with migration to coroutines and view models")
 class GHIOExecutorLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {

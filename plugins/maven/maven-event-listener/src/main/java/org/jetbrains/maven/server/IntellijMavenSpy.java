@@ -16,13 +16,46 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
-import static org.jetbrains.maven.server.EventInfoPrinter.printMavenEventInfo;
 import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 
 @Named("Intellij Idea Maven Embedded Event Spy")
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
+  private EventInfoPrinter myPrinter;
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @Override
+  public void init(Context context) throws Exception {
+    try {
+      doInit(context);
+    }
+    catch (Throwable ignore) {
+    }
+
+    if (myPrinter == null) {
+      myPrinter = new EventInfoPrinter(s -> System.out.println(s));
+      System.err.println("IntellijMavenSpy not initialized, build nodes could be displayed incorrectly");
+    }
+  }
+
+  private void doInit(Context context)
+    throws Throwable {
+
+    Map<String, Object> data = context.getData();
+    Properties properties = (Properties)data.get("versionProperties");
+    String version = properties.getProperty("version");
+    if (version.startsWith("3")) {
+      //noinspection UseOfSystemOutOrSystemErr
+      myPrinter = new EventInfoPrinter(s -> System.out.println(s));
+      return;
+    }
+    if (version.startsWith("4")) {
+      myPrinter = new EventInfoPrinter(new Maven4TerminalInvoker());
+    }
+  }
 
   @Override
   public void onEvent(Object event) {
@@ -45,12 +78,12 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     }
   }
 
-  private static void onDependencyResolutionRequest(DependencyResolutionRequest event) {
+  private void onDependencyResolutionRequest(DependencyResolutionRequest event) {
     String projectId = event.getMavenProject() == null ? "unknown" : event.getMavenProject().getId();
-    printMavenEventInfo("DependencyResolutionRequest", "id", projectId);
+    myPrinter.printMavenEventInfo("DependencyResolutionRequest", "id", projectId);
   }
 
-  private static void onDependencyResolutionResult(DependencyResolutionResult event) {
+  private void onDependencyResolutionResult(DependencyResolutionResult event) {
     List<Exception> errors = event.getCollectionErrors();
     StringBuilder result = new StringBuilder();
     for (Exception e : errors) {
@@ -59,10 +92,10 @@ public class IntellijMavenSpy extends AbstractEventSpy {
       }
       result.append(e.getMessage());
     }
-    printMavenEventInfo("DependencyResolutionResult", "error", result);
+    myPrinter.printMavenEventInfo("DependencyResolutionResult", "error", result);
   }
 
-  private static void collectAndPrintLastLinesForEA(Throwable e) {
+  private void collectAndPrintLastLinesForEA(Throwable e) {
     //need to collect last 3 lines to send to EA
     int lines = Math.max(e.getStackTrace().length, 3);
     StringBuilder builder = new StringBuilder();
@@ -70,10 +103,10 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     for (int i = 0; i < lines; i++) {
       builder.append(e.getStackTrace()[i]).append("\n");
     }
-    printMavenEventInfo("INTERR", "error", builder);
+    myPrinter.printMavenEventInfo("INTERR", "error", builder);
   }
 
-  private static void onRepositoryEvent(RepositoryEvent event) {
+  private void onRepositoryEvent(RepositoryEvent event) {
     RepositoryEvent.EventType type = event.getType();
 
     // optimization to prevent unnecessary CPU and memory pressure on many irrelevant events
@@ -83,15 +116,16 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     String errMessage = event.getException() == null ? "" : event.getException().getMessage();
     String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();
-    printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
+    myPrinter.printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
   }
 
-  private static void onExecutionEvent(ExecutionEvent event) {
+  private void onExecutionEvent(ExecutionEvent event) {
     MojoExecution mojoExec = event.getMojoExecution();
     String projectId = event.getProject() == null ? "unknown" : event.getProject().getId();
     if (mojoExec != null) {
       String errMessage = event.getException() == null ? "" : getErrorMessage(event.getException());
-      printMavenEventInfo(event.getType(), "source", String.valueOf(mojoExec.getSource()), "goal", mojoExec.getGoal(), "id", projectId,
+      myPrinter.printMavenEventInfo(event.getType(), "source", String.valueOf(mojoExec.getSource()), "goal", mojoExec.getGoal(), "id",
+                                    projectId,
                           "error",
                           errMessage);
     }
@@ -100,7 +134,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
         printSessionStartedEventAndReactorData(event, projectId);
       }
       else {
-        printMavenEventInfo(event.getType(), "id", projectId);
+        myPrinter.printMavenEventInfo(event.getType(), "id", projectId);
       }
     }
   }
@@ -112,7 +146,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
   }
 
-  private static void printSessionStartedEventAndReactorData(ExecutionEvent event, String projectId) {
+  private void printSessionStartedEventAndReactorData(ExecutionEvent event, String projectId) {
     MavenSession session = event.getSession();
     if (session != null) {
       List<MavenProject> projectsInReactor = session.getProjects();
@@ -126,10 +160,10 @@ public class IntellijMavenSpy extends AbstractEventSpy {
           .append(project.getArtifactId()).append(":")
           .append(project.getVersion()).append("&&");
       }
-      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder);
+      myPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder);
     }
     else {
-      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");
+      myPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");
     }
   }
 }

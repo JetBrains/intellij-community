@@ -15,13 +15,17 @@ public abstract class FileChooserFactory {
     return ApplicationManager.getApplication().getService(FileChooserFactory.class);
   }
 
-  public abstract @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                                               @Nullable Project project,
-                                                               @Nullable Component parent);
+  public abstract @NotNull FileChooserDialog createFileChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  );
 
-  public abstract @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                                               @Nullable Project project,
-                                                               @Nullable Component parent);
+  public abstract @NotNull PathChooserDialog createPathChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  );
 
   /**
    * Creates Save File dialog.
@@ -41,15 +45,17 @@ public abstract class FileChooserFactory {
   }
 
   /**
-   * Adds path completion listener to a given text field.
+   * Adds a path completion listener to a given text field.
    *
    * @param field      input field to add completion to
    * @param descriptor chooser options
-   * @param showHidden include hidden files into completion variants
-   * @param parent     if null then will be registered with {@link com.intellij.openapi.actionSystem.PlatformDataKeys#UI_DISPOSABLE}
+   * @param showHidden include hidden files in completion variants
+   * @param parent     when {@code null}, will be registered with {@link com.intellij.openapi.actionSystem.PlatformDataKeys#UI_DISPOSABLE}
    */
-  public abstract void installFileCompletion(@NotNull JTextField field,
-                                             @NotNull FileChooserDescriptor descriptor,
-                                             boolean showHidden,
-                                             @Nullable Disposable parent);
+  public abstract void installFileCompletion(
+    @NotNull JTextField field,
+    @NotNull FileChooserDescriptor descriptor,
+    boolean showHidden,
+    @Nullable Disposable parent
+  );
 }

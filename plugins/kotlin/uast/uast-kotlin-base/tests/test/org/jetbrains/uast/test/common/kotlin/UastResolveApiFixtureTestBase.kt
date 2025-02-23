@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
@@ -22,12 +24,14 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.KotlinUFile
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethodBase
+import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import kotlin.io.path.Path
 import kotlin.io.path.extension
@@ -2556,9 +2560,15 @@ interface UastResolveApiFixtureTestBase {
                 
                 package test.pkg
                 
-                inline fun belongsToClassPart(): String = TODO()
+                annotation class MyAnnotation(
+                  val myAttr: String = "defaultValue",
+                )
                 
-                inline fun <reified T : Any> needFake(): String = TODO()
+                @MyAnnotation
+                inline fun <T> T.belongsToClassPart(): String = TODO()
+                
+                @MyAnnotation("myAttrValue")
+                inline fun <reified T : Any> T.needFake(): String = TODO()
             """.trimIndent()
         )
         myFixture.configureByText(
@@ -2566,8 +2576,8 @@ interface UastResolveApiFixtureTestBase {
                 import test.pkg.*
                 
                 fun test() {
-                  belongsToClassPart()
-                  needFake()
+                  Any().belongsToClassPart()
+                  Any().needFake()
                 }
             """.trimIndent()
         )
@@ -2576,14 +2586,31 @@ interface UastResolveApiFixtureTestBase {
             val uFile = myFixture.file.toUElementOfType<UFile>()!!
             uFile.accept(object : AbstractUastVisitor() {
                 override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (node.isConstructorCall()) {
+                        // Like Any()
+                        return super.visitCallExpression(node)
+                    }
+                    val txt = node.sourcePsi?.text
                     val resolved = node.resolve()
-                    TestCase.assertNotNull(resolved)
+                    TestCase.assertNotNull(txt, resolved)
 
                     val containingClass = resolved!!.containingClass
                     val expectedName =
                         if (isK2) "MyStringsKt" // multi-file facade
                         else "MyStringsKt__MyStringJVMKt" // multi-file class part
-                    TestCase.assertEquals(expectedName, containingClass?.name)
+                    TestCase.assertEquals(txt, expectedName, containingClass?.name)
+
+                    TestCase.assertEquals(txt, 1, resolved.parameterList.parametersCount)
+                    val rcv = resolved.parameterList.parameters.single()
+                    val rcvType = if (!isK2 && resolved.name == "needFake") "java.lang.Object" else "T"
+                    TestCase.assertEquals(txt, rcvType, rcv.type.canonicalText)
+
+                    TestCase.assertEquals(txt, 2, resolved.annotations.size)
+                    TestCase.assertTrue(txt, resolved.hasAnnotation("test.pkg.MyAnnotation"))
+                    val anno = resolved.annotations.find { it.qualifiedName == "test.pkg.MyAnnotation" }
+                    val attrVal = anno?.findAttributeValue("myAttr")
+                    val expected = if (resolved.name == "needFake") "myAttrValue" else "defaultValue"
+                    TestCase.assertEquals(txt, expected, (attrVal as? PsiLiteral)?.value)
 
                     return super.visitCallExpression(node)
                 }

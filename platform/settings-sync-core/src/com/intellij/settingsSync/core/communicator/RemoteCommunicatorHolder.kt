@@ -78,7 +78,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
 
   fun getAvailableProviders(): List<SettingsSyncCommunicatorProvider> {
     val extensionList = arrayListOf<SettingsSyncCommunicatorProvider>()
-    extensionList.addAll(SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList)
+    extensionList.addAll(SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.filter { it.isAvailable() })
     if (extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE } == null) {
       extensionList.add(DummyDefaultCommunicatorProvider)
     }

@@ -98,7 +98,9 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, final @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@Nullable String shortName,
+                                         @NotNull PsiPackage psiPackage,
+                                         @NotNull GlobalSearchScope scope) {
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {

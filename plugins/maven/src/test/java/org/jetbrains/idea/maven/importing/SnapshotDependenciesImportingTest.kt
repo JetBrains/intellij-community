@@ -166,9 +166,9 @@ ${repositoriesSection()}<dependencies>
                        "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
                        "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
-    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
-    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
-    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
   }
 
   @Test

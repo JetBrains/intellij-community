@@ -1,3 +1,4 @@
+// IGNORE_K1
 data class TestClass1(@java.lang.Deprecated val pctorfield: Int) {
     constructor(@java.lang.Deprecated param: Int, param2: String) : this(param)
 }
@@ -20,3 +21,4 @@ class TestClass2(
 // SEARCH: param:pctorfield
 // SEARCH: param:functionParam
 // SEARCH: param:param
+// SEARCH: param:pctorfield

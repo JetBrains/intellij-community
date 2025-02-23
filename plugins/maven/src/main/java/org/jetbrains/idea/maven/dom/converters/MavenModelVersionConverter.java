@@ -26,12 +26,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0;
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
 
 public class MavenModelVersionConverter extends MavenConstantListConverter {
-  private static final String VERSION_4_0 = "4.0.0";
-  private static final String VERSION_4_1 = "4.1.0";
-  private static final List<String> VALUES_MAVEN_3 = Collections.singletonList(VERSION_4_0);
-  private static final List<String> VALUES_MAVEN_4 = Arrays.asList(VERSION_4_0, VERSION_4_1);
+  private static final List<String> VALUES_MAVEN_3 = Collections.singletonList(MODEL_VERSION_4_0_0);
+  private static final List<String> VALUES_MAVEN_4 = Arrays.asList(MODEL_VERSION_4_0_0, MODEL_VERSION_4_1_0);
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {

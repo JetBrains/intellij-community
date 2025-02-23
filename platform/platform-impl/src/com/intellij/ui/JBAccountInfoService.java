@@ -158,7 +158,7 @@ public interface JBAccountInfoService {
 
   record JbaOAuthProvider(
     @NotNull String id,
-    @NotNull String name,
+    @NlsSafe @NotNull String name,
     @NotNull String logoUrl,
     @NotNull String logoDarkUrl
   ) { }
@@ -211,6 +211,7 @@ public interface JBAccountInfoService {
     @NotNull String jbaUserId,
     @NotNull LicenseKind licenseKind,
     @NotNull LicenseeType licenseeType,
+    @NotNull LicensePack licensePack,
     @NlsSafe @NotNull String licensedTo,
     @NotNull Instant expiresOn
   ) { }
@@ -219,6 +220,13 @@ public interface JBAccountInfoService {
     STANDARD,
     TRIAL,
     FREE,
+  }
+
+  enum LicensePack {
+    ALL_PRODUCTS_PACK,
+    DOTULTIMATE,
+    STUDENT,
+    NONE
   }
 
   enum LicenseeType {

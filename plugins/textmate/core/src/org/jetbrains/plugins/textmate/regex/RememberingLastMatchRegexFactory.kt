@@ -1,24 +1,25 @@
 package org.jetbrains.plugins.textmate.regex
 
+import kotlinx.coroutines.Runnable
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 
 class RememberingLastMatchRegexFactory(private val delegate: RegexFactory) : RegexFactory {
-  override fun regex(regexString: String): RegexFacade {
+  override fun regex(pattern: CharSequence): RegexFacade {
     var hasGMatch = false
     var hasAMatch = false
     var i = 0
-    while (i < regexString.length - 1 && !hasGMatch && !hasAMatch) {
-      val c = regexString[i]
+    while (i < pattern.length - 1 && !hasGMatch && !hasAMatch) {
+      val c = pattern[i]
       if (c == '\\') {
         i += 1
-        when (regexString[i]) {
+        when (pattern[i]) {
           'G' -> hasGMatch = true
           'A' -> hasAMatch = true
         }
       }
       i += 1
     }
-    return TextMateRegexFacadeRememberLastMatch(delegate = delegate.regex(regexString),
+    return TextMateRegexFacadeRememberLastMatch(delegate = delegate.regex(pattern),
                                                 hasGMatch = hasGMatch,
                                                 hasAMatch = hasAMatch)
   }

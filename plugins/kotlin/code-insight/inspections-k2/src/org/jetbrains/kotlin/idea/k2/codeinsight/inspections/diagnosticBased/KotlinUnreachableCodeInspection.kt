@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -17,8 +19,7 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
     override val diagnosticType: KClass<KaFirDiagnostic.UnreachableCode>
         get() = KaFirDiagnostic.UnreachableCode::class
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.UnreachableCode
     ): Unit = Unit
@@ -26,12 +27,23 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
     override fun getProblemDescription(
         element: KtElement,
         context: Unit
-    ): @InspectionMessage String = KotlinBundle.message("unreachable.code")
+    ): @InspectionMessage String = KotlinBundle.message("inspection.unreachable.code")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtElement,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtElement>> = emptyArray()
+    ): KotlinModCommandQuickFix<KtElement> = object : KotlinModCommandQuickFix<KtElement>() {
+
+        override fun getFamilyName(): String = KotlinBundle.message("inspection.unreachable.code.remove.unreachable.code")
+
+        override fun applyFix(
+            project: Project,
+            element: KtElement,
+            updater: ModPsiUpdater,
+        ) {
+            element.delete()
+        }
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

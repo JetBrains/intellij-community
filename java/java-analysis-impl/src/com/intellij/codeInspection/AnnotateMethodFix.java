@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -85,7 +85,7 @@ public class AnnotateMethodFix extends ModCommandQuickFix {
     }
 
     if (myAnnotateOverriddenMethods) {
-      for (PsiMethod inheritor : OverridingMethodsSearch.search(method)) {
+      for (PsiMethod inheritor : OverridingMethodsSearch.search(method).asIterable()) {
         if (AnnotationUtil.isAnnotatingApplicable(inheritor, myAnnotation) &&
             !AnnotationUtil.isAnnotated(inheritor, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
           toAnnotate.add(inheritor);

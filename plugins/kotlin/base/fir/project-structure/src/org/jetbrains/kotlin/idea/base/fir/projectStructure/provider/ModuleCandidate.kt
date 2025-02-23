@@ -20,7 +20,7 @@ internal sealed class ModuleCandidate {
     ) : ModuleCandidate()
 
     data class Sdk(
-        val sdk: com.intellij.openapi.projectRoots.Sdk
+        val sdkId: com.intellij.platform.workspace.jps.entities.SdkId
     ) : ModuleCandidate()
 
     data class FixedModule(

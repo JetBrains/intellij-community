@@ -3,12 +3,12 @@ package fleet.util
 
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlin.random.Random
 import kotlin.random.nextInt
 
 object NetUtils {
-  private val used = ConcurrentHashMap.newKeySet<Int>()
+  private val used = ConcurrentHashSet<Int>()
 
   // https://en.wikipedia.org/wiki/Ephemeral_port
   private val portsRange = (1 shl 15) + (1 shl 14) until (1 shl 16)

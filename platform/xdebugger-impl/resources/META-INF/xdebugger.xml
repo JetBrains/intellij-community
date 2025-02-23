@@ -28,6 +28,9 @@
     <extensionPoint name="xdebugger.controlExceptionBreakpointSupport" interface="com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport" dynamic="true"/>
 
     <extensionPoint name="xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.xValueCustomDescriptorSerializerProvider"
+                    interface="com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -153,6 +156,10 @@
                  description="Enables frontend based actions in evaluation trees. Please, enable it only on the frontend side."
                  key="debugger.frontend.tree.actions"/>
 
+    <registryKey defaultValue="false"
+                 description="Enables remove/disable all but this breakpoint actions"
+                 key="debugger.remove.disable.actions"/>
+
     <intentionAction>
       <language>UAST</language>
       <className>com.intellij.xdebugger.impl.codeinsight.ControlExceptionBreakpointIntentionAction</className>
@@ -227,7 +234,11 @@
     <group id="XDebugger.Inspect.Tree.Popup.Frontend">
       <group id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
       <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend"/>
+      <separator/>
       <group id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend"/>
+      <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend"/>
     </group>
   </actions>
 

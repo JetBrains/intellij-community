@@ -16,6 +16,8 @@
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243/find-classes-model-243.jar
       find-all-model-experimental:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232/find-all-model-232.jar
+      find-ec-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251/find-ec-model-251.jar
 - name: lib/searchEverywhereMl.jar
   modules:
   - name: intellij.searchEverywhereMl

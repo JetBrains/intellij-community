@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
   @Override
   protected void modifyRoots(@NotNull VirtualFile file, @NotNull ContentEntry entry) {
+    OptionalExclusionUtil.cancelExclusion(entry.getRootModel().getModule().getProject(), file);
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       if (file.equals(excludeFolder.getFile())) {
         entry.removeExcludeFolder(excludeFolder);

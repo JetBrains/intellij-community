@@ -62,7 +62,6 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
     override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    context(KaSession)
-    override fun prepareContext(element: KtReturnExpression) {
+    override fun KaSession.prepareContext(element: KtReturnExpression) {
     }
 }

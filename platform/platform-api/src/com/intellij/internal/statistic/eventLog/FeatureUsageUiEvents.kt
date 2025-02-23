@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.ExitActionType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -24,7 +25,7 @@ interface FeatureUsageUiEvents {
 
   fun logShowDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 
-  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, invocationPlace: String? = null)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String? = null)
 
   fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 }
@@ -43,7 +44,7 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logShowDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 
-  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, invocationPlace: String?) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String?) {
   }
 
   override fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String?) {

@@ -55,8 +55,8 @@ public class a12 {
     System.out.println(true.<error descr="Cannot call methods on 'boolean' type">toString</error>());
     System.out.println().<error descr="Cannot access fields on 'void' type">field</error>;
     System.out.println().<error descr="Cannot call methods on 'void' type">method</error>();
-    System.out.println(ufo.lights);
-    System.out.println(ufo.hover());
+    System.out.println(ufo.<error descr="Cannot resolve symbol 'lights'">lights</error>);
+    System.out.println(ufo.<error descr="Cannot resolve method 'hover()'">hover</error>());
 
     <error descr="Cannot resolve method 'xxxxxx' in 'a12'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
 

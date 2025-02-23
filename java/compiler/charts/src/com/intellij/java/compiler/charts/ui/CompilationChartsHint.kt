@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.java.compiler.charts.CompilationChartsBundle
@@ -22,11 +22,12 @@ import javax.swing.SwingUtilities
 class CompilationChartsHint(
   private val project: Project,
   private val component: CompilationChartsDiagramsComponent,
+  disposable: Disposable,
 ) : Disposable {
   private var module: ModuleIndex? = null
   private var active: Boolean = false
   private var balloon: Balloon? = null
-  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable)
   private var balloonRectOnScreen: Rectangle? = null
 
   fun module(): ModuleIndex? = module

@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -40,8 +41,47 @@ import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.chipStyle
-import org.jetbrains.jewel.ui.util.thenIf
 
+/**
+ * A lightweight, button-like component used to represent actions, attributes, or filters.
+ *
+ * The `Chip` component is a compact, clickable element that provides visual feedback for various interaction states
+ * (hover, focus, press, etc.). It is versatile and customizable, allowing developers to define its style, behavior, and
+ * content.
+ *
+ * **Guidelines:** Reference Compose Chips for usage suggestions:
+ * [Compose Chips Documentation](https://developer.android.com/develop/ui/compose/components/chip)
+ *
+ * **Usage example:**
+ *
+ * ```kotlin
+ * var clicks by remember { mutableStateOf(0) }
+ * Chip(
+ *     onClick = { clicks++ },
+ *     enabled = true
+ * ) {
+ *     Text("Clicked: $clicks times!")
+ * }
+ * ```
+ *
+ * **Key Features:**
+ * - Small footprint, ideal for short text, icons, or a combination.
+ * - Fully customizable using [ChipStyle], enabling tailored shapes, paddings, and colors.
+ * - Adapts dynamically to user interactions with built-in state management.
+ *
+ * **When to use:**
+ * - To suggest or apply filters (e.g., user-selected tags).
+ * - To surface commonly used, secondary actions.
+ * - To display compact attributes or classifications.
+ *
+ * @param modifier Modifier to customize the layout and visual appearance.
+ * @param interactionSource Custom [MutableInteractionSource] for observing chip interaction events.
+ * @param enabled Controls interactivity. When `false`, the chip is non-clickable and rendered visually as disabled.
+ * @param selected Tracks the visual and semantic selection state of the chip.
+ * @param style Defines the visual styling of the chip (via [ChipStyle]).
+ * @param onClick Action to perform when the chip is clicked.
+ * @param content The composable content displayed inside the chip (e.g., text, icons, or a combination).
+ */
 @Composable
 public fun Chip(
     modifier: Modifier = Modifier,
@@ -69,6 +109,46 @@ public fun Chip(
     )
 }
 
+/**
+ * A toggleable version of [Chip], representing a switchable on/off state.
+ *
+ * `ToggleableChip` provides a compact UI element that can toggle between two states: checked and unchecked. This
+ * component is suitable for enabling/disabling an option or toggling a feature.
+ *
+ * **Usage example:**
+ *
+ * ```kotlin
+ * var isChecked by remember { mutableStateOf(false) }
+ * ToggleableChip(
+ *     checked = isChecked,
+ *     onClick = { isChecked = it },
+ *     enabled = true
+ * ) {
+ *     Text(if (isChecked) "Enabled" else "Disabled")
+ * }
+ * ```
+ *
+ * **Key Features:**
+ * - Represents a binary (checked/unchecked) state, similar to a checkbox.
+ * - Fully customizable using [ChipStyle], enabling tailored shapes, paddings, and colors.
+ * - Automatically adapts visual appearance based on toggle states.
+ *
+ * **When to use:**
+ * - To create toggleable filters or options.
+ * - To represent binary states that persist or control a feature.
+ * - As a compact alternative to a checkbox.
+ *
+ * **State Management:** The `checked` parameter controls the current state of the chip, while `onClick` defines the
+ * behavior when the chip is toggled.
+ *
+ * @param checked Indicates whether the chip is checked (true) or unchecked (false).
+ * @param onClick Action to perform when the chip is toggled. The new toggle state is passed to this lambda.
+ * @param modifier Modifier to customize chip layout and visuals.
+ * @param interactionSource Custom [MutableInteractionSource] for observing chip interaction events.
+ * @param enabled Controls interactivity. When `false`, the chip cannot be toggled.
+ * @param style Defines the visual styling of the chip (via [ChipStyle]).
+ * @param content The composable content displayed inside the chip (e.g., text, icons, or a combination).
+ */
 @Composable
 public fun ToggleableChip(
     checked: Boolean,
@@ -97,6 +177,52 @@ public fun ToggleableChip(
     )
 }
 
+/**
+ * A chip component designed for mutually exclusive selection within a group.
+ *
+ * `RadioButtonChip` provides a compact UI element for representing an option in a single-selection group. When
+ * selected, it automatically deselects other chips in the group.
+ *
+ * **Usage example:**
+ *
+ * ```kotlin
+ * var selectedOption by remember { mutableStateOf(0) }
+ * Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+ *     RadioButtonChip(
+ *         selected = selectedOption == 0,
+ *         onClick = { selectedOption = 0 }
+ *     ) { Text("Option 1") }
+ *     RadioButtonChip(
+ *         selected = selectedOption == 1,
+ *         onClick = { selectedOption = 1 }
+ *     ) { Text("Option 2") }
+ *     RadioButtonChip(
+ *         selected = selectedOption == 2,
+ *         onClick = { selectedOption = 2 }
+ *     ) { Text("Option 3") }
+ * }
+ * ```
+ *
+ * **Key Features:**
+ * - Represents mutually exclusive states in a single-selection group.
+ * - Fully customizable using [ChipStyle], enabling tailored shapes, paddings, and colors.
+ * - Automatically adapts visual appearance depending on whether the chip is selected or not.
+ *
+ * **When to use:**
+ * - To represent options in a single-selection choice group (e.g., forms, filters).
+ * - For small, space-efficient alternatives to radio buttons.
+ *
+ * **State Management:** The `selected` parameter controls whether the chip is active, while `onClick` handles selection
+ * actions.
+ *
+ * @param selected Indicates whether the chip is selected in the group.
+ * @param onClick Action to perform when the chip is selected.
+ * @param modifier Modifier to customize chip layout and visuals.
+ * @param interactionSource Custom [MutableInteractionSource] for observing chip interaction events.
+ * @param enabled Controls interactivity. When `false`, the chip cannot be selected or clicked.
+ * @param style Defines the visual styling of the chip (via [ChipStyle]).
+ * @param content The composable content displayed inside the chip (e.g., text, icons, or a combination).
+ */
 @Composable
 public fun RadioButtonChip(
     selected: Boolean,

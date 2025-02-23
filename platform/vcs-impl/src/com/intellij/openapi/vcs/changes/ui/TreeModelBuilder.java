@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -196,12 +196,11 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   private @NotNull TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
-                                                                  @NotNull ChangesBrowserSpecificFilesNode<?> node,
-                                                                  @NotNull FileStatus status) {
+                                                                  @NotNull ChangesBrowserSpecificFilesNode<?> node) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
-      insertLocalFileIntoNode(specificFiles, node, status);
+      insertLocalFileIntoNode(specificFiles, node);
     }
     return this;
   }
@@ -260,7 +259,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     assert myProject != null;
     if (ContainerUtil.isEmpty(modifiedWithoutEditing)) return this;
     ModifiedWithoutEditingNode node = new ModifiedWithoutEditingNode(myProject, modifiedWithoutEditing);
-    return insertSpecificFileNodeToModel(modifiedWithoutEditing, node, FileStatus.HIJACKED);
+    return insertSpecificFileNodeToModel(modifiedWithoutEditing, node);
   }
 
   private @NotNull TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable ChangesBrowserNode.Tag tag) {
@@ -320,8 +319,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   private void insertLocalFileIntoNode(@NotNull Collection<? extends VirtualFile> files,
-                                       @NotNull ChangesBrowserNode<?> subtreeRoot,
-                                       @NotNull FileStatus status) {
+                                       @NotNull ChangesBrowserNode<?> subtreeRoot) {
     List<VirtualFile> sortedFiles = sorted(files, FILE_COMPARATOR);
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
@@ -567,6 +565,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
     if (parentUserObject instanceof FilePath &&
         childUserObject instanceof FilePath) {
+      appendCollapsedParent(child, parent);
       return child;
     }
 
@@ -580,12 +579,19 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       List<ChangesBrowserNode<?>> children = child.iterateNodeChildren().toList(); // defensive copy
       for (ChangesBrowserNode<?> childNode : children) {
         parent.add(childNode);
+        appendCollapsedParent(childNode, child);
       }
 
       return parent;
     }
 
     return null;
+  }
+
+  private static void appendCollapsedParent(@NotNull ChangesBrowserNode<?> child, ChangesBrowserNode<?> parent) {
+    if (child instanceof ChangesBrowserNode.NodeWithCollapsedParents childWithCollapsedParents) {
+      childWithCollapsedParents.addCollapsedParent(parent);
+    }
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull FilePath fp) {

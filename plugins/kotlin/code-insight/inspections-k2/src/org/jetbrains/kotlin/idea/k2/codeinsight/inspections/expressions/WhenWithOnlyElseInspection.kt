@@ -85,8 +85,7 @@ internal class WhenWithOnlyElseInspection
      *   - whether the `when` expression itself is used as an expression
      *   - for the subject variable, if present, whether the initializer is pure.
      */
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context? {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
         val isWhenUsedAsExpression = element.isUsedAsExpression
@@ -102,10 +101,10 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtWhenExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtWhenExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtWhenExpression>() {
+    ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.when.with.only.else.action.name")
@@ -124,7 +123,7 @@ internal class WhenWithOnlyElseInspection
 
             updater.moveCaretTo(newCaretPosition)
         }
-    })
+    }
 
     /**
      * STEP 3.1:

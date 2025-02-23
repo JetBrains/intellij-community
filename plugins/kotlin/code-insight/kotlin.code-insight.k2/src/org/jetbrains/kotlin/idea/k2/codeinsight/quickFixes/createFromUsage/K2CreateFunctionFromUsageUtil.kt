@@ -81,7 +81,12 @@ object K2CreateFunctionFromUsageUtil {
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
         var expectedType = expectedType
         if (expectedType == null) {
-            val parent = this.parent
+            var parent = this.parent
+            var current = this
+            if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+                current = parent
+                parent = parent.parent
+            }
             expectedType = when {
                 parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.boolean
                 parent is KtStringTemplateEntryWithExpression -> builtinTypes.string
@@ -97,8 +102,11 @@ object K2CreateFunctionFromUsageUtil {
                         argument(ktType)
                     }
                 }
-                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
+                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == current && parent.parent is KtValueArgument -> {
                     (parent.expectedType as? KaFunctionType)?.returnType
+                }
+                parent is KtBinaryExpression && parent.operationToken == KtTokens.EQ && parent.left == current -> {
+                    parent.right?.expressionType
                 }
                 else -> null
             }
@@ -119,7 +127,7 @@ object K2CreateFunctionFromUsageUtil {
 
         expectedType = makeAccessibleInCreationPlace(expectedType, this) ?: return null
         val jvmType = expectedType.convertToJvmType(this) ?: return null
-        return ExpectedKotlinType(expectedType, jvmType)
+        return ExpectedKotlinType.create(expectedType, jvmType)
     }
 
     // Given: `println("a = ${A().foo()}")`
@@ -176,13 +184,13 @@ object K2CreateFunctionFromUsageUtil {
     ): ExpectedParameter {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
+        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
         var expectedArgumentType = argumentExpression?.expressionType
-        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
         if (expectedArgumentType != null && receiverType is KaClassType) {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression!!)
-        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)
+        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
         val names = parameterNames?.toList() ?: listOf(defaultParameterName)
         val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
         return expectedParameter(expectedType, *nameArray)

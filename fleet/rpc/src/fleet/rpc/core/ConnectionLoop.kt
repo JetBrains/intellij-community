@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.Clock
 
 private object ConnectionLoop {
   val logger = logger<ConnectionLoop>()
@@ -57,7 +58,7 @@ fun <T> connectionLoop(
           delay(curDelayMs)
         }
         status.value = ConnectionStatus.TemporarilyDisconnected(
-          connectionScheduledFor = System.currentTimeMillis() + curDelayMs,
+          connectionScheduledFor = Clock.System.now().toEpochMilliseconds() + curDelayMs,
           delayJob = Job(),
           reason = ex.causeOfType<TransportDisconnectedException>() ?: ex)
         delayJob.join()
@@ -95,7 +96,7 @@ fun <T> CoroutineScope.connectionLoopOld(
 
       if (reason != null) {
         ConnectionLoop.logger.info(reason.takeIf { ConnectionLoop.logger.isDebugEnabled }) {
-          "Connection by <$connectionJobName> lost. Cause=${reason.causes().joinToString { it.localizedMessage ?: it.toString() }}\n" +
+          "Connection by <$connectionJobName> lost. Cause=${reason.causes().joinToString { it.message ?: it.toString() }}\n" +
           "Consider increasing logging level to DEBUG for ${ConnectionLoop::class.qualifiedName}"
         }
       }
@@ -113,7 +114,7 @@ fun <T> CoroutineScope.connectionLoopOld(
           ConnectionLoop.logger.info { "Delay for <$connectionJobName>(attempt #$attempt) was canceled for reason: ${e.message}" }
         }
       }
-      status.value = ConnectionStatus.TemporarilyDisconnected(System.currentTimeMillis() + curDelayMs, delayJob, reason)
+      status.value = ConnectionStatus.TemporarilyDisconnected(Clock.System.now().toEpochMilliseconds() + curDelayMs, delayJob, reason)
 
       delayJob.join()
       curDelayMs = delayStrategy.nextDelay(curDelayMs)

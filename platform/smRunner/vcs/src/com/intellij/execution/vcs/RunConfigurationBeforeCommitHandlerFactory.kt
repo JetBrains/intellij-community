@@ -4,6 +4,7 @@ package com.intellij.execution.vcs
 import com.intellij.build.BuildView
 import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
+import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
@@ -16,6 +17,7 @@ import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ConsoleViewWithDelegate
@@ -47,6 +49,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
@@ -207,7 +210,7 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
   }
 
   private fun getTestRunnerResultsForm(executionConsole: ExecutionConsole?): SMTestRunnerResultsForm? =
-    (executionConsole?.component as? SMTestRunnerResultsForm)
+    if (executionConsole !is SMTRunnerConsoleView) null else executionConsole.component as? SMTestRunnerResultsForm
 
   private fun createCommitProblem(descriptions: List<FailureDescription>): CommitProblem? {
     return when {
@@ -239,9 +242,17 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
       configurationBean != null -> getOptionTitle(configurationBean.name)
       else -> VcsBundle.message("before.commit.run.configuration.no.configuration.selected.checkbox")
     }
+    val icon = if (configurationBean != null) ConfigurationTypeUtil.findConfigurationType(configurationBean.configurationId)?.icon else null
 
-    return BooleanCommitOption.createLink(project, this, disableWhenDumb = true, initialText, settings.myState::enabled,
-                                          SmRunnerBundle.message("link.label.choose.configuration.before.commit")) { sourceLink, linkData ->
+    return BooleanCommitOption.Companion.createLink(project,
+                                                    this,
+                                                    disableWhenDumb = true,
+                                                    text = initialText,
+                                                    iconAfterText = icon,
+                                                    getter = { settings.myState.enabled },
+                                                    setter = { settings.myState.enabled = it },
+                                                    linkText = SmRunnerBundle.message("link.label.choose.configuration.before.commit"))
+    { sourceLink: LinkLabel<BooleanCommitOption.LinkContext>, linkData: BooleanCommitOption.LinkContext ->
       JBPopupFactory.getInstance().createActionGroupPopup(null,
                                                           createConfigurationChooser(linkData),
                                                           SimpleDataContext.EMPTY_CONTEXT,
@@ -285,7 +296,7 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
                 settings.myState.configuration = bean
 
                 val optionTitle = getOptionTitle(configuration.name)
-                linkContext.setCheckboxText(optionTitle)
+                linkContext.update(optionTitle, ConfigurationTypeUtil.findConfigurationType(type.id)?.icon)
               }
             })
           }

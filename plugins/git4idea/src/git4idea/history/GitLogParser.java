@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,13 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see GitLogRecord
  */
 @ApiStatus.Internal
-public class GitLogParser<R extends GitLogRecord> {
+public final class GitLogParser<R extends GitLogRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
 
   // Single records begin with %x01%x01, end with %03%03. Items of commit information (hash, committer, subject, etc.) are separated by %x02%x02.
-  static final String RECORD_START = "\u0001\u0001";
-  static final String ITEMS_SEPARATOR = "\u0002\u0002";
-  static final String RECORD_END = "\u0003\u0003";
+  public static final String RECORD_START = "\u0001\u0001";
+  public static final String ITEMS_SEPARATOR = "\u0002\u0002";
+  public static final String RECORD_END = "\u0003\u0003";
   private static final int MAX_SEPARATOR_LENGTH = 10;
   private static final char[] CONTROL_CHARS = new char[]{'\u0001', '\u0002', '\u0003'};
   private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
@@ -254,7 +254,8 @@ public class GitLogParser<R extends GitLogRecord> {
   }
 
   // --name-status or no flag
-  enum NameStatus {
+  @ApiStatus.Internal
+  public enum NameStatus {
     /**
      * No flag.
      */

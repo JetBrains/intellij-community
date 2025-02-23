@@ -19,7 +19,7 @@ class PythonPackagesUpdater : ProjectActivity {
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
       service<PyPIPackageRanking>().reload()
-      service<PypiPackageCache>().loadCache()
+      service<PypiPackageCache>().reloadCache()
     }
   }
 }

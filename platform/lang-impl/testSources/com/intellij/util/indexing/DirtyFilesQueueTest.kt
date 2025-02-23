@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.TextSearchService
@@ -85,7 +85,7 @@ class DirtyFilesQueueTest {
   @After
   fun tearDown() {
     runBlocking(Dispatchers.EDT) {
-      writeAction {
+      edtWriteAction {
         Disposer.dispose(testRootDisposable) // must dispose in EDT
       }
     }
@@ -106,13 +106,13 @@ class DirtyFilesQueueTest {
     runBlocking {
       openProject(testNameRule.methodName) { project, module ->
         val src = tempDir.createVirtualDir("src")
-        writeAction {
+        edtWriteAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
         }
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-        writeAction { src.createFile("A.txt") }
+        edtWriteAction { src.createFile("A.txt") }
         restart(skipFullScanning = false, project) // persist queue
         assertThat(project.getQueueFile()).exists()
         assertThat(getQueueFile()).exists()
@@ -156,13 +156,13 @@ class DirtyFilesQueueTest {
 
       val files: List<VirtualFile> = openProject(testNameRule.methodName) { project, module ->
         val src = tempDir.createVirtualDir("src")
-        writeAction {
+        edtWriteAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
         }
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-        val files = writeAction {
+        val files = edtWriteAction {
           fileNames.map {
             val file = src.createFile(it)
             file.writeText("$commonPrefix1 $it")
@@ -175,7 +175,7 @@ class DirtyFilesQueueTest {
         }
         files
       }
-      writeAction {
+      edtWriteAction {
         for (file in files) {
           file.writeText("$commonPrefix2 $file")
         }
@@ -236,13 +236,13 @@ class DirtyFilesQueueTest {
         registerFiletype(filetype)
         val src = tempDir.createVirtualDir("src")
 
-        writeAction {
+        edtWriteAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
         }
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-        val file = writeAction {
+        val file = edtWriteAction {
           src.createFile("A.${filetype.defaultExtension}")
         }
         fileBasedIndex.changedFilesCollector.ensureUpToDate()
@@ -266,7 +266,7 @@ class DirtyFilesQueueTest {
         registerFiletype(filetype)
         val src = tempDir.createVirtualDir("src")
 
-        val file = writeAction {
+        val file = edtWriteAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
@@ -276,7 +276,7 @@ class DirtyFilesQueueTest {
           val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
           assertThat(files).contains(file)
         }
-        writeAction {
+        edtWriteAction {
           file.delete(this)
         }
         fileBasedIndex.changedFilesCollector.ensureUpToDate()
@@ -316,7 +316,7 @@ class DirtyFilesQueueTest {
   private fun restart(skipFullScanning: Boolean, project: Project? = null) {
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
-        val tumbler = FileBasedIndexTumbler("test")
+        val tumbler = FileBasedIndexTumbler("DirtyFilesQueueTest")
         if (skipFullScanning) {
           tumbler.allowSkippingFullScanning()
         }

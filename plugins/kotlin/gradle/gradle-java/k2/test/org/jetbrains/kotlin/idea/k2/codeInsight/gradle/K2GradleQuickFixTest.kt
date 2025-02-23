@@ -6,17 +6,19 @@ import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleMultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Ignore
 import org.junit.Test
+import java.io.File
 
 class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
-    override fun checkUnexpectedErrors(ktFile: KtFile) {
-        // TODO: KTIJ-32363
+    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForUnexpectedErrors(mainFile, ktFile, fileText)
     }
 
     @Test

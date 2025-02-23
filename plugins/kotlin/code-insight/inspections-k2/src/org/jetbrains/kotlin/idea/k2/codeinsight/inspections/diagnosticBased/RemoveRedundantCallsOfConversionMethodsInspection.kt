@@ -24,8 +24,7 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
     override val diagnosticType: KClass<KaFirDiagnostic.RedundantCallOfConversionMethod>
         get() = KaFirDiagnostic.RedundantCallOfConversionMethod::class
 
-    context(KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtQualifiedExpression,
         diagnostic: KaFirDiagnostic.RedundantCallOfConversionMethod
     ): Unit = Unit
@@ -48,10 +47,10 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("redundant.call.of.the.conversion.method")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtQualifiedExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = object : KotlinModCommandQuickFix<KtQualifiedExpression>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
 
@@ -62,5 +61,5 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
         ) {
             element.replace(element.receiverExpression)
         }
-    })
+    }
 }

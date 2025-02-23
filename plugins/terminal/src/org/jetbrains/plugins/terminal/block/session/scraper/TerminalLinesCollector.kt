@@ -3,8 +3,10 @@ package org.jetbrains.plugins.terminal.block.session.scraper
 
 import com.jediterm.terminal.model.LinesBuffer
 import com.jediterm.terminal.model.TerminalLine
+import org.jetbrains.annotations.ApiStatus
 
-internal interface TerminalLinesCollector {
+@ApiStatus.Internal
+interface TerminalLinesCollector {
   fun addLines(linesBuffer: LinesBuffer) {
     for (i in 0 until linesBuffer.lineCount) {
       addLine(linesBuffer.getLine(i))

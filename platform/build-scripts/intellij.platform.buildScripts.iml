@@ -63,6 +63,7 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="json-schema-validator" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json-io" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
@@ -115,10 +116,10 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
-        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.5">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:2.0.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5.jar">
-              <sha256sum>68d0ecf4537f09f9115b2d68c57664cd1bdcf8ec25937b7280f89eea20c3bf22</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1.jar">
+              <sha256sum>46aa057f38b1cb2ac89d7e4b6357570b82bfd8e2b4d062ab40b09db3290d1c26</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar">
               <sha256sum>45b24b098dcaec230fde72b4e0568dab464cf7d8afd8b83fb9ac628778c67df9</sha256sum>
@@ -141,7 +142,7 @@
             <dependency maven-id="io.ktor:ktor-client-logging-jvm" />
             <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
             <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="commons-logging:commons-logging" />
             <dependency maven-id="commons-codec:commons-codec" />
             <dependency maven-id="org.apache.httpcomponents:httpclient" />
@@ -152,7 +153,7 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar!/" />
@@ -161,7 +162,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431-sources.jar!/" />

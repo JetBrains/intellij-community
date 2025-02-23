@@ -8,7 +8,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -29,11 +29,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.impl.utils.where
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.platform.eel.provider.utils.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText
@@ -42,7 +42,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.io.IOException
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -63,6 +63,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil.isMavenUnitTestModeEnabled
 import org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveGlobalSettingsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveUserSettingsPath
+import java.io.IOException
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
@@ -141,7 +142,7 @@ object MavenEelUtil  {
       result.add(MavenInSpecificPath(home))
     }
 
-    val path = runBlockingMaybeCancellable { where("mvn") }?.asNioPathOrNull()?.parent?.parent
+    val path = runBlockingMaybeCancellable { exec.where("mvn") }?.asNioPathOrNull()?.parent?.parent
     if (path != null && isValidMavenHome(path)) {
       result.add(MavenInSpecificPath(path))
     }
@@ -241,7 +242,10 @@ object MavenEelUtil  {
 
   @JvmStatic
   fun resolveUserSettingsPathBlocking(overriddenUserSettingsFile: String?, project: Project?): Path {
-    return runBlockingMaybeCancellable { resolveUserSettingsPathAsync(overriddenUserSettingsFile, project) }
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      resolveUserSettingsPathAsync(overriddenUserSettingsFile, project)
+    }
   }
 
   suspend fun resolveLocalRepositoryAsync(
@@ -436,7 +440,7 @@ object MavenEelUtil  {
         val eel = project.getEelDescriptor().upgrade()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
-          writeAction {
+          edtWriteAction {
             val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
                                                                    ProjectJdkTable.getInstance().allJdks.toList())
             val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)

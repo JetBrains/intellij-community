@@ -32,6 +32,13 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     Set<String> shortNames = names.stream()
       .map(name -> StringUtil.getShortName(name))
       .collect(Collectors.toSet());
+
+    Set<String> classShortNames = names.stream()
+      .map(name -> StringUtil.getShortName(StringUtil.getPackageName(name)))
+      .filter(name -> !name.isBlank())
+      .collect(Collectors.toSet());
+    shortNames.addAll(classShortNames);
+
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -42,16 +49,16 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         String name = qualifierReferenceExpression.getReferenceName();
         PsiElement qualifierReference = qualifierReferenceExpression.getReferenceNameElement();
         if (qualifierReference == null || name == null || !shortNames.contains(name)) return;
-        OnDemandStaticImportContext context = findOnDemandImportContext(expression);
+        StaticImportContext context = findOnDemandImportContext(expression);
         if (context == null) return;
         holder.registerProblem(qualifierReference,
                                JavaBundle.message("inspection.static.import.can.be.used.display.name"),
-                               new OnDemandStaticImportFix());
+                               new StaticImportFix());
       }
     };
   }
 
-  private static class OnDemandStaticImportFix extends PsiUpdateModCommandQuickFix {
+  private static class StaticImportFix extends PsiUpdateModCommandQuickFix {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
@@ -59,7 +66,9 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         return;
       }
       if (!(referenceExpression.getParent() instanceof PsiReferenceExpression targetReferenceExpression)) return;
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetReferenceExpression);
+      JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      javaCodeStyleManager.shortenClassReferences(targetReferenceExpression);
+      javaCodeStyleManager.optimizeImports(targetReferenceExpression.getContainingFile());
     }
 
     @Override
@@ -70,11 +79,11 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
 
   /**
    * @param reference the reference expression to evaluate; must not be null.
-   * @return the {@link OnDemandStaticImportContext} if the reference can be on-demand static imported,
+   * @return the {@link StaticImportContext} if the reference can be on-demand static imported,
    * or null if the criteria for such a context are not met.
    */
   @Nullable
-  public static OnDemandStaticImportContext findOnDemandImportContext(@NotNull PsiReferenceExpression reference) {
+  public static StaticImportCanBeUsedInspection.StaticImportContext findOnDemandImportContext(@NotNull PsiReferenceExpression reference) {
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(reference.getProject());
     PsiFile file = reference.getContainingFile();
     if (!(file instanceof PsiJavaFile javaFile)) return null;
@@ -87,7 +96,7 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) return null;
     if (!(qualifier.resolve() instanceof PsiClass psiClass)) return null;
     String classQualifiedName = psiClass.getQualifiedName();
-    if (!javaCodeStyleManager.isStaticAutoImportClass(classQualifiedName)) return null;
+    if (!javaCodeStyleManager.isStaticAutoImportName(classQualifiedName + "." + memberName)) return null;
     PsiElement referenceNameElement = qualifier.getReferenceNameElement();
     if (referenceNameElement == null) return null;
     PsiClass anImport = AddOnDemandStaticImportAction.getClassToPerformStaticImport(referenceNameElement);
@@ -95,9 +104,9 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     if (javaCodeStyleManager.hasConflictingOnDemandImport(javaFile, anImport, memberName)) return null;
     PsiImportList importList = javaFile.getImportList();
     if (importList == null) return null;
-    return new OnDemandStaticImportContext(anImport, memberName, importList);
+    return new StaticImportContext(anImport, memberName, importList);
   }
 
-  public record OnDemandStaticImportContext(@NotNull PsiClass psiClass, @NotNull String memberName, @NotNull PsiImportList importList) {
+  public record StaticImportContext(@NotNull PsiClass psiClass, @NotNull String memberName, @NotNull PsiImportList importList) {
   }
 }

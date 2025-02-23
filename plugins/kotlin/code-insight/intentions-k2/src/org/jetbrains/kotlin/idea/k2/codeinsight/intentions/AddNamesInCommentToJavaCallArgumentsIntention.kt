@@ -31,8 +31,7 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
 
     override fun isApplicableByPsi(element: KtCallElement): Boolean = element.canAddArgumentNameCommentsByPsi()
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
+    override fun KaSession.prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
 
     override fun invoke(
       actionContext: ActionContext,

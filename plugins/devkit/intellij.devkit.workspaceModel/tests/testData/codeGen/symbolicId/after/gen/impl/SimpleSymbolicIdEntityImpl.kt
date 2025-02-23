@@ -5,14 +5,15 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.PersistentEntityId
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -177,7 +178,7 @@ internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolic
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicIdEntity>() {
+internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicIdEntity>(), SoftLinkable {
   var version: Int = 0
   lateinit var name: String
   lateinit var related: SimpleId
@@ -187,6 +188,194 @@ internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicId
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isRelatedInitialized(): Boolean = ::related.isInitialized
   internal fun isSealedClassWithLinksInitialized(): Boolean = ::sealedClassWithLinks.isInitialized
+
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    result.add(related)
+    val _sealedClassWithLinks = sealedClassWithLinks
+    when (_sealedClassWithLinks) {
+      is SealedClassWithLinks.Many -> {
+        val __sealedClassWithLinks = _sealedClassWithLinks
+        when (__sealedClassWithLinks) {
+          is SealedClassWithLinks.Many.Ordered -> {
+            for (item in __sealedClassWithLinks.list) {
+              result.add(item)
+            }
+          }
+          is SealedClassWithLinks.Many.Unordered -> {
+            for (item in __sealedClassWithLinks.set) {
+              result.add(item)
+            }
+          }
+        }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        result.add(_sealedClassWithLinks.id)
+      }
+    }
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    index.index(this, related)
+    val _sealedClassWithLinks = sealedClassWithLinks
+    when (_sealedClassWithLinks) {
+      is SealedClassWithLinks.Many -> {
+        val __sealedClassWithLinks = _sealedClassWithLinks
+        when (__sealedClassWithLinks) {
+          is SealedClassWithLinks.Many.Ordered -> {
+            for (item in __sealedClassWithLinks.list) {
+              index.index(this, item)
+            }
+          }
+          is SealedClassWithLinks.Many.Unordered -> {
+            for (item in __sealedClassWithLinks.set) {
+              index.index(this, item)
+            }
+          }
+        }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        index.index(this, _sealedClassWithLinks.id)
+      }
+    }
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val removedItem_related = mutablePreviousSet.remove(related)
+    if (!removedItem_related) {
+      index.index(this, related)
+    }
+    val _sealedClassWithLinks = sealedClassWithLinks
+    when (_sealedClassWithLinks) {
+      is SealedClassWithLinks.Many -> {
+        val __sealedClassWithLinks = _sealedClassWithLinks
+        when (__sealedClassWithLinks) {
+          is SealedClassWithLinks.Many.Ordered -> {
+            for (item in __sealedClassWithLinks.list) {
+              val removedItem_item = mutablePreviousSet.remove(item)
+              if (!removedItem_item) {
+                index.index(this, item)
+              }
+            }
+          }
+          is SealedClassWithLinks.Many.Unordered -> {
+            for (item in __sealedClassWithLinks.set) {
+              val removedItem_item = mutablePreviousSet.remove(item)
+              if (!removedItem_item) {
+                index.index(this, item)
+              }
+            }
+          }
+        }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        val removedItem__sealedClassWithLinks_id = mutablePreviousSet.remove(_sealedClassWithLinks.id)
+        if (!removedItem__sealedClassWithLinks_id) {
+          index.index(this, _sealedClassWithLinks.id)
+        }
+      }
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    val related_data = if (related == oldLink) {
+      changed = true
+      newLink as SimpleId
+    }
+    else {
+      null
+    }
+    if (related_data != null) {
+      related = related_data
+    }
+    val _sealedClassWithLinks = sealedClassWithLinks
+    val res_sealedClassWithLinks = when (_sealedClassWithLinks) {
+      is SealedClassWithLinks.Many -> {
+        val __sealedClassWithLinks = _sealedClassWithLinks
+        val res__sealedClassWithLinks = when (__sealedClassWithLinks) {
+          is SealedClassWithLinks.Many.Ordered -> {
+            val __sealedClassWithLinks_list_data = __sealedClassWithLinks.list.map {
+              val it_data = if (it == oldLink) {
+                changed = true
+                newLink as SimpleId
+              }
+              else {
+                null
+              }
+              if (it_data != null) {
+                it_data
+              }
+              else {
+                it
+              }
+            }
+            var __sealedClassWithLinks_data = __sealedClassWithLinks
+            if (__sealedClassWithLinks_list_data != null) {
+              __sealedClassWithLinks_data = __sealedClassWithLinks_data.copy(list = __sealedClassWithLinks_list_data)
+            }
+            __sealedClassWithLinks_data
+          }
+          is SealedClassWithLinks.Many.Unordered -> {
+            val __sealedClassWithLinks_set_data = __sealedClassWithLinks.set.map {
+              val it_data = if (it == oldLink) {
+                changed = true
+                newLink as SimpleId
+              }
+              else {
+                null
+              }
+              if (it_data != null) {
+                it_data
+              }
+              else {
+                it
+              }
+            }
+            var __sealedClassWithLinks_data = __sealedClassWithLinks
+            if (__sealedClassWithLinks_set_data != null) {
+              __sealedClassWithLinks_data = __sealedClassWithLinks_data.copy(set = __sealedClassWithLinks_set_data)
+            }
+            __sealedClassWithLinks_data
+          }
+        }
+        res__sealedClassWithLinks
+      }
+      is SealedClassWithLinks.Nothing -> {
+        _sealedClassWithLinks
+      }
+      is SealedClassWithLinks.Single -> {
+        val _sealedClassWithLinks_id_data = if (_sealedClassWithLinks.id == oldLink) {
+          changed = true
+          newLink as SimpleId
+        }
+        else {
+          null
+        }
+        var _sealedClassWithLinks_data = _sealedClassWithLinks
+        if (_sealedClassWithLinks_id_data != null) {
+          _sealedClassWithLinks_data = _sealedClassWithLinks_data.copy(id = _sealedClassWithLinks_id_data)
+        }
+        _sealedClassWithLinks_data
+      }
+    }
+    if (res_sealedClassWithLinks != null) {
+      sealedClassWithLinks = res_sealedClassWithLinks
+    }
+    return changed
+  }
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     val modifiable = SimpleSymbolicIdEntityImpl.Builder(null)

@@ -86,6 +86,6 @@ public class FakeRevision implements ByteBackedContentRevision {
 
   @Override
   public String toString() {
-    return myFile.getPath();
+    return "FakeRevision:" + myFile.getPath();
   }
 }

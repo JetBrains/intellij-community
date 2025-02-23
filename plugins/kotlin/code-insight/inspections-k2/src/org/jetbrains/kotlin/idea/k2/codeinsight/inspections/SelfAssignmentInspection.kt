@@ -26,10 +26,10 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
     override fun getProblemDescription(element: KtBinaryExpression, context: String): String =
         KotlinBundle.message("variable.0.is.assigned.to.itself", context)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: String,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.self.assignment.fix.text")
@@ -41,7 +41,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         ) {
             element.delete()
         }
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -53,8 +53,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): String? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
         val right = element.right
 

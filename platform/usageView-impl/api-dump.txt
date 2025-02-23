@@ -62,7 +62,6 @@ c:com.intellij.usages.impl.UsageNode
 - p:isDataValid():Z
 - navigate(Z):V
 - p:updateCachedPresentation():V
-- p:updateNotify():V
 c:com.intellij.usages.impl.UsagePreviewPanel
 - com.intellij.usages.impl.UsageContextPanelBase
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider

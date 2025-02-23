@@ -22,7 +22,5 @@ class JbaCommunicatorProvider : SettingsSyncCommunicatorProvider, Disposable {
     CloudConfigServerCommunicator(null, authServiceLazy.value)
   }.value
 
-  override fun dispose() {
-    TODO("Not yet implemented")
-  }
+  override fun dispose() {}
 }

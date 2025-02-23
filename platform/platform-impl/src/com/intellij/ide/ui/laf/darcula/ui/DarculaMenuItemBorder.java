@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.MainMenuDisplayMode;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -19,11 +18,11 @@ import java.awt.*;
 public class DarculaMenuItemBorder implements Border, UIResource {
 
   public static @NotNull JBInsets menuBarItemInnerInsets() {
-    return UISettings.getShadowInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR? JBUI.insets(0,4): JBUI.insets(2);
+    return JBUI.insets(2);
   }
 
   public static @NotNull JBInsets menuBarItemOuterInsets() {
-    return UISettings.getShadowInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR? JBUI.insets(5, 0) : JBUI.emptyInsets();
+    return JBUI.emptyInsets();
   }
 
   @Override
@@ -44,7 +43,7 @@ public class DarculaMenuItemBorder implements Border, UIResource {
       }
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      result = menuBarItemInnerInsets();
+      result = ShowMode.Companion.isMergedMainMenu() ? JBUI.insets(0, 4) : menuBarItemInnerInsets();
     }
     else {
       result = JBUI.CurrentTheme.Menu.Selection.innerInsets();

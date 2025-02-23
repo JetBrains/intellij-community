@@ -64,7 +64,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     expected.forEach {
       session.commandExecutionManager.sendCommandToExecute(it.command)
     }
-    awaitBlocksFinalized(view.outputView.controller.outputModel, count)
+    awaitBlocksFinalized(view.outputView.controller.outputModel, count, 60.seconds)
     val actual = view.outputView.controller.outputModel.collectCommandResults()
     Assert.assertEquals(expected, actual)
   }
@@ -73,7 +73,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
   @Test
   fun `multiline commands with bracketed mode`() {
     val (session, view) = startSessionAndCreateView()
-    Assume.assumeTrue(session.model.isBracketedPasteMode)
+    assumeTrue(session.model.isBracketedPasteMode)
     val expected = listOf(
       CommandResult("echo 1\necho 2", "1\n2")
     )

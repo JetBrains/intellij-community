@@ -46,13 +46,14 @@ internal class SimplifyWhenWithBooleanConstantConditionInspection : KotlinApplic
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context {
         return Context(element.isUsedAsExpression)
     }
 
-    override fun createQuickFixes(element: KtWhenExpression, context: Context): Array<KotlinModCommandQuickFix<KtWhenExpression>> =
-        arrayOf(SimplifyFix(context))
+    override fun createQuickFix(
+        element: KtWhenExpression,
+        context: Context,
+    ): KotlinModCommandQuickFix<KtWhenExpression> = SimplifyFix(context)
 }
 
 private class SimplifyFix(private val context: Context) : KotlinModCommandQuickFix<KtWhenExpression>() {

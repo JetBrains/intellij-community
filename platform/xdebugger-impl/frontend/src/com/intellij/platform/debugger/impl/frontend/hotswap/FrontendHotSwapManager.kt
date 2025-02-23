@@ -11,10 +11,13 @@ import com.intellij.xdebugger.impl.hotswap.NOTIFICATION_TIME_SECONDS
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -23,14 +26,11 @@ internal class FrontendHotSwapManager(private val project: Project, val coroutin
   private val frontendStatusFlow = MutableStateFlow(null as XDebugHotSwapCurrentSessionStatus?).also { flow ->
     coroutineScope.launch {
       XDebuggerHotSwapApi.getInstance().currentSessionStatus(project.projectId()).collectLatest { state ->
-        val newStatus = state
-        flow.value = newStatus
+        flow.value = state
         // clear success status after delay
-        if (newStatus != null && newStatus.status == HotSwapVisibleStatus.SUCCESS) {
-          launch(Dispatchers.Default) {
-            delay(NOTIFICATION_TIME_SECONDS.seconds)
-            flow.compareAndSet(newStatus, newStatus.copy(status = HotSwapVisibleStatus.NO_CHANGES))
-          }
+        if (state?.status == HotSwapVisibleStatus.SUCCESS) {
+          delay(NOTIFICATION_TIME_SECONDS.seconds)
+          flow.compareAndSet(state, state.copy(status = HotSwapVisibleStatus.NO_CHANGES))
         }
       }
     }

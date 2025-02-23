@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,9 +9,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
@@ -106,25 +106,24 @@ class RegistrationIndexer {
   private void processActionContainer(ActionContainer actionContainer) {
     for (Action action : actionContainer.getActions()) {
       addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-      addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
+      addIdEntry(action, action.getEffectiveId(), RegistrationEntry.RegistrationType.ACTION_ID);
     }
 
     for (Group group : actionContainer.getGroups()) {
       addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-      addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
+      addIdEntry(group, group.getEffectiveId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
 
       processActionContainer(group);
     }
   }
 
   private void addIdEntry(DomElement domElement,
-                          GenericAttributeValue<String> idValue,
+                          @Nullable String idValue,
                           RegistrationEntry.RegistrationType type) {
+    if (StringUtil.isEmptyOrSpaces(idValue)) return;
     if (!DomUtil.hasXml(domElement)) return;
-    String id = idValue.getStringValue();
-    if (StringUtil.isEmptyOrSpaces(id)) return;
 
-    storeEntry(id, domElement, type);
+    storeEntry(idValue, domElement, type);
   }
 
   private void addEntry(DomElement domElement,

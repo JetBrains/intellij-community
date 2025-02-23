@@ -3,22 +3,23 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
+import com.intellij.java.codeserver.core.JavaPsiReferenceUtil.ForwardReferenceProblem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.JavaPsiReferenceUtil.ForwardReferenceProblem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -1683,7 +1684,7 @@ public final class ExpressionUtils {
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
         PsiVariable var = (PsiVariable)target;
         if (var.hasModifierProperty(PsiModifier.FINAL) ||
-            HighlightControlFlowUtil.isEffectivelyFinal(var, PsiUtil.getVariableCodeBlock(var, null), null)) {
+            ControlFlowUtil.isEffectivelyFinal(var, PsiUtil.getVariableCodeBlock(var, null))) {
           continue;
         }
       }

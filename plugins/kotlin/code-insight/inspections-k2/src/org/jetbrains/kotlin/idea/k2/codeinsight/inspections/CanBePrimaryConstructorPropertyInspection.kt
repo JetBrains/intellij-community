@@ -40,8 +40,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
+    override fun KaSession.prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null
         val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null
@@ -55,10 +54,10 @@ internal class CanBePrimaryConstructorPropertyInspection :
         return MovePropertyToConstructorInfo.create(element)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtProperty,
         context: MovePropertyToConstructorInfo,
-    ): Array<KotlinModCommandQuickFix<KtProperty>> = arrayOf(object : KotlinModCommandQuickFix<KtProperty>() {
+    ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
@@ -70,5 +69,5 @@ internal class CanBePrimaryConstructorPropertyInspection :
         ) {
             element.moveToConstructor(context.toWritable(updater))
         }
-    })
+    }
 }

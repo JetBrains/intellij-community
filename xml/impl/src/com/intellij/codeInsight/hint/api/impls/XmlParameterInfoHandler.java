@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
@@ -70,7 +71,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   private static @Nullable XmlTag findXmlTag(PsiFile file, int offset){
-    if (!(file instanceof XmlFile)) return null;
+    if (!(file instanceof XmlFile) || file instanceof HtmlCompatibleFile) return null;
 
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;

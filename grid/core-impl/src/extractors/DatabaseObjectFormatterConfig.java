@@ -32,6 +32,11 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
   }
 
   @Override
+  public boolean isAllowedShowBigObjects() {
+    return false;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -62,6 +67,8 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
 
     private final DataGridSettings settings;
 
+    private boolean isAllowedShowBigObjects;
+
     public DatabaseDisplayObjectFormatterConfig() {
       this(null, false, null, null);
     }
@@ -73,6 +80,7 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
       @Nullable DataGridSettings settings
     ) {
       super(ObjectFormatterMode.DISPLAY);
+      this.isAllowedShowBigObjects = false;
       this.displayType = displayType;
       this.isModeDetectedAutomatically = isModeDetectedAutomatically;
       this.allowedTypes = allowedTypes;
@@ -95,6 +103,15 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
     @Override
     public @Nullable DataGridSettings getSettings() {
       return settings;
+    }
+
+    public void allowShowBigObjects() {
+      this.isAllowedShowBigObjects = true;
+    }
+
+    @Override
+    public boolean isAllowedShowBigObjects() {
+      return this.isAllowedShowBigObjects;
     }
 
     @Override

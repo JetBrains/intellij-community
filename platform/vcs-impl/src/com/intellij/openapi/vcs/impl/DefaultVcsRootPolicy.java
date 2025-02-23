@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,14 @@ public abstract class DefaultVcsRootPolicy {
    * Return roots that belong to the project (ex: all content roots).
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
-  public abstract @NotNull Collection<VirtualFile> getDefaultVcsRoots();
+  public final @NotNull Collection<VirtualFile> getDefaultVcsRoots() {
+    return ContainerUtil.mapNotNull(getDefaultVcsRootsCandidates(), dir -> {
+      VirtualFile canonicalDir = dir.getCanonicalFile();
+      return canonicalDir != null ? canonicalDir : dir;
+    });
+  }
+
+  protected abstract @NotNull Collection<VirtualFile> getDefaultVcsRootsCandidates();
 
   public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);

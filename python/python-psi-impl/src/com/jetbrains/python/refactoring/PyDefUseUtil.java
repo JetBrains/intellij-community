@@ -24,10 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
@@ -77,6 +74,12 @@ public final class PyDefUseUtil {
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
+                                  if (instruction instanceof PyWithContextExitInstruction withExit) {
+                                    // probably should remove acceptTypeAssertions and make context nullable
+                                    if (!withExit.isSuppressingExceptions(context)) {
+                                      return ControlFlowUtil.Operation.CONTINUE;
+                                    }
+                                  }
                                   if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
                                     var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
                                     if (typeGuardInstruction != null) {
