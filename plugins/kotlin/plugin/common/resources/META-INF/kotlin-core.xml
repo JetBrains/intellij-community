@@ -595,7 +595,7 @@
 
     <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"

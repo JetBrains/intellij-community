@@ -262,7 +262,12 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
 
     val service = DumbService.getInstance(dir.project)
     return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
-        val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+        val adjustedDir =
+            if (template.name == "Kotlin Script") {
+                targetDir
+            } else {
+                CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+            }
         val psiFile = createKotlinFileFromTemplate(adjustedDir, fileName, template)
         if (psiFile is KtFile) {
             val singleClass = psiFile.declarations.singleOrNull() as? KtClass
