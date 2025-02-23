@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +26,7 @@ public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
   /**
-   * @deprecated To support contracts from different libraries please use {@link JvmContractAnnotationProvider}
+   * @deprecated To support contracts from different libraries please use {@link StaticAnalysisAnnotationManager#getKnownContractAnnotations}
    */
   @Deprecated
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
@@ -235,7 +232,9 @@ public final class JavaMethodContractUtil {
    * @return a found annotation (null if not found)
    */
   public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method, boolean skipExternal) {
-    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), skipExternal);
+    return AnnotationUtil.findAnnotationInHierarchy(method,
+                                                    Set.of(StaticAnalysisAnnotationManager.getInstance().getKnownContractAnnotations()),
+                                                    skipExternal);
   }
 
   /**
@@ -245,7 +244,9 @@ public final class JavaMethodContractUtil {
    * @return a found annotation (null if not found)
    */
   public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
-    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), false);
+    return AnnotationUtil.findAnnotationInHierarchy(method,
+                                                    Set.of(StaticAnalysisAnnotationManager.getInstance().getKnownContractAnnotations()),
+                                                    false);
   }
 
   /**
