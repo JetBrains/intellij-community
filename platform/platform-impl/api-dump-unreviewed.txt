@@ -8370,6 +8370,20 @@ f:com.intellij.openapi.fileEditor.TextEditorWithPreview$MyFileEditorState
 - f:getSplitLayout():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - hashCode():I
 - f:isVerticalSplit():Z
+a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
+- com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+- <init>(com.intellij.openapi.fileEditor.FileEditorProvider):V
+- accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- acceptRequiresReadAction():Z
+- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- f:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+- p:createSplitEditor(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.FileEditor
+- getEditorTypeId():java.lang.String
+- getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
+- writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
+f:com.intellij.openapi.fileEditor.TextEditorWithPreviewProviderKt
+- sf:createSplitEditorProviderTypeId(java.lang.String,java.lang.String):java.lang.String
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
 - sf:Companion:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$Companion
