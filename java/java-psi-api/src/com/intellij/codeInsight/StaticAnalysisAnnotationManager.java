@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +24,11 @@ public final class StaticAnalysisAnnotationManager {
     "org.gradle.api.Incubating"
   };
 
+  private static final String[] KNOWN_CONTRACT_ANNOTATIONS = {
+    "org.jetbrains.annotations.Contract",
+    "org.springframework.lang.Contract"
+  };
+
   public static StaticAnalysisAnnotationManager getInstance() {
     return ApplicationManager.getApplication().getService(StaticAnalysisAnnotationManager.class);
   }
@@ -34,5 +39,12 @@ public final class StaticAnalysisAnnotationManager {
    */
   public @NotNull String @NotNull [] getKnownUnstableApiAnnotations() {
     return KNOWN_UNSTABLE_API_ANNOTATIONS;
+  }
+
+  /**
+   * @return array of contract annotations that uses the contract syntax specified by {@link org.jetbrains.annotations.Contract}
+   */
+  public @NotNull String @NotNull [] getKnownContractAnnotations() {
+    return KNOWN_CONTRACT_ANNOTATIONS;
   }
 }
