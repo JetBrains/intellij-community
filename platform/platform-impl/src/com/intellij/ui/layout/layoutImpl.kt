@@ -10,8 +10,15 @@ import javax.swing.JComponent
 
 @PublishedApi
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
 internal fun createLayoutBuilder(): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
+}
+
+@ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
+@Deprecated("Use Kotlin UI DSL Version 2")
+fun createLayoutBuilderInternal(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
