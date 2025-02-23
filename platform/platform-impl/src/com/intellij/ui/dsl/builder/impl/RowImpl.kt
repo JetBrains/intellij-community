@@ -58,18 +58,16 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var topGap: TopGap? = null
     private set
 
-  /**
-   * Used if topGap is not set, skipped for first row
-   */
-  var internalTopGap: Int = 0
-
   var bottomGap: BottomGap? = null
     private set
 
   /**
-   * Used if bottomGap is not set, skipped for last row
+   * Top is used if topGap is not set, skipped for first row
+   * Bottom is used if bottomGap is not set, skipped for last row
    */
-  var internalBottomGap: Int = 0
+  var internalGaps: UnscaledGapsY = UnscaledGapsY.EMPTY
+
+  var customGaps: UnscaledGapsY? = null
 
   val cells: MutableList<CellBaseImpl<*>?> = mutableListOf()
 
@@ -387,10 +385,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customize(customRowGaps: UnscaledGapsY): Row {
-    internalTopGap = customRowGaps.top
-    internalBottomGap = customRowGaps.bottom
-    topGap = null
-    bottomGap = null
+    customGaps = customRowGaps
 
     return this
   }

@@ -370,18 +370,22 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   }
 
   private fun getRowGaps(row: RowImpl, first: Boolean, last: Boolean): UnscaledGapsY {
+    row.customGaps?.let {
+      return it
+    }
+
     val top = when (row.topGap) {
       TopGap.NONE -> 0
       TopGap.SMALL -> spacingConfiguration.verticalSmallGap
       TopGap.MEDIUM -> spacingConfiguration.verticalMediumGap
-      null -> if (first) 0 else row.internalTopGap
+      null -> if (first) 0 else row.internalGaps.top
     }
 
     val bottom = when (row.bottomGap) {
       BottomGap.NONE -> 0
       BottomGap.SMALL -> spacingConfiguration.verticalSmallGap
       BottomGap.MEDIUM -> spacingConfiguration.verticalMediumGap
-      null -> if (last) 0 else row.internalBottomGap
+      null -> if (last) 0 else row.internalGaps.bottom
     }
 
     return if (top > 0 || bottom > 0) UnscaledGapsY(top = top, bottom = bottom) else UnscaledGapsY.EMPTY
