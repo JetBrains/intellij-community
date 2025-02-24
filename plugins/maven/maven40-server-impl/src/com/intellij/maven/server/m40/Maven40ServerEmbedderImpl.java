@@ -26,14 +26,19 @@ import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
+import org.apache.maven.model.*;
 import org.apache.maven.model.Dependency;
-import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.FileModelSource;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProcessor;
+import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
+import org.apache.maven.model.path.DefaultPathTranslator;
+import org.apache.maven.model.path.DefaultUrlNormalizer;
+import org.apache.maven.model.path.PathTranslator;
+import org.apache.maven.model.root.DefaultRootLocator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
@@ -841,6 +846,82 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  @Override
+  public @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File pomDir, @NotNull MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
+    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
+    Model result = interpolateAndAlignModel(nativeModel, baseDir, pomDir);
+    return Maven40ModelConverter.convertModel(result);
+  }
+
+  public @NotNull Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
+    DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
+    DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
+    DefaultRootLocator rootLocator = new DefaultRootLocator();
+    StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
+    Model result = Maven40ProfileUtil.doInterpolate(interpolator, nativeModel, basedir);
+    MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
+    myPathTranslator.alignToBaseDirectory(result, pomDir);
+    return result;
+  }
+
+  private static class MyDefaultPathTranslator {
+    private final PathTranslator myPathTranslator;
+
+    private MyDefaultPathTranslator(PathTranslator pathTranslator) {
+      myPathTranslator = pathTranslator;
+    }
+
+    private String alignToBaseDirectory(String path, File basedir) {
+      return myPathTranslator.alignToBaseDirectory(path, basedir);
+    }
+
+    /**
+     * adapted from {@link org.apache.maven.project.path.DefaultPathTranslator#alignToBaseDirectory(Model, File)}
+     */
+    private void alignToBaseDirectory(Model model, File basedir) {
+      if (basedir == null) {
+        return;
+      }
+
+      Build build = model.getBuild();
+
+      if (build != null) {
+        build.setDirectory(alignToBaseDirectory(build.getDirectory(), basedir));
+
+        build.setSourceDirectory(alignToBaseDirectory(build.getSourceDirectory(), basedir));
+
+        build.setTestSourceDirectory(alignToBaseDirectory(build.getTestSourceDirectory(), basedir));
+
+        for (Resource resource : build.getResources()) {
+          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
+        }
+
+        for (Resource resource : build.getTestResources()) {
+          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
+        }
+
+        if (build.getFilters() != null) {
+          List<String> filters = new ArrayList<>();
+          for (String filter : build.getFilters()) {
+            filters.add(alignToBaseDirectory(filter, basedir));
+          }
+          build.setFilters(filters);
+        }
+
+        build.setOutputDirectory(alignToBaseDirectory(build.getOutputDirectory(), basedir));
+
+        build.setTestOutputDirectory(alignToBaseDirectory(build.getTestOutputDirectory(), basedir));
+      }
+
+      Reporting reporting = model.getReporting();
+
+      if (reporting != null) {
+        reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
+      }
+    }
+  }
 
   @Override
   public @NotNull MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(@NotNull LongRunningTaskInput longRunningTaskInput,

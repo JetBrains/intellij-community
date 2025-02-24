@@ -96,4 +96,7 @@ public interface MavenServerEmbedder extends Remote {
   boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
 
   boolean ping(MavenToken token) throws RemoteException;
+
+  @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File dir, @NotNull MavenToken token)
+    throws RemoteException;
 }

@@ -559,7 +559,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       MavenLog.LOG.info(e)
     }
     else {
-      MavenLog.LOG.error(e)
+      MavenLog.LOG.warn(e)
     }
   }
 

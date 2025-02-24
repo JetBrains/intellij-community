@@ -61,15 +61,6 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     }
   }
 
-  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
-    val transformer = RemotePathTransformerFactory.createForProject(project!!)
-    val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
-    val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
-    val m = getServer().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
-    MavenServerResultTransformer.transformPaths(transformer, m)
-    return m
-  }
-
   override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
     return getServer().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken)
   }

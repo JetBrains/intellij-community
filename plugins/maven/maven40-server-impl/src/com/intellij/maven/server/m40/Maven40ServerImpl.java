@@ -3,7 +3,6 @@ package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.Maven40ModelInheritanceAssembler;
 import com.intellij.maven.server.m40.utils.Maven40ProfileUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.*;
@@ -34,17 +33,6 @@ public class Maven40ServerImpl extends MavenServerBase {
   public MavenServerIndexer createIndexer(MavenToken token) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir, pomDir);
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
   }
 
   @Override

@@ -9,7 +9,6 @@ import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.path.DefaultPathTranslator;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
-import org.apache.maven.model.path.PathTranslator;
 import org.apache.maven.model.profile.DefaultProfileActivationContext;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
@@ -146,24 +145,7 @@ public final class Maven40ProfileUtil {
     return result;
   }
 
-  public static @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
-    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
-    Model result = interpolateAndAlignModel(nativeModel, basedir, pomDir);
-    return Maven40ModelConverter.convertModel(result);
-  }
-
-  public static @NotNull Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
-    DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
-    DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
-    DefaultRootLocator rootLocator = new DefaultRootLocator();
-    StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
-    Model result = doInterpolate(interpolator, nativeModel, basedir);
-    MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
-    myPathTranslator.alignToBaseDirectory(result, pomDir);
-    return result;
-  }
-
-  private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
+  public static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
     try {
       Properties userProperties = new Properties();
       userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
@@ -191,63 +173,6 @@ public final class Maven40ProfileUtil {
       MavenServerGlobals.getLogger().error(e);
     }
     return result;
-  }
-
-  private static class MyDefaultPathTranslator {
-    private final PathTranslator myPathTranslator;
-
-    private MyDefaultPathTranslator(PathTranslator pathTranslator) {
-      myPathTranslator = pathTranslator;
-    }
-
-    private String alignToBaseDirectory(String path, File basedir) {
-      return myPathTranslator.alignToBaseDirectory(path, basedir);
-    }
-
-    /**
-     * adapted from {@link org.apache.maven.project.path.DefaultPathTranslator#alignToBaseDirectory(Model, File)}
-     */
-    private void alignToBaseDirectory(Model model, File basedir) {
-      if (basedir == null) {
-        return;
-      }
-
-      Build build = model.getBuild();
-
-      if (build != null) {
-        build.setDirectory(alignToBaseDirectory(build.getDirectory(), basedir));
-
-        build.setSourceDirectory(alignToBaseDirectory(build.getSourceDirectory(), basedir));
-
-        build.setTestSourceDirectory(alignToBaseDirectory(build.getTestSourceDirectory(), basedir));
-
-        for (Resource resource : build.getResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        for (Resource resource : build.getTestResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        if (build.getFilters() != null) {
-          List<String> filters = new ArrayList<>();
-          for (String filter : build.getFilters()) {
-            filters.add(alignToBaseDirectory(filter, basedir));
-          }
-          build.setFilters(filters);
-        }
-
-        build.setOutputDirectory(alignToBaseDirectory(build.getOutputDirectory(), basedir));
-
-        build.setTestOutputDirectory(alignToBaseDirectory(build.getTestOutputDirectory(), basedir));
-      }
-
-      Reporting reporting = model.getReporting();
-
-      if (reporting != null) {
-        reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
-      }
-    }
   }
 }
 

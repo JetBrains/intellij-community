@@ -78,6 +78,8 @@ abstract class DummyEmbedder : MavenServerEmbedder {
   override fun cancelLongRunningTask(longRunningTaskId: String, token: MavenToken?) = true
 
   override fun ping(token: MavenToken?) = true
+
+  override fun interpolateAndAlignModel(model: MavenModel, dir: File, token: MavenToken) = model
 }
 
 class UntrustedDummyEmbedder(val myProject: Project) : DummyEmbedder() {

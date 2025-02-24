@@ -83,10 +83,6 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return DummyIndexer()
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, pomDir: File?, token: MavenToken?): MavenModel {
-    return model
-  }
-
   override fun assembleInheritance(model: MavenModel, parentModel: MavenModel?, token: MavenToken?): MavenModel {
     return model
   }

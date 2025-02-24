@@ -33,9 +33,6 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
 
   MavenServerIndexer createIndexer(MavenToken token) throws RemoteException;
 
-  @NotNull
-  MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException;
-
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException;
 
   ProfileApplicationResult applyProfiles(MavenModel model,
