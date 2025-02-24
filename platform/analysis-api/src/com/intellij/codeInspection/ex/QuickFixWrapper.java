@@ -131,12 +131,12 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull String getText() {
-    return getFamilyName();
+    return myFix.getName();
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return myFix.getName();
+    return myFix.getFamilyName();
   }
 
   @Override
