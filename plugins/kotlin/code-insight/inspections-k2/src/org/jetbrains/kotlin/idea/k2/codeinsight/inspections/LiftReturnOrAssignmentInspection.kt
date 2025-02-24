@@ -89,7 +89,9 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
                 if (expression.parent !is KtBlockExpression && analyze(expression) { expression.isUsedAsExpression }) return
 
                 states.forEach { state ->
-                    if (expression is KtIfExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtIfExpression::class.java, true) != expression) {
+                    if (expression is KtIfExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtIfExpression::class.java, true) != expression
+                        || expression is KtTryExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtTryExpression::class.java, true) != expression) {
+                        // already highlighted when visited nested if/try
                         return@forEach
                     }
                     val problemMessage = KotlinBundle.message(
