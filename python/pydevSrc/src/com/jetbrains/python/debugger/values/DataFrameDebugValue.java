@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.getColumnData;
+import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.getInformationColumns;
 
 public final class DataFrameDebugValue extends PyDebugValue {
   private final ColumnNode treeColumns = new ColumnNode();
@@ -65,10 +65,13 @@ public final class DataFrameDebugValue extends PyDebugValue {
       public void ok(String value) {
         myLoadValuePolicy = ValuesPolicy.SYNC;
         myValue = value;
-        DataFrameDebugValue.InformationColumns columns = getColumnData(value);
-        if (columns != null) {
-          setColumns(columns);
-        }
+        try {
+          DataFrameDebugValue.InformationColumns columns = getInformationColumns(value);
+          if (columns != null) {
+            setColumns(columns);
+          }
+        } catch (Exception ignored) {}
+
         for (XValueNode node : myValueNodes) {
           if (node != null && !node.isObsolete()) {
             updateNodeValueAfterLoading(node, value, "", null);
