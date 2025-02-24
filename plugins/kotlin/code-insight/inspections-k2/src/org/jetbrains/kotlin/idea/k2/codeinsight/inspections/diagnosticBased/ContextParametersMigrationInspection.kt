@@ -136,8 +136,10 @@ internal class ContextParametersMigrationInspection :
             .mapNotNullTo(SmartSet.create()) { it.getImplicitOnlyContextReceiver() }
     }
 
-    // Create a function copy and add placeholder context parameter names.
-    // Then use the name suggestion provider to improve names where possible.
+    /**
+     * Create a function copy and add placeholder context parameter names.
+     * Then use the name suggestion provider to improve names where possible.
+     */
     private fun findSuggestedContextNames(
         contextReceivers: List<KtContextReceiver>,
         containingDeclaration: KtNamedDeclaration,
