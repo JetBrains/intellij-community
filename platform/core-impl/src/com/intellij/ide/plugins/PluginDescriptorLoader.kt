@@ -39,7 +39,6 @@ import java.util.jar.JarInputStream
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import javax.xml.stream.XMLStreamException
-import kotlin.Throws
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -361,6 +360,9 @@ private fun loadFromPluginDir(
   return null
 }
 
+/**
+ * @return null if `lib` subdirectory does not exist, otherwise a list of paths to archives (.jar or .zip)
+ */
 private fun resolveArchives(path: Path): MutableList<Path>? {
   try {
     return Files.newDirectoryStream(path.resolve("lib")).use { stream ->
@@ -1173,10 +1175,9 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
     productBuildNumber = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
-  @Suppress("SSBasedInspection")
   result.addAll(
     descriptors = toSequence(
-      list = runBlocking {
+      list = @Suppress("RAW_RUN_BLOCKING") runBlocking {
         val pool = ZipFilePool.POOL?.takeIf { !context.transient } ?: NonShareableJavaZipFilePool()
         urlToFilename.map { (url, filename) ->
           async(Dispatchers.IO) {
