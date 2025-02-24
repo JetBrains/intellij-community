@@ -30,14 +30,18 @@ import org.apache.maven.model.*;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.building.FileModelSource;
-import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.model.building.ModelProcessor;
+import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.model.path.DefaultPathTranslator;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.path.PathTranslator;
+import org.apache.maven.model.profile.DefaultProfileActivationContext;
+import org.apache.maven.model.profile.DefaultProfileInjector;
+import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
+import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator;
+import org.apache.maven.model.profile.activation.ProfileActivator;
+import org.apache.maven.model.profile.activation.PropertyProfileActivator;
 import org.apache.maven.model.root.DefaultRootLocator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
@@ -860,7 +864,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     DefaultRootLocator rootLocator = new DefaultRootLocator();
     StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
-    Model result = Maven40ProfileUtil.doInterpolate(interpolator, nativeModel, basedir);
+    Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, pomDir);
     return result;
@@ -921,6 +925,167 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
       }
     }
+  }
+
+  @Override
+  public @NotNull ProfileApplicationResult applyProfiles(@NotNull MavenModel model,
+                                                         @NotNull File basedir,
+                                                         @NotNull MavenExplicitProfiles explicitProfiles,
+                                                         @NotNull HashSet<@NotNull String> alwaysOnProfiles,
+                                                         @NotNull MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      return applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  private static ProfileApplicationResult applyProfiles(MavenModel model,
+                                                        File basedir,
+                                                        MavenExplicitProfiles explicitProfiles,
+                                                        Collection<String> alwaysOnProfiles) {
+    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
+
+    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
+    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
+    List<Profile> activatedPom = new ArrayList<>();
+    List<Profile> activatedExternal = new ArrayList<>();
+    List<Profile> activeByDefault = new ArrayList<>();
+
+    List<Profile> rawProfiles = nativeModel.getProfiles();
+    List<Profile> expandedProfilesCache = null;
+    List<Profile> deactivatedProfiles = new ArrayList<>();
+
+    for (int i = 0; i < rawProfiles.size(); i++) {
+      Profile eachRawProfile = rawProfiles.get(i);
+
+      if (disabledProfiles.contains(eachRawProfile.getId())) {
+        deactivatedProfiles.add(eachRawProfile);
+        continue;
+      }
+
+      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
+
+      Activation activation = eachRawProfile.getActivation();
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
+
+        // expand only if necessary
+        if (expandedProfilesCache == null) {
+          DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
+          DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
+          DefaultRootLocator rootLocator = new DefaultRootLocator();
+          StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
+          expandedProfilesCache = doInterpolate(interpolator, nativeModel, basedir).getProfiles();
+        }
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
+
+        ModelProblemCollector collector = new ModelProblemCollector() {
+          @Override
+          public void add(ModelProblemCollectorRequest request) {
+          }
+        };
+        DefaultProfileActivationContext context = new DefaultProfileActivationContext();
+        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
+          try {
+            if (eachActivator.isActive(eachExpandedProfile, context, collector)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (Exception e) {
+            MavenServerGlobals.getLogger().warn(e);
+          }
+        }
+      }
+
+      if (shouldAdd) {
+        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
+        }
+      }
+    }
+
+    List<Profile> activatedProfiles = new ArrayList<>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
+
+    for (Profile each : activatedProfiles) {
+      new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
+    }
+
+    return new ProfileApplicationResult(
+      Maven40ModelConverter.convertModel(nativeModel),
+      new MavenExplicitProfiles(collectProfilesIds(activatedProfiles), collectProfilesIds(deactivatedProfiles))
+    );
+  }
+
+  private static ProfileActivator[] getProfileActivators(File basedir) {
+    PropertyProfileActivator sysPropertyActivator = new PropertyProfileActivator();
+    /*
+    DefaultContext context = new DefaultContext();
+    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
+    try {
+      sysPropertyActivator.contextualize(context);
+    }
+    catch (ContextException e) {
+      MavenServerGlobals.getLogger().error(e);
+      return new ProfileActivator[0];
+    }
+    */
+
+    return new ProfileActivator[]{
+      // TODO: implement
+      //new MyFileProfileActivator(basedir),
+      sysPropertyActivator,
+      new JdkVersionProfileActivator(),
+      new OperatingSystemProfileActivator()};
+  }
+
+  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
+    Collection<String> result = new HashSet<>();
+    for (Profile each : profiles) {
+      if (each.getId() != null) {
+        result.add(each.getId());
+      }
+    }
+    return result;
+  }
+
+  private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
+    try {
+      Properties userProperties = new Properties();
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
+      ModelBuildingRequest request = new DefaultModelBuildingRequest();
+      request.setUserProperties(userProperties);
+      request.setSystemProperties(MavenServerUtil.collectSystemProperties());
+      request.setBuildStartTime(new Date());
+      request.setFileModel(result);
+
+      List<ModelProblemCollectorRequest> problems = new ArrayList<>();
+      result = interpolator.interpolateModel(result, basedir, request, new ModelProblemCollector() {
+        @Override
+        public void add(ModelProblemCollectorRequest request) {
+          problems.add(request);
+        }
+      });
+
+      for (ModelProblemCollectorRequest problem : problems) {
+        if (problem.getException() != null) {
+          MavenServerGlobals.getLogger().warn(problem.getException());
+        }
+      }
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().error(e);
+    }
+    return result;
   }
 
   @Override

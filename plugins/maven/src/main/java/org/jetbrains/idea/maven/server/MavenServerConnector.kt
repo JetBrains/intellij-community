@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenModel
 import java.nio.file.Path
 import java.rmi.RemoteException
@@ -59,13 +58,6 @@ interface MavenServerConnector : Disposable {
 
   suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
 
-  suspend fun applyProfiles(
-    model: MavenModel,
-    basedir: Path,
-    explicitProfiles: MavenExplicitProfiles,
-    alwaysOnProfiles: Collection<String>,
-  ): ProfileApplicationResult
-
   fun checkConnected(): Boolean
 
   enum class State {
@@ -86,20 +78,6 @@ interface MavenServerConnector : Disposable {
       return retry {
         MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString())
           .assembleInheritance(model, parentModel)
-      }
-    }
-
-    @JvmStatic
-    suspend fun applyProfiles(
-      project: Project,
-      model: MavenModel,
-      basedir: Path,
-      explicitProfiles: MavenExplicitProfiles,
-      alwaysOnProfiles: Collection<String>,
-    ): ProfileApplicationResult {
-      return retry {
-        MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString())
-          .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles)
       }
     }
 

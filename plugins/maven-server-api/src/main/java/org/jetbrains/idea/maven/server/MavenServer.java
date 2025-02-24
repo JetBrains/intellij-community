@@ -18,14 +18,11 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.execution.rmi.IdeaWatchdogAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.HashSet;
 
 public interface MavenServer extends Remote, IdeaWatchdogAware {
 
@@ -34,11 +31,6 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   MavenServerIndexer createIndexer(MavenToken token) throws RemoteException;
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException;
-
-  ProfileApplicationResult applyProfiles(MavenModel model,
-                                         File basedir,
-                                         MavenExplicitProfiles explicitProfiles,
-                                         HashSet<String> alwaysOnProfiles, MavenToken token) throws RemoteException;
 
   @Nullable
   MavenPullServerLogger createPullLogger(MavenToken token) throws RemoteException;
