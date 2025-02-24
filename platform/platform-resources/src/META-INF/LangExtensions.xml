@@ -1049,6 +1049,8 @@
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <registryKey defaultValue="false" key="ide.project.view.coroutines" restartRequired="true"
                  description="Use the new experimental coroutine-based Project View implementation"/>
+    <registryKey defaultValue="true" description="Show the New File or Directory button in the Project View title"
+                 key="ide.project.view.show.new.element.button" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"

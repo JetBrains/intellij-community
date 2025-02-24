@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
@@ -83,6 +84,10 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (isProjectView(e)) {
+      if (!Registry.is("ide.project.view.show.new.element.button", true)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
       presentation.setText(ActionsBundle.message("action.NewElement.ProjectView.text"));
     }
     if (project == null) {
