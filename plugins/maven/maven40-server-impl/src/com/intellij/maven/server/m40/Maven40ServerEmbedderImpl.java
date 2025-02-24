@@ -1089,6 +1089,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Override
+  public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      return Maven40ModelInheritanceAssembler.assembleInheritance(model, parentModel);
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @Override
   public @NotNull MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                        @NotNull ArrayList<MavenGoalExecutionRequest> requests,
                                                                                        @NotNull String goal,

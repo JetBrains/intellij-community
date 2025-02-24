@@ -8,8 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.model.MavenModel
-import java.nio.file.Path
 import java.rmi.RemoteException
 
 interface MavenServerConnector : Disposable {
@@ -56,8 +54,6 @@ interface MavenServerConnector : Disposable {
   @Throws(RemoteException::class)
   fun createIndexer(): MavenServerIndexer
 
-  suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
-
   fun checkConnected(): Boolean
 
   enum class State {
@@ -72,14 +68,6 @@ interface MavenServerConnector : Disposable {
     @Topic.AppLevel
     val DOWNLOAD_LISTENER_TOPIC: Topic<MavenServerDownloadListener> =
       Topic(MavenServerDownloadListener::class.java.simpleName, MavenServerDownloadListener::class.java)
-
-    @JvmStatic
-    suspend fun assembleInheritance(project: Project, basedir: Path, model: MavenModel, parentModel: MavenModel): MavenModel {
-      return retry {
-        MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString())
-          .assembleInheritance(model, parentModel)
-      }
-    }
 
     private suspend fun <T> retry(action: suspend () -> T): T {
       for (i in 1..3) {

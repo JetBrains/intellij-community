@@ -7,8 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.model.MavenModel
-import java.rmi.ConnectException
 
 suspend fun <R> withStoppedConnector(action: suspend () -> R): R {
   Disposer.newDisposable().use { disposable ->
@@ -99,10 +97,6 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     throw RuntimeException("not implemented")
   }
 
-  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    throw RuntimeException("not implemented")
-  }
-
   override fun pingBlocking(): Boolean {
     return true
   }
@@ -149,11 +143,6 @@ private class StoppedMavenServerConnector : MavenServerConnector {
   override fun createIndexer(): MavenServerIndexer {
     throw RuntimeException("not implemented")
   }
-
-  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    throw ConnectException("Cannot reconnect")
-  }
-
 
   override fun dispose() {
   }

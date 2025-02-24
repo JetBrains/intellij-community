@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.execution.rmi.IdeaWatchdogAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.rmi.Remote;
@@ -29,8 +28,6 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException;
 
   MavenServerIndexer createIndexer(MavenToken token) throws RemoteException;
-
-  MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException;
 
   @Nullable
   MavenPullServerLogger createPullLogger(MavenToken token) throws RemoteException;

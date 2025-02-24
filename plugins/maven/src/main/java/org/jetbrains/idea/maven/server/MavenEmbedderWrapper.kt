@@ -397,6 +397,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().applyProfiles(model, baseDir, explicitProfiles, alwaysOnProfiles, ourToken)
   }
 
+  internal suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel, ourToken: MavenToken): MavenModel {
+    return getOrCreateWrappee().assembleInheritance(model, parentModel, ourToken)
+  }
+
   protected fun interface LongRunningEmbedderTask<R : Serializable> {
     fun run(embedder: MavenServerEmbedder, longRunningTaskInput: LongRunningTaskInput): MavenServerResponse<R>
   }

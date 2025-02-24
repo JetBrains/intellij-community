@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.server
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.ExceptionUtil
-import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
 import java.rmi.RemoteException
 import java.util.concurrent.ConcurrentHashMap
@@ -56,10 +55,6 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     synchronized(embedderLock) {
       return getServerBlocking().createIndexer(MavenRemoteObjectWrapper.ourToken)
     }
-  }
-
-  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    return getServer().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken)
   }
 
   protected abstract fun <R> perform(r: () -> R): R
