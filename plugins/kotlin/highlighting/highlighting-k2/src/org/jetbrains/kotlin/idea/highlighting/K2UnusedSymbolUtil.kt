@@ -375,9 +375,12 @@ object K2UnusedSymbolUtil {
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
                referenceExists(declarationContainingClass, useScope) {
-                  val refElement = it.element
-                          refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
-                          || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                   val refElement = it.element
+                   analyze(declaration) {
+                       refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
+                               || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()
+                           ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                   }
               })) {
               return true
           }
@@ -396,7 +399,7 @@ object K2UnusedSymbolUtil {
 
           if (declaration is KtEnumEntry) {
               val enumClass = declarationContainingClass?.takeIf { it.isEnum() }
-              if (hasBuiltInEnumFunctionReference(enumClass, useScope)) return true
+              if (hasBuiltInEnumFunctionReference(enumClass, useScope, declaration)) return true
           }
       }
 
@@ -454,10 +457,13 @@ object K2UnusedSymbolUtil {
     return !ReferencesSearch.search(KotlinReferencesSearchParameters(psiElement, scope)).forEach(Processor<PsiReference> { !predicate.invoke(it) })
   }
   context(KaSession)
-  private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
+  private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope, declaration: KtNamedDeclaration): Boolean {
       if (enumClass == null) return false
-      val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope)
-           { hasBuiltInEnumFunctionReference(it, enumClass) }
+      val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope) {
+          analyze(declaration) {
+              hasBuiltInEnumFunctionReference(it, enumClass)
+          }
+      }
 
       return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
   }
