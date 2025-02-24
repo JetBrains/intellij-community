@@ -22,9 +22,7 @@ module fleet.util.core {
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
   requires kotlinx.datetime;
-  requires fleet.preferences;
   requires fleet.reporting.api;
-  requires fleet.util.os;
 
   requires static fleet.util.multiplatform;
 }
