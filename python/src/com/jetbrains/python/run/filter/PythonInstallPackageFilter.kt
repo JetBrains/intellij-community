@@ -22,6 +22,9 @@ class PythonInstallPackageFilter(val project: Project, val editor: EditorImpl? =
     val moduleName = line.removePrefix(prefix).dropLastWhile { it != '\'' }.dropLast(1)
     val pipPackageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
     val pythonSdk = getSdkForFile(editor) ?: project.pythonSdk ?: return null
+    val installed = PyPackageInstallUtils.checkIsInstalled(project, pythonSdk, pipPackageName)
+    if (installed)
+      return null
     val existsInRepository = PyPackageInstallUtils.checkExistsInRepository(project, pythonSdk, pipPackageName)
     if (!existsInRepository)
       return null
