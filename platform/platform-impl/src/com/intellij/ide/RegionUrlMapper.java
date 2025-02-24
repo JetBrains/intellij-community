@@ -10,6 +10,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.io.HttpRequests;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +24,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @see Region
@@ -139,11 +140,10 @@ public final class RegionUrlMapper {
 
   private static @NotNull CompletableFuture<@NotNull RegionMapping> tryLoadMappingOrEmpty(@NotNull Region region) {
     return loadMapping(region).exceptionally(t -> {
-      while (t instanceof CompletionException) {
+      while (t instanceof CompletionException || t instanceof ExecutionException) {
         t = t.getCause();
       }
-      if (t instanceof CancellationException ||
-          t instanceof ControlFlowException) {
+      if (t instanceof CancellationException || t instanceof ControlFlowException) {
         LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
       }
       else if (t instanceof IOException) {
@@ -173,10 +173,25 @@ public final class RegionUrlMapper {
 
   private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
     var configUrl = getConfigUrl(reg);
-    var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+    var client = HttpClient.newBuilder()
+      .executor(ExecutorsKt.asExecutor(Dispatchers.getIO()))
+      .connectTimeout(Duration.ofMillis(HttpRequests.CONNECTION_TIMEOUT))
+      .followRedirects(HttpClient.Redirect.NORMAL)
+      .build();
     var request = HttpRequest.newBuilder(new URI(configUrl)).build();
-    var json = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
-    return RegionMapping.fromJson(json);
+    var response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+      .get(HttpRequests.READ_TIMEOUT, TimeUnit.MILLISECONDS);
+    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+      var message = (String)null;
+      if (response.statusCode() == HttpRequests.CUSTOM_ERROR_CODE) {
+        message = response.headers().firstValue("Error-Message").orElse(null);
+      }
+      if (message == null) {
+        message = IdeCoreBundle.message("error.connection.failed.status", response.statusCode());
+      }
+      throw new HttpRequests.HttpStatusException(message, response.statusCode(), configUrl);
+    }
+    return RegionMapping.fromJson(response.body());
   }
 
   private static @NotNull String getConfigUrl(@NotNull Region reg) {
