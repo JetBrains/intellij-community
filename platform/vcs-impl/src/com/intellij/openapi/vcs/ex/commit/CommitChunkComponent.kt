@@ -120,11 +120,13 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       adjustEditorSettings(editor)
       centerPanel.border = CommitInputBorder(editor, this)
 
-      ApplicationManagerEx.getApplicationEx().messageBus.connect(tracker.disposable)
+      ApplicationManagerEx.getApplicationEx().messageBus.connect(this)
         .subscribe(LafManagerListener.TOPIC, LafManagerListener {
           commitMessage.updateUI() // otherwise it would be called in case of popup is closed
         })
     }
+
+    Disposer.register(this, commitMessage)
 
     setupResizing(commitMessage)
     setupDocumentLengthTracker(commitMessage)
@@ -279,6 +281,7 @@ private class CommitChunkWorkFlowHandler(
     setupCommitHandlersTracking()
     setupCommitChecksResultTracking()
     vcsesChanged()
+    Disposer.register(this, ui)
   }
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
