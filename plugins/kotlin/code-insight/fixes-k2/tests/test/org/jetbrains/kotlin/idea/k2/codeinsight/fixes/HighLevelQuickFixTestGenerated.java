@@ -5622,6 +5622,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertStringInitializerToCharLiteral.kt");
         }
 
+        @TestMetadata("disabledOnLibraryCall.kt")
+        public void testDisabledOnLibraryCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/disabledOnLibraryCall.kt");
+        }
+
         @TestMetadata("dontChangeOverriddenPropertyTypeToErrorType.kt")
         public void testDontChangeOverriddenPropertyTypeToErrorType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/dontChangeOverriddenPropertyTypeToErrorType.kt");
