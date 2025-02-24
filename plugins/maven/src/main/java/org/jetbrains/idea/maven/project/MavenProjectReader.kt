@@ -5,10 +5,13 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import org.jdom.Element
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
@@ -17,15 +20,12 @@ import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil
+import org.jetbrains.idea.maven.utils.*
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
-import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -180,29 +180,68 @@ class MavenProjectReader(private val myProject: Project) {
         parentDesc = MavenParentDesc(parent.mavenId, parent.relativePath)
       }
 
-      val parentModelWithProblems =
-        object : MavenParentProjectFileAsyncProcessor<Pair<VirtualFile, RawModelReadResult>>(myProject) {
-          override fun findManagedFile(id: MavenId): VirtualFile? {
-            return locator.findProjectFile(id)
+      class Processor(private val myProject: Project) {
+        suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult> {
+          val result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first
+          return Pair.create(parentFile, result)
+        }
+
+        suspend fun findInLocalRepository(generalSettings: MavenGeneralSettings, parentDesc: MavenParentDesc): Pair<VirtualFile, RawModelReadResult>? {
+          val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
+          val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
+          if (parentFile != null) {
+            return doProcessParent(parentFile)
+          }
+          return null
+        }
+
+        suspend fun process(
+          generalSettings: MavenGeneralSettings,
+          projectFile: VirtualFile,
+          parentDesc: MavenParentDesc?,
+        ): Pair<VirtualFile, RawModelReadResult>? {
+          if (parentDesc == null) {
+            return null
           }
 
-          override suspend fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
-            val parentModel = doReadProjectModel(myProject, parentFile, true).model
-            val parentId = parentDesc!!.parentId
-            if (parentId != parentModel.mavenId) return null
+          val superPom = MavenUtil.resolveSuperPomFile(myProject, projectFile)
+          if (superPom == null || projectFile == superPom) return null
 
-            return super.processRelativeParent(parentFile)
+          val locatedParentFile = locator.findProjectFile(parentDesc.parentId)
+          if (locatedParentFile != null) {
+            return doProcessParent(locatedParentFile)
           }
 
-          override suspend fun processSuperParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
-            return null // do not process superPom
+          if (Strings.isEmpty(parentDesc.parentRelativePath)) {
+            val localRepoResult = findInLocalRepository(generalSettings, parentDesc)
+            if (localRepoResult != null) {
+              return localRepoResult
+            }
           }
 
-          override suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
-            val result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first
-            return Pair.create(parentFile, result)
+          if (projectFile.parent != null) {
+            val parentFileCandidate = projectFile.parent.findFileByRelativePath(MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+
+            val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
+              parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
+            else parentFileCandidate
+
+            if (parentFile != null) {
+              val parentModel = doReadProjectModel(myProject, parentFile, true).model
+              val parentId = parentDesc.parentId
+              val parentResult = if (parentId != parentModel.mavenId) null else doProcessParent(parentFile)
+              if (null != parentResult){
+                return parentResult
+              }
+            }
           }
-        }.process(generalSettings, file, parentDesc)
+
+          val defaultParentDesc = MavenParentDesc(parentDesc.parentId, MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+          return findInLocalRepository(generalSettings, defaultParentDesc)
+        }
+      }
+
+      val parentModelWithProblems = Processor(myProject).process(generalSettings, file, parentDesc)
 
       if (parentModelWithProblems == null) return model // no parent or parent not found;
 
