@@ -83,6 +83,10 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     return executionFixture.waitForAnyGradleTaskExecution(action)
   }
 
+  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    executionFixture.assertSyncViewTree(assert)
+  }
+
   fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     executionFixture.assertBuildViewTree(assert)
   }
