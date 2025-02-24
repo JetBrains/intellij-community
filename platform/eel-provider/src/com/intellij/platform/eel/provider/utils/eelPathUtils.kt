@@ -7,7 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.fs.createTemporaryDirectory
+import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
 import com.intellij.util.awaitCancellationAndInvoke
@@ -52,7 +53,7 @@ object EelPathUtils {
     val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
-      val file = eel.fs.createTemporaryFile(CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
+      val file = eel.fs.createTemporaryFile().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).getOrThrowFileSystemException()
       file.asNioPath()
     }
   }
@@ -71,7 +72,7 @@ object EelPathUtils {
 
   @JvmStatic
   suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = ""): Path {
-    val file = eelApi.fs.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build()).getOrThrowFileSystemException()
+    val file = eelApi.fs.createTemporaryDirectory().prefix(prefix).getOrThrowFileSystemException()
     return file.asNioPath()
   }
 
@@ -273,10 +274,10 @@ object EelPathUtils {
 
   private suspend fun EelApi.createTempFor(source: Path, deleteOnExit: Boolean): Path {
     return if (source.isDirectory()) {
-      fs.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException().asNioPath()
+      fs.createTemporaryDirectory().deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
     }
     else {
-      fs.createTemporaryFile(CreateTemporaryEntryOptions.Builder().deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException().asNioPath()
+      fs.createTemporaryFile().deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
     }
   }
 
@@ -579,12 +580,11 @@ object EelPathUtils {
 
     val eelApi = target.upgrade()
 
-    val options = CreateTemporaryEntryOptions.Builder()
+    val tmpDir = eelApi.fs.createTemporaryDirectory()
       .prefix(path.fileName.toString())
       .suffix("eel")
       .deleteOnExit(true)
-      .build()
-    val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
+      .getOrThrow()
     val referencedPath = tmpDir.resolve(path.name)
 
     withContext(Dispatchers.IO) {
