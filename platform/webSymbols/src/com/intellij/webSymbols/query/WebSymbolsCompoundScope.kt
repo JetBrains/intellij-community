@@ -22,6 +22,7 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
                                consumer: (WebSymbolsScope) -> Unit)
 
   fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolsScope> {
+    if (requiresResolve() && !queryExecutor.allowResolve) return emptyList()
     val list = mutableListOf<WebSymbolsScope>()
     build(queryExecutor) {
       if (it is WebSymbolsCompoundScope)
@@ -33,6 +34,8 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
     }
     return list
   }
+
+  protected open fun requiresResolve(): Boolean = true
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
