@@ -77,12 +77,12 @@ abstract class ExitConfirmationDialogUi(data: ComponentData): UiComponent(data) 
   abstract val cancelButton: UiComponent
 }
 
-private class ExitConfirmationDialogUiCommonImpl(data: ComponentData): ExitConfirmationDialogUi(data) {
+class ExitConfirmationDialogUiCommonImpl(data: ComponentData): ExitConfirmationDialogUi(data) {
   override val exitConfirmButton: UiComponent = x { byAccessibleName("Exit") }
   override val cancelButton: UiComponent = x { byAccessibleName("Back to Activation") }
 }
 
-private class RestartToFreeModeConfirmationDialogUi(data: ComponentData): ExitConfirmationDialogUi(data) {
+class RestartToFreeModeConfirmationDialogUi(data: ComponentData): ExitConfirmationDialogUi(data) {
   override val exitConfirmButton: UiComponent = x { byAccessibleName("Restart") }
   override val cancelButton: UiComponent = x { byAccessibleName("Back to Subscriptions") }
 }
