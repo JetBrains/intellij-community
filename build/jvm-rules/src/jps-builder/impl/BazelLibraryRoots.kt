@@ -68,6 +68,8 @@ internal class BazelLibraryRoots(
     return acc
   }
 
+  fun getFiles(): Set<Path> = roots.keys
+
   @Synchronized
   override fun updateIfExists(root: Path, namespace: String): LibRootUpdateResult {
     // known for JPS (as requested) but not found in an actual set of deps => deleted

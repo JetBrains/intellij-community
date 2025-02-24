@@ -166,11 +166,16 @@ internal class JpsTargetBuilder(
     if (context.scope.isIncrementalCompilation) {
       // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
       // that all such files are compiled in the first round.
-      JavaBuilderUtil.markDirtyDependenciesForInitialRound(
-        context,
-        BazelDirtyFileHolder(context, context.projectDescriptor.fsState, chunk.targets.single() as BazelModuleBuildTarget),
-        chunk,
-      )
+      tracer.span("markDirtyDependenciesForInitialRound") { span ->
+        markDirtyDependenciesForInitialRound(
+          context = context,
+          target = target,
+          dirtyFilesHolder = BazelDirtyFileHolder(context, context.projectDescriptor.fsState, chunk.targets.single() as BazelModuleBuildTarget),
+          chunk = chunk,
+          tracer = tracer,
+          dataProvider = dataManager!!,
+        )
+      }
     }
 
     for (builder in builders) {

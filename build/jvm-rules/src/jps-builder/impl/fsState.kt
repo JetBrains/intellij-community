@@ -22,6 +22,7 @@ import org.jetbrains.jps.incremental.messages.DoneSomethingNotification
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
+
 internal fun initFsStateForCleanBuild(context: CompileContext, target: BuildTarget<*>) {
   val fsState = context.projectDescriptor.fsState
   // JPS calls markRecompile on it, but for clean rebuild it should always be null
