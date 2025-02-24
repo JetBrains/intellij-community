@@ -157,7 +157,7 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
         }
         reader.beginArray()
         if (reader.peek() != JsonToken.END_ARRAY) {
-          sourcesContent = SmartList<String>()
+          sourcesContent = SmartList<String?>()
           do {
             if (reader.peek() == JsonToken.STRING) {
               sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()))
