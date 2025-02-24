@@ -127,7 +127,7 @@ final class JavaErrorFormatUtil {
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
       return TextRange.create(0, element.getTextLength() + 1);
     }
-    return null;
+    return TextRange.create(0, element.getTextLength());
   }
 
   static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {

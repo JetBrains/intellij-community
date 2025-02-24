@@ -161,7 +161,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
       info.fileLevelAnnotation();
     }
-    TextRange range = error.rangeInFile();
+    TextRange range = error.range();
     info.range(range);
     if (range.getLength() == 0) {
       int offset = range.getStartOffset();

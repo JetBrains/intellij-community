@@ -786,8 +786,8 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
-      .withAnchor(psi -> psi.getParent() instanceof PsiAssignmentExpression assignment ? assignment : psi)
-      .withRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression ? null : getRange(psi))
+      .withAbsoluteRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression assignment ? 
+                                           assignment.getTextRange() : getRange(psi).shiftRight(psi.getTextRange().getStartOffset()))
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");

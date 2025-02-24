@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -33,31 +32,10 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
-   * @return a desired anchor to put the error message at
-   */
-  public @NotNull PsiElement anchor() {
-    return kind.anchor(psi);
-  }
-
-  /**
-   * @return range within anchor to highlight; or null if the whole anchor should be highlighted
-   */
-  public @Nullable TextRange range() {
-    return kind.range(psi, context);
-  }
-
-  /**
    * @return range of this error within the file
    */
-  public @NotNull TextRange rangeInFile() {
-    PsiElement anchor = anchor();
-    TextRange range = range();
-    if (range == null) {
-      return anchor.getTextRange();
-    }
-    else {
-      return range.shiftRight(anchor.getTextRange().getStartOffset());
-    }
+  public @NotNull TextRange range() {
+    return kind.range(psi, context);
   }
 
   /**
