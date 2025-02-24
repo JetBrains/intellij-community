@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-internal class DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
+internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
         return when (diagnostic) {
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable,

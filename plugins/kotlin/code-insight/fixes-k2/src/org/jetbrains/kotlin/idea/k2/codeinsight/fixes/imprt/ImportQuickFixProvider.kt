@@ -43,8 +43,8 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     context(KaSession)
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         val factories = listOf(
-            UnresolvedNameReferenceImportQuickFixFactory(),
-            DelegateMethodImportQuickFixFactory(),
+            UnresolvedNameReferenceImportQuickFixFactory,
+            DelegateMethodImportQuickFixFactory,
         )
 
         return factories.flatMap { it.run { createQuickFixes(diagnostics) } }
