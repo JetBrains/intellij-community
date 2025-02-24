@@ -5627,6 +5627,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/dontChangeOverriddenPropertyTypeToErrorType.kt");
         }
 
+        @TestMetadata("duplicatedFixes.kt")
+        public void testDuplicatedFixes() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/duplicatedFixes.kt");
+        }
+
         @TestMetadata("expectedParameterTypeMismatch.kt")
         public void testExpectedParameterTypeMismatch() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/expectedParameterTypeMismatch.kt");

@@ -184,7 +184,13 @@ object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType), diagnostic.expectedType)
+            val actualType = getActualType(diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
+
+            registerVariableTypeFixes(declaration, actualType, expectedType)
         }
 
     val assignmentTypeMismatch =
@@ -206,7 +212,10 @@ object ChangeTypeQuickFixFactories {
                 if (declaration.typeReference == null) {
                     add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
                 }
-                addAll(registerExpressionTypeFixes(expression, diagnostic.expectedType, type))
+                val expectedType = diagnostic.expectedType
+                if (!expectedType.semanticallyEquals(actualType)) {
+                    addAll(registerExpressionTypeFixes(expression, expectedType, type))
+                }
             }
         }
 
@@ -216,8 +225,12 @@ object ChangeTypeQuickFixFactories {
             val property = expr.parent as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
-            registerVariableTypeFixes(property, getActualType(actualType), diagnostic.expectedType)
+            val actualType = getActualType(property.getPropertyInitializerType() ?: diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (expectedType.semanticallyEquals(actualType)) {
+                return@ModCommandBased emptyList()
+            }
+            registerVariableTypeFixes(property, actualType, expectedType)
         }
 
     private fun KaSession.registerVariableTypeFixes(
@@ -243,6 +256,9 @@ object ChangeTypeQuickFixFactories {
             val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
 
             val property = (expression as? KtReferenceExpression)?.mainReference?.resolve() as? KtProperty
             if (property != null) {

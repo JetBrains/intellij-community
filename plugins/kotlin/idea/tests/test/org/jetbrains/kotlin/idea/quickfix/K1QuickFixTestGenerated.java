@@ -19639,6 +19639,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/dontChangeOverriddenPropertyTypeToErrorType.kt");
             }
 
+            @TestMetadata("duplicatedFixes.kt")
+            public void testDuplicatedFixes() throws Exception {
+                runTest("testData/quickfix/typeMismatch/duplicatedFixes.kt");
+            }
+
             @TestMetadata("expectedParameterTypeMismatch.kt")
             public void testExpectedParameterTypeMismatch() throws Exception {
                 runTest("testData/quickfix/typeMismatch/expectedParameterTypeMismatch.kt");
