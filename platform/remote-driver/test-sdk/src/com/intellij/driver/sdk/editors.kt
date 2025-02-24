@@ -26,6 +26,7 @@ interface Editor {
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
   fun getSelectionModel(): SelectionModel
   fun getSoftWrapModel(): SoftWrapModel
+  fun visualLineToY(visualLine: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
