@@ -52,7 +52,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     }
 
     val sourceText = InlayDumpUtil.removeInlays(expectedText)
-    myFixture.configureByText(fileName, sourceText)
+    configureFile(fileName, sourceText)
 
     val editor = myFixture.editor
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
@@ -67,6 +67,10 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
     val actualText = dumpCodeVisionHints(sourceText)
     assertEquals(expectedText, actualText)
+  }
+
+  protected open fun configureFile(fileName: String, sourceText: String) {
+    myFixture.configureByText(fileName, sourceText)
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
