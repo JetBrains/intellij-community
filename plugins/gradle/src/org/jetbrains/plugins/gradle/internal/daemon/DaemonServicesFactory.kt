@@ -11,6 +11,7 @@ import org.gradle.internal.service.ServiceRegistry
 import org.gradle.launcher.daemon.client.DaemonClientFactory
 import org.gradle.launcher.daemon.configuration.DaemonParameters
 import org.gradle.launcher.daemon.configuration.DaemonPriority
+import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import org.gradle.util.GradleVersion
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -18,11 +19,13 @@ import java.io.InputStream
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.util.Optional
 
 fun getDaemonServiceFactory(daemonClientFactory: DaemonClientFactory, myServiceDirectoryPath: String?): ServiceRegistry {
   val layoutParameters = getBuildLayoutParameters(myServiceDirectoryPath)
   val daemonParameters = getDaemonParameters(layoutParameters)
   return when {
+    GradleVersionUtil.isCurrentGradleAtLeast("8.13") -> getDaemonServicesAfter8Dot13(daemonClientFactory, daemonParameters)
     GradleVersionUtil.isCurrentGradleAtLeast("8.8") -> getDaemonServicesAfter8Dot8(daemonClientFactory, daemonParameters)
     else -> getDaemonServicesBefore8Dot8(daemonClientFactory, daemonParameters)
   }
@@ -42,6 +45,38 @@ private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactor
                                               ByteArrayInputStream(ByteArray(0))
     )
     return invocationResult as ServiceRegistry
+  }
+  catch (e: ReflectiveOperationException) {
+    throw RuntimeException("Cannot resolve ServiceRegistry by reflection. Gradle version: " + GradleVersion.current(), e)
+  }
+  catch (e: ClassCastException) {
+    throw RuntimeException("Unable to cast the result of the invocation to ServiceRegistry. Gradle version: " + GradleVersion.current(), e)
+  }
+}
+
+private fun getDaemonServicesAfter8Dot13(daemonClientFactory: DaemonClientFactory, parameters: DaemonParameters): ServiceRegistry {
+  try {
+    val daemonRequestContextClass = Class.forName("org.gradle.launcher.daemon.context.DaemonRequestContext")
+    val serviceLookupClass = Class.forName("org.gradle.internal.service.ServiceLookup")
+    val createBuildClientServicesMethod: Method = DaemonClientFactory::class.java.getDeclaredMethod(
+      "createBuildClientServices",
+      serviceLookupClass,
+      DaemonParameters::class.java,
+      daemonRequestContextClass,
+      InputStream::class.java,
+      Optional::class.java
+    )
+    val serviceLookupDelegate = getGradleServiceLookup()
+    val serviceLookup: Any = GradleServiceLookupProxy.newProxyInstance(serviceLookupDelegate)
+    val requestContext = getDaemonRequestContextAfter8Dot8()
+    return createBuildClientServicesMethod.invoke(
+      daemonClientFactory,
+      serviceLookup,
+      parameters,
+      requestContext,
+      ByteArrayInputStream(ByteArray(0)),
+      Optional.empty<InternalBuildProgressListener>()
+    ) as ServiceRegistry
   }
   catch (e: ReflectiveOperationException) {
     throw RuntimeException("Cannot resolve ServiceRegistry by reflection. Gradle version: " + GradleVersion.current(), e)
