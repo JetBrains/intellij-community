@@ -10,21 +10,21 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
 class PluginSetTestBuilder(private val path: Path) {
-  private var disabledPluginIds = mutableSetOf<String>()
-  private var expiredPluginIds = mutableSetOf<String>()
-  private var productBuildNumber = PluginManagerCore.buildNumber
+  private var disabledPluginIds = mutableSetOf<PluginId>()
+  private var expiredPluginIds = mutableSetOf<PluginId>()
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
   private var essentialPlugins = mutableListOf<PluginId>()
+  private var productBuildNumber = PluginManagerCore.buildNumber
 
   private var context: DescriptorListLoadingContext? = null
   private var result: PluginLoadingResult? = null
 
   fun withDisabledPlugins(vararg disabledPluginIds: String) = apply {
-    this.disabledPluginIds += disabledPluginIds
+    this.disabledPluginIds += disabledPluginIds.map(PluginId::getId)
   }
 
   fun withExpiredPlugins(vararg expiredPluginIds: String) = apply {
-    this.expiredPluginIds += expiredPluginIds
+    this.expiredPluginIds += expiredPluginIds.map(PluginId::getId)
   }
 
   fun withBrokenPlugin(pluginId: String, vararg versions: String?) = apply {
@@ -48,8 +48,8 @@ class PluginSetTestBuilder(private val path: Path) {
   fun withLoadingContext(): PluginSetTestBuilder {
     return apply {
       context = DescriptorListLoadingContext(
-        customDisabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
-        customExpiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
+        customDisabledPlugins = disabledPluginIds,
+        customExpiredPlugins = expiredPluginIds,
         customBrokenPluginVersions = brokenPlugins,
         customEssentialPlugins = essentialPlugins,
         productBuildNumber = { productBuildNumber },
