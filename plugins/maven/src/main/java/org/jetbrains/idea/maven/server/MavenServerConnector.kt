@@ -57,8 +57,6 @@ interface MavenServerConnector : Disposable {
   @Throws(RemoteException::class)
   fun createIndexer(): MavenServerIndexer
 
-  suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel
-
   suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
 
   suspend fun applyProfiles(
@@ -82,11 +80,6 @@ interface MavenServerConnector : Disposable {
     @Topic.AppLevel
     val DOWNLOAD_LISTENER_TOPIC: Topic<MavenServerDownloadListener> =
       Topic(MavenServerDownloadListener::class.java.simpleName, MavenServerDownloadListener::class.java)
-
-    @JvmStatic
-    suspend fun interpolateAndAlignModel(project: Project, model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
-      return retry { MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString()).interpolateAndAlignModel(model, basedir, pomDir) }
-    }
 
     @JvmStatic
     suspend fun assembleInheritance(project: Project, basedir: Path, model: MavenModel, parentModel: MavenModel): MavenModel {

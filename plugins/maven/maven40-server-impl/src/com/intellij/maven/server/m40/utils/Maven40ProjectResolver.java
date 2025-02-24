@@ -343,7 +343,7 @@ public class Maven40ProjectResolver {
 
     MavenModel model = new MavenModel();
     Model nativeModel = mavenProject.getModel();
-    Model interpolatedNativeModel = Maven40ProfileUtil.interpolateAndAlignModel(nativeModel, myEmbedder.getMultiModuleProjectDirectory(), mavenProject.getBasedir());
+    Model interpolatedNativeModel = myEmbedder.interpolateAndAlignModel(nativeModel, myEmbedder.getMultiModuleProjectDirectory(), mavenProject.getBasedir());
     try {
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;

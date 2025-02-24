@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.security.MavenToken;
@@ -39,17 +38,6 @@ public class Maven3ServerImpl extends MavenServerBase {
       return result;
     }
     catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3XProfileUtil.interpolateAndAlignModel(model, basedir, pomDir);
-    }
-    catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
   }
