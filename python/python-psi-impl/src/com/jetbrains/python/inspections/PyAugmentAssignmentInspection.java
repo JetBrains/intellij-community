@@ -74,7 +74,7 @@ public final class PyAugmentAssignmentInspection extends PyInspection {
       final PyExpression target = node.getLeftHandSideExpression();
       final PyBinaryExpression value = PyUtil.as(node.getAssignedValue(), PyBinaryExpression.class);
 
-      if (target != null && value != null) {
+      if (target != null && value != null && node.getTargets().length == 1) {
         final PyExpression leftExpression = value.getLeftExpression();
         final PyExpression rightExpression = PyPsiUtils.flattenParens(value.getRightExpression());
 
