@@ -22,10 +22,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.ui.EditorTextField
-import com.intellij.ui.JBColor
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
@@ -233,7 +231,11 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyFilterAction : DumbAwareAction(FindBundle.messagePointer("find.popup.show.filter.popup"), Presentation.NULL_STRING, AllIcons.General.Filter) {
+  private inner class MyFilterAction : DumbAwareAction(
+    FindBundle.messagePointer("find.popup.show.filter.popup"),
+    Presentation.NULL_STRING,
+    LayeredIcon.create(AllIcons.General.Filter, AllIcons.General.Dropdown)
+  ) {
     val myGroup: ActionGroup
     var listPopup: ListPopup? = null
     init {
