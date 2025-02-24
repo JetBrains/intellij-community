@@ -130,23 +130,114 @@ public final class TreeState implements JDOMExternalizable {
     public String getType() {
       return type;
     }
+
+    @Nullable SerializablePathElement getSerializablePart() {
+      return id == null || type == null ? null : new SerializablePathElement(id, type);
+    }
+  }
+
+  private static final class PatchMatcherCache {
+    private final Map<Object, Node> cachedNodes = new HashMap<>();
+
+    @Nullable Node getNode(@NotNull Object parent) {
+      return cachedNodes.get(parent);
+    }
+
+    @NotNull Node getOrCreateNode(@NotNull Object parent) {
+      var result = getNode(parent);
+      if (result != null) return result;
+      result = new Node();
+      cachedNodes.put(parent, result);
+      return result;
+    }
+
+    private static final class Node {
+      private final Map<@NotNull SerializablePathElement, @NotNull SerializedMatch> serializedMatches = new HashMap<>();
+      private final Map<@NotNull Object, @NotNull UserObjectMatch> userObjectMatches = new HashMap<>();
+      private int maxCachedIndex;
+
+      void cacheSerializedMatch(@NotNull Object node, int nodeIndex, @NotNull List<@NotNull SerializablePathElement> matchedElements) {
+        maxCachedIndex = Math.max(maxCachedIndex, nodeIndex);
+        serializedMatches.put(matchedElements.get(0), new SerializedMatch(node, matchedElements));
+      }
+
+      void cacheUserObjectMatch(@NotNull Object node, int nodeIndex) {
+        maxCachedIndex = Math.max(maxCachedIndex, nodeIndex);
+        userObjectMatches.put(new SerializablePathElement(calcId(node), calcType(node)), new UserObjectMatch(node));
+      }
+
+      int getMaxCachedIndex() {
+        return maxCachedIndex;
+      }
+
+      @Nullable SerializedMatch getSerializedMatch(@NotNull TreeState.PathElement element) {
+        var serializablePart = element.getSerializablePart();
+        return serializablePart == null ? null : serializedMatches.get(serializablePart);
+      }
+
+      @Nullable UserObjectMatch getUserObjectMatch(@NotNull TreeState.PathElement element) {
+        var userObject = element.userObject;
+        return userObject == null ? null : userObjectMatches.get(userObject);
+      }
+    }
+
+    private interface CachedMatch {
+      @NotNull Object getNode();
+      int getLength();
+    }
+
+    private record SerializedMatch(@NotNull Object node, @NotNull List<@NotNull SerializablePathElement> matchedElements) implements CachedMatch {
+      @Override
+      public @NotNull Object getNode() {
+        return node;
+      }
+
+      @Override
+      public int getLength() {
+        return matchedElements.size();
+      }
+    }
+
+    private record UserObjectMatch(@NotNull Object node) implements CachedMatch {
+      @Override
+      public @NotNull Object getNode() {
+        return node;
+      }
+
+      @Override
+      public int getLength() {
+        return 1;
+      }
+    }
   }
 
   private static final class PathMatcher {
     private final @NotNull PathElement @NotNull [] serializedPath;
+    private final @Nullable PatchMatcherCache cache;
     private int matchedSoFar = 0;
     private @Nullable TreePath matchedPath;
 
-    static @Nullable PathMatcher tryStart(@NotNull PathElement @NotNull [] serializedPath, @NotNull TreePath rootPath) {
+    static @Nullable PathMatcher tryStart(@NotNull PathElement @NotNull [] serializedPath, @NotNull TreePath rootPath, @Nullable PatchMatcherCache cache) {
       if (serializedPath.length == 0) return null;
       if (!serializedPath[0].matches(rootPath.getLastPathComponent())) return null;
-      var attempt = new PathMatcher(serializedPath, rootPath.getParentPath());
+      var attempt = new PathMatcher(serializedPath, rootPath.getParentPath(), cache);
       return attempt.tryAdvance(rootPath.getLastPathComponent()) ? attempt : null;
     }
 
-    private PathMatcher(@NotNull PathElement @NotNull [] serializedPath, @Nullable TreePath parentPath) {
+    private PathMatcher(@NotNull PathElement @NotNull [] serializedPath, @Nullable TreePath parentPath, @Nullable PatchMatcherCache cache) {
       this.serializedPath = serializedPath;
       this.matchedPath = parentPath;
+      this.cache = cache;
+    }
+
+    @Nullable PatchMatcherCache.Node getCachedMatches(@NotNull Object parent) {
+      if (cache == null) return null;
+      return cache.getNode(parent);
+    }
+
+    @Nullable PatchMatcherCache.Node getOrCreateCachedMatches(@NotNull Object parent) {
+      if (cache == null) return null;
+      return cache.getOrCreateNode(parent);
     }
 
     @Nullable TreePath matchedPath() {
@@ -158,19 +249,38 @@ public final class TreeState implements JDOMExternalizable {
     }
 
     boolean tryAdvance(@NotNull Object node) {
+      return tryAdvanceWithParent(null, node, -1);
+    }
+
+    boolean tryAdvanceWithParent(@Nullable Object parent, @NotNull Object node, int index) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Trying to advance a matcher using " + node);
-        LOG.debug("The serialized path: " + Arrays.toString(serializedPath));
-        LOG.debug("Matched so far: " + matchedSoFar + " elements corresponding to " + matchedPath);
+        LOG.debug("The node's parent is " + parent);
+        logCurrentMatchedPath();
       }
       assert matchedSoFar <= serializedPath.length;
       if (matchedSoFar == serializedPath.length) throw new IllegalStateException("Already matched all the path");
+      // In the current implementation, caching is only enabled for non-async trees, which is why we check for index >= 0,
+      // as for async visitors the index is unknown and passed as -1.
+      // This may change in the future, but we'll need to teach the visitors to keep track of the current child index then.
+      var cacheNode = index >= 0 && parent != null ? getOrCreateCachedMatches(parent) : null;
       boolean flattenedSucceeded = false;
       boolean plainSucceeded = false;
+      List<SerializablePathElement> serializableElements = null;
+      var userObject = TreeUtil.getUserObject(node);
+      String id = null;
+      String type = null;
       // The flattened case (a node represents several nested nodes).
       var provider = getProvider(node);
       if (provider != null) {
         var flattened = provider.getFlattenedElements();
+        if (flattened != null && !flattened.isEmpty()) {
+          serializableElements = flattened; // for caching
+          if (flattened.size() == 1) { // optimization, to avoid recomputing id/type
+            id = flattened.get(0).id();
+            type = flattened.get(0).type();
+          }
+        }
         if (flattened != null && flattened.size() > 1 && matchedSoFar + flattened.size() <= serializedPath.length) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Unflattened elements: " + flattened);
@@ -193,9 +303,28 @@ public final class TreeState implements JDOMExternalizable {
           }
         }
       }
+      // compute the cacheable results and cache them
+      if (id == null) {
+        id = calcId(node);
+      }
+      if (type == null) {
+        type = calcType(node);
+      }
+      if (serializableElements == null) { // the case when there's no provider or the flattened list is null or empty
+        serializableElements = List.of(new SerializablePathElement(id, type));
+      }
+      if (cacheNode != null) {
+        cacheNode.cacheSerializedMatch(node, index, serializableElements);
+        if (userObject != null) {
+          cacheNode.cacheUserObjectMatch(node, index);
+        }
+      }
       // The regular case (one-to-one match).
       if (!flattenedSucceeded) {
-        if (serializedPath[matchedSoFar].isMatchTo(node)) {
+        if (
+          (userObject != null && userObject.equals(serializedPath[matchedSoFar].userObject)) ||
+          (id.equals(serializedPath[matchedSoFar].id) && type.equals(serializedPath[matchedSoFar].type))
+        ) {
           plainSucceeded = true;
           ++matchedSoFar;
         }
@@ -213,6 +342,61 @@ public final class TreeState implements JDOMExternalizable {
         }
         return false;
       }
+    }
+
+    boolean tryAdvanceUsingCache(@NotNull PatchMatcherCache.Node cacheNode) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Trying to advance a matcher using the cache");
+        logCurrentMatchedPath();
+      }
+      assert matchedSoFar <= serializedPath.length;
+      if (matchedSoFar == serializedPath.length) throw new IllegalStateException("Already matched all the path");
+      @Nullable PatchMatcherCache.CachedMatch match = null;
+      var serializedMatch = cacheNode.getSerializedMatch(serializedPath[matchedSoFar]);
+      if (serializedMatch != null) {
+        var cachedElements = serializedMatch.matchedElements();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Trying to use the cached serialized elements: " + cachedElements);
+        }
+        if (matchedSoFar + cachedElements.size() <= serializedPath.length) {
+          for (var i = 0; i < cachedElements.size(); ++i) {
+            var cachedElement = cachedElements.get(i);
+            var serializedElement = serializedPath[matchedSoFar + i];
+            if (!serializedElement.id.equals(cachedElement.id()) || !serializedElement.type.equals(cachedElement.type())) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Mismatched cached element at " + i + ": " + cachedElement + " != " + serializedElement);
+              }
+              break;
+            }
+          }
+          match = serializedMatch;
+        }
+      }
+      if (match == null) {
+        LOG.debug("Failed to advance using the cached serialized elements");
+        var cachedUserObjectMatch = cacheNode.getUserObjectMatch(serializedPath[matchedSoFar]);
+        if (cachedUserObjectMatch != null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Advancing using the user object match: " + cachedUserObjectMatch);
+          }
+          match = cachedUserObjectMatch;
+        }
+      }
+      if (match != null) {
+        var node = match.getNode();
+        matchedPath = matchedPath == null ? new CachingTreePath(node) : matchedPath.pathByAddingChild(node);
+        matchedSoFar += match.getLength();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath + " using " + match);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    private void logCurrentMatchedPath() {
+      LOG.debug("The serialized path: " + Arrays.toString(serializedPath));
+      LOG.debug("Matched so far: " + matchedSoFar + " elements corresponding to " + matchedPath);
     }
   }
 
@@ -693,9 +877,11 @@ public final class TreeState implements JDOMExternalizable {
   private void applyExpandedTo(@NotNull TreeFacade tree, @NotNull TreePath rootPath, @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
+    var cache = new PatchMatcherCache();
+
     for (PathElement[] path : myExpandedPaths) {
       if (path.length == 0) continue;
-      var matcher = PathMatcher.tryStart(path, rootPath);
+      var matcher = PathMatcher.tryStart(path, rootPath, cache);
       if (matcher == null) continue;
       expandImpl(matcher, tree, indicator);
     }
@@ -762,13 +948,22 @@ public final class TreeState implements JDOMExternalizable {
 
         if (matcher.fullyMatched()) return;
 
-
         Object parent = parentPath.getLastPathComponent();
+
         TreeModel model = tree.tree.getModel();
+
+        var cachedMatches = matcher.getCachedMatches(parent);
+        if (cachedMatches != null) {
+          if (matcher.tryAdvanceUsingCache(cachedMatches)) {
+            expandImpl(matcher, tree, indicator);
+            return;
+          }
+        }
+
         int childCount = model.getChildCount(parent);
-        for (int j = 0; j < childCount; j++) {
+        for (int j = cachedMatches == null ? 0 : cachedMatches.getMaxCachedIndex() + 1; j < childCount; j++) {
           Object child = tree.tree.getModel().getChild(parent, j);
-          if (matcher.tryAdvance(child)) {
+          if (matcher.tryAdvanceWithParent(parent, child, j)) {
             expandImpl(matcher, tree, indicator);
             break;
           }
@@ -935,7 +1130,7 @@ public final class TreeState implements JDOMExternalizable {
     private final @NotNull PathMatcher matcher;
 
     SinglePathVisitor(PathElement[] elements) {
-      matcher = new PathMatcher(elements, null);
+      matcher = new PathMatcher(elements, null, null);
     }
 
     @Override
@@ -960,7 +1155,7 @@ public final class TreeState implements JDOMExternalizable {
 
       private final @NotNull PathMatcher matcher;
 
-      private PathMatchState(PathElement[] elements) { this.matcher = new PathMatcher(elements, null); }
+      private PathMatchState(PathElement[] elements) { this.matcher = new PathMatcher(elements, null, null); }
 
       @NotNull PathMatch match(@NotNull TreePath path) {
         if (Objects.equals(path.getParentPath(), matcher.matchedPath())) {
