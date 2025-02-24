@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
@@ -92,7 +91,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             updateNewUiEnabledState(isGenOneTerminalEnabled)
           }
         }
-      }.visible(ExperimentalUI.isNewUI())
+      }.visible(isGenOneTerminalOptionVisible())
 
       group(message("settings.terminal.project.settings")) {
         row(message("settings.start.directory")) {
