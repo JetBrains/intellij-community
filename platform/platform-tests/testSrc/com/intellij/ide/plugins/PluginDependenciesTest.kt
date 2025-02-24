@@ -18,7 +18,7 @@ internal class PluginDependenciesTest {
   private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun `plugin is loaded when dependency is resolved - depends`() {
+  fun `plugin is loaded when depends dependency is resolved`() {
     bar()
     `foo depends bar`()
 
@@ -29,14 +29,14 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is not loaded when dependency is not resolved - depends`() {
+  fun `plugin is not loaded when depends dependency is not resolved`() {
     `foo depends bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
 
   @Test
-  fun `plugin is loaded when dependency is resolved - depends optional`() {
+  fun `plugin is loaded when depends-optional dependency is resolved`() {
     `foo depends-optional bar`()
     bar()
 
@@ -47,7 +47,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded when dependency is not resolved - depends optional`() {
+  fun `plugin is loaded when depends-optional dependency is not resolved`() {
     `foo depends-optional bar`()
     baz()
 
@@ -59,7 +59,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `v1 plugin gets v2 content module in classloader parents even without direct dependency - depends`() {
+  fun `v1 plugin gets v2 content module in classloader parents even without direct dependency if depends dependency is used`() {
     `foo depends bar`()
     `bar with optional module`()
     val pluginSet = buildPluginSet()
@@ -69,7 +69,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `v2 plugin dependency brings only the implicit main module - plugin dependency`() {
+  fun `v2 plugin dependency brings only the implicit main module in classloader parents`() {
     `foo plugin-dependency bar`()
     `bar with optional module`()
     val pluginSet = buildPluginSet()
@@ -81,7 +81,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is not loaded if it has a dependency on v2 module - depends`() {
+  fun `plugin is not loaded if it has a depends dependency on v2 module`() {
     `bar with optional module`()
     PluginBuilder.empty().id("foo").depends("bar.module").build(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
@@ -89,7 +89,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is not loaded if it has a dependency on v2 module - plugin dependency`() {
+  fun `plugin is not loaded if it has a plugin dependency on v2 module`() {
     `bar with optional module`()
     PluginBuilder.empty().id("foo").pluginDependency("bar.module").build(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
@@ -97,7 +97,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded if it has a dependency on v2 module - module dependency`() {
+  fun `plugin is loaded if it has a module dependency on v2 module`() {
     `bar with optional module`()
     PluginBuilder.empty().id("foo").dependency("bar.module").build(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
@@ -225,7 +225,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is not loaded when it has a disabled dependency - depends`() {
+  fun `plugin is not loaded when it has a disabled depends dependency`() {
     `foo depends bar`()
     bar()
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar"))
@@ -233,7 +233,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is not loaded when it has a transitive disabled dependency - depends`() {
+  fun `plugin is not loaded when it has a transitive disabled depends dependency`() {
     PluginBuilder.empty()
       .id("com.intellij.gradle")
       .build(pluginDirPath.resolve("intellij.gradle"))
@@ -252,7 +252,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded when it has an optional disabled dependency - depends optional`() {
+  fun `plugin is loaded when it has a disabled depends-optional dependency`() {
     `foo depends-optional bar`()
     bar()
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar"))
@@ -260,7 +260,7 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded when it has a dependency on plugin alias (depends)`() {
+  fun `plugin is loaded when it has a depends dependency on plugin alias`() {
     `foo depends bar`()
     `baz with alias bar`()
     val pluginSet = buildPluginSet()
