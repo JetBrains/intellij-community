@@ -18,7 +18,7 @@ import java.awt.Color
 
 @Experimental
 @Serializable
-data class AdRangeHighlighter(
+internal data class AdRangeHighlighter(
   private val interval: AdIntervalData,
   private val data: AdRangeHighlighterData,
 ) : RangeHighlighterEx {
@@ -32,15 +32,15 @@ data class AdRangeHighlighter(
       val textAttributeKey = highlighter.textAttributesKey?.externalName
       if (textAttributeKey != null) {
         return AdRangeHighlighter(
-          AdIntervalData.fromRangeMarker(id, highlighter),
-          AdRangeHighlighterData(
+          interval = AdIntervalData.fromRangeMarker(id, highlighter),
+          data = AdRangeHighlighterData(
             textAttributeKey,
             highlighter.layer,
             highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
             highlighter.isAfterEndOfLine,
-            true, // TODO: incorrect
+            highlighter.isVisibleIfFolded,
             highlighter,
-          )
+          ),
         )
       }
       return null
@@ -76,6 +76,10 @@ data class AdRangeHighlighter(
   override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = data.origin?.lineSeparatorRenderer
   override fun getLineSeparatorColor(): Color? = data.origin?.lineSeparatorColor
   override fun getErrorStripeTooltip(): Any? = data.origin?.errorStripeTooltip
+  override fun getLineMarkerRenderer(): LineMarkerRenderer? = data.origin?.lineMarkerRenderer
+  override fun getGutterIconRenderer(): GutterIconRenderer? = data.origin?.gutterIconRenderer
+  override fun getErrorStripeMarkColor(scheme: EditorColorsScheme?): Color? = data.origin?.getErrorStripeMarkColor(scheme)
+  override fun <T : Any?> getUserData(key: Key<T?>): T? = data.origin?.getUserData(key)
 
   // region Not yet implemented
 
@@ -124,10 +128,6 @@ data class AdRangeHighlighter(
     TODO("Not yet implemented")
   }
 
-  override fun getLineMarkerRenderer(): LineMarkerRenderer? {
-    TODO("Not yet implemented")
-  }
-
   override fun setLineMarkerRenderer(renderer: LineMarkerRenderer?) {
     TODO("Not yet implemented")
   }
@@ -136,15 +136,7 @@ data class AdRangeHighlighter(
     TODO("Not yet implemented")
   }
 
-  override fun getGutterIconRenderer(): GutterIconRenderer? {
-    TODO("Not yet implemented")
-  }
-
   override fun setGutterIconRenderer(renderer: GutterIconRenderer?) {
-    TODO("Not yet implemented")
-  }
-
-  override fun getErrorStripeMarkColor(scheme: EditorColorsScheme?): Color? {
     TODO("Not yet implemented")
   }
 
@@ -197,10 +189,6 @@ data class AdRangeHighlighter(
   }
 
   override fun dispose() {
-    TODO("Not yet implemented")
-  }
-
-  override fun <T : Any?> getUserData(key: Key<T?>): T? {
     TODO("Not yet implemented")
   }
 

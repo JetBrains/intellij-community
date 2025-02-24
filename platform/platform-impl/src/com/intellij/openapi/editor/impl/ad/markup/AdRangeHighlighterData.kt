@@ -5,12 +5,13 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 
 @Experimental
 @Serializable
-data class AdRangeHighlighterData(
+internal data class AdRangeHighlighterData(
   val textAttributesKey: String,
   val layer: Int,
   val isExactRange: Boolean,

@@ -14,10 +14,11 @@ import fleet.kernel.DurableEntityType
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 
+// needed to be public to register in EditorEntityTypeProvider
 @Experimental
 class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentComponent> {
 
-  val markupStorage: AdMarkupStorage by MarkupStorageAttr
+  internal val markupStorage: AdMarkupStorage by MarkupStorageAttr
 
   companion object : DurableEntityType<AdMarkupEntity>(
     AdMarkupEntity::class.java.name,
@@ -25,12 +26,12 @@ class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentCo
     ::AdMarkupEntity,
     DocumentComponentEntity,
   ) {
-    val MarkupStorageAttr: Required<AdMarkupStorage> = requiredValue("markupStorage", AdMarkupStorage.Companion.serializer())
+    internal val MarkupStorageAttr: Required<AdMarkupStorage> = requiredValue("markupStorage", AdMarkupStorage.serializer())
 
     fun empty(documentEntity: DocumentEntity): AdMarkupEntity = requireChangeScope {
       AdMarkupEntity.new {
         it[DocumentAttr] = documentEntity
-        it[MarkupStorageAttr] = AdMarkupStorage.Companion.empty()
+        it[MarkupStorageAttr] = AdMarkupStorage.empty()
       }
     }
   }

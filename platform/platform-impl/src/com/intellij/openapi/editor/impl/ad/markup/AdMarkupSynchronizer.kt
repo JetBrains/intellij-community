@@ -108,7 +108,7 @@ internal class AdMarkupSynchronizer(
     }
   }
 
-  private fun highlightersToRemove(lastSeenNoveltyId: Long): Pair<Boolean, List<RemovedHighlight>> {
+  private fun highlightersToRemove(lastSeenNoveltyId: Long): Pair<Boolean, List<RemovedHighlighter>> {
     return synchronized(id2RemovedId) {
       // too old, re-send all
       val invalidateOldMarkup: Boolean = (id2RemovedId.size == MAX_DEAD_MARKERS_SIZE) &&
@@ -119,7 +119,7 @@ internal class AdMarkupSynchronizer(
         id2RemovedId.tailMap(lastSeenNoveltyId, false)
           .entries
           .filter { (_, removedId) -> removedId <= lastSeenNoveltyId }
-          .map { (id, removedId) -> RemovedHighlight(id, removedId) }
+          .map { (id, removedId) -> RemovedHighlighter(id, removedId) }
       }
       (invalidateOldMarkup to toRemove)
     }
@@ -140,15 +140,15 @@ internal class AdMarkupSynchronizer(
     return toAdd
   }
 
-  private fun nextNoveltyId(lastSeenNoveltyId: Long, toAdd: List<AdRangeHighlighter>, toRemove: List<RemovedHighlight>): Long {
+  private fun nextNoveltyId(lastSeenNoveltyId: Long, toAdd: List<AdRangeHighlighter>, toRemove: List<RemovedHighlighter>): Long {
     val m1 = toAdd.maxOfOrNull { it.id } ?: lastSeenNoveltyId
     val m2 = toRemove.maxOfOrNull { it.id } ?: lastSeenNoveltyId
     return max(m1, m2)
   }
 }
 
-private data class RemovedHighlight(
-  val id: Long, // TODO not used
+private data class RemovedHighlighter(
+  val id: Long, // TODO: not used
   val removedId: Long,
 ) {
   override fun toString(): String = "($id, $removedId)"
