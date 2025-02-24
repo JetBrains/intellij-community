@@ -37,7 +37,7 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
         KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         onTheFly,
-        IntentionWrapper(ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true).asIntention())
+        LocalQuickFix.from(ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true))!!
     )
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {

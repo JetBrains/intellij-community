@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -88,7 +87,7 @@ class NonVarPropertyInExternalInterfaceInspection : AbstractKotlinInspection() {
             holder.registerProblem(
                 property.valOrVarKeyword,
                 KotlinBundle.message("property.in.external.interface.should.be.var"),
-                IntentionWrapper(ChangeVariableMutabilityFix(property, true).asIntention())
+                LocalQuickFix.from(ChangeVariableMutabilityFix(property, true))!!
             )
         }
     }

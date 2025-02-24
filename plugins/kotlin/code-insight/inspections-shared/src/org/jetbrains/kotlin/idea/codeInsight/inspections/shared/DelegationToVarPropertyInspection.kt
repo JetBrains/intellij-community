@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -38,7 +38,7 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val canRemoveVar = canChangeToVal && !isUsedForOtherClass
 
             val fixes = listOfNotNull(
-                if (canChangeToVal) IntentionWrapper(ChangeVariableMutabilityFix(parameter, makeVar = false).asIntention()) else null,
+                if (canChangeToVal) LocalQuickFix.from((ChangeVariableMutabilityFix(parameter, makeVar = false))) else null,
                 if (canRemoveVar) RemoveVarKeyword() else null,
             ).ifEmpty { return }
 

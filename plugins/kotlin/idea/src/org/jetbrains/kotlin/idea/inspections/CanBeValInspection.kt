@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -46,7 +46,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
                     KotlinBundle.message("variable.is.never.modified.and.can.be.declared.immutable.using.val"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
-                    IntentionWrapper(ChangeVariableMutabilityFix(declaration, false).asIntention())
+                    LocalQuickFix.from(ChangeVariableMutabilityFix(declaration, false))!!
                 )
                 holder.registerProblem(problemDescriptor)
             }

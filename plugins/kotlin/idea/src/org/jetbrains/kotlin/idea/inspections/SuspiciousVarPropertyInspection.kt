@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -30,7 +30,7 @@ class SuspiciousVarPropertyInspection : AbstractKotlinInspection() {
                 property.valOrVarKeyword,
                 KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true).asIntention())
+                LocalQuickFix.from(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true))!!
             )
         })
 
