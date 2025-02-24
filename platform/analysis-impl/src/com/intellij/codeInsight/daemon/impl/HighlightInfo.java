@@ -90,7 +90,8 @@ public class HighlightInfo implements Segment {
           return desc.future().get();
         }
         catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
+          LOG.warn(e);
+          return List.of();
         }
       }
       else {
