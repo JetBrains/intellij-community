@@ -21,7 +21,6 @@ import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -63,14 +62,14 @@ class IndexingIteratorsProviderImpl(
     val iterators = ArrayList<IndexableFilesIterator>()
     val libraryOrigins = HashSet<LibraryOrigin>()
 
-    index.visitFileSets { fileSet: WorkspaceFileSet, entityPointer, recursive ->
-      val files = fileSet as WorkspaceFileSetWithCustomData<*>
+    index.visitFileSets { fileSet, entityPointer, recursive ->
+      fileSet as WorkspaceFileSetWithCustomData<*>
       val root = fileSet.root
       val customData = fileSet.data
       if (customData is ModuleRelatedRootData) {
         iterators.add(ModuleFilesIteratorImpl(customData.module, root, recursive, true))
       }
-      else if (files.kind.isContent) {
+      else if (fileSet.kind.isContent) {
         val rootHolder: IndexingRootHolder
         if (recursive) {
           rootHolder = IndexingRootHolder.fromFile(root)
@@ -84,17 +83,17 @@ class IndexingIteratorsProviderImpl(
         val storage = model.currentSnapshot
         val entity = entityPointer.resolve(storage)
         if (entity is LibraryEntity) {
-          val sourceLibraryRoot = SmartList<VirtualFile>()
-          val libraryRoot = SmartList<VirtualFile>()
-
-          if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
-            sourceLibraryRoot.add(root)
-          }
-          else {
-            libraryRoot.add(root)
-          }
           val libraryBridge = storage.libraryMap.getDataByEntity(entity)
           if (libraryBridge != null) {
+            val sourceLibraryRoot = SmartList<VirtualFile>()
+            val libraryRoot = SmartList<VirtualFile>()
+
+            if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
+              sourceLibraryRoot.add(root)
+            }
+            else {
+              libraryRoot.add(root)
+            }
             val iterator =
               LibraryIndexableFilesIteratorImpl.createIterator(libraryBridge, libraryRoot, sourceLibraryRoot)
             if (iterator != null && libraryOrigins.add(iterator.origin)) {
