@@ -399,6 +399,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/constructorParameterAnnotation.test");
             }
 
+            @TestMetadata("containsOperator.test")
+            public void testContainsOperator() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/containsOperator.test");
+            }
+
+            @TestMetadata("containsOperator_withStdlib.test")
+            public void testContainsOperator_withStdlib() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/containsOperator_withStdlib.test");
+            }
+
             @TestMetadata("delegateExtensionBoth.test")
             public void testDelegateExtensionBoth() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/delegateExtensionBoth.test");
