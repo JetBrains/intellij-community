@@ -9,11 +9,11 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
-import com.intellij.platform.workspace.jps.serialization.impl.toPath
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -55,13 +55,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
-      val descriptor = try {
-        Path.of(path).getEelDescriptor()
-      }
-      catch (_: InvalidPathException) {
-        // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'
-        LocalEelDescriptor
-      }
+      val descriptor = getDescriptor(path)
       val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
       globalInstance.getOrCreateFromUrl(path)
     } else {
@@ -117,7 +111,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
     ThreadingAssertions.assertWriteAccess()
     if (isCommitted) error("Modification already completed")
 
-    val descriptor = modifiedSdkEntity.homePath?.toPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val descriptor = getDescriptor(modifiedSdkEntity.homePath?.toString())
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
 
@@ -173,5 +167,16 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun toString(): String {
     return "$name Version:$versionString Path:($homePath)"
+  }
+
+  private fun getDescriptor(path: String?): EelDescriptor {
+    path ?: return LocalEelDescriptor
+    return try {
+      Path.of(path).getEelDescriptor()
+    }
+    catch (_: InvalidPathException) {
+      // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'
+      LocalEelDescriptor
+    }
   }
 }
