@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.*;
@@ -380,7 +381,9 @@ public class IterationStateTest extends AbstractEditorTest {
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, 3, 0,
                                    new TextAttributes(new Color(random, random, random++), new Color(random, random, random++),
                                    null, null, Font.PLAIN), HighlighterTargetArea.EXACT_RANGE);
-    highlighter.setErrorStripeTooltip(HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1,3).createUnconditionally());
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1, 3).createUnconditionally();
+    highlighter.setErrorStripeTooltip(info);
+    info.setHighlighter((RangeHighlighterEx)highlighter);
     return highlighter;
   }
 
