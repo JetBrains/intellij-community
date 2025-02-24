@@ -531,19 +531,19 @@ class ListComboBoxUiTest {
 
     @Test
     fun `when editable ListComboBox selectedIndex changes then text field updates`() {
-        var selectedIdx by mutableStateOf(0)
+        var selectedIndex by mutableStateOf(0)
 
         composeRule.setContent {
-            val textState = rememberTextFieldState(comboBoxItems[selectedIdx])
+            val textState = rememberTextFieldState(comboBoxItems[selectedIndex])
 
             // Update text state when selectedIndex changes
-            LaunchedEffect(selectedIdx) { textState.edit { replace(0, length, comboBoxItems[selectedIdx]) } }
+            LaunchedEffect(selectedIndex) { textState.edit { replace(0, length, comboBoxItems[selectedIndex]) } }
 
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = selectedIdx,
-                    onItemSelected = { index, _ -> selectedIdx = index },
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
                     textFieldState = textState, // Pass the explicitly managed text state
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
                     itemContent = { item, isSelected, isActive ->
@@ -560,7 +560,7 @@ class ListComboBoxUiTest {
         }
 
         textField.assertTextEquals("Item 1")
-        selectedIdx = 3
+        selectedIndex = 3
         composeRule.waitForIdle()
 
         textField.assertTextEquals("Book")
