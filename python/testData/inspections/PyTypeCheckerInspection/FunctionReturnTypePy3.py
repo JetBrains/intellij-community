@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Generator, Iterable
 
 def a(x: List[int]) -> List[str]:
     return <warning descr="Expected type 'list[str]', got 'list[list[int]]' instead">[x]</warning>
@@ -54,8 +54,12 @@ def m(x) -> None:
 
 def n() -> Generator[int, Any, str]:
     yield 13
-    return 42
+    return <warning descr="Expected type 'str', got 'int' instead">42</warning>
 
 def o(val) -> int:
     assert val is int
     return val
+
+def t() -> Iterable[int]:
+    yield 13
+    return "str" # no warning here

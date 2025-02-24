@@ -1,4 +1,4 @@
-from typing import Generator, Iterable, Iterator, AsyncIterable, AsyncIterator, AsyncGenerator
+from typing import Generator, Iterable, Iterator, AsyncIterable, AsyncIterator, AsyncGenerator, Protocol
 
 # Fix incorrect YieldType
 def a() -> Iterable[str]:
@@ -16,20 +16,20 @@ def c() -> Generator[int, Any, str]:
     return <warning descr="Expected type 'str', got 'int' instead">42</warning>
 
 # Suggest AsyncGenerator
-async def d() -> <warning descr="Expected type 'AsyncGenerator[int, None]', got 'Iterable[int]' instead">Iterable[int]</warning>:
+async def d() -> <warning descr="Expected type 'AsyncGenerator[int, Any]', got 'Iterable[int]' instead">Iterable[int]</warning>:
     yield 42
 
-async def e() -> <warning descr="Expected type 'AsyncGenerator[int, None]', got 'Iterator[int]' instead">Iterator[int]</warning>:
+async def e() -> <warning descr="Expected type 'AsyncGenerator[int, Any]', got 'Iterator[int]' instead">Iterator[int]</warning>:
     yield 42
 
 async def f() -> <warning descr="Expected type 'AsyncGenerator[int, str]', got 'Generator[int, str, None]' instead">Generator[int, str, None]</warning>:
     yield 13
 
 # Suggest sync Generator
-def g() -> <warning descr="Expected type 'Generator[int, None, None]', got 'AsyncIterable[int]' instead">AsyncIterable[int]</warning>:
+def g() -> <warning descr="Expected type 'Generator[int, Any, None]', got 'AsyncIterable[int]' instead">AsyncIterable[int]</warning>:
     yield 42
 
-def h() -> <warning descr="Expected type 'Generator[int, None, None]', got 'AsyncIterator[int]' instead">AsyncIterator[int]</warning>:
+def h() -> <warning descr="Expected type 'Generator[int, Any, None]', got 'AsyncIterator[int]' instead">AsyncIterator[int]</warning>:
     yield 42
 
 def i() -> <warning descr="Expected type 'Generator[int, str, None]', got 'AsyncGenerator[int, str]' instead">AsyncGenerator[int, str]</warning>:
@@ -66,4 +66,25 @@ async def r() -> AsyncGenerator[int]:
     yield 42
     
 def s() -> Generator[int]:
-    yield from <warning descr="Cannot yield from 'AsyncGenerator[int, None]', use async for instead"><warning descr="Expected type 'collections.Iterable', got 'AsyncGenerator[int, None]' instead">r()</warning></warning>
+    yield from <warning descr="Cannot yield from 'AsyncGenerator[int, None]', use async for instead">r()</warning>
+    
+def t() -> object: # no error here
+    yield None # no error here
+
+class IntIterator(Protocol):
+  def __next__(self, /) -> int:
+    ...
+
+def x(b: bool) -> IntIterator:
+  if b:
+      yield 0
+  yield <warning descr="Expected yield type 'int', got 'str' instead">"str"</warning>
+
+class TIterator[T](Protocol):
+    def __next__(self, /) -> T:
+        ...
+
+def y(b: bool) -> TIterator[int]:
+    if b:
+        yield 0
+    yield <warning descr="Expected yield type 'int', got 'str' instead">"str"</warning>

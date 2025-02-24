@@ -2,7 +2,6 @@ aliases_implicit.py
 aliases_recursive.py
 aliases_typealiastype.py
 aliases_variance.py
-annotations_generators.py
 annotations_typeexpr.py
 callables_annotation.py
 callables_kwargs.py

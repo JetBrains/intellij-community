@@ -340,6 +340,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
       // Ignore nested lambdas
     }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // Ignore nested classes
+    }
   }
 
   /**
@@ -644,6 +649,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         @Override
         public void visitPyFunction(@NotNull PyFunction node) {
           // Ignore nested functions
+        }
+
+        @Override
+        public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
+          // Ignore lambdas
+        }
+
+        @Override
+        public void visitPyClass(@NotNull PyClass node) {
+          // Ignore nested classes
         }
 
         @Override

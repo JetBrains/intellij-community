@@ -2071,12 +2071,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (!function.isGenerator()) {
         return wrapInCoroutineType(returnType, function);
       }
-      var desc = GeneratorTypeDescriptor.create(returnType);
+      var desc = GeneratorTypeDescriptor.fromGenerator(returnType);
       if (desc != null) {
-        return desc.withAsync(true).toPyType(function);
+        final PyClass classType = PyPsiFacade.getInstance(function.getProject()).createClassByQName(ASYNC_GENERATOR, function);
+        final List<PyType> generics = Arrays.asList(desc.yieldType, desc.sendType);
+        return classType != null ? new PyCollectionTypeImpl(classType, false, generics) : null;
       }
     }
-
     return returnType;
   }
 
@@ -2106,72 +2107,80 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   public record GeneratorTypeDescriptor(
-    String className,
-    PyType yieldType, // if YieldType is not specified, it is AnyType
-    PyType sendType,  // if SendType is not specified, it is PyNoneType
-    PyType returnType // if ReturnType is not specified, it is PyNoneType
+    @Nullable PyType yieldType,
+    @Nullable PyType sendType,
+    @Nullable PyType returnType,
+    boolean isAsync
   ) {
-
-    private static final List<String> SYNC_TYPES = List.of(GENERATOR, "typing.Iterable", "typing.Iterator");
-    private static final List<String> ASYNC_TYPES = List.of(ASYNC_GENERATOR, "typing.AsyncIterable", "typing.AsyncIterator");
-
-    public static @Nullable GeneratorTypeDescriptor create(@Nullable PyType type) {
-      final PyClassType classType = as(type, PyClassType.class);
-      final PyCollectionType genericType = as(type, PyCollectionType.class);
-      if (classType == null) return null;
+    /**
+     * Extracts type parameters from typing.Generator and typing.AsyncGenerator 
+     */
+    public static @Nullable GeneratorTypeDescriptor fromGenerator(@Nullable PyType type) {
+      if (!(type instanceof PyClassType classType)) return null;
 
       final String qName = classType.getClassQName();
       if (qName == null) return null;
-      if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
+      
+      boolean isAsync = ASYNC_GENERATOR.equals(qName);
+      if (!isAsync && !GENERATOR.equals(qName)) return null;
+
+      final PyType noneType = PyBuiltinCache.getInstance(classType.getPyClass()).getNoneType();
 
       PyType yieldType = null;
-      final var noneType = PyBuiltinCache.getInstance(classType.getPyClass()).getNoneType();
       PyType sendType = noneType;
-      PyType returnType = noneType;
-
-      if (genericType != null) {
+      PyType returnType = isAsync ? null : noneType;
+      if (type instanceof PyCollectionType genericType) {
         yieldType = ContainerUtil.getOrElse(genericType.getElementTypes(), 0, yieldType);
-        if (GENERATOR.equals(qName) || ASYNC_GENERATOR.equals(qName)) {
-          sendType = ContainerUtil.getOrElse(genericType.getElementTypes(), 1, sendType);
+        sendType = ContainerUtil.getOrElse(genericType.getElementTypes(), 1, sendType);
+        returnType = ContainerUtil.getOrElse(genericType.getElementTypes(), 2, returnType);
+      }
+      return new GeneratorTypeDescriptor(yieldType, sendType, returnType, isAsync);
+    }
+
+    /**
+     * Unlike {@link #fromGenerator}, this method can also extract yield type from Protocol types like typing.Iterable
+     */
+    public static @Nullable GeneratorTypeDescriptor fromGeneratorOrProtocol(@Nullable PyType type, @NotNull TypeEvalContext context) { 
+      if (!(type instanceof PyClassType classType)) return null;
+      
+      GeneratorTypeDescriptor desc = fromGenerator(type);
+      if (desc != null) {
+        return desc;
+      }
+      
+      if (PyProtocolsKt.isProtocol(classType, context)) {
+        PyType yieldType;
+        
+        PyType syncUpcast = PyTypeUtil.convertToType(classType, "typing.Iterable", classType.getPyClass(), context);
+        if (syncUpcast instanceof PyCollectionType collectionType) {
+          yieldType = collectionType.getIteratedItemType();
+          return new GeneratorTypeDescriptor(yieldType, null, null, false);
         }
-        if (GENERATOR.equals(qName)) {
-          returnType = ContainerUtil.getOrElse(genericType.getElementTypes(), 2, returnType);
+        PyType asyncUpcast = PyTypeUtil.convertToType(classType, "typing.AsyncIterable", classType.getPyClass(), context);
+        if (asyncUpcast instanceof PyCollectionType asyncCollectionType) {
+          yieldType = asyncCollectionType.getIteratedItemType();
+          return new GeneratorTypeDescriptor(yieldType, null, null, true);
+        }
+        
+        // Here we try to understand a yield type by return type of __next__ method of protocol specified in annotation.
+        // We cannot use convertToType with typing.Iterator here, as it inherits from typing.Iterable 
+        // and requires both __iter__ and __next__, while it should be possible to decide the yield type only by __next__.
+        // TODO: unify logic with PyTargetExpressionImpl.getIterationType (PY-82453)
+        PyFunction next = classType.getPyClass().findMethodByName(PyNames.DUNDER_NEXT, true, context);
+        if (next != null) {
+          yieldType = context.getReturnType(next);
+          yieldType = PyTypeChecker.substitute(yieldType, PyTypeChecker.unifyReceiver(classType, context), context);
+          return new GeneratorTypeDescriptor(yieldType, null, null, false);
+        }
+
+        PyFunction anext = classType.getPyClass().findMethodByName(PyNames.ANEXT, true, context);
+        if (anext != null) {
+          yieldType = Ref.deref(unwrapCoroutineReturnType(context.getReturnType(anext)));
+          yieldType = PyTypeChecker.substitute(yieldType, PyTypeChecker.unifyReceiver(classType, context), context);
+          return new GeneratorTypeDescriptor(yieldType, null, null, true);
         }
       }
-      return new GeneratorTypeDescriptor(qName, yieldType, sendType, returnType);
-    }
-
-    public boolean isAsync() {
-      return ASYNC_TYPES.contains(className);
-    }
-
-    public GeneratorTypeDescriptor withAsync(boolean async) {
-      if (async) {
-        var idx = SYNC_TYPES.indexOf(className);
-        if (idx == -1) return this;
-        return new GeneratorTypeDescriptor(ASYNC_TYPES.get(idx), yieldType, sendType, returnType);
-      }
-      else {
-        var idx = ASYNC_TYPES.indexOf(className);
-        if (idx == -1) return this;
-        return new GeneratorTypeDescriptor(SYNC_TYPES.get(idx), yieldType, sendType, returnType);
-      }
-    }
-
-    public @Nullable PyType toPyType(@NotNull PsiElement anchor) {
-      final PyClass classType = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(className, anchor);
-      final List<PyType> generics;
-      if (GENERATOR.equals(className)) {
-        generics = Arrays.asList(yieldType, sendType, returnType);
-      }
-      else if (ASYNC_GENERATOR.equals(className)) {
-        generics = Arrays.asList(yieldType, sendType);
-      }
-      else {
-        generics = Collections.singletonList(yieldType);
-      }
-
-      return classType != null ? new PyCollectionTypeImpl(classType, false, generics) : null;
+      return null;
     }
   }
 
