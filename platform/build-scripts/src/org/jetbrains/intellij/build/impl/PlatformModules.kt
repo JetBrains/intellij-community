@@ -530,7 +530,7 @@ private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate-services.xml",
   "/META-INF/RdServer.xml",
   "/META-INF/unattendedHost.xml",
-  "/META-INF/codeWithMe.xml",
+  "/META-INF/cwmBackendConnection.xml",
   "/META-INF/codeWithMeFrontend.xml",
 )
 
