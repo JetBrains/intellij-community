@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.replaceService
+import java.rmi.ConnectException
 
 suspend fun <R> withStoppedConnector(action: suspend () -> R): R {
   Disposer.newDisposable().use { disposable ->
@@ -163,7 +164,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
   }
 
   override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
-    throw RuntimeException("not implemented")
+    throw ConnectException("Cannot reconnect")
   }
 
   override fun pingBlocking(): Boolean {
