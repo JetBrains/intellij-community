@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLDistribution.*
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import junit.framework.TestCase.assertEquals
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -25,6 +26,8 @@ class WSLDistributionConsoleFoldingTest {
 
   @Test
   fun `should fold`() {
+    Assume.assumeFalse(WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()) // Folding doesn't make sense for IJent (no wsl.exe)
+
     fun assertShouldFold(commandLine: GeneralCommandLine = GeneralCommandLine("echo"), options: WSLCommandLineOptions) {
       val line = wslRule.wsl.patchCommandLine(commandLine, null, options).commandLineString
       assertShouldFold(expected = true, line = line)
@@ -48,6 +51,8 @@ class WSLDistributionConsoleFoldingTest {
 
   @Test
   fun `should not fold`() {
+    Assume.assumeFalse(WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent())
+
     fun assertShouldNotFold(line: String) {
       assertShouldFold(expected = false, line = line)
     }
@@ -85,6 +90,8 @@ class WSLDistributionConsoleFoldingTest {
 
   @Test
   fun `replacement text`() {
+    Assume.assumeFalse(WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent())
+
     fun assertReplacement(commandLine: GeneralCommandLine = GeneralCommandLine("echo"), options: WSLCommandLineOptions) {
       neverRunTTYFix(commandLine)
       val commandLineString = commandLine.commandLineString
