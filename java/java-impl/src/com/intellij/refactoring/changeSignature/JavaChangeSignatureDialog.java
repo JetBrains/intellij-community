@@ -771,7 +771,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
         if (converted != null && converted != annotation) {
           String text = converted.getText();
-          return text.replaceFirst("@" + converted.getQualifiedName(), "@Contract");
+          return text.replaceFirst("^@" + converted.getQualifiedName(), "@Contract");
         }
       }
       catch (ContractConverter.ContractConversionException ignored) {
