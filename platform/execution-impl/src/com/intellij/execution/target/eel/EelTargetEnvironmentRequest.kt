@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -150,8 +150,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     request.localPortBindings.forEach { localPortBinding ->
       forwardingScope.launch {
-        val remoteAddress = EelTunnelsApi.HostAddress.Builder((localPortBinding.target ?: 0).toUShort()).build()
-        val acceptor = eel.tunnels.getAcceptorForRemotePort(remoteAddress).getOrThrow()
+        val acceptor = eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).getOrThrow()
 
         val socket = Socket()
 
@@ -236,13 +235,13 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
             }
             else {
               runBlockingMaybeCancellable {
-                val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
+                val options = eel.fs.createTemporaryDirectory()
 
                 targetRootPath.prefix?.let(options::prefix)
                 targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
                 options.deleteOnExit(true)
 
-                eel.fs.createTemporaryDirectory(options.build()).getOrThrow().toString()
+                options.getOrThrow().toString()
               }
             }
           }
