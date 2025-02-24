@@ -104,13 +104,16 @@ def get_column_descriptions(table):
 
 
 def get_value_occurrences_count(table):
+    import warnings
     df = __convert_to_df(table)
     bin_counts = []
 
-    for _, column_data in df.items():
-        column_visualisation_type, result = __analyze_column(column_data)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # Suppress all
+        for _, column_data in df.items():
+            column_visualisation_type, result = __analyze_column(column_data)
 
-        bin_counts.append(str({column_visualisation_type:result}))
+            bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
 
@@ -119,7 +122,7 @@ def __get_data_slice(table, start, end):
 
 
 def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
-    # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
+    # type: (Union[pd.DataFrame, pd.Series], function, Union[None, int], Union[None, int], Union[None, str]) -> str
 
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
