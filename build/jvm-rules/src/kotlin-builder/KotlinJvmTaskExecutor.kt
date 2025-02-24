@@ -71,8 +71,9 @@ internal suspend fun compileKotlinForJvm(
     classPath = classPath,
   )
 
+  val coroutineContext = coroutineContext
   coroutineContext.ensureActive()
-  val pipeline = createJvmPipeline(config) {
+  val pipeline = createJvmPipeline(config, checkCancelled = { coroutineContext.ensureActive() }) {
     // todo write
   }
   var code = pipeline.execute(kotlinArgs, Services.EMPTY, messageCollector).code

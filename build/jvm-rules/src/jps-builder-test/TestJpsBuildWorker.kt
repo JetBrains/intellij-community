@@ -31,7 +31,6 @@ internal object TestJpsBuildWorker {
 
     performTestInvocation { out, coroutineScope ->
       // IDEA console is bad and outdated, write to file and use modern tooling to view logs
-      // ${dateTimeFormatter.format(LocalDateTime.now())}
       val logFile = testPaths.userHomeDir.resolve("kotlin-worker/log.jsonl")
       Files.createDirectories(logFile.parent)
       val openTelemetryAndOnClose = configureOpenTelemetry(Files.newOutputStream(logFile), "test-builder")
@@ -46,7 +45,7 @@ internal object TestJpsBuildWorker {
       val exitCode = RootAllocator(Long.MAX_VALUE).use { allocator ->
         tracer.span("build") { span ->
           buildUsingJps(
-            //forceIncremental = true,
+            forceIncremental = true,
             baseDir = baseDir,
             args = args,
             out = out,

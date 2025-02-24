@@ -96,8 +96,8 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
 }
 
 internal suspend fun markTargetUpToDate(
-  context: CompileContext,
-  target: ModuleBuildTarget,
+  context: BazelCompileContext,
+  target: BazelModuleBuildTarget,
   dataManager: BazelBuildDataProvider,
 ) {
   coroutineContext.ensureActive()
@@ -132,7 +132,11 @@ internal suspend fun markTargetUpToDate(
 }
 
 private fun dropRemovedPaths(context: CompileContext, target: ModuleBuildTarget, dataManager: BazelBuildDataProvider): Boolean {
-  val files = Utils.REMOVED_SOURCES_KEY.get(context)?.remove(target) ?: return false
-  dataManager.sourceToOutputMapping.remove(files)
+  val files = context.getUserData(Utils.REMOVED_SOURCES_KEY) ?: return false
+
+  require(files.isEmpty() || (files.size == 1 && files.containsKey(target))) { "Expected the only $target (files=$files)" }
+  context.putUserData(Utils.REMOVED_SOURCES_KEY, null)
+
+  dataManager.sourceToOutputMapping.remove(files.get(target) ?: return false)
   return true
 }

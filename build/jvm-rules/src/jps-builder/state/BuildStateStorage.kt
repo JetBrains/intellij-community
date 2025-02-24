@@ -91,7 +91,7 @@ internal fun loadBuildState(
           return LoadStateResult(
             rebuildRequested = rebuildRequested,
             map = createInitialSourceMap(sourceFileToDigest),
-            changedFiles = emptyList(),
+            changedOrAddedFiles = emptyList(),
             deletedFiles = emptyList(),
           )
         }
@@ -173,7 +173,7 @@ data class LoadStateResult(
   @JvmField val rebuildRequested: String?,
 
   @JvmField val map: Map<Path, SourceDescriptor>,
-  @JvmField val changedFiles: List<Path>,
+  @JvmField val changedOrAddedFiles: List<Path>,
   @JvmField val deletedFiles: List<RemovedFileInfo>,
 )
 
@@ -253,10 +253,13 @@ private fun doLoad(
   }
 
   // if a file was not removed from newFiles, it means that file is unknown and so, a new one
-  for (entry in newFiles) {
-    // for now, missing digest means that file is changed (not compiled)
-    result.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = entry.value, outputs = emptyStringArray, isChanged = true))
+  if (newFiles.isNotEmpty()) {
+    for (entry in newFiles) {
+      // for now, missing digest means that file is changed (not compiled)
+      result.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = entry.value, outputs = emptyStringArray, isChanged = true))
+    }
+    changedFiles.addAll(newFiles.keys)
   }
 
-  return LoadStateResult(map = result, changedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
+  return LoadStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
 }

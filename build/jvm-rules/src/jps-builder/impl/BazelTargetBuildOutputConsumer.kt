@@ -12,6 +12,8 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.CompiledClass
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.kotlin.backend.common.output.OutputFile
+import org.jetbrains.kotlin.build.GeneratedFile
+import org.jetbrains.kotlin.build.GeneratedJvmClass
 import java.io.File
 import java.nio.file.Path
 
@@ -46,14 +48,35 @@ internal class BazelTargetBuildOutputConsumer(
   fun registerKotlincOutput(context: CompileContext, outputs: List<OutputFile>) {
     val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
     outputSink.registerKotlincOutput(outputs)
+    val sourceToOutputMapping = dataManager?.sourceToOutputMapping
     for (fileObject in outputs) {
       val sourceFiles = fileObject.sourceFiles
-      if (fileObject.relativePath.endsWith(".kt")) {
+      val relativePath = fileObject.relativePath.replace(File.separatorChar, '/')
+      if (relativePath.endsWith(".class")) {
         successfullyCompiled.addAll(sourceFiles)
       }
 
       for (sourceFile in sourceFiles) {
-        dataManager?.sourceToOutputMapping?.appendRawRelativeOutput(sourceFile.toPath(), fileObject.relativePath)
+        sourceToOutputMapping?.appendRawRelativeOutput(sourceFile.toPath(), relativePath)
+      }
+    }
+    registeredSourceCount += successfullyCompiled.size
+    JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
+  }
+
+  // avoid calling asByteArray several times - it is a call to ClassWriter (not some cached data)
+  fun registerIncrementalKotlincOutput(context: CompileContext, outputs: List<GeneratedFile>) {
+    val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
+    outputSink.registerIncrementalKotlincOutput(outputs)
+    val sourceToOutputMapping = dataManager?.sourceToOutputMapping
+    for (fileObject in outputs) {
+      val sourceFiles = fileObject.sourceFiles
+      if (fileObject is GeneratedJvmClass) {
+        successfullyCompiled.addAll(sourceFiles)
+      }
+
+      for (sourceFile in sourceFiles) {
+        sourceToOutputMapping?.appendRawRelativeOutput(sourceFile.toPath(), fileObject.relativePath)
       }
     }
     registeredSourceCount += successfullyCompiled.size

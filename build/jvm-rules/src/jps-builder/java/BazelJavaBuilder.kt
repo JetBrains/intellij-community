@@ -16,28 +16,24 @@ import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptyMap
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
-import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaCompilingTool
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.GlobalContextKey
-import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.StopBuildException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.java.ExternalJavacOptionsProvider
@@ -127,20 +123,6 @@ internal class BazelJavaBuilder(
         }
       }
     }
-  }
-
-  override fun chunkBuildStarted(context: CompileContext, chunk: ModuleChunk) {
-    if (!isIncremental) {
-      return
-    }
-
-    // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
-    // that all such files are compiled in the first round.
-    JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
-      override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-        context.projectDescriptor.fsState.processFilesToRecompile(context, chunk.targets.single(), processor)
-      }
-    }, chunk)
   }
 
   override fun buildFinished(context: CompileContext) {

@@ -25,6 +25,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
+import kotlin.coroutines.coroutineContext
 
 internal class NonIncrementalKotlinBuilder(
   private val job: Job,
@@ -75,7 +76,8 @@ internal class NonIncrementalKotlinBuilder(
       classPath = bazelConfigurationHolder.classPath.asList(),
     )
 
-    val pipeline = createJvmPipeline(config) {
+    val coroutineContext = coroutineContext
+    val pipeline = createJvmPipeline(config, checkCancelled = { coroutineContext.ensureActive() }) {
       outputConsumer.registerKotlincOutput(context, it.asList())
     }
     val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, builder.build(), messageCollector)

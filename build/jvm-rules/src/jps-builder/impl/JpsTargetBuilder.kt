@@ -162,6 +162,17 @@ internal class JpsTargetBuilder(
     parentSpan: Span,
   ): Boolean {
     val chunk = ModuleChunk(java.util.Set.of<ModuleBuildTarget>(target))
+
+    if (context.scope.isIncrementalCompilation) {
+      // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
+      // that all such files are compiled in the first round.
+      JavaBuilderUtil.markDirtyDependenciesForInitialRound(
+        context,
+        BazelDirtyFileHolder(context, context.projectDescriptor.fsState, chunk.targets.single() as BazelModuleBuildTarget),
+        chunk,
+      )
+    }
+
     for (builder in builders) {
       builder.chunkBuildStarted(context, chunk)
     }
@@ -294,8 +305,7 @@ internal class JpsTargetBuilder(
     val targets = java.util.Set.of<BuildTarget<*>>(target)
     try {
       context.setCompilationStartStamp(targets, System.currentTimeMillis())
-
-      Utils.ERRORS_DETECTED_KEY.set(context, false)
+      context.putUserData(Utils.ERRORS_DETECTED_KEY, false)
 
       var doneSomething = false
 
@@ -312,17 +322,17 @@ internal class JpsTargetBuilder(
             require(context.getUserData(CURRENT_ROUND_DELTA_KEY) == null)
             require(context.getUserData(NEXT_ROUND_DELTA_KEY) == null)
             val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
-            if (buildState.changedFiles.isEmpty()) {
+            val changedOrAddedFiles = buildState.changedOrAddedFiles
+            if (changedOrAddedFiles.isEmpty()) {
               fsState.getDelta(target).initRecompile(Map.of())
             }
             else {
-              val k = Array<BuildRootDescriptor>(buildState.changedFiles.size) {
-                buildRootIndex.fileToDescriptors.get(buildState.changedFiles.get(it))!!
+              val k = Array<BuildRootDescriptor>(changedOrAddedFiles.size) {
+                buildRootIndex.fileToDescriptors.get(changedOrAddedFiles.get(it))!!
               }
-              val v = Array<Set<Path>>(buildState.changedFiles.size) {
-                ObjectArraySet(arrayOf(buildState.changedFiles.get(it)))
+              val v = Array<Set<Path>>(changedOrAddedFiles.size) {
+                ObjectArraySet(arrayOf(changedOrAddedFiles.get(it)))
               }
-              val fsState = projectDescriptor.fsState
               fsState.getDelta(target).initRecompile(Object2ObjectArrayMap(k, v))
             }
             fsState.markInitialScanPerformed(target)
@@ -441,7 +451,7 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
 
   val removedSources = context.getUserData(Utils.REMOVED_SOURCES_KEY)?.get(target)
   if (removedSources == null) {
-    Utils.REMOVED_SOURCES_KEY.set(context, Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
+    context.putUserData(Utils.REMOVED_SOURCES_KEY, Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
   }
   else {
     val set = linkedSet<Path>()

@@ -39,16 +39,14 @@ internal class JvmAbiOutputExtension(
     override fun finalizeClassFactory(factory: ClassFileFactory) {
         // We need to wait until the end to produce any output in order to strip classes
         // from the InnerClasses attributes.
-        val outputFiles =
-            AbiOutputFiles(
-                abiClassInfoBuilder(),
-                factory,
-                removeDebugInfo,
-                removeDataClassCopyIfConstructorIsPrivate,
-                preserveDeclarationOrder,
-                treatInternalAsPrivate,
-            )
-      outputConsumer(outputFiles.asList())
+      outputConsumer(AbiOutputFiles(
+        abiClassInfoBuilder(),
+        factory,
+        removeDebugInfo,
+        removeDataClassCopyIfConstructorIsPrivate,
+        preserveDeclarationOrder,
+        treatInternalAsPrivate,
+      ).asList())
     }
 
     private class InnerClassInfo(val name: String, val outerName: String?, val innerName: String?, val access: Int)

@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.fir.backend.utils.extractFirDeclarations
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.modules.JavaRootPath
-import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import java.io.File
 import java.nio.file.Path
 
@@ -72,6 +71,7 @@ fun prepareCompilerConfiguration(
   abiOutputConsumer: (List<OutputFile>) -> Unit,
 ): CompilerConfiguration {
   val config = configTemplate.copy()
+  config.put(JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY, true)
   configurePlugins(
     args = args,
     workingDir = baseDir,
@@ -94,9 +94,10 @@ fun prepareCompilerConfiguration(
 
 fun createJvmPipeline(
   config: CompilerConfiguration,
+  checkCancelled: () -> Unit,
   consumer: (OutputFileCollection) -> Unit,
 ): AbstractCliPipeline<K2JVMCompilerArguments> {
-  return BazelJvmCliPipeline(BazelJvmConfigurationPipelinePhase(config), consumer)
+  return BazelJvmCliPipeline(BazelJvmConfigurationPipelinePhase(config), checkCancelled, consumer)
 }
 
 fun configureModule(
@@ -108,8 +109,8 @@ fun configureModule(
   allSources: List<Path>,
   // if incremental compilation
   changedKotlinSources: Sequence<String>?,
-  classPath: List<Path>
-) {
+  classPath: List<Path>,
+): ModuleBuilder {
   var isJava9Module = false
   config.moduleName = moduleName
 
@@ -160,6 +161,7 @@ fun configureModule(
   val modules = listOf(module)
   config.modules = modules
   config.moduleChunk = ModuleChunk(modules)
+  return module
 }
 
 @OptIn(ExperimentalCompilerApi::class)
@@ -193,6 +195,7 @@ private fun createCompilerConfigurationTemplate(): CompilerConfiguration {
 
 private class BazelJvmCliPipeline(
   private val configPhase: BazelJvmConfigurationPipelinePhase,
+  private val checkCancelled: () -> Unit,
   private val consumer: (OutputFileCollection) -> Unit,
 ) : AbstractCliPipeline<K2JVMCompilerArguments>() {
   override val defaultPerformanceManager: K2JVMCompilerPerformanceManager = K2JVMCompilerPerformanceManager()
@@ -206,7 +209,7 @@ private class BazelJvmCliPipeline(
     return configPhase then
       JvmFrontendPipelinePhase then
       JvmFir2IrPipelinePhase then
-      BazelJvmBackendPipelinePhase(consumer)
+      BazelJvmBackendPipelinePhase(consumer, checkCancelled)
   }
 }
 
@@ -227,6 +230,7 @@ private class BazelJvmConfigurationPipelinePhase(
 // https://youtrack.jetbrains.com/issue/KT-75033/split-JvmBackendPipelinePhase-to-be-able-to-provide-a-custom-implementation-of-writeOutputs
 private class BazelJvmBackendPipelinePhase(
   private val consumer: (OutputFileCollection) -> Unit,
+  private val checkCancelled: () -> Unit,
 ) : PipelinePhase<JvmFir2IrPipelineArtifact, JvmBinaryPipelineArtifact>(
   name = "JvmBackendPipelineStep",
   preActions = setOf(
@@ -250,10 +254,24 @@ private class BazelJvmBackendPipelinePhase(
     val baseBackendInput = fir2IrResult.toBackendInput(configuration, jvmBackendExtension)
     val codegenFactory = JvmIrCodegenFactory(configuration)
 
+    val mapField = CompilerConfiguration::class.java.getDeclaredField("map")
+    mapField.isAccessible = true
+
     val module = configuration.moduleChunk!!.modules.single()
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+    checkCancelled()
+    // ensure that createOutputFilesFlushingCallbackIfPossible will not create files on disk - we do set outputDir only as a workaround
+    val configurationWithoutOutputDir = configuration.copy()
+    //val map = mapField.get(configurationWithoutOutputDir) as MutableMap<*, *>
+    //for (key in map.keys) {
+    //  if (key.toString() == JVMConfigurationKeys.OUTPUT_DIRECTORY.toString()) {
+    //    map.remove(key)
+    //    break
+    //  }
+    //}
+
     val codegenInput = KotlinToJVMBytecodeCompiler.runLowerings(
       project = project,
+      //configuration = configurationWithoutOutputDir,
       configuration = configuration,
       moduleDescriptor = fir2IrResult.irModuleFragment.descriptor,
       module = module,
@@ -264,7 +282,8 @@ private class BazelJvmBackendPipelinePhase(
       reportGenerationStarted = false,
     )
 
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+    checkCancelled()
+
     val generationState = KotlinToJVMBytecodeCompiler.runCodegen(
       codegenInput = codegenInput,
       state = codegenInput.state,
@@ -274,8 +293,9 @@ private class BazelJvmBackendPipelinePhase(
       reportGenerationFinished = false,
     )
 
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+    checkCancelled()
     consumer(generationState.factory)
+
     return JvmBinaryPipelineArtifact(listOf(generationState))
   }
 }

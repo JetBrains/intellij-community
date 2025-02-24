@@ -43,6 +43,33 @@ _kt_kotlinc_options(
     visibility = ["//src:__subpackages__", "//zip:__pkg__"],
 )
 
+# jvm_import(
+#     name = "kotlin-compiler",
+#     jar = "@kotlin-compiler//file",
+#     source_jar = "@kotlin-compiler-sources//file",
+#     visibility = ["//visibility:public"],
+#     runtime_deps = [
+#         "@lib//:jetbrains-annotations",
+#         "@lib//:kotlinx-coroutines-core"
+#     ],
+# )
+
+alias(
+    name = "kotlin-compiler",
+    actual = "@kotlin-compiler_http//:kotlin-compiler",
+    visibility = ["//visibility:public"],
+)
+# java_import(
+#     name = "kotlin-compiler",
+#     jars = ["kotlin-compiler.jar"],
+#     srcjar = "@kotlin-compiler-sources//file",
+#     visibility = ["//visibility:public"],
+#     runtime_deps = [
+#         "@lib//:jetbrains-annotations",
+#         "@lib//:kotlinx-coroutines-core"
+#     ],
+# )
+
 jvm_provided_library(
   name = "kotlin-compiler-provided",
   lib = "//:kotlin-compiler",
@@ -83,17 +110,6 @@ jvm_import(
     jar = "@kotlin-build-tools-impl//file",
     source_jar = "@kotlin-build-tools-impl-sources//file",
     visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-compiler",
-    jar = "@kotlin-compiler//file",
-    source_jar = "@kotlin-compiler-sources//file",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        "@lib//:jetbrains-annotations",
-        "@lib//:kotlinx-coroutines-core"
-    ],
 )
 
 jvm_import(

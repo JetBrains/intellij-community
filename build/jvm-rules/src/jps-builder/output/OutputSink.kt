@@ -8,12 +8,14 @@ import com.intellij.util.lang.ImmutableZipEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.java.InMemoryJavaOutputFileObject
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
+import org.jetbrains.kotlin.build.GeneratedFile
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -54,13 +56,55 @@ class OutputSink internal constructor(
       // not clear - is path system-independent or not?
       val path = file.relativePath.replace(File.separatorChar, '/')
       val newContent = file.asByteArray()
-      val oldContent = fileToData.put(path, KotlinOutputData(newContent)) as KotlinOutputData?
-      if (!isChanged && (oldContent == null || !oldContent.data.contentEquals(newContent))) {
+      val oldContent = fileToData.put(path, KotlinOutputData(newContent))
+      if (!isChanged && (oldContent == null || !compareContent(oldContent, newContent))) {
         isChanged = true
       }
     }
     if (isChanged) {
       this.isChanged = true
+    }
+  }
+
+  @Suppress("DuplicatedCode")
+  @Synchronized
+  fun registerIncrementalKotlincOutput(outputFiles: List<GeneratedFile>) {
+    var isChanged = isChanged
+    for (file in outputFiles) {
+      val newContent = file.data
+      val oldContent = fileToData.put(file.relativePath, KotlinOutputData(newContent))
+      if (!isChanged && (oldContent == null || !compareContent(oldContent, newContent))) {
+        isChanged = true
+      }
+    }
+    if (isChanged) {
+      this.isChanged = true
+    }
+  }
+
+  private fun compareContent(oldContent: Any, newContent: ByteArray): Boolean {
+    return when (oldContent) {
+      is KotlinOutputData -> oldContent.data.contentEquals(newContent)
+      is ImmutableZipEntry -> oldContent.getData(oldZipFile!!).contentEquals(newContent)
+      else -> false
+    }
+  }
+
+  fun getData(path: String): ByteArray? {
+    val info = fileToData.get(path) ?: return null
+    return when (info) {
+      is KotlinOutputData -> info.data
+      is ImmutableZipEntry -> info.getData(oldZipFile!!)
+      else -> info as ByteArray
+    }
+  }
+
+  fun getSize(path: String): Int {
+    val info = fileToData.get(path) ?: return -1
+    return when (info) {
+      is KotlinOutputData -> info.data.size
+      is ImmutableZipEntry -> info.getByteBuffer(oldZipFile!!, null).remaining()
+      else -> (info as ByteArray).size
     }
   }
 
@@ -73,7 +117,7 @@ class OutputSink internal constructor(
       // not clear - is path system-independent or not?
       val path = file.relativePath.replace(File.separatorChar, '/')
       val newContent = file.asByteArray()
-      val oldContent = abiFileToData.put(path, KotlinOutputData(newContent)) as KotlinOutputData?
+      val oldContent = abiFileToData.put(path, KotlinOutputData(newContent)) as? KotlinOutputData
       if (!isChanged && (oldContent == null || !oldContent.data.contentEquals(newContent))) {
         isChanged = true
       }
@@ -135,6 +179,28 @@ class OutputSink internal constructor(
         data = info as ByteArray
       }
       consumer(path, data, 0, data.size)
+    }
+  }
+
+  inline fun findVfsChildren(parentName: String, dirConsumer: (String) -> Unit, consumer: (String) -> Unit) {
+    val prefix = if (parentName.isEmpty()) "" else "$parentName/"
+    val dirUniqueGuard = hashSet<String>()
+    for ((path, _) in fileToData.tailMap(prefix)) {
+      if (!path.startsWith(prefix)) {
+        break
+      }
+
+      val nextSlashIndex = path.indexOf('/', startIndex = prefix.length + 1)
+      if (nextSlashIndex != -1) {
+        val dirName = path.substring(prefix.length, nextSlashIndex)
+        if (dirUniqueGuard.add(dirName)) {
+          dirConsumer(dirName)
+        }
+        continue
+      }
+      else {
+        consumer(path)
+      }
     }
   }
 

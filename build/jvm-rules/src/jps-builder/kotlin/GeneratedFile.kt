@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import java.io.File
 
 open class GeneratedFile(
+  @JvmField val relativePath: String,
   sourceFiles: Collection<File>,
   val outputFile: File,
   @JvmField val data: ByteArray,
@@ -18,11 +19,12 @@ open class GeneratedFile(
 }
 
 class GeneratedJvmClass(
+  relativePath: String,
   sourceFiles: Collection<File>,
   data: ByteArray,
   outputFile: File,
   metadataVersionFromLanguageVersion: MetadataVersion
-) : GeneratedFile(sourceFiles, outputFile, data) {
+) : GeneratedFile(relativePath = relativePath, sourceFiles = sourceFiles, outputFile = outputFile, data = data) {
   val outputClass = requireNotNull(LocalFileKotlinClass.create(outputFile, data, metadataVersionFromLanguageVersion)) {
     "Couldn't load KotlinClass from $outputFile; it may happen because class doesn't have valid Kotlin annotations"
   }

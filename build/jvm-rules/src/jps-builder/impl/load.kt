@@ -10,6 +10,7 @@ import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
+import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -23,6 +24,18 @@ import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
+private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
+  override fun getDataStorageDir() = dir
+
+  override fun getTargetsDataRoot(): Path = dir
+
+  override fun getTargetTypeDataRootDir(targetType: BuildTargetType<*>): Path = dir
+
+  override fun getTargetDataRootDir(target: BuildTarget<*>): Path = dir
+
+  override fun getTargetDataRoot(targetType: BuildTargetType<*>, targetId: String): Path  = dir
+}
+
 internal fun loadJpsProject(
   storageManager: StorageManager,
   dataStorageRoot: Path,
@@ -32,9 +45,9 @@ internal fun loadJpsProject(
   relativizer: PathRelativizerService,
   buildDataProvider: BazelBuildDataProvider,
 ): ProjectDescriptor {
-  val dataPaths = BuildDataPathsImpl(dataStorageRoot)
   val dataManager = BuildDataManager.createSingleDb(
-    /* dataPaths = */ dataPaths,
+    ///* dataPaths = */ BazelBuildDataPaths(dataStorageRoot),
+    /* dataPaths = */ BuildDataPathsImpl(dataStorageRoot),
     /* targetStateManager = */ BazelBuildTargetStateManager,
     /* relativizer = */ relativizer,
     /* versionManager = */ NoopBuildDataVersionManager,
@@ -56,7 +69,7 @@ internal object NoopIgnoredFileIndex : IgnoredFileIndex {
   override fun isIgnored(path: String) = false
 }
 
-internal object NoopBuildDataVersionManager : BuildDataVersionManager {
+private object NoopBuildDataVersionManager : BuildDataVersionManager {
   override fun versionDiffers() = false
 
   override fun saveVersion() {

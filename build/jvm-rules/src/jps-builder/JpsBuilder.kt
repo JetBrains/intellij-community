@@ -221,6 +221,7 @@ suspend fun buildUsingJps(
       buildState = buildState,
       log = log,
       sourceFileCount = sourceFileToDigest.size,
+      forceIncremental = forceIncremental,
       parentSpan = parentSpan,
     )
     if (forceFullRebuild) {
@@ -403,21 +404,25 @@ private fun checkIsFullRebuildRequired(
   buildState: LoadStateResult,
   log: RequestLog,
   sourceFileCount: Int,
-  parentSpan: Span
+  parentSpan: Span,
+  forceIncremental: Boolean
 ): Boolean {
   if (buildState.rebuildRequested != null) {
     parentSpan.setAttribute("rebuildRequested", buildState.rebuildRequested)
     return true
   }
+  if (forceIncremental) {
+    return false
+  }
 
-  val incrementalEffort = buildState.changedFiles.size + buildState.deletedFiles.size
+  val incrementalEffort = buildState.changedOrAddedFiles.size + buildState.deletedFiles.size
   val rebuildThreshold = sourceFileCount * thresholdPercentage
   val forceFullRebuild = incrementalEffort >= rebuildThreshold
   log.out.appendLine("incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild")
 
   if (parentSpan.isRecording) {
     // do not use toRelative - print as is to show the actual path
-    parentSpan.setAttribute(AttributeKey.stringArrayKey("changedFiles"), buildState.changedFiles.map { it.toString() })
+    parentSpan.setAttribute(AttributeKey.stringArrayKey("changedFiles"), buildState.changedOrAddedFiles.map { it.toString() })
     parentSpan.setAttribute(AttributeKey.stringArrayKey("deletedFiles"), buildState.deletedFiles.map { it.toString() })
 
     parentSpan.setAttribute("incrementalEffort", incrementalEffort.toLong())
