@@ -4,10 +4,6 @@
 
 package fleet.tracing.runtime
 
-import fleet.tracing.runtime.tl.currentSpanThreadLocal
-
-val currentSpan: Span get() = currentSpanThreadLocal.get() ?: Span.Noop
-
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 data class SpanInfo(
   val name: String,

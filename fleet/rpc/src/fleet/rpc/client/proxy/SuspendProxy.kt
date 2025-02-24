@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client.proxy
 
+import fleet.reporting.shared.runtime.currentSpan
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.rpc.core.RemoteObject
-import fleet.tracing.runtime.currentSpan
-import fleet.tracing.span
-import fleet.tracing.spannedScope
 import fleet.util.async.catching
 import fleet.util.async.use
 import fleet.util.causeOfType

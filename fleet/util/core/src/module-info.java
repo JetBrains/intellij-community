@@ -21,6 +21,7 @@ module fleet.util.core {
   requires transitive fleet.multiplatform.shims;
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
+  requires fleet.reporting.shared;
   requires kotlinx.datetime;
   requires fleet.reporting.api;
 

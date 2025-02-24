@@ -6,12 +6,13 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.kernel.rebase.OfferContributorEntity
 import fleet.kernel.rebase.RemoteKernelConnectionEntity
 import fleet.kernel.rebase.WorkspaceClockEntity
+import fleet.reporting.shared.runtime.currentSpan
 import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.tracing.*
 import fleet.tracing.runtime.Span
 import fleet.tracing.runtime.SpanInfo
-import fleet.tracing.runtime.currentSpan
-import fleet.tracing.span
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.*
 import fleet.util.async.catching
 import fleet.util.async.coroutineNameAppended

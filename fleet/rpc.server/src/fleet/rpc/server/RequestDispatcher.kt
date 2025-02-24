@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.server
 
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.core.TransportMessage
-import fleet.tracing.spannedScope
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
 import fleet.util.channels.channels

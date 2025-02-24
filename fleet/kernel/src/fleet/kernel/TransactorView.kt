@@ -4,7 +4,7 @@ package fleet.kernel
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.Editor
 import fleet.kernel.rebase.runOfferContributors
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.async.view
 import fleet.util.openmap.MutableOpenMap
 import fleet.fastutil.ints.IntArrayList

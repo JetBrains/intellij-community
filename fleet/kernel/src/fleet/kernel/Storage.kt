@@ -3,8 +3,8 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.EidGen
-import fleet.tracing.span
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.UID
 import fleet.util.async.catching
 import fleet.util.async.use

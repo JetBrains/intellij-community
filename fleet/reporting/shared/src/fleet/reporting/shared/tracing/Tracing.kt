@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.tracing
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.reporting.shared.tracing
 
+import fleet.reporting.shared.runtime.currentSpan
+import fleet.reporting.shared.runtime.currentSpanThreadLocal
+import fleet.tracing.SpanInfoBuilder
 import fleet.tracing.runtime.CompletableSpan
 import fleet.tracing.runtime.Span
+import fleet.tracing.runtime.SpanInfo
 import fleet.tracing.runtime.SpanStatus
-import fleet.tracing.runtime.currentSpan
-import fleet.tracing.runtime.tl.currentSpanThreadLocal
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -59,3 +61,7 @@ suspend fun <T> spannedScope(
   withSpan(span) {
     withContext(span.asContextElement(), body)
   }
+
+internal inline fun spanInfo(name: String, job: Any, isScope: Boolean, builder: SpanInfoBuilder.() -> Unit = {}): SpanInfo {
+  return SpanInfoBuilder(name, job, isScope).apply(builder).build()
+}

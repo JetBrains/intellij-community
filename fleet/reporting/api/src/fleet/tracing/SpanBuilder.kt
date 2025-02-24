@@ -17,7 +17,7 @@ class SpanInfoBuilder(
     map[key] = value
   }
 
-  internal fun build(): SpanInfo =
+  fun build(): SpanInfo =
     SpanInfo(
       name = name,
       job = job,
@@ -25,8 +25,4 @@ class SpanInfoBuilder(
       isScope = isScope,
       startTimestampNano = startTimestampNano,
       cause = cause)
-}
-
-internal inline fun spanInfo(name: String, job: Any, isScope: Boolean, builder: SpanInfoBuilder.() -> Unit = {}): SpanInfo {
-  return SpanInfoBuilder(name, job, isScope).apply(builder).build()
 }

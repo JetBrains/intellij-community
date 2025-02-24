@@ -3,8 +3,8 @@
 
 package fleet.util.async
 
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.tracing.SpanInfoBuilder
-import fleet.tracing.spannedScope
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 

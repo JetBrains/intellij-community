@@ -9,8 +9,8 @@ import fleet.kernel.*
 import fleet.kernel.rebase.RebaseLogger.logger
 import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.client.durable
-import fleet.tracing.span
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.*
 import fleet.util.async.conflateReduce
 import fleet.util.async.use

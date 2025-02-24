@@ -9,5 +9,6 @@ module fleet.rpc.server {
   requires fleet.multiplatform.shims;
   requires io.opentelemetry.context;
   requires fleet.reporting.api;
+  requires fleet.reporting.shared;
   exports fleet.rpc.server;
 }

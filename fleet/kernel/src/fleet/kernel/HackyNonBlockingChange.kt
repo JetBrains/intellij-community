@@ -2,8 +2,8 @@
 package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
-import fleet.tracing.span
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 
 suspend fun <T> hackyNonBlockingChange(body: ChangeScope.() -> T): T =
   spannedScope("hackyNonBlockingChange") {

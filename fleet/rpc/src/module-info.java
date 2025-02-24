@@ -10,6 +10,7 @@ module fleet.rpc {
   requires org.jetbrains.annotations;
   requires fleet.preferences;
   requires fleet.reporting.api;
+  requires fleet.reporting.shared;
   requires fleet.multiplatform.shims;
   requires kotlinx.datetime;
 

@@ -4,7 +4,7 @@ package fleet.kernel.rete
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.kernel.rete.impl.*
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.async.conflateReduce
 import fleet.util.async.use
 import fleet.util.channels.channels

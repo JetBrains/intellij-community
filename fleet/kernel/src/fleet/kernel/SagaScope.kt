@@ -3,7 +3,7 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.Entity
-import fleet.tracing.spannedScope
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.async.*
 import fleet.util.logging.logger
 import kotlinx.coroutines.*

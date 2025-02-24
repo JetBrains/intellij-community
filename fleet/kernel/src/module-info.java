@@ -9,6 +9,7 @@ module fleet.kernel {
   requires kotlinx.coroutines.core;
   requires fleet.preferences;
   requires fleet.reporting.api;
+  requires fleet.reporting.shared;
   requires fleet.multiplatform.shims;
 
   exports fleet.kernel;
