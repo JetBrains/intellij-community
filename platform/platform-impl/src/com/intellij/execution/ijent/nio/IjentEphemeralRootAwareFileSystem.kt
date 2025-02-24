@@ -135,7 +135,12 @@ internal class IjentEphemeralRootAwarePath(
   }
 
   override fun toString(): String {
-    return rootPath.resolve(originalPath.pathString.removePrefix("/")).toString()
+    return if (isAbsolute) {
+      rootPath.resolve(originalPath.pathString.removePrefix("/")).toString()
+    }
+    else {
+      originalPath.toString()
+    }
   }
 }
 
