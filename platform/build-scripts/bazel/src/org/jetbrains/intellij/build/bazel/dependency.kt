@@ -358,6 +358,12 @@ private fun addDep(
 
 internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"
 
+internal const val PRODUCTION_RESOURCES_TARGET_SUFFIX = "_resources"
+internal val PRODUCTION_RESOURCES_TARGET_REGEX = Regex("^(?!.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}).+${Regex.escape(PRODUCTION_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
+
+internal const val TEST_RESOURCES_TARGET_SUFFIX = "_test_resources"
+internal val TEST_RESOURCES_TARGET_REGEX = Regex("^.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
+
 private fun getLabelForTest(dependencyLabel: String): String {
   if (dependencyLabel.contains(':')) {
     return "${dependencyLabel}$TEST_LIB_NAME_SUFFIX"

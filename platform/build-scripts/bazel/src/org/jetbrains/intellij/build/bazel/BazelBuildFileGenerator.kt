@@ -289,7 +289,10 @@ internal class BazelBuildFileGenerator(
     val resourceDependencies = mutableListOf<String>()
     val sources = moduleDescriptor.sources
     if (moduleDescriptor.resources.isNotEmpty()) {
-      generateResources(module = moduleDescriptor, resourceDependencies = resourceDependencies)
+      generateResources(module = moduleDescriptor, resourceDependencies = resourceDependencies, forTests = false)
+    }
+    if (moduleDescriptor.testResources.isNotEmpty()) {
+      generateResources(module = moduleDescriptor, resourceDependencies = resourceDependencies, forTests = true)
     }
 
     // if someone depends on such a test module from another production module
@@ -331,7 +334,7 @@ internal class BazelBuildFileGenerator(
           deps = deps.copy(deps = deps.deps + extraDeps)
         }
 
-        renderDeps(deps = deps, target = this, resourceDependencies = resourceDependencies)
+        renderDeps(deps = deps, target = this, resourceDependencies = resourceDependencies, forTests = false)
       }
     }
     else {
@@ -351,7 +354,7 @@ internal class BazelBuildFileGenerator(
         visibility(arrayOf("//visibility:public"))
 
         if (moduleDescriptor.testSources.isEmpty()) {
-          renderDeps(deps = moduleList.deps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies)
+          renderDeps(deps = moduleList.deps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = false)
         }
       }
     }
@@ -370,7 +373,7 @@ internal class BazelBuildFileGenerator(
           javacOptionsLabel?.let { option("javac_opts", it) }
           kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies)
+          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = true)
         }
 
         target("jvm_test") {
@@ -385,7 +388,7 @@ internal class BazelBuildFileGenerator(
           javacOptionsLabel?.let { option("javac_opts", it) }
           kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies)
+          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = true)
         }
       }
     }
@@ -402,6 +405,7 @@ internal class BazelBuildFileGenerator(
   private fun BuildFile.generateResources(
     module: ModuleDescriptor,
     resourceDependencies: MutableList<String>,
+    forTests: Boolean,
   ) {
     if (module.sources.isEmpty() && !(module.module.dependenciesList.dependencies.none {
         when (it) {  // -- require
@@ -415,25 +419,32 @@ internal class BazelBuildFileGenerator(
       println("Expected no module/library non-runtime dependencies for resource-only module for ${module.module.name}")
     }
 
-    val resources = module.resources
-    if (resources.isEmpty()) {
-      return
+    val resources = if (forTests) module.testResources else module.resources
+    check(resources.isNotEmpty()) {
+      "This function should be called only for modules with resources (module=${module.module.name}, forTests=$forTests)"
     }
 
     if (!module.isCommunity && module.targetName.startsWith("dotenv-") && resources[0].baseDirectory.contains("community")) {
-      resourceDependencies.add("@community//plugins/env-files-support:${module.targetName}_resources")
+      if (forTests) {
+        // skip for now
+      }
+      else {
+        resourceDependencies.add("@community//plugins/env-files-support:${module.targetName}_resources")
+      }
       return
     }
-    if (!module.isCommunity && module.module.name == "intellij.rider.plugins.renderdoc") {
+    if (!forTests && !module.isCommunity && module.module.name == "intellij.rider.plugins.renderdoc") {
       resourceDependencies.add("//dotnet/Plugins/renderdoc-support:renderdoc_resources")
       return
     }
 
     load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
+    val targetNameSuffix = if (forTests) TEST_RESOURCES_TARGET_SUFFIX else PRODUCTION_RESOURCES_TARGET_SUFFIX
+
     for ((i, resource) in resources.withIndex()) {
       target("jvm_resources") {
-        val name = "${module.targetName}_resources" + (if (i == 0) "" else "_$i")
+        val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
         option("name", name)
         resourceDependencies.add(name)
 
@@ -677,6 +688,7 @@ private fun renderDeps(
   deps: ModuleDeps?,
   target: Target,
   resourceDependencies: List<String>,
+  forTests: Boolean,
 ) {
   if (deps != null) {
     if (deps.associates.isNotEmpty()) {
@@ -691,7 +703,24 @@ private fun renderDeps(
   }
 
   if (resourceDependencies.isNotEmpty() || (deps != null && deps.runtimeDeps.isNotEmpty())) {
-    val runtimeDeps = resourceDependencies.map { if (it.startsWith('@') || it.startsWith("//")) it else ":$it" } + (deps?.runtimeDeps ?: emptyList())
+    val runtimeDeps = resourceDependencies
+                        .filter {
+                          check(
+                            PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
+                            TEST_RESOURCES_TARGET_REGEX.matches(it)
+                          ) {
+                            "Unexpected resource dependency target name: $it"
+                          }
+                          check(
+                            !PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
+                            !TEST_RESOURCES_TARGET_REGEX.matches(it)
+                          ) {
+                            "Resource dependency target name matches both prod and test regex: $it"
+                          }
+                          return@filter PRODUCTION_RESOURCES_TARGET_REGEX.matches(it) ||
+                          (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it))
+                        }.map { if (it.startsWith('@') || it.startsWith("//")) it else ":$it" } +
+                      (deps?.runtimeDeps ?: emptyList())
     if (runtimeDeps.isNotEmpty()) {
       target.option("runtime_deps", runtimeDeps)
     }
