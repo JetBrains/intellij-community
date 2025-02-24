@@ -57,7 +57,7 @@ class PluginDescriptorTest {
 
   @Test
   fun `descriptor with multiple depends-optional loads`() {
-    val descriptor = loadDescriptorFromTestDataDir("dependsOptionalMultiple")
+    val descriptor = loadDescriptorFromTestDataDir("multipleDependsOptional")
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.pluginDependencies
     assertThat(pluginDependencies).hasSize(2)
@@ -66,8 +66,8 @@ class PluginDescriptorTest {
   }
   
   @Test
-  fun testMultipleDependenciesTags() {
-    val descriptor = loadDescriptorFromTestDataDir("multipleDependenciesTags")
+  fun `descriptor with multiple plugin dependencies loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("multiplePluginDependencies")
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.dependencies.plugins
     assertThat(pluginDependencies).hasSize(2)
@@ -75,14 +75,14 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun testMalformedDescriptor() {
+  fun `malformed descriptor does not load`() {
     assertThatThrownBy { loadDescriptorFromTestDataDir("malformed") }
       .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
 
   @Test
-  fun nameAsId() {
-    val descriptor = loadDescriptorInTest(Path.of(testDataPath, "anonymous"))
+  fun `name is used as a substitute for id if id is missing`() {
+    val descriptor = loadDescriptorFromTestDataDir("nameAsId")
     assertThat(descriptor.pluginId.idString).isEqualTo("test")
     assertThat(descriptor.name).isEqualTo("test")
   }
