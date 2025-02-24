@@ -57,6 +57,8 @@ class SearchEverywhereItem(
   }
 
   override fun hashCode(): Int = presentableText.hashCode()
+
+  override fun toString(): String = "Text: `$presentableText', Usage: $usage"
 }
 
 @ApiStatus.Internal

@@ -170,7 +170,10 @@ public final class MixedResultsSearcher implements SESearcher {
 
     @Override
     public void run() {
-      LOG.debug("Search task started for contributor ", myContributor);
+      LOG.debug("Search task started for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
       SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
@@ -206,7 +209,10 @@ public final class MixedResultsSearcher implements SESearcher {
       finally {
         finishCallback.run();
       }
-      LOG.debug("Search task finished for contributor ", myContributor);
+      LOG.debug("Search task finished for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
     }
 
     private boolean processFoundItem(Item element, int priority, ProgressIndicator wrapperIndicator) {

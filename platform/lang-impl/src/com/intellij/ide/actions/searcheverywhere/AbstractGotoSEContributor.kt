@@ -298,6 +298,17 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
       val everywhere = scope.isSearchInLibraries
       val viewModel = MyViewModel(myProject, model)
+
+      if (LOG.isTraceEnabled) {
+        LOG.trace(buildString {
+          append("!! Collecting Goto SE items for ").append(this@AbstractGotoSEContributor::class.simpleName).append(" !!\n")
+          append("PSI context is: ").append(context).append("\n")
+          append("Provider is: ").append(provider::class.simpleName).append("\n")
+          append("Search scope is: ").append(scope.displayName).append("\n")
+          append("Is libraries search? ").append(if (everywhere) "YES" else "NO").append("\n")
+        })
+      }
+
       when (provider) {
         is ChooseByNameInScopeItemProvider -> {
           val parameters = FindSymbolParameters.wrap(pattern, scope)

@@ -182,6 +182,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     public TargetPresentation getPresentation() {
       return second;
     }
+
+    @Override public String toString() {
+      return "An item with precalculated presentation, breakdown:\n" +
+             "Text: " + getPresentation().getPresentableText() + "\n" +
+             "Original item, class: " + getItem().getClass().getSimpleName() + "\n";
+    }
   }
 
   public static final class PsiItemWithPresentation extends ItemWithPresentation<PsiElement> {
