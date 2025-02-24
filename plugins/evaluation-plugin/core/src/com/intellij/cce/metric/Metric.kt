@@ -34,7 +34,7 @@ interface Metric {
   val showByDefault: Boolean
 
   val maximumSessions: Int
-    get() = 200000
+    get() = 75000
 
   fun shouldComputeIntervals(numberOfSessions: Int): Boolean {
     if (numberOfSessions > maximumSessions) LOG.warn("Confidence Interval not calculated for metric $name because number of sessions $numberOfSessions exceeds maximum threshold $maximumSessions")
