@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,7 +26,7 @@ class RedundantModalityModifierInspection : AbstractKotlinInspection(), CleanupL
             holder.registerProblem(
                 modalityModifier,
                 KotlinBundle.message("redundant.modality.modifier"),
-                IntentionWrapper(RemoveModifierFix(declaration, implicitModality, isRedundant = true))
+                LocalQuickFix.from(RemoveModifierFix(declaration, implicitModality, isRedundant = true))!!
             )
         }
     }

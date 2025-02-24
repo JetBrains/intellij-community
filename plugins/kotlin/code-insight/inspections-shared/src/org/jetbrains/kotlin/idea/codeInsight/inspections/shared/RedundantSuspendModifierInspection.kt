@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.descendants
@@ -41,9 +41,9 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 if (function.hasSuspendOrUnresolvedCall()) return
 
                 holder.registerProblem(
-                    suspendModifier, KotlinBundle.message("redundant.suspend.modifier"), IntentionWrapper(
-                        RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true)
-                    )
+                    suspendModifier,
+                    KotlinBundle.message("redundant.suspend.modifier"),
+                    LocalQuickFix.from(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))!!
                 )
             }
         })

@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -37,7 +37,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
             holder.registerProblem(
                 visibilityModifier,
                 KotlinBundle.message("redundant.visibility.modifier"),
-                IntentionWrapper(RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true))
+                LocalQuickFix.from(RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true))!!
             )
         })
 

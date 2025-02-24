@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
@@ -12,19 +12,19 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 internal object CallFromPublicInlineFixFactories {
 
-    val nonPublicCallFromPublicInlineFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NonPublicCallFromPublicInline ->
+    val nonPublicCallFromPublicInlineFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NonPublicCallFromPublicInline ->
         listOfNotNull(
             createFixIfAvailable(diagnostic.psi)
         )
     }
 
-    val protectedCallFromPublicInlineErrorFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ProtectedCallFromPublicInlineError ->
+    val protectedCallFromPublicInlineErrorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ProtectedCallFromPublicInlineError ->
         listOfNotNull(
             createFixIfAvailable(diagnostic.psi)
         )
     }
 
-    val superCallFromPublicInlineFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.SuperCallFromPublicInline ->
+    val superCallFromPublicInlineFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SuperCallFromPublicInline ->
         listOfNotNull(
             createFixIfAvailable(diagnostic.psi)
         )
