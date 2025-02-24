@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 
-internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
+internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
         return when (diagnostic) {
             is KaFirDiagnostic.UnresolvedImport,
