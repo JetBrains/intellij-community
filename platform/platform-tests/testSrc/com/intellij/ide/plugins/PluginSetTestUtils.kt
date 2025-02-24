@@ -21,17 +21,30 @@ fun ObjectAssert<PluginSet>.hasExactlyEnabledModulesWithoutMainDescriptors(varar
 
 fun ObjectAssert<PluginSet>.doesNotHaveEnabledModulesWithoutMainDescriptors() = hasExactlyEnabledModulesWithoutMainDescriptors()
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasClassloaderParents(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<IdeaPluginDescriptorImpl>.hasDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
     .contains(*parentDescriptors)
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveClassloaderParents(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
     .doesNotContain(*parentDescriptors)
 }
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.hasTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+  extracting { (it.classLoader as PluginClassLoader).getAllParentsClassLoaders() }
+    .asInstanceOf(InstanceOfAssertFactories.ARRAY)
+    .contains(*parentDescriptors.map { it.classLoader }.toTypedArray())
+}
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+  extracting { (it.classLoader as PluginClassLoader).getAllParentsClassLoaders() }
+    .asInstanceOf(InstanceOfAssertFactories.ARRAY)
+    .doesNotContain(*parentDescriptors.map { it.classLoader }.toTypedArray())
+}
+
 
 fun PluginSet.getEnabledPlugin(id: String): IdeaPluginDescriptorImpl =
   enabledPlugins.firstOrNull { it.pluginId.idString == id } ?: throw AssertionError("Plugin '$id' not found")

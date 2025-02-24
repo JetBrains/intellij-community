@@ -24,7 +24,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasClassloaderParents(bar)
+    assertThat(foo).hasDirectParentClassloaders(bar)
   }
 
   @Test
@@ -41,7 +41,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasClassloaderParents(bar)
+    assertThat(foo).hasDirectParentClassloaders(bar)
   }
 
   @Test
@@ -51,8 +51,8 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
-    assertThat(foo).doesNotHaveClassloaderParents(baz)
-    assertThat(baz).doesNotHaveClassloaderParents(foo)
+    assertThat(foo).doesNotHaveDirectParentClassloaders(baz)
+    assertThat(baz).doesNotHaveDirectParentClassloaders(foo)
   }
 
   @Test
@@ -62,7 +62,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasClassloaderParents(bar)
+    assertThat(foo).hasDirectParentClassloaders(bar)
   }
 
   @Test
@@ -79,7 +79,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasClassloaderParents(bar, pluginSet.getEnabledModule("bar.module"))
+    assertThat(foo).hasDirectParentClassloaders(bar, pluginSet.getEnabledModule("bar.module"))
   }
 
   @Test
@@ -90,8 +90,8 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
     assertThat(foo)
-      .hasClassloaderParents(bar)
-      .doesNotHaveClassloaderParents(pluginSet.getEnabledModule("bar.module"))
+      .hasDirectParentClassloaders(bar)
+      .doesNotHaveDirectParentClassloaders(pluginSet.getEnabledModule("bar.module"))
   }
 
   @Test
@@ -182,7 +182,7 @@ internal class PluginDependenciesTest {
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin", "dep")
     val (sample, dep) = result.getEnabledPlugins("sample.plugin", "dep")
-    assertThat(sample).hasClassloaderParents(dep)
+    assertThat(sample).hasDirectParentClassloaders(dep)
   }
 
   @Test
@@ -196,8 +196,8 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("embedded.module", "required.module", "required2.module")
     val (req, req2, embed) = pluginSet.getEnabledModules("required.module", "required2.module", "embedded.module")
-    assertThat(req2).hasClassloaderParents(req)
-    assertThat(req).hasClassloaderParents(embed)
+    assertThat(req2).hasDirectParentClassloaders(req)
+    assertThat(req).hasDirectParentClassloaders(embed)
   }
 
   @Test
@@ -282,19 +282,31 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in v2 module`() {
+  fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in optional v2 module, only the v2 module is a classloader parent`() {
     `baz with an optional module which has an alias bar and package prefix`()
     `foo depends bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+    val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
+    val bazModule = pluginSet.getEnabledModule("baz.module")
+    assertThat(foo)
+      .hasDirectParentClassloaders(bazModule)
+      .doesNotHaveDirectParentClassloaders(baz)
+      .hasTransitiveParentClassloaders(baz) // only because the module is optional
   }
 
   @Test
-  fun `plugin is loaded if it has a plugin dependency on plugin alias that is placed in v2 module`() {
+  fun `plugin is loaded if it has a plugin dependency on plugin alias that is placed in optional v2 module, only the v2 module is a classloader parent`() {
     `baz with an optional module which has an alias bar and package prefix`()
     `foo plugin-dependency bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+    val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
+    val bazModule = pluginSet.getEnabledModule("baz.module")
+    assertThat(foo)
+      .hasDirectParentClassloaders(bazModule)
+      .doesNotHaveDirectParentClassloaders(baz)
+      .hasTransitiveParentClassloaders(baz) // only because the module is optional
   }
 
   @Test
@@ -303,6 +315,33 @@ internal class PluginDependenciesTest {
     `foo module-dependency bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
+  }
+
+  @Test
+  fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in required v2 module, only the v2 module is a classloader parent`() {
+    `baz with a required module which has an alias bar and package prefix`()
+    `foo depends bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+    val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
+    val bazModule = pluginSet.getEnabledModule("baz.module")
+    assertThat(bazModule).doesNotHaveTransitiveParentClassloaders(baz)
+    assertThat(foo)
+      .hasDirectParentClassloaders(bazModule)
+      .doesNotHaveTransitiveParentClassloaders(baz)
+  }
+
+  @Test
+  fun `plugin is loaded if it has a plugin dependency on plugin alias that is placed in required v2 module, only the v2 module is a classloader parent`() {
+    `baz with a required module which has an alias bar and package prefix`()
+    `foo plugin-dependency bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+    val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
+    val bazModule = pluginSet.getEnabledModule("baz.module")
+    assertThat(foo)
+      .hasDirectParentClassloaders(bazModule)
+      .doesNotHaveTransitiveParentClassloaders(baz)
   }
 
   @Test
@@ -373,6 +412,9 @@ internal class PluginDependenciesTest {
     .build(pluginDirPath.resolve("baz"))
   private fun `baz with an optional module which has an alias bar and package prefix`() = PluginBuilder.empty().id("baz")
     .module("baz.module", PluginBuilder.withModulesLang().packagePrefix("baz.module").pluginAlias("bar"))
+    .build(pluginDirPath.resolve("baz"))
+  private fun `baz with a required module which has an alias bar and package prefix`() = PluginBuilder.empty().id("baz")
+    .module("baz.module", PluginBuilder.withModulesLang().packagePrefix("baz.module").pluginAlias("bar"), loadingRule = ModuleLoadingRule.REQUIRED)
     .build(pluginDirPath.resolve("baz"))
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
