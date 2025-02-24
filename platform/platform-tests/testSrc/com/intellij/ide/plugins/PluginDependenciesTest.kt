@@ -56,13 +56,15 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded when plugin dependency is resolved`() {
-    bar()
+  fun `plugin is loaded when plugin dependency is resolved, only main module is a classloader parent`() {
+    `bar with optional module`()
     `foo plugin-dependency bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasDirectParentClassloaders(bar)
+    assertThat(foo)
+      .hasDirectParentClassloaders(bar)
+      .doesNotHaveTransitiveParentClassloaders(pluginSet.getEnabledModule("bar.module"))
   }
 
   @Test
