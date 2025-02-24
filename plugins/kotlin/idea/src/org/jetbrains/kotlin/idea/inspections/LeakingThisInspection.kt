@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING
 import com.intellij.codeInspection.ProblemsHolder
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -23,8 +24,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.LEAKING_THIS
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class LeakingThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = classVisitor { klass ->
@@ -96,12 +95,12 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         })
     }
 
-    private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
+    private fun createMakeFinalFix(declaration: KtDeclaration?): LocalQuickFix? {
         declaration ?: return null
         val useScope = declaration.useScope
         if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
         if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-        return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD).asIntention())
+        return AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD)
     }
 }
 
