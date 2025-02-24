@@ -20,9 +20,6 @@ val isFleetDistributionMode: Boolean by lazy { fleetFlag("fleet.distribution.mod
 // e.g. upload required resources to the Space in the runtime
 val isFleetUnpublishedBuild: Boolean by lazy { fleetFlag("fleet.unpublished.build") }
 
-@Deprecated("remove FL-30525")
-val isUsingMicroSpans: Boolean by lazy { fleetFlag("fleet.track.micro.spans", defaultValue = true) }
-
 // Defines whether we are under testing. If set to true, some components will be mocked.
 val isFleetTestMode: Boolean by lazy { !isFleetDevMode && !isFleetDistributionMode }
 
