@@ -22,6 +22,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyPackageInstallUtils {
+  fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
+    if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
+      return false
+    }
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val repositoryManager = packageManager.repositoryManager
+    return repositoryManager.allPackages().any { it == packageName }
+  }
+
+
   suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String) {
     val isConfirmed = withContext(Dispatchers.EDT) {
       confirmInstall(project, packageName)
@@ -29,13 +39,13 @@ object PyPackageInstallUtils {
     if (!isConfirmed)
       return
     val result = withBackgroundProgress(project = project, PyBundle.message("python.packaging.installing.package", packageName),
-                           cancellable = true) {
+                                        cancellable = true) {
       installPackage(project, sdk, packageName)
     }
     result.getOrThrow()
   }
 
-  fun confirmInstall(project: Project, packageName: String): Boolean  {
+  fun confirmInstall(project: Project, packageName: String): Boolean {
     val isWellKnownPackage = ApplicationManager.getApplication()
       .getService(PyPIPackageRanking::class.java)
       .packageRank.containsKey(packageName)
@@ -75,7 +85,7 @@ object PyPackageInstallUtils {
     val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
-    return pythonPackageManager.installPackage(packageSpecification, emptyList<String>())
+    return pythonPackageManager.installPackage(packageSpecification, emptyList())
   }
 
   /**
