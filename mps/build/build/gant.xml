@@ -285,19 +285,6 @@
             <arg value="${patchJps}"/>
         </exec>
 
-        <property name="patchFixDefaultForVcs"
-                  value="${basedir}/patches/FixDefaultForVCSCodeReviewLayout.patch"/>
-        <echo message="Applying ${patchFixDefaultForVcs}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${patchFixDefaultForVcs}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchFixDefaultForVcs}"/>
-        </exec>
-
     </target>
 
     <!-- ===================================================== -->
