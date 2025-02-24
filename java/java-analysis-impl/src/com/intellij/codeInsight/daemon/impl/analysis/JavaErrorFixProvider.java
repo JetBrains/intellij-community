@@ -737,10 +737,11 @@ final class JavaErrorFixProvider {
   }
 
   private void createAccessFixes() {
-    JavaFixesPusher<PsiJavaCodeReferenceElement, JavaResolveResult> accessFix = (error, sink) -> {
-      if (error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
-        HighlightFixUtil.registerAccessQuickFixAction(sink, member, error.psi(), null);
-        if (error.psi() instanceof PsiReferenceExpression expression) {
+    JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
+      if (error.psi() instanceof PsiJavaCodeReferenceElement ref && 
+          error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
+        HighlightFixUtil.registerAccessQuickFixAction(sink, member, ref, null);
+        if (ref instanceof PsiReferenceExpression expression) {
           sink.accept(myFactory.createRenameWrongRefFix(expression));
         }
       }
@@ -865,7 +866,7 @@ final class JavaErrorFixProvider {
       }
     });
     fix(CLASS_REFERENCE_LIST_DUPLICATE,
-        error -> myFactory.createRemoveDuplicateExtendsAction(HighlightUtil.formatClass(error.context())));
+        error -> myFactory.createRemoveDuplicateExtendsAction(HighlightNamesUtil.formatClass(error.context())));
     multi(CLASS_REFERENCE_LIST_INNER_PRIVATE, error -> List.of(
       addModifierFix(error.context(), PsiModifier.PUBLIC),
       addModifierFix(error.context(), PsiModifier.PROTECTED)));

@@ -14,11 +14,9 @@ import com.intellij.java.JavaBundle
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo.JpmsModuleAccessMode
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo.JpmsModuleAccessProblem
+import com.intellij.java.codeserver.core.JpmsModuleInfo
 import com.intellij.java.codeserver.core.JpmsModuleInfo.TargetModuleInfo
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.Nls
 
 /**
@@ -32,13 +30,13 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
     val useFile = place.containingFile?.originalFile ?: return true
-    val infos = findTargetModuleInfos(targetPackageName, targetFile, useFile) ?: return true
+    val infos = JpmsModuleInfo.findTargetModuleInfos(targetPackageName, targetFile, useFile) ?: return true
     return infos.isNotEmpty() && infos.any { info -> info.accessAt(useFile).checkAccess(useFile, JpmsModuleAccessMode.EXPORT) == null }
   }
 
   override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile ?: return null
-    val infos = findTargetModuleInfos(targetPackageName, targetFile, useFile) ?: return null
+    val infos = JpmsModuleInfo.findTargetModuleInfos(targetPackageName, targetFile, useFile) ?: return null
     if (infos.isEmpty()) {
       return ErrorWithFixes(JavaErrorBundle.message("package.not.found", targetPackageName))
     }
@@ -57,36 +55,6 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun isAccessible(targetModule: PsiJavaModule, place: PsiElement): Boolean {
     val useFile = place.containingFile?.originalFile ?: return true
     return TargetModuleInfo(targetModule, "").accessAt(useFile).checkModuleAccess(place) == null
-  }
-
-  private fun findTargetModuleInfos(targetPackageName: String, targetFile: PsiFile?, useFile: PsiFile): List<TargetModuleInfo>? {
-    val originalTargetFile = targetFile?.originalFile
-    if (!PsiUtil.isAvailable(JavaFeature.MODULES, useFile)) return null
-
-    val useVFile = useFile.virtualFile
-    val index = ProjectFileIndex.getInstance(useFile.project)
-    if (useVFile != null && index.isInLibrarySource(useVFile)) return null
-    if (originalTargetFile != null && originalTargetFile.isPhysical) {
-      return listOf(TargetModuleInfo(originalTargetFile, targetPackageName))
-    }
-    if (useVFile == null) return null
-
-    val target = JavaPsiFacade.getInstance(useFile.project).findPackage(targetPackageName) ?: return null
-    val module = index.getModuleForFile(useVFile) ?: return null
-    val test = index.isInTestSourceContent(useVFile)
-    val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
-    val dirs = target.getDirectories(moduleScope)
-    val packageName = target.qualifiedName
-    if (dirs.isEmpty()) {
-      return if (target.getFiles(moduleScope).isEmpty()) {
-        listOf()
-      }
-      else {
-        null
-      }
-    }
-
-    return dirs.map { dir -> TargetModuleInfo(dir, packageName) }
   }
 
   fun JpmsModuleAccessInfo.toErrorWithFixes(problem: JpmsModuleAccessProblem, place: PsiElement): ErrorWithFixes {

@@ -4,7 +4,9 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo.JpmsModuleAccessProblem;
 import com.intellij.java.codeserver.core.JpmsModuleInfo;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -24,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -299,7 +302,7 @@ final class ModuleChecker {
     myVisitor.report(kind.create(statement));
   }
   
-  JavaErrorKind.Parameterized<PsiElement, JpmsModuleAccessInfo> accessError(@NotNull JpmsModuleAccessInfo.JpmsModuleAccessProblem problem) {
+  JavaErrorKind.Parameterized<PsiElement, JpmsModuleAccessInfo> accessError(@NotNull JpmsModuleAccessProblem problem) {
     return switch (problem) {
       case FROM_NAMED -> JavaErrorKinds.MODULE_ACCESS_FROM_NAMED;
       case FROM_UNNAMED -> JavaErrorKinds.MODULE_ACCESS_FROM_UNNAMED;
@@ -325,10 +328,51 @@ final class ModuleChecker {
       return;
     }
     JpmsModuleAccessInfo moduleAccess = new JpmsModuleInfo.TargetModuleInfo(target, "").accessAt(myVisitor.file().getOriginalFile());
-    JpmsModuleAccessInfo.JpmsModuleAccessProblem problem = moduleAccess.checkModuleAccess(statement);
+    JpmsModuleAccessProblem problem = moduleAccess.checkModuleAccess(statement);
     if (problem != null) {
       myVisitor.report(accessError(problem).create(statement, moduleAccess));
     }
   }
 
+  private static @NotNull PsiElement findPackagePrefix(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement candidate = ref;
+    while (candidate instanceof PsiJavaCodeReferenceElement element) {
+      if (element.resolve() instanceof PsiPackage) return candidate;
+      candidate = element.getQualifier();
+    }
+    return ref;
+  }
+
+  void checkModuleAccess(@NotNull PsiModifierListOwner target, @NotNull PsiElement ref) {
+    if (target instanceof PsiClass targetClass && !(target instanceof PsiTypeParameter)) {
+      String packageName = PsiUtil.getPackageName(targetClass);
+      if (packageName != null) {
+        checkAccess(packageName, target.getContainingFile(), ref);
+      }
+    }
+    else if (target instanceof PsiPackage targetPackage) {
+      checkAccess(targetPackage.getQualifiedName(), null, ref);
+    }
+  }
+
+  private void checkAccess(@NotNull String targetPackageName, @Nullable PsiFile targetFile, @NotNull PsiElement place) {
+    PsiFile file = myVisitor.file().getOriginalFile();
+    List<JpmsModuleInfo.@NotNull TargetModuleInfo> infos = JpmsModuleInfo.findTargetModuleInfos(targetPackageName, targetFile, file);
+    if (infos == null) return;
+    if (infos.isEmpty()) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_PACKAGE_NOT_FOUND.create(place, targetPackageName));
+      return;
+    }
+    JavaCompilationError<PsiElement, JpmsModuleAccessInfo> error = null;
+    for (JpmsModuleInfo.TargetModuleInfo info : infos) {
+      JpmsModuleAccessInfo moduleAccessInfo = info.accessAt(file);
+      JpmsModuleAccessProblem problem = moduleAccessInfo.checkAccess(file, JpmsModuleAccessInfo.JpmsModuleAccessMode.READ);
+      if (problem == null) return;
+      if (error == null) {
+        PsiElement anchor = place instanceof PsiJavaCodeReferenceElement ref ? findPackagePrefix(ref) : place;
+        error = accessError(problem).create(anchor, moduleAccessInfo);
+      }
+    }
+    myVisitor.report(error);
+  }
 }

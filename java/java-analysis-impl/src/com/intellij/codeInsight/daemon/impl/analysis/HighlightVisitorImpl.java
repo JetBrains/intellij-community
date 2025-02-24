@@ -16,15 +16,11 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -40,6 +36,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
@@ -50,8 +47,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private @NotNull PsiFile myFile;
   private JavaErrorCollector myCollector;
-
-  private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
@@ -183,7 +178,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
     errorFixProvider.processFixes(error, consumer);
     ErrorFixExtensionPoint.registerFixes(consumer, error.psi(), error.kind().key());
-    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS, ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED)
+    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
+      .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED).map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
@@ -207,75 +203,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-    visitElement(expression);
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (hasErrorResults() || toReportFunctionalExpressionProblemOnParent(parent)) return;
-
-    if (!hasErrorResults()) {
-      PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-      if (functionalInterfaceType != null) {
-        add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
-      }
-    }
-  }
-
-  @Override
-  public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
-    super.visitImportStaticReferenceElement(ref);
-    JavaResolveResult[] results = ref.multiResolve(false);
-    if (!hasErrorResults() && results.length == 1) {
-      add(HighlightUtil.checkReference(ref, results[0]));
-    }
-  }
-
-  static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
-    try {
-      if (ref instanceof PsiReferenceExpressionImpl) {
-        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
-        JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, containingFile);
-        return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-      }
-      return ref.advancedResolve(true);
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-  }
-
-  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    JavaResolveResult result = resolveOptimised(expression, myFile);
-    if (result != null) {
-      add(HighlightUtil.checkReference(expression, result));
-    }
-
-    if (!hasErrorResults()) {
-      visitElement(expression);
-    }
-  }
-
-  @Override
-  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+    // Necessary to call visitElement, as super-implementation is empty
     visitElement(expression);
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
-    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-    if (functionalInterfaceType != null) {
-      if (!hasErrorResults() && PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) {
-        add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
-      }
-    }
-  }
-
-  /**
-   * @return true for {@code functional_expression;} or {@code var l = functional_expression;}
-   */
-  private static boolean toReportFunctionalExpressionProblemOnParent(@Nullable PsiElement parent) {
-    if (parent instanceof PsiLocalVariable variable) {
-      return variable.getTypeElement().isInferredType();
-    }
-    return parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
   }
 
   @Override
@@ -293,17 +223,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private void checkSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
     SwitchBlockHighlightingModel model = SwitchBlockHighlightingModel.createInstance(myLanguageLevel, switchBlock, myFile);
     if (model == null) return;
-    if (!hasErrorResults()) model.checkSwitchLabelValues(myErrorSink);
+    if (!hasErrorResults()) model.checkSwitchLabelValues(builder -> add(builder));
   }
 
-  @Override
-  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    if (!(ref instanceof PsiExpression)) {
-      JavaResolveResult result = resolveOptimised(ref, myFile);
-      if (result != null) {
-        add(HighlightUtil.checkReference(ref, result));
-      }
-    }
-    if (!hasErrorResults()) super.visitReferenceElement(ref);
-  }
 }

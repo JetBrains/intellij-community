@@ -60,7 +60,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull ControlFlowChecker myControlFlowChecker = new ControlFlowChecker(this);
   private final @NotNull FunctionChecker myFunctionChecker = new FunctionChecker(this);
   final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
-  private final @NotNull ModuleChecker myModuleChecker = new ModuleChecker(this);
+  final @NotNull ModuleChecker myModuleChecker = new ModuleChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull SwitchChecker mySwitchChecker = new SwitchChecker(this);
@@ -426,6 +426,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(expression, functionalInterfaceType));
       }
       if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceContext(expression, functionalInterfaceType);
+      if (!hasErrorResults()) myFunctionChecker.checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
     }
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceResolve(expression, results, functionalInterfaceType);
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceReturnType(expression, result, functionalInterfaceType);
@@ -472,7 +473,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
       if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)) {
-        /* anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/
+        /* an anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/
         myClassChecker.checkClassMustBeAbstract(aClass);
       }
       if (!hasErrorResults()) {
@@ -933,6 +934,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (functionalInterfaceType != null) {
         myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
         if (!hasErrorResults()) myFunctionChecker.checkInterfaceFunctional(expression, functionalInterfaceType);
+        if (!hasErrorResults()) myFunctionChecker.checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
       }
       else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
         report(JavaErrorKinds.LAMBDA_TYPE_INFERENCE_FAILURE.create(expression));

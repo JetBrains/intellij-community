@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -22,8 +22,8 @@ public class MoveBoundClassToFrontFix extends PsiUpdateModCommandAction<PsiTypeP
     PsiClass psiClass = classToExtendFrom.resolve();
 
     myName = QuickFixBundle.message("move.bound.class.to.front.fix.text",
-                                    psiClass == null ? "<null>" : HighlightUtil.formatClass(psiClass),
-                                    HighlightUtil.formatClass(aClass));
+                                    psiClass == null ? "<null>" : HighlightNamesUtil.formatClass(psiClass),
+                                    HighlightNamesUtil.formatClass(aClass));
   }
 
   @Override

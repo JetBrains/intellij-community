@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
  * - color names, like "reassigned variables"/fields/statics etc.
  * - soft keywords
  * NO COMPILATION ERRORS
- * for other highlighting errors see {@link HighlightVisitorImpl}
+ * for other highlighting errors see {@link JavaErrorCollector}
  */
 final class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
@@ -178,7 +179,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   }
 
   private void doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = HighlightVisitorImpl.resolveOptimised(ref, myFile);
+    JavaResolveResult result = LocalRefUseInfo.resolveOptimised(ref, myFile);
     PsiElement resolved = result != null ? result.getElement() : null;
 
     if (resolved instanceof PsiVariable variable) {

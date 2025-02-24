@@ -8,6 +8,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErro
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -388,5 +389,52 @@ final class FunctionChecker {
         }
       }
     }
+  }
+
+  // 15.13 | 15.27
+  // It is a compile-time error if any class or interface mentioned by either U or the function type of U
+  // is not accessible from the class or interface in which the method reference expression appears.
+  void checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression,
+                                              @NotNull PsiType functionalInterfaceType) {
+    checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType, true);
+  }
+
+  private void checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression,
+                                                      @NotNull PsiType functionalInterfaceType,
+                                                      boolean checkFunctionalTypeSignature) {
+    PsiClassType.ClassResolveResult resolveResult =
+      PsiUtil.resolveGenericsClassInType(PsiClassImplUtil.correctType(functionalInterfaceType, expression.getResolveScope()));
+    PsiClass psiClass = resolveResult.getElement();
+    if (psiClass == null) return;
+    if (!PsiUtil.isAccessible(myVisitor.project(), psiClass, expression, null)) {
+      myVisitor.myModifierChecker.reportAccessProblem(expression, psiClass, resolveResult);
+      return;
+    }
+    for (PsiType type : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
+      if (type != null) {
+        checkFunctionalInterfaceTypeAccessible(expression, type, false);
+        if (myVisitor.hasErrorResults()) return;
+      }
+    }
+
+    PsiMethod psiMethod = checkFunctionalTypeSignature ? LambdaUtil.getFunctionalInterfaceMethod(resolveResult) : null;
+    if (psiMethod != null) {
+      PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(psiMethod, resolveResult);
+      for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+        PsiType substitute = substitutor.substitute(parameter.getType());
+        if (substitute != null) {
+          checkFunctionalInterfaceTypeAccessible(expression, substitute, false);
+          if (myVisitor.hasErrorResults()) return;
+        }
+      }
+
+      PsiType substitute = substitutor.substitute(psiMethod.getReturnType());
+      if (substitute != null) {
+        checkFunctionalInterfaceTypeAccessible(expression, substitute, false);
+      }
+      return;
+    }
+
+    myVisitor.myModuleChecker.checkModuleAccess(psiClass, expression);
   }
 }

@@ -923,6 +923,9 @@ final class ExpressionChecker {
     if (!result.isStaticsScopeCorrect()) {
       myVisitor.report(JavaErrorKinds.REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT.create(ref, resolved));
     }
+    if (resolved instanceof PsiModifierListOwner owner) {
+      myVisitor.myModuleChecker.checkModuleAccess(owner, ref);
+    }
   }
 
   private void checkUnresolvedReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {

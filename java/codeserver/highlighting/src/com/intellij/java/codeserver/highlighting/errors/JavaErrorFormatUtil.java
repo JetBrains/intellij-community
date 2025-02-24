@@ -117,8 +117,8 @@ final class JavaErrorFormatUtil {
         return nameElement.getTextRangeInParent();
       }
     }
-    if (element instanceof PsiReferenceExpression refExpression) {
-      PsiElement nameElement = refExpression.getReferenceNameElement();
+    if (element instanceof PsiJavaCodeReferenceElement ref) {
+      PsiElement nameElement = ref.getReferenceNameElement();
       if (nameElement != null) {
         return nameElement.getTextRangeInParent();
       }

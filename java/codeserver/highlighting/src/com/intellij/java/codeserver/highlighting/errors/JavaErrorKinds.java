@@ -1157,6 +1157,9 @@ public final class JavaErrorKinds {
       .withRawDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_SELECT_FROM_TYPE_PARAMETER =
     error(PsiJavaCodeReferenceElement.class, "reference.select.from.type.parameter");
+  public static final Parameterized<PsiElement, String> REFERENCE_PACKAGE_NOT_FOUND =
+    parameterized(PsiElement.class, String.class, "reference.package.not.found")
+      .withRawDescription((psi, packageName) -> message("reference.package.not.found", packageName));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
@@ -1307,23 +1310,23 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, PsiType.class, "string.template.raw.processor")
       .withRawDescription((psi, type) -> message("string.template.raw.processor", type.getPresentableText()));
 
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PRIVATE =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.private")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PRIVATE =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.private")
+      .withRange((psi, cls) -> getRange(psi))
       .withRawDescription((psi, result) -> message("access.private", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PROTECTED =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.protected")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PROTECTED =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.protected")
+      .withRange((psi, cls) -> getRange(psi))
       .withRawDescription(
         (psi, result) -> message("access.protected", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.package.local")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.package.local")
+      .withRange((psi, cls) -> getRange(psi))
       .withRawDescription(
         (psi, result) -> message("access.package.local", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.generic.problem")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.generic.problem")
+      .withRange((psi, cls) -> getRange(psi))
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 

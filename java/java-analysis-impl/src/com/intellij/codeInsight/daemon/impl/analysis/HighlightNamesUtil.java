@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -25,6 +26,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -379,5 +382,14 @@ public final class HighlightNamesUtil {
 
   static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
+  }
+
+  public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
+    return formatClass(aClass, true);
+  }
+
+  public static @NotNull String formatClass(@NotNull PsiClass aClass, boolean fqn) {
+    return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
   }
 }
