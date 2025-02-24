@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
@@ -138,10 +138,8 @@ object GradleArtifactDownloader {
   }
 
   private suspend fun createTaskOutputFile(eel: EelApi): EelPath {
-    val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
+    return eel.fs.createTemporaryFile()
       .prefix("ijDownloadArtifactOut")
-      .build()
-    return eel.fs.createTemporaryFile(options)
       .getOrThrow { IllegalStateException("Unable to create the task output file: ${it.message}") }
   }
 
