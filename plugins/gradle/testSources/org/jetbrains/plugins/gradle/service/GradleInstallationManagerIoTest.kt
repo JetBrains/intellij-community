@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service
 
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -46,7 +47,8 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .generate()
     )
     val guessedVersion = GradleInstallationManager.getGradleVersion(calculateGradleDistributionRoot())
-    assertEquals(gradleVersion, guessedVersion)
+    // we have to compare base versions because "-rc" versions are located in a folder without a suffix
+    assertEquals(version(gradleVersion).baseVersion, version(guessedVersion).baseVersion)
   }
 
   @Test
