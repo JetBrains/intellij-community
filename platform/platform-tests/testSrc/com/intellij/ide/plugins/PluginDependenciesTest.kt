@@ -283,6 +283,22 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
   }
 
+  @Test
+  fun `plugin is not loaded if it has a module dependency on plugin alias of a plugin without package prefix`() {
+    `baz with alias bar`()
+    PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
+  }
+
+  @Test
+  fun `plugin is not loaded if it has a module dependency on plugin alias of a plugin with package prefix`() {
+    PluginBuilder.empty().id("baz").pluginAlias("bar").packagePrefix("idk").build(pluginDirPath.resolve("baz"))
+    PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
+  }
+
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
   private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")
