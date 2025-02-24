@@ -12721,6 +12721,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/genericContext.kt");
         }
 
+        @TestMetadata("implicitContextReceiverSmartCastsInlineReplacement.kt")
+        public void testImplicitContextReceiverSmartCastsInlineReplacement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/implicitContextReceiverSmartCastsInlineReplacement.kt");
+        }
+
+        @TestMetadata("implicitContextReceiverSmartCastsTopLevelReplacement.kt")
+        public void testImplicitContextReceiverSmartCastsTopLevelReplacement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/implicitContextReceiverSmartCastsTopLevelReplacement.kt");
+        }
+
         @TestMetadata("implicitDispatchContextExtension.kt")
         public void testImplicitDispatchContextExtension() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/implicitDispatchContextExtension.kt");

@@ -238,8 +238,9 @@ internal class ContextParametersMigrationInspection :
         receiverValue: KaReceiverValue?,
         allContextReceivers: Set<KtContextReceiver>,
     ): KtContextReceiver? {
-        if (receiverValue !is KaImplicitReceiverValue) return null
-        return receiverValue.symbol.psi.takeIf { it in allContextReceivers } as? KtContextReceiver
+        val unwrapped = receiverValue?.unwrapSmartCasts() ?: return null
+        if (unwrapped !is KaImplicitReceiverValue) return null
+        return unwrapped.symbol.psi.takeIf { it in allContextReceivers } as? KtContextReceiver
     }
 
     private fun KaSession.buildLabeledThisUsageInfo(
