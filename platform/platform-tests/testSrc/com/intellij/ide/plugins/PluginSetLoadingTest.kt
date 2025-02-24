@@ -61,9 +61,7 @@ class PluginSetLoadingTest {
 
     val result = PluginSetTestBuilder(pluginDirPath)
       .withDisabledPlugins("foo")
-      .withLoadingContext()
-      .withLoadingResult()
-      .loadingResult
+      .buildLoadingResult()
 
     val incompletePlugins = result.getIncompleteIdMap().values
     assertThat(incompletePlugins).hasSize(1)
@@ -92,9 +90,7 @@ class PluginSetLoadingTest {
 
     val result = PluginSetTestBuilder(pluginDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
-      .withLoadingContext()
-      .withLoadingResult()
-      .loadingResult
+      .buildLoadingResult()
 
     assertThat(result.hasPluginErrors).isFalse()
     val plugins = result.enabledPlugins.toList()

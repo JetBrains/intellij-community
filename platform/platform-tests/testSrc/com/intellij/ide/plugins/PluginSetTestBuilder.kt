@@ -16,9 +16,6 @@ class PluginSetTestBuilder(private val path: Path) {
   private var essentialPlugins = mutableListOf<PluginId>()
   private var productBuildNumber = PluginManagerCore.buildNumber
 
-  private var context: DescriptorListLoadingContext? = null
-  private var result: PluginLoadingResult? = null
-
   fun withDisabledPlugins(vararg disabledPluginIds: String) = apply {
     this.disabledPluginIds += disabledPluginIds.map(PluginId::getId)
   }
@@ -45,45 +42,40 @@ class PluginSetTestBuilder(private val path: Path) {
       productBuildNumber = BuildNumber.fromString(value)!!
     }
 
-  fun withLoadingContext(): PluginSetTestBuilder {
-    return apply {
-      context = DescriptorListLoadingContext(
-        customDisabledPlugins = disabledPluginIds,
-        customExpiredPlugins = expiredPluginIds,
-        customBrokenPluginVersions = brokenPlugins,
-        customEssentialPlugins = essentialPlugins,
-        productBuildNumber = { productBuildNumber },
-      )
-    }
+  fun buildLoadingContext(): DescriptorListLoadingContext {
+    // copy just in case
+    val buildNumber = productBuildNumber
+    return DescriptorListLoadingContext(
+      customDisabledPlugins = disabledPluginIds.toSet(),
+      customExpiredPlugins = expiredPluginIds.toSet(),
+      customBrokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
+      customEssentialPlugins = essentialPlugins.toList(),
+      productBuildNumber = { buildNumber },
+    )
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
-  val loadingContext: DescriptorListLoadingContext
-    get() = context ?: withLoadingContext().context!!
-
-  fun withLoadingResult(): PluginSetTestBuilder {
-    return apply {
-      result = PluginLoadingResult(checkModuleDependencies = false)
-      // constant order in tests
-      val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
-      loadingContext.use {
-        runBlocking {
-          result!!.addAll(
-            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext, ZipFilePoolImpl()) },
-            overrideUseIfCompatible = false,
-            productBuildNumber = loadingContext.productBuildNumber(),
-          )
-        }
+  fun buildLoadingResult(context: DescriptorListLoadingContext? = null): PluginLoadingResult {
+    val context = context ?: buildLoadingContext()
+    val result = PluginLoadingResult(checkModuleDependencies = false)
+    // constant order in tests
+    val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
+    context.use {
+      runBlocking {
+        result.addAll(
+          descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, context, ZipFilePoolImpl()) },
+          overrideUseIfCompatible = false,
+          productBuildNumber = context.productBuildNumber(),
+        )
       }
     }
+    return result
   }
 
-  val loadingResult: PluginLoadingResult
-    get() = result ?: withLoadingResult().result!!
-
   fun build(): PluginSet {
+    val context = buildLoadingContext()
+    val loadingResult = buildLoadingResult(context)
     return PluginManagerCore.initializePlugins(
-      /* context = */ loadingContext,
+      /* context = */ context,
       /* loadingResult = */ loadingResult,
       /* coreLoader = */ UrlClassLoader.build().get(),
       /* checkEssentialPlugins = */ false,
