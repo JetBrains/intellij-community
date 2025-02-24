@@ -21,7 +21,6 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded when depends dependency is resolved`() {
     bar()
     `foo depends bar`()
-
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -39,7 +38,6 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded when depends-optional dependency is resolved`() {
     `foo depends-optional bar`()
     bar()
-
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -50,7 +48,6 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded when depends-optional dependency is not resolved`() {
     `foo depends-optional bar`()
     baz()
-
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
