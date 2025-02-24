@@ -3,11 +3,9 @@
 // LANGUAGE_VERSION: 2.2
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
 
-class C1 {
-    fun C1.f1() {}
+class C {
+    fun Int.fn() {}
 }
 
-context(c1: C1)
-fun f() {
-    with(c1) { f1() }
-}
+context(<caret>C)
+fun test() = 0.fn() // end comment

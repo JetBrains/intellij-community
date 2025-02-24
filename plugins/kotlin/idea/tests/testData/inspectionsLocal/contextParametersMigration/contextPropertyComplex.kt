@@ -26,7 +26,7 @@ val test: Int
         c1
         c2
 
-        with (C1()) {
+        with(C1()) {
             f1()
             f2()
             f1().f2().f1().f2()
@@ -34,7 +34,7 @@ val test: Int
             c2
         }
 
-        with (C2()) {
+        with(C2()) {
             f1()
             f2()
             f1().f2().f1().f2()
@@ -42,8 +42,8 @@ val test: Int
             c2
         }
 
-        with (C1()) {
-            with (C2()) {
+        with(C1()) {
+            with(C2()) {
                 f1()
                 f2()
                 f1().f2().f1().f2()

@@ -9,5 +9,5 @@ class C {
 
 context(c: C)
 fun bar() {
-    42.let { with(c) { it.foo("boo") { } } }
+    with(c) { 42.foo("boo") { } }
 }

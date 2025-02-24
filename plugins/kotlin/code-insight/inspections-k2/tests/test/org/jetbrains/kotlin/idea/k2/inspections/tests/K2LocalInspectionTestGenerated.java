@@ -12626,6 +12626,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("bothReceiversForcedToBeImplicit.kt")
+        public void testBothReceiversForcedToBeImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/bothReceiversForcedToBeImplicit.kt");
+        }
+
         @TestMetadata("callChainWithStrangeComments.kt")
         public void testCallChainWithStrangeComments() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/callChainWithStrangeComments.kt");
@@ -12691,6 +12696,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/dotQualifiedExpressionMiddleSameLine.kt");
         }
 
+        @TestMetadata("endBodyComments1.kt")
+        public void testEndBodyComments1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/endBodyComments1.kt");
+        }
+
+        @TestMetadata("endBodyComments2.kt")
+        public void testEndBodyComments2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/endBodyComments2.kt");
+        }
+
+        @TestMetadata("endBodyComments3.kt")
+        public void testEndBodyComments3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/endBodyComments3.kt");
+        }
+
         @TestMetadata("functionalType.kt")
         public void testFunctionalType() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/functionalType.kt");
@@ -12741,6 +12761,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/passContextToContext.kt");
         }
 
+        @TestMetadata("propertyWithGetterAndSetter.kt")
+        public void testPropertyWithGetterAndSetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/propertyWithGetterAndSetter.kt");
+        }
+
         @TestMetadata("sameContextForTwoReceivers.kt")
         public void testSameContextForTwoReceivers() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/sameContextForTwoReceivers.kt");
@@ -12764,6 +12789,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("valueParameterDefault.kt")
         public void testValueParameterDefault() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/valueParameterDefault.kt");
+        }
+
+        @TestMetadata("withTwoOutOfThree.kt")
+        public void testWithTwoOutOfThree() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/withTwoOutOfThree.kt");
         }
     }
 
