@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.application.Application;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -21,7 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class SmartPointerTracker {
+@ApiStatus.Internal
+public final class SmartPointerTracker {
   private static final ReferenceQueue<SmartPsiElementPointerImpl<?>> ourQueue = new ReferenceQueue<>();
 
   private int nextAvailableIndex;

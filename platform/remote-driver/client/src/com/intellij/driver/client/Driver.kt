@@ -163,7 +163,7 @@ interface ProjectRef : PolymorphRef
 inline fun <reified T : Any> Driver.service(rdTarget: RdTarget = RdTarget.DEFAULT): T = service(T::class, rdTarget)
 
 /**
- * @return new remote proxy for a [Remote] application service interface
+ * @return new remote proxy for a [Remote] project-level service interface
  */
 inline fun <reified T : Any> Driver.service(project: ProjectRef, rdTarget: RdTarget = RdTarget.DEFAULT): T = service(T::class, project, rdTarget)
 

@@ -8,5 +8,5 @@ kt_jvm_library(
         "//:kotlin-metadata",
         "//:kotlin-compiler",
     ],
-    visibility = ["//src/kotlin-builder:__pkg__"],
+    visibility = ["//visibility:public"],
 )

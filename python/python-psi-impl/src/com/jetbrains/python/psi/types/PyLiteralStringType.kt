@@ -2,7 +2,8 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import java.util.*
@@ -32,6 +33,13 @@ class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImp
 
   override fun hashCode(): Int {
     return Objects.hash(super.hashCode(), cls)
+  }
+
+  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyLiteralStringType(this)
+    }
+    return visitor.visitPyClassType(this)
   }
 
   companion object {

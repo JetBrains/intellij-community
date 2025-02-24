@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,7 +19,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -26,10 +28,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -46,10 +46,9 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   private volatile boolean enabled = true;
 
   @Override
+  @RequiresBackgroundThread
   public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ThreadingAssertions.assertNoOwnReadAccess(); // have to be able to wait over the write action to finish, must not hold RA for that
-
     ReadAction.run(() -> {
       try {
         info.computeQuickFixesSynchronously(editor.getDocument());
@@ -66,39 +65,35 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     Document document = editor.getDocument();
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     // compute unresolved refs suggestions from the caret to two pages down (in case the user is scrolling down, which is often the case)
     int startOffset = Math.max(0, visibleRange.getStartOffset());
     int endOffset = Math.min(document.getTextLength(), visibleRange.getEndOffset()+visibleRange.getLength());
-    List<HighlightInfo> unresolvedInfos = new ArrayList<>(); // collect unresolved-ref infos into intermediate collection to avoid messing with HighlightInfo lock under the markup lock
     int caret = editor.getCaretModel().getOffset();
     TextRange caretLine = DocumentUtil.getLineTextRange(document, document.getLineNumber(caret));
     if (caretLine.getStartOffset() < startOffset || caretLine.getEndOffset() >= endOffset) {
       // in case the caret line is scrolled out of sight it would be useful if the quick fixes are ready there nevertheless
-      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, caretLine.getStartOffset(), caretLine.getEndOffset(), info -> {
-        if (info.hasLazyQuickFixes()) {
-          unresolvedInfos.add(info);
-        }
-        return true;
-      });
+      startLazyFixJobs(editor, project,context, caretLine.getStartOffset(), caretLine.getEndOffset());
     }
-    DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, startOffset, endOffset, info -> {
-      if (info.hasLazyQuickFixes()) {
-        unresolvedInfos.add(info);
-      }
-      return true;
-    });
+    startLazyFixJobs(editor, project, context, startOffset, endOffset);
     if (!ClientId.isLocal(ClientEditorManager.getClientId(editor))) {
       // for non-local editor its visible area is unreliable, so ignore all optimizations there
       // (see IJPL-163871 Intentions sometimes don't appear in Remote Dev and Code With Me)
-      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), info -> {
-        if (info.hasLazyQuickFixes()) {
-          unresolvedInfos.add(info);
-        }
-        return true;
-      });
+      startLazyFixJobs(editor, project, context, 0, document.getTextLength());
     }
-    for (HighlightInfo info : unresolvedInfos) {
-      startJob(info, editor);
+  }
+
+  private void startLazyFixJobs(@NotNull Editor editor, @NotNull Project project, @NotNull CodeInsightContext context, int startOffset, int endOffset) {
+    List<HighlightInfo> infos = new ArrayList<>();
+    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, HighlightSeverity.ERROR, startOffset, endOffset,context, info -> {
+      infos.add(info);
+      return true;
+    });
+    // query hasLazyQuickFixes outside MarkupModel lock
+    for (HighlightInfo info : infos) {
+      if (info.hasLazyQuickFixes()) {
+        startJob(info, editor);
+      }
     }
   }
 
@@ -108,15 +103,7 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     if (!enabled) {
       return;
     }
-    info.startComputeQuickFixes(computation -> {
-      return ReadAction.nonBlocking(()->{
-        AtomicReference<List<HighlightInfo.IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
-        ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-          () -> result.set(info.doComputeLazyQuickFixes(editor.getDocument(), computation)));
-        return result.get();
-      }).submit(ForkJoinPool.commonPool());
-      }
-    );
+    info.startComputeQuickFixes(editor.getDocument());
   }
 
   @TestOnly
@@ -126,16 +113,10 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   }
 
   @TestOnly
-  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info, @NotNull Document document, int timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  @RequiresEdt
+  void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    ReadAction.nonBlocking(() -> {
-      try {
-        info.computeQuickFixesSynchronously(document);
-      }
-      catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }).submit(AppExecutorUtil.getAppExecutorService()).get(timeout, unit);
+    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(file, editor, info))
+    .get(timeout, unit);
   }
 }

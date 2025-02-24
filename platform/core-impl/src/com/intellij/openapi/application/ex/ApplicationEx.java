@@ -2,10 +2,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadActionListener;
-import com.intellij.openapi.application.WriteIntentReadActionListener;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -214,6 +211,21 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
   @ApiStatus.Internal
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
+    runnable.run();
+  }
 }

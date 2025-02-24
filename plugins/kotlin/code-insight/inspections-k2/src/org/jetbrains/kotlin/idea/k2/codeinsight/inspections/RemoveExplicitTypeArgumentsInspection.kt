@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -17,7 +20,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectionBase.Simple<KtTypeArgumentList, Unit>() {
+internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectionBase<KtTypeArgumentList, Unit>() {
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
@@ -27,11 +30,6 @@ internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectio
         }
     }
 
-    override fun getProblemDescription(
-        element: KtTypeArgumentList,
-        context: Unit,
-    ): @InspectionMessage String = KotlinBundle.message("explicit.type.arguments.can.be.inferred")
-
     override fun isApplicableByPsi(element: KtTypeArgumentList): Boolean {
         val callExpression = element.parent as? KtCallExpression ?: return false
         return RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression)
@@ -39,15 +37,26 @@ internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectio
 
     override fun KaSession.prepareContext(element: KtTypeArgumentList): Unit? = areTypeArgumentsRedundant(element).asUnit
 
-    override fun createQuickFixes(
+    override fun InspectionManager.createProblemDescriptor(
         element: KtTypeArgumentList,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtTypeArgumentList>> {
-        val removeExplicitTypeArgumentsFix = createRemoveExplicitTypeArgumentsFix()
-        val removeExplicitTypeFix = createRemoveExplicitTypeFix(element)
-        return if (removeExplicitTypeFix == null) arrayOf(removeExplicitTypeArgumentsFix)
-        else arrayOf(removeExplicitTypeArgumentsFix, removeExplicitTypeFix)
-    }
+        rangeInElement: TextRange?,
+        onTheFly: Boolean
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ KotlinBundle.message("explicit.type.arguments.can.be.inferred"),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+        /* ...fixes = */ *createQuickFixes(element).toTypedArray(),
+    )
+
+    private fun createQuickFixes(
+        element: KtTypeArgumentList,
+    ): Collection<KotlinModCommandQuickFix<KtTypeArgumentList>> = listOfNotNull(
+        createRemoveExplicitTypeArgumentsFix(),
+        createRemoveExplicitTypeFix(element),
+    )
 
     private fun createRemoveExplicitTypeArgumentsFix(): KotlinModCommandQuickFix<KtTypeArgumentList> =
         object : KotlinModCommandQuickFix<KtTypeArgumentList>() {

@@ -99,11 +99,13 @@ internal class CommandCompletionService(
     lookup.ensureSelectionVisible(true)
   }
 
-  fun addFiltersAndRefresh(lookup: LookupImpl) {
+  fun addFiltersAndRefresh(lookup: LookupImpl, showIfMeaningless: Boolean = true) {
     val userData = lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
     if (userData == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
-    lookup.showIfMeaningless() // stop hiding
+    if (showIfMeaningless) {
+      lookup.showIfMeaningless() // stop hiding
+    }
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
@@ -361,6 +363,12 @@ internal class CommandCompletionCharFilter : CharFilter() {
         editor.document.immutableCharSequence[offset - 1] == completionFactory.suffix() &&
         lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused) return Result.ADD_TO_PREFIX
     val element = lookup.currentItem ?: return null
+    if (c == ' ' &&
+        findCommandCompletionType(completionFactory, false, offset, editor) is InvocationCommandType.FullLine &&
+        !lookup.isFocused &&
+      lookup.items.any { it.`as`(CommandCompletionLookupElement::class.java) != null }) {
+      return Result.ADD_TO_PREFIX
+    }
     element.`as`(CommandCompletionLookupElement::class.java) ?: return null
     return Result.ADD_TO_PREFIX
   }

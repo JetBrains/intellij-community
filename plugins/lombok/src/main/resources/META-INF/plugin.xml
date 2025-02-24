@@ -64,7 +64,7 @@
     <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
     <propertyAccessorDetector implementation="de.plushnikov.intellij.plugin.extension.LombokPropertyAccessorDetector"/>
 
-    <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
+    <lang.java.javaErrorFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
 
     <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 

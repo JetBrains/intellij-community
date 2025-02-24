@@ -6,7 +6,7 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import java.nio.file.Path
@@ -14,9 +14,8 @@ import java.nio.file.Path
 data object TypeVanillaPython3 : PythonType<PythonBinary>("python3") {
   override suspend fun createSdkFor(python: PythonBinary): Sdk = createSdk(python)
 
-  // TODO: DOC
   fun createSdk(python: PythonBinary): Sdk =
-    SdkConfigurationUtil.setupSdk(emptyArray(), python.refreshAndGetVirtualFile(),
+    SdkConfigurationUtil.setupSdk(emptyArray(), python.refreshAndFindVirtualFileOrDirectory()!!,
                                   SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, null, null)
 
   // Python is directly executable

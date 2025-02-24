@@ -647,6 +647,8 @@
       <with attribute="implementationClass" implements="com.intellij.ide.scratch.ScratchFileCreationHelper"/>
     </extensionPoint>
 
+    <extensionPoint name="pluginExternalResources.unpackToPlugin" beanClass="com.intellij.ide.extensionResources.ExternalResourcesUnpackExtensionBean" dynamic="true"/>
+
     <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
     </extensionPoint>
@@ -763,6 +765,11 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.skipper"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.offset.provider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider"/>
     </extensionPoint>
 
   </extensionPoints>

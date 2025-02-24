@@ -23,11 +23,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.normalizePackageName
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
@@ -316,7 +312,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
             manager.reloadPackages()
           }
           refreshInstalledPackages()
-          manager.repositoryManager.refreshCashes()
+          manager.repositoryManager.refreshCaches()
         }
       }
     }

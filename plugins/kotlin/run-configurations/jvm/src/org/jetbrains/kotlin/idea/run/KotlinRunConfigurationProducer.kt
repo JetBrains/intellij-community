@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+@InternalIgnoreDependencyViolation
 class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunConfiguration>() {
     override fun isDumbAware(): Boolean = true
 

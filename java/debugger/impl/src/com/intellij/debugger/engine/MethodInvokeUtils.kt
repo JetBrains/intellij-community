@@ -61,6 +61,15 @@ object MethodInvokeUtils {
              .map { "\tat ${DebuggerUtils.getValueAsString(evaluationContext, it)}" }
              .joinToString(separator = "\n", postfix = "\n")
   }
+
+  fun getMethodHandlesImplLookup(evaluationContext: EvaluationContextImpl): ObjectReference? {
+    val theClass = evaluationContext.debugProcess.findClass(evaluationContext,
+                                                            "java.lang.invoke.MethodHandles\$Lookup",
+                                                            null)
+    val theField = DebuggerUtils.findField(theClass,
+                                           "IMPL_LOOKUP")
+    return theClass?.getValue(theField) as? ObjectReference
+  }
 }
 
 @Throws(EvaluateException::class)
@@ -96,13 +105,11 @@ internal fun tryInvokeWithHelper(
   val debugProcess = evaluationContext.debugProcess
   val invokerArgs = mutableListOf<Value?>()
 
-  val lookupClass =
-    debugProcess.findClass(evaluationContext, "java.lang.invoke.MethodHandles\$Lookup", evaluationContext.getClassLoader())
-  if (lookupClass == null) {
-    logger<MethodInvokeUtils>().error("Lookup class not found, java version " + evaluationContext.virtualMachineProxy.version())
+  val implLookup = MethodInvokeUtils.getMethodHandlesImplLookup(evaluationContext)
+  if (implLookup == null) {
+    logger<MethodInvokeUtils>().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP, java version " + evaluationContext.virtualMachineProxy.version())
     return InvocationResult(false, null)
   }
-  val implLookup = lookupClass.getValue(DebuggerUtils.findField(lookupClass, "IMPL_LOOKUP")) as ObjectReference
 
   invokerArgs.add(implLookup) // lookup
   invokerArgs.add(type.classObject()) // class

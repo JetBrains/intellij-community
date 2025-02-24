@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,7 +23,8 @@ import java.util.List;
  * {@link ValueContainerImpl}, creates an 'index' over its content ({@link #id2ValueMap}),
  * and uses the index to apply changes faster.
  */
-final class FileId2ValueMapping<Value> {
+@ApiStatus.Internal
+public final class FileId2ValueMapping<Value> {
   private final @NotNull Int2ObjectMap<Value> id2ValueMap = new Int2ObjectOpenHashMap<>();
   private final @NotNull ValueContainerImpl<Value> valueContainer;
 

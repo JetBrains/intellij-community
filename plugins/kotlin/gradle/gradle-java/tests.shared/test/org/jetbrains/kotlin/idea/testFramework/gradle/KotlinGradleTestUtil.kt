@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.testFramework.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.gradleJava.scripting.minimal_gradle_version_supported
+import org.jetbrains.kotlin.gradle.scripting.shared.minimal_gradle_version_supported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 
 internal fun assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion: GradleVersion) {

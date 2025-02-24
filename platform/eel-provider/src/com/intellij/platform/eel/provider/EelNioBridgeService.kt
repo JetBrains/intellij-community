@@ -4,6 +4,9 @@ package com.intellij.platform.eel.provider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.NonNls
@@ -33,7 +36,7 @@ interface EelNioBridgeService {
   /**
    * @return `null`  if the Eel API for [eelDescriptor] does not have a corresponding [java.nio.file.FileSystem]
    */
-  fun tryGetNioRoot(eelDescriptor: EelDescriptor): Path?
+  fun tryGetNioRoots(eelDescriptor: EelDescriptor): Set<Path>?
 
   /**
    * @return The `internalName` from [register] that was provided alongside [eelDescriptor].
@@ -63,18 +66,75 @@ interface EelNioBridgeService {
  * @throws IllegalArgumentException if the Eel API for [this] does not have a corresponding [java.nio.file.FileSystem]
  */
 @Throws(IllegalArgumentException::class)
-fun EelPath.asNioPath(): Path {
-  return asNioPathOrNull()
+fun EelPath.asNioPath(): Path =
+  asNioPath(null)
+
+/**
+ * The [project] is important for targets like WSL: paths like `\\wsl.localhost\Ubuntu` and `\\wsl$\Ubuntu` are equivalent,
+ * but they have different string representation, and some functionality is confused when `wsl.localhost` and `wsl$` are confused.
+ * This function helps to choose the proper root according to the base path of the project.
+ */
+@Throws(IllegalArgumentException::class)
+fun EelPath.asNioPath(project: Project?): Path {
+  return asNioPathOrNull(project)
          ?: throw IllegalArgumentException("Could not convert $this to nio.Path: the corresponding provider for $descriptor is not registered in ${EelNioBridgeService::class.simpleName}")
 }
 
-fun EelPath.asNioPathOrNull(): Path? {
+/**
+ * The [project] is important for targets like WSL: paths like `\\wsl.localhost\Ubuntu` and `\\wsl$\Ubuntu` are equivalent,
+ * but they have different string representation, and some functionality is confused when `wsl.localhost` and `wsl$` are confused.
+ * This function helps to choose the proper root according to the base path of the project.
+ */
+fun EelPath.asNioPathOrNull(): Path? =
+  asNioPathOrNull(null)
+
+fun EelPath.asNioPathOrNull(project: Project?): Path? {
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
   }
   val service = EelNioBridgeService.getInstanceSync()
-  val root = service.tryGetNioRoot(descriptor) ?: return null
-  return parts.fold(root, Path::resolve)
+  val eelRoots = service.tryGetNioRoots(descriptor)?.takeIf { it.isNotEmpty() }
+
+  // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
+  // If the project works with `wsl$` paths, this function must return `wsl$` paths, and the same for `wsl.localhost`.
+  val projectBasePath = project?.basePath?.let(Path::of)?.toString()?.trimEnd('/', '\\')
+
+  LOG.trace {
+    "asNioPathOrNull():" +
+    " path=$this" +
+    " project=$project" +
+    " descriptor=$descriptor" +
+    " eelRoots=${eelRoots?.joinToString(prefix = "[", postfix = "]", separator = ", ") { path -> "$path (${path.javaClass.name})"}}" +
+    " projectBasePath=$projectBasePath"
+  }
+
+  if (eelRoots == null) {
+    return null
+  }
+
+  val eelRoot =
+    if (projectBasePath != null) {
+      val projectBasePathRoot = project.basePath!!.let(Path::of).root.toString().trimEnd('/', '\\')
+
+      // Choosing between not only paths belonging to the project, but also paths with the same root (e.g. mount drive on Windows).
+      // It's possible that some code in the project tries to access the file outside the project, f.i., accessing `~/.m2`.
+      eelRoots.singleOrNull { eelRoot ->
+        projectBasePath.startsWith(eelRoot.toString().trimEnd('/', '\\'))
+      }
+      ?: eelRoots.singleOrNull { eelRoot ->
+        eelRoot.root.toString().trimEnd('/', '\\') == projectBasePathRoot
+      }
+      ?: eelRoots.first()
+    }
+    else {
+      eelRoots.first()
+    }
+
+  val result = parts.fold(eelRoot, Path::resolve)
+  LOG.trace {
+    "asNioPathOrNull(): path=$this project=$project result=$result"
+  }
+  return result
 }
 
 /**
@@ -90,7 +150,7 @@ fun Path.asEelPath(): EelPath {
   }
   val service = EelNioBridgeService.getInstanceSync()
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
-  val root = service.tryGetNioRoot(descriptor) ?: error("unreachable") // since the descriptor is not null, the root should be as well
+  val root = service.tryGetNioRoots(descriptor)?.firstOrNull { this.startsWith(it) } ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
   if (descriptor.operatingSystem == EelPath.OS.UNIX) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
@@ -100,7 +160,9 @@ fun Path.asEelPath(): EelPath {
   }
 }
 
-fun EelDescriptor.routingPrefix(): Path {
-  return EelNioBridgeService.getInstanceSync().tryGetNioRoot(this)
+fun EelDescriptor.routingPrefixes(): Set<Path> {
+  return EelNioBridgeService.getInstanceSync().tryGetNioRoots(this)
          ?: throw IllegalArgumentException("Failure of obtaining prefix: could not convert $this to EelPath. The path does not belong to the default NIO FileSystem")
 }
+
+private val LOG = logger<EelNioBridgeService>()

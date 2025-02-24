@@ -15,7 +15,7 @@ class C {
   @interface Anno { String f<error descr="@interface members may not have parameters">(Anno this)</error>; }
 
   void m0() {
-    Runnable r = (C <error descr="Receivers are not allowed outside of method parameter list">C.this</error>) -> { };
+    Runnable r = (C <error descr="Receivers are not allowed outside of method’s parameter list">C.this</error>) -> { };
   }
 
   void m1a(<error descr="Modifier 'final' not allowed here">final</error> C this) { }

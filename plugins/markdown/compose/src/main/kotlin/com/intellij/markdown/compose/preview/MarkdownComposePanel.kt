@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.compose.JBComposePanel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
@@ -134,7 +135,7 @@ internal class MarkdownComposePanel(
         val coroutineScope = rememberCoroutineScope()
         LaunchedEffect(Unit) {
           coroutineScope.launch {
-            scrollToLineFlow.debounce(16.milliseconds).collect { scrollToLine ->
+            scrollToLineFlow.debounce(33.milliseconds).collectLatest { scrollToLine ->
               scrollingSynchronizer.scrollToLine(scrollToLine, animationSpec)
             }
           }

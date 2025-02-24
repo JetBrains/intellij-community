@@ -8,6 +8,7 @@
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Inner'
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 annotation class MyExperimentalAPI

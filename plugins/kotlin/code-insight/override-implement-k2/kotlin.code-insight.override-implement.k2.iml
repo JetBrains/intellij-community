@@ -40,5 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
   </component>
 </module>

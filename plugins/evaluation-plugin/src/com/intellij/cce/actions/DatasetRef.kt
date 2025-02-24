@@ -1,6 +1,8 @@
 package com.intellij.cce.actions
 
 import com.intellij.cce.util.httpGet
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
@@ -109,6 +111,7 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
       "Token for dataset $url should be configured"
     }
 
+    LOG.info("Downloading dataset $url to $path")
     val content = httpGet(url, readToken)
     path.toFile().writeText(content)
   }
@@ -117,3 +120,5 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
 internal data class AiPlatformFileRef(override val name: String): DatasetRef {
   override fun prepare(datasetContext: DatasetContext) { }
 }
+
+private val LOG = fileLogger()

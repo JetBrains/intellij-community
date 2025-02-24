@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.navigation.AbstractKotlinMultifileNavigationTest
 import org.jetbrains.kotlin.idea.k2.navigation.AbstractKotlinNavigationToLibrarySourceTest
+import org.jetbrains.kotlin.idea.k2.navigation.AbstractMultiModuleNavigationTest
 import org.jetbrains.kotlin.idea.k2.navigation.AbstractResolveExtensionGeneratedSourcesFilterTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.NAVIGATION
 import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
@@ -23,6 +24,10 @@ internal fun MutableTWorkspace.generateK2NavigationTests() {
 
         testClass<AbstractKotlinMultifileNavigationTest> {
             model("multifile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractMultiModuleNavigationTest> {
+            model("multimodule", pattern = DIRECTORY, isRecursive = false)
         }
     }
 }

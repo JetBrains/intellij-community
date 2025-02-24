@@ -158,6 +158,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
 - f:setActionId(java.lang.String):V
+*a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- a:findChangeSignatureOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
+- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
 - <init>():V
@@ -178,8 +185,21 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - a:generationIsAvailable(com.intellij.psi.PsiElement,I):Z
-- f:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - pf:isOnlySpaceInLine(com.intellij.openapi.editor.Document,I):Z
+*pf:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider$GenerateCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- <init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String):V
+- b:<init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- f:getAction():com.intellij.codeInsight.actions.CodeInsightAction
+- f:getCustomI18nName():java.lang.String
+- f:getCustomName():java.lang.String
+- getI18nName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- f:setCustomI18nName(java.lang.String):V
+- f:setCustomName(java.lang.String):V
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
 - <init>():V
@@ -198,6 +218,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:hasToShow(com.intellij.psi.PsiElement):Z
 - f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
+*:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
+- *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
+- findOffsets(com.intellij.psi.PsiFile,I):java.util.List
+*f:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
 - skip(com.intellij.codeInsight.intention.CommonIntentionAction,com.intellij.psi.PsiFile,I):Z

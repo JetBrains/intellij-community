@@ -18,11 +18,13 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 
-internal class FrontendXValue(
+@ApiStatus.Internal
+class FrontendXValue(
   val project: Project,
   evaluatorCoroutineScope: CoroutineScope,
   val xValueDto: XValueDto,
@@ -43,6 +45,8 @@ internal class FrontendXValue(
 
   @Volatile
   private var canNavigateToTypeSource = false
+
+  var descriptor: XValueDescriptor? = null
 
   init {
     cs.launch {
@@ -74,6 +78,10 @@ internal class FrontendXValue(
 
     cs.launch {
       canNavigateToTypeSource = xValueDto.canNavigateToTypeSource.await()
+    }
+
+    cs.launch {
+      descriptor = xValueDto.descriptor?.await()
     }
   }
 

@@ -95,8 +95,8 @@ final class ConfigurableController implements Configurable.TopComponentControlle
 
   private static void showProject(@Nullable SimpleBanner banner,
                                   boolean hasProject) {
-    if (banner instanceof Banner) {
-      ((Banner)banner).showProject(hasProject);
+    if (banner instanceof ConfigurableEditorBanner) {
+      ((ConfigurableEditorBanner)banner).showProject(hasProject);
     }
   }
 }

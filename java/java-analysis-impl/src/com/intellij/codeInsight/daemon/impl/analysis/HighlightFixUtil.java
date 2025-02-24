@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -17,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -32,8 +32,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -43,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 public final class HighlightFixUtil {
@@ -703,13 +707,9 @@ public final class HighlightFixUtil {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(project));
     PsiElementFactory factory = facade.getElementFactory();
-    JavaSdkVersion version = requireNonNullElse(JavaVersionService.getInstance().getJavaSdkVersion(file),
-                                                        JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(file)));
     for (PsiClass aClass : classes) {
-      if (aClass == null) {
-        continue;
-      }
-      if (!GenericsHighlightUtil.hasReferenceTypeProblem(aClass, parameterList, version)) {
+      if (aClass == null) continue;
+      if (isPotentiallyCompatible(aClass, parameterList)) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         Map<PsiTypeParameter, PsiType> map = new HashMap<>();
@@ -896,6 +896,117 @@ public final class HighlightFixUtil {
     return List.of(factory.createIncreaseLanguageLevelFix(applicableLevel),
                    factory.createUpgradeSdkFor(applicableLevel),
                    factory.createShowModulePropertiesFix(element));
+  }
+
+  static void registerFixesOnInvalidSelector(@NotNull PsiExpression selector,
+                                             @NotNull Consumer<? super @Nullable CommonIntentionAction> sink) {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    if (selector.getParent() instanceof PsiSwitchStatement switchStatement) {
+      sink.accept(factory.createConvertSwitchToIfIntention(switchStatement));
+    }
+    PsiType selectorType = selector.getType();
+    if (PsiTypes.longType().equals(selectorType) ||
+        PsiTypes.floatType().equals(selectorType) ||
+        PsiTypes.doubleType().equals(selectorType)) {
+      sink.accept(factory.createAddTypeCastFix(PsiTypes.intType(), selector));
+      sink.accept(factory.createWrapWithAdapterFix(PsiTypes.intType(), selector));
+    }
+  }
+
+  static @Nullable IntentionAction createPrimitiveToBoxedPatternFix(@NotNull PsiElement anchor) {
+    PsiTypeElement element = null;
+    PsiType operandType = null;
+    if (anchor instanceof PsiInstanceOfExpression instanceOfExpression) {
+      element = InstanceOfUtils.findCheckTypeElement(instanceOfExpression);
+      operandType = instanceOfExpression.getOperand().getType();
+    }
+    else if (anchor instanceof PsiPattern pattern) {
+      element = JavaPsiPatternUtil.getPatternTypeElement(pattern);
+      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class);
+      if (block != null) {
+        PsiExpression selector = block.getExpression();
+        if (selector != null) {
+          operandType = selector.getType();
+        }
+      }
+    }
+    if (element != null && operandType != null && TypeConversionUtil.isPrimitiveAndNotNull(element.getType())) {
+      return QuickFixFactory.getInstance().createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
+    }
+    return null;
+  }
+
+  /**
+   * Checks if the specified element is possibly a reference to a static member of a class,
+   * when the {@code new} keyword is removed.
+   * The element is split into two parts: the qualifier and the reference element.
+   * If they both exist and the qualifier references a class and the reference element text matches either
+   * the name of a static field or the name of a static method of the class
+   * then the method returns true
+   *
+   * @param element an element to examine
+   * @return true if the new expression can actually be a call to a class member (field or method), false otherwise.
+   */
+  @Contract(value = "null -> false", pure = true)
+  private static boolean isCallToStaticMember(@Nullable PsiElement element) {
+    if (!(element instanceof PsiNewExpression newExpression)) return false;
+
+    PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+    if (reference == null) return false;
+
+    PsiElement qualifier = reference.getQualifier();
+    PsiElement memberName = reference.getReferenceNameElement();
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement) || memberName == null) return false;
+
+    PsiClass clazz = tryCast(referenceElement.resolve(), PsiClass.class);
+    if (clazz == null) return false;
+
+    if (newExpression.getArgumentList() == null) {
+      PsiField field = clazz.findFieldByName(memberName.getText(), true);
+      return field != null && field.hasModifierProperty(PsiModifier.STATIC);
+    }
+    PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
+        if (!containingClass.isInterface() || containingClass == clazz) {
+          // a static method in an interface is not resolvable from its subclasses
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static @Nullable CommonIntentionAction createUnresolvedReferenceFix(PsiJavaCodeReferenceElement psi) {
+    return PsiTreeUtil.skipParentsOfType(psi, PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
+           isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null;
+  }
+
+  /**
+   * @return true if type parameters of a class are potentially compatible with type arguments in the list
+   * (that is: number of parameters is the same, and argument types are within bounds)
+   */
+  private static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
+    PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
+
+    PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+    int targetParametersNum = typeParameters.length;
+    int refParametersNum = referenceParameterList.getTypeArguments().length;
+    if (targetParametersNum != refParametersNum) return false;
+
+    // bounds check
+    for (int i = 0; i < targetParametersNum; i++) {
+      PsiType type = referenceElements[i].getType();
+      if (ContainerUtil.exists(
+        typeParameters[i].getSuperTypes(),
+        bound -> !bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+                 GenericsUtil.checkNotInBounds(type, bound, referenceParameterList))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static final class ReturnModel {

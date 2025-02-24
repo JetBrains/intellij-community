@@ -105,6 +105,13 @@ class EditorCellView(
       updateDraggableBarVisibility()
     }
 
+  var isUnderDiff: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      updateCellActionsToolbarVisibility()
+    }
+
   init {
     cell.source.afterChange(this) {
       updateInput()
@@ -121,9 +128,12 @@ class EditorCellView(
     editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
       updateCellHighlight(force = true)
     }
-    editor.notebook?.readOnly?.afterChange(this) {
+    cell.notebook.readOnly.afterChange(this) {
       updateRunButtonVisibility()
       updateDraggableBarVisibility()
+    }
+    cell.notebook.showCellToolbar.afterChange(this) {
+      updateCellActionsToolbarVisibility()
     }
     recreateControllers()
     updateSelection(false)
@@ -401,9 +411,11 @@ class EditorCellView(
 
   private fun updateCellActionsToolbarVisibility() {
     val toolbarManager = input.cellActionsToolbar ?: return
+    if ((isUnderDiff == true)) return
     val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
     val tracker = NotebookCellActionsToolbarStateTracker.get(editor) ?: return
     when {
+      !cell.notebook.showCellToolbar.get() -> toolbarManager.hideToolbar()
       mouseOver -> toolbarManager.showToolbar(targetComponent)
       selected -> {
         // we show the toolbar only for the last selected cell

@@ -10,10 +10,13 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
+import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.newEditor.OptionsEditorColleague
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsEditor
@@ -119,7 +122,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       return settingsEditor.isModified
     }
 
-    override fun isIncludedInEditorHistory(project: Project): Boolean = false
+    override fun isIncludedInEditorHistory(project: Project): Boolean = true
     override fun isPersistedInEditorHistory() = false
 
     override fun shouldSkipEventSystem() = true
@@ -129,6 +132,26 @@ internal class SettingsVirtualFileHolder private constructor(private val project
         Disposer.dispose( this.disposable )
       }
       dialogLazy.drop()
+    }
+
+    fun getConfigurableId(): String? {
+      val dialog = dialogLazy.valueIfInitialized ?: return null
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return null
+      return settingsEditor.selectedConfigurableId
+    }
+
+    fun setConfigurableId(configurableId: String?) {
+      if (configurableId == null) {
+        return
+      }
+      val dialog = dialogLazy.valueIfInitialized ?: return
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return
+
+      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
+        .takeIf { !it.configurables.isEmpty() }
+      val configurableToSelect = ConfigurableVisitor.findById(configurableId, listOf(group)) ?: return
+      settingsEditor.setNavigatingNow();
+      settingsEditor.select(configurableToSelect)
     }
   }
 

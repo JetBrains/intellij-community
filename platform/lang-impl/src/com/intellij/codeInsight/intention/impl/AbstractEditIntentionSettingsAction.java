@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -7,11 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
+@ApiStatus.Internal
+public abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(AbstractEditIntentionSettingsAction.class);
 
   final @NotNull String myFamilyName;

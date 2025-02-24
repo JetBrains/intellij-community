@@ -15,10 +15,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -49,6 +46,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   private final boolean isApplyButtonNeeded;
   private final boolean isResetButtonNeeded;
   private final JLabel myHintLabel = new JLabel();
+  private final boolean myIsModal;
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
@@ -56,6 +54,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     editor = new SingleSettingEditor(myDisposable, configurable);
     isApplyButtonNeeded = showApplyButton;
     isResetButtonNeeded = showResetButton;
+    myIsModal = true;
     init(configurable, project);
   }
 
@@ -65,6 +64,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     editor = new SingleSettingEditor(myDisposable, configurable);
     isApplyButtonNeeded = showApplyButton;
     isResetButtonNeeded = showResetButton;
+    myIsModal = true;
     init(configurable, null);
   }
 
@@ -72,7 +72,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
                         @NotNull List<? extends ConfigurableGroup> groups,
                         @Nullable Configurable configurable,
                         @Nullable String filter) {
-    this(project, null, groups, configurable, filter);
+    this(project, null, groups, configurable, filter, true);
   }
 
   public SettingsDialog(@NotNull Project project,
@@ -80,11 +80,21 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
                         @NotNull List<? extends ConfigurableGroup> groups,
                         @Nullable Configurable configurable,
                         @Nullable String filter) {
+    this(project, parentComponent, groups, configurable, filter, true);
+  }
+
+  SettingsDialog(@NotNull Project project,
+                        @Nullable Component parentComponent,
+                        @NotNull List<? extends ConfigurableGroup> groups,
+                        @Nullable Configurable configurable,
+                        @Nullable String filter,
+                        boolean isModal) {
     super(project, parentComponent, true, IdeModalityType.IDE, true, false);
     dimensionServiceKey = DIMENSION_KEY;
-    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, () -> createHelpButton(JBInsets.emptyInsets()), isModal, this::treeViewFactory, this::spotlightPainterFactory);
     isApplyButtonNeeded = true;
     isResetButtonNeeded = false;
+    myIsModal = isModal;
     init(null, project);
   }
 
@@ -109,7 +119,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected @Nullable JComponent createTitlePane() {
-    if (!shouldBeNonModal())
+    if (myIsModal)
       return null;
     ApplyActionWrapper applyActionWrapper = new ApplyActionWrapper(editor.getApplyAction());
     applyActionWrapper.putValue(DEFAULT_ACTION, Boolean.toString(true));
@@ -126,7 +136,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     String hint = project != null && project.isDefault() ? IdeUICustomization.getInstance().projectMessage("template.settings.hint") : null;
     myHintLabel.setText(hint);
     setTitle(name == null ? CommonBundle.settingsTitle() : name.replace('\n', ' '));
-    if (shouldBeNonModal()) {
+    if (!myIsModal) {
       setUndecorated(true);
     }
 
@@ -137,7 +147,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
     init();
 
-    if (configurable == null && !shouldBeNonModal()) {
+    if (configurable == null && myIsModal) {
       JRootPane rootPane = getPeer().getRootPane();
       if (rootPane != null) {
         rootPane.setMinimumSize(new JBDimension(900, 700));
@@ -148,8 +158,12 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
-    if (UISettings.isIdeHelpTooltipEnabled()) {
-      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    if (UISettings.isIdeHelpTooltipEnabled() ) {
+      if (!myIsModal) {
+        ((SettingsEditor)editor).setHelpTooltip(helpButton);
+      } else {
+        new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+      }
     }
     else {
       super.setHelpTooltip(helpButton);
@@ -217,7 +231,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected JComponent createSouthPanel() {
-    if (shouldBeNonModal())
+    if (!myIsModal)
       return null;
     else
       return super.createSouthPanel();
@@ -264,17 +278,6 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return EventHandler.getShortcuts(ACTION_FIND);
   }
 
-  @ApiStatus.Internal
-  static public boolean useNonModalSettingsWindow() {
-    if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
-      return Boolean.parseBoolean(System.getProperty("ide.ui.non.modal.settings.window"));
-    }
-    return AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window");
-  }
-
-  private boolean shouldBeNonModal() {
-    return useNonModalSettingsWindow() && editor instanceof SettingsEditor;
-  }
 
   private final class ApplyActionWrapper extends AbstractAction {
     private final @NotNull Action delegate;

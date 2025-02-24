@@ -1,15 +1,8 @@
 package ru.adelf.idea.dotenv.tests.dotenv;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.DebugUtil;
-import com.jetbrains.php.lang.psi.BasicPhpPsiUtil;
 import org.junit.Test;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
-
-import java.util.List;
 
 public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
 

@@ -1,5 +1,10 @@
 package ru.adelf.idea.dotenv.tests
 
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -35,6 +40,21 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
         assertSameLinesWithFile(referenceFile, actual)
     }
 
+    fun doInspectionTest(inspection: LocalInspectionTool) {
+        myFixture.enableInspections(inspection)
+        myFixture.testHighlighting(true, true, true)
+    }
+
+    fun doQuickFixTest(inspection: LocalInspectionTool) {
+        myFixture.enableInspections(inspection)
+        myFixture.doHighlighting()
+        val intention = myFixture.findSingleIntention("Put value inside double quotes")
+        myFixture.launchAction(intention)
+        val referenceFile = filenamePrefixForCurrentTest("txt")
+        myFixture.copyFileToProject(referenceFile)
+        myFixture.checkResultByFile(referenceFile)
+    }
+
     fun doUsageTest() {
         var result : String? = null
         runInEdtAndWait {
@@ -44,6 +64,16 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
         }
         val referenceFile = "${testDataPath}/${filenamePrefixForCurrentTest("txt")}"
         assertSameLinesWithFile(referenceFile, result!!)
+    }
+
+    fun doSingleCompletionTest() {
+        val settings = CodeInsightSettings.getInstance()
+        val command = Runnable {
+            val previousCompletionState: Boolean = settings.AUTOCOMPLETE_ON_CODE_COMPLETION
+            (LookupManager.getActiveLookup(myFixture.editor) as? LookupImpl)?.finishLookup('\n')
+            settings.AUTOCOMPLETE_ON_CODE_COMPLETION = previousCompletionState
+        }
+        CommandProcessor.getInstance().executeCommand(project, command, null, null, myFixture.editor.document)
     }
 
     override fun getBasePath(): String = "testResources/ru/adelf/idea/dotenv/tests"

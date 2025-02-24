@@ -318,8 +318,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   private fun ensureTempDirCreated() {
     ourTempDir = when {
       isProjectInEelEnvironment() -> {
-        val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        Path("$mount/mavenTests")
+        val fileSystemMount = getFileSystemMount()
+        if (fileSystemMount.isBlank()) {
+          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
+        }
+        Path("$fileSystemMount/mavenTests")
       }
       myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
       else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
@@ -379,17 +382,15 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val mavenImporterSettings: MavenImportingSettings
     get() = MavenProjectsManager.getInstance(myProject!!).importingSettings
 
-  protected var repositoryPath: String?
-    get() {
-      val path = repositoryFile.toString()
-      return FileUtil.toSystemIndependentName(path)
-    }
-    protected set(path) {
-      mavenGeneralSettings.setLocalRepository(path)
+  protected var repositoryPath: Path
+    get() = mavenGeneralSettings.effectiveRepositoryPath
+    set(path) {
+      mavenGeneralSettings.setLocalRepository(path.toCanonicalPath())
     }
 
-  protected val repositoryFile: Path
-    get() = mavenGeneralSettings.effectiveRepositoryPath
+  protected fun resetRepositoryFile() {
+    mavenGeneralSettings.setLocalRepository(null)
+  }
 
   protected val projectPath: Path
     get() = myProjectRoot!!.path.toNioPathOrNull()!!
@@ -808,6 +809,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
     assertTrue(connector.checkConnected())
     return connector
+  }
+
+  protected fun getFileSystemMount(): String {
+    return System.getenv("EEL_FIXTURE_MOUNT") ?: ""
   }
 
   private val testMavenHome: String?

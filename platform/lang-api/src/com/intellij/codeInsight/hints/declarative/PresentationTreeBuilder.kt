@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Once the tree building started, it must provide at least one text node. Otherwise, an exception will be thrown.
@@ -58,7 +59,8 @@ class InlayActionData(val payload: InlayActionPayload, val handlerId: String) {
   }
 }
 
-sealed interface InlayActionPayload
+@ApiStatus.NonExtendable
+interface InlayActionPayload
 
 class StringInlayActionPayload(val text: String) : InlayActionPayload {
   override fun equals(other: Any?): Boolean {

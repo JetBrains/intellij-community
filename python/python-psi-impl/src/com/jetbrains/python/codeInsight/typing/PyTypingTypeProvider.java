@@ -128,7 +128,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     PARAM_SPEC, PARAM_SPEC_EXT,
     TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
   );
-  
+
+  public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager";
+  public static final String ASYNC_CONTEXT_MANAGER = "contextlib.AbstractAsyncContextManager";
+
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
   public static final String UNPACK = "typing.Unpack";
@@ -1022,7 +1025,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     assert typeParamDefinitionFromStack == null || typeParamDefinitionFromStack instanceof PyTargetExpression;
     PyTargetExpression targetExpr = (PyTargetExpression)typeParamDefinitionFromStack;
     if (type instanceof PyTypeVarTypeImpl typeVar) {
-      return typeVar.withScopeOwner(getTypeParameterScope(typeVar.getName(), typeHint, context)).withTargetExpression(targetExpr);
+      return typeVar.withScopeOwner(getTypeParameterScope(typeVar.getName(), typeHint, context)).withDeclarationElement(targetExpr);
     }
     if (type instanceof PyParamSpecType paramSpec) {
       return paramSpec.withScopeOwner(getTypeParameterScope(paramSpec.getName(), typeHint, context)).withDeclarationElement(targetExpr);
@@ -2220,7 +2223,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
   }
 
-  static class Context {
+  @ApiStatus.Internal
+  public static final class Context {
     private final @NotNull TypeEvalContext myContext;
     private final @NotNull Stack<PyQualifiedNameOwner> myTypeAliasStack = new Stack<>();
     private boolean myComputeTypeParameterScope = true;

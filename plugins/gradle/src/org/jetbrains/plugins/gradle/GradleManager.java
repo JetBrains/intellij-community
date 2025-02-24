@@ -110,15 +110,15 @@ public final class GradleManager
       String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
 
       GradleInstallationManager gradleInstallationManager = GradleInstallationManager.getInstance();
-      File gradleHome = gradleInstallationManager.getGradleHome(project, rootProjectPath);
+      Path gradleHome = gradleInstallationManager.getGradleHomePath(project, rootProjectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
           // Try to resolve symbolic links as there were problems with them at the gradle side.
-          localGradlePath = gradleHome.getCanonicalPath();
+          localGradlePath = gradleHome.toRealPath().toString();
         }
         catch (IOException e) {
-          localGradlePath = gradleHome.getAbsolutePath();
+          localGradlePath = gradleHome.toAbsolutePath().toString();
         }
       }
 

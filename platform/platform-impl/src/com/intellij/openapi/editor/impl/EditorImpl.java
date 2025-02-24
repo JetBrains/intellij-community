@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.impl.ad.AdTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -476,7 +477,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myEditorModel = new EditorModelImpl(this);
-    myAdEditorModel = project == null ? null : AdTheManager.getInstance(project).createEditorModel(this);
+
+    DocumentEx adDocument = AdTheManager.getInstance().getAdDocument(myDocument);
+    myAdEditorModel = adDocument == null ? null : new EditorModel() {
+      @Override public DocumentEx getDocument() { return adDocument; }
+      @Override public MarkupModelEx getEditorMarkupModel() { return myMarkupModel; }
+      @Override public MarkupModelEx getDocumentMarkupModel() { return myEditorFilteringMarkupModel; }
+      @Override public EditorHighlighter getHighlighter() { return myHighlighter; }
+      @Override public InlayModelEx getInlayModel() { return myInlayModel; }
+      @Override public FoldingModelEx getFoldingModel() { return myFoldingModel; }
+      @Override public SoftWrapModelEx getSoftWrapModel() { return mySoftWrapModel; }
+      @Override public CaretModel getCaretModel() { return myCaretModel; }
+      @Override public SelectionModel getSelectionModel() { return mySelectionModel; }
+      @Override public ScrollingModel getScrollingModel() { return myScrollingModel; }
+      @Override public FocusModeModel getFocusModel() { return myFocusModeModel; }
+      @Override public boolean isAd() { return true; }
+      @Override public void dispose() { AdTheManager.getInstance().releaseDocEntity(myDocument); }
+    };
 
     myView = new EditorView(this, myEditorModel);
     myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
@@ -508,6 +525,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     addListeners();
+
+    if (myAdEditorModel != null) {
+      AdTheManager.getInstance().bindEditor(this);
+    }
   }
 
   private void addListeners() {
@@ -1159,7 +1180,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(myCaretModel);
       Disposer.dispose(mySoftWrapModel);
       Disposer.dispose(myView);
-      if (myAdView != null) Disposer.dispose(myAdView);
+      if (myAdView != null) {
+        Disposer.dispose(myAdView);
+        Disposer.dispose(myAdEditorModel);
+      }
       clearCaretThread();
 
       myFocusListeners.clear();
@@ -1744,8 +1768,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myGutterComponent.isShowing();
   }
 
-  @ApiStatus.Internal
-  public void repaintToScreenBottom(int startLine) {
+  private void repaintToScreenBottom(int startLine) {
     int yStartLine = logicalLineToY(startLine);
     repaintToScreenBottomStartingFrom(yStartLine);
   }

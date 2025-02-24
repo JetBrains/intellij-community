@@ -22,6 +22,7 @@
 - a:addDirtyPathFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,Z):V
 - a:belongsTo(com.intellij.openapi.vcs.FilePath):Z
 - a:markEverythingDirty():V
+- markRootDirty(com.intellij.openapi.vfs.VirtualFile):V
 - a:pack():com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 *:com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
 - a:areConsequentCommits(java.util.List):Z

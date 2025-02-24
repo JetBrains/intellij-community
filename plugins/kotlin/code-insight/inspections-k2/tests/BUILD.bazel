@@ -38,7 +38,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",

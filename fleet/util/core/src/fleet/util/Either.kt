@@ -24,7 +24,7 @@ import kotlin.error
 @JvmInline
 @Serializable(with = EitherSerializer::class)
 value class Either<out T, E> internal constructor(
-  private val value: Any?
+  private val value: Any?,
 ) {
   /**
    * Returns `true` if this instance represents a value outcome.
@@ -102,20 +102,26 @@ val <T, E> Either<T, E>.value: T
 val <T, E> Either<T, E>.error: E
   get() = requireNotNull(errorOrNull) { "Not a Error" }
 
-inline fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> = when (this.isValue) {
-  false -> this as Either<R, E>
-  else -> f(valueOrNull!!)
-}
+inline fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> =
+  @Suppress("UNCHECKED_CAST")
+  when (this.isValue) {
+    false -> this as Either<R, E>
+    else -> f(valueOrNull!!)
+  }
 
-inline fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> = when (this.isValue) {
-  false -> this as Either<R, E>
-  true -> Either.value(f(valueOrNull!!))
-}
+inline fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> =
+  @Suppress("UNCHECKED_CAST")
+  when (this.isValue) {
+    false -> this as Either<R, E>
+    true -> Either.value(f(valueOrNull!!))
+  }
 
-inline fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> = when (this.isError) {
-  false -> this as Either<T, R>
-  true -> Either.error(f(error))
-}
+inline fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> =
+  @Suppress("UNCHECKED_CAST")
+  when (this.isError) {
+    false -> this as Either<T, R>
+    true -> Either.error(f(error))
+  }
 
 /**
  * Performs the given [action] on the encapsulated [E] if this instance represents [error][Either.isError].
@@ -130,6 +136,15 @@ inline fun <T, E> Either<T, E>.onError(action: (error: E) -> Unit): Either<T, E>
 }
 
 /**
+ * Unwraps the value of an `Either` instance.
+ *
+ * If the instance is a `error`, it will call the provided [action] function that is supposed to throw or unwind.
+ * If the instance is a `value`, it will return the contained value.
+ */
+inline fun <T, E> Either<T, E>.unwrap(action: (error: E) -> Nothing): T =
+  onError { action(it) }.value
+
+/**
  * Performs the given [action] on the encapsulated value if this instance represents [value][Either.isValue].
  * Returns the original `Either` unchanged.
  */
@@ -142,8 +157,8 @@ inline fun <T, E> Either<T, E>.onValue(action: (value: T) -> Unit): Either<T, E>
 }
 
 internal class EitherSerializer<T, E>(
-  val valueSerializer: KSerializer<T>,
-  val errorSerializer: KSerializer<E>,
+  private val valueSerializer: KSerializer<T>,
+  private val errorSerializer: KSerializer<E>,
 ) : KSerializer<Either<T, E>> {
 
   override val descriptor: SerialDescriptor

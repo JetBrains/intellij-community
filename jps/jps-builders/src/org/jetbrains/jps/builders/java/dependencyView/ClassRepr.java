@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -14,7 +15,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Predicate;
 
-final class ClassRepr extends ClassFileRepr {
+@ApiStatus.Internal
+public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.ClassType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;

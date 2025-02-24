@@ -23,9 +23,9 @@ final class SimpleTextFragment extends TextFragment {
     myFont = fontInfo.getFont();
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
-      var charWidth = fontInfo.charWidth2D(myText[i]);
+      int codePoint = myText[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
+      var charWidth = fontInfo.charWidth2D(codePoint);
       if (isGridCellAlignmentEnabled()) {
-        int codePoint = Character.codePointAt(myText, i);
         var newWidth = adjustedWidthOrNull(codePoint, charWidth);
         if (newWidth != null) {
           if (myCharAlignment == null) {

@@ -134,6 +134,7 @@ class BuildScriptDataBuilder(
   override fun project(name: String, configuration: String): Expression = backend.project(name, configuration)
   override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = with(backend) { mavenRepository(url) }
   override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = with(backend) { mavenCentral() }
+  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = with(backend) { mavenLocal(url) }
   // @formatter:on
 
   companion object {

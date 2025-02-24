@@ -19,23 +19,23 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
 
 @Internal
 open class XDebugSessionTabNewUI(
-  session: XDebugSessionImpl,
+  session: XDebugSessionProxy,
   icon: Icon?,
-  environment: ExecutionEnvironment?
+  environment: ExecutionEnvironment?,
 ) : XDebugSessionTab(session, icon, environment, false) {
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
   private var toolbarGroup: DefaultActionGroup? = null
 
-  override fun initDebuggerTab(session: XDebugSessionImpl) {
+  override fun initDebuggerTab(session: XDebugSessionProxy) {
     ui.defaults.initTabDefaults(0, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null)
     createDefaultTabs(session)
     addDebugToolwindowActions(session.project)
@@ -43,14 +43,15 @@ open class XDebugSessionTabNewUI(
       override fun schemaChanged() {
         if (isSingleContent()) {
           updateToolbars()
-        } else {
+        }
+        else {
           initToolbars(session)
         }
       }
     })
   }
 
-  override fun initToolbars(session: XDebugSessionImpl) {
+  override fun initToolbars(session: XDebugSessionProxy) {
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
     (myUi as? RunnerLayoutUiImpl)?.also {
       it.setLeftToolbarVisible(isVerticalToolbar)
@@ -77,7 +78,8 @@ open class XDebugSessionTabNewUI(
 
     if (isVerticalToolbar) {
       myUi.options.setLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-    } else {
+    }
+    else {
       myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
     }
   }

@@ -125,7 +125,7 @@ private class SessionThreadsData() {
  * @see com.intellij.openapi.progress.Cancellation.isInNonCancelableSection
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
-  if (!suspendContext.debugProcess.isEvaluationPossible(suspendContext)) return null
+  if (!suspendContext.debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
   val method = DebuggerUtilsImpl.findMethod(cancellationClass,
@@ -150,7 +150,7 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
 private fun booleanValue(suspendContext: SuspendContextImpl, b: Boolean): BooleanValue = suspendContext.virtualMachineProxy.mirrorOf(b)
 
 private fun <T> invokeInSuspendCommand(suspendContext: SuspendContextImpl, action: () -> T): T? {
-  if (DebuggerManagerThreadImpl.getCurrentCommand() is SuspendContextCommandImpl) {
+  if (DebugProcessImpl.isInSuspendCommand(suspendContext)) {
     return action()
   }
   var result: T? = null

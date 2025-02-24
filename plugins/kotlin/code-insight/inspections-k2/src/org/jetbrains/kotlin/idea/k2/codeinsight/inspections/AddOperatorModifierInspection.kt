@@ -24,8 +24,8 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean =
         element.nameIdentifier != null && !element.hasModifier(KtTokens.OPERATOR_KEYWORD)
 
-    override fun createQuickFixes(element: KtNamedFunction, context: Unit): Array<KotlinModCommandQuickFix<KtNamedFunction>> =
-        arrayOf(object : KotlinModCommandQuickFix<KtNamedFunction>() {
+    override fun createQuickFix(element: KtNamedFunction, context: Unit): KotlinModCommandQuickFix<KtNamedFunction> =
+        object : KotlinModCommandQuickFix<KtNamedFunction>() {
 
             override fun getFamilyName(): String = KotlinBundle.message("add.operator.modifier")
 
@@ -34,7 +34,7 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
                 element: KtNamedFunction,
                 updater: ModPsiUpdater,
             ) = element.addModifier(KtTokens.OPERATOR_KEYWORD)
-        })
+        }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {
         override fun visitNamedFunction(function: KtNamedFunction) {

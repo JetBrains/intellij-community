@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiClass
@@ -28,7 +29,7 @@ private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHol
       val moduleName = javaModule.name
       if (moduleName.startsWith("java.")) return@analyzeFileDependencies
       val packageName = dependencyFile.packageName
-      if (JavaModuleGraphUtil.exports(javaModule, packageName, null)) return@analyzeFileDependencies
+      if (JavaPsiModuleUtil.exports(javaModule, packageName, null)) return@analyzeFileDependencies
       holder.registerProblem(
         place,
         JvmAnalysisBundle.message("inspection.message.illegal.dependency.module.doesn.t.export", moduleName, packageName)

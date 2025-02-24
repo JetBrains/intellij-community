@@ -92,4 +92,24 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
     }
     return Optional.empty();
   } 
+
+  /**
+   * A helper method to match the wanted error message and cast it safely.
+   * 
+   * @param kinds wanted error kinds
+   * @return an optional containing this object typed, if it matches one of wanted kinds; empty optional otherwise
+   * @param <WantedPsi> the common context type of wanted kinds
+   * @param <WantedContext> the common context type of wanted kinds
+   */
+  @SafeVarargs
+  public final <WantedPsi extends PsiElement, WantedContext> @NotNull Optional<JavaCompilationError<WantedPsi, WantedContext>> 
+  forKind(JavaErrorKind<? extends WantedPsi, ? extends WantedContext>... kinds) {
+    for (JavaErrorKind<? extends WantedPsi, ? extends WantedContext> errorKind : kinds) {
+      if (errorKind.equals(kind)) {
+        //noinspection unchecked
+        return Optional.of((JavaCompilationError<WantedPsi, WantedContext>)this);
+      }
+    }
+    return Optional.empty();
+  } 
 }

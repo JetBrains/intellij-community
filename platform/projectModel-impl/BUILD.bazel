@@ -35,6 +35,7 @@ jvm_library(
     "@lib//:hash4j",
     "//platform/backend/workspace",
     "//platform/diagnostic",
+    "//platform/eel-provider",
   ],
   exports = [
     "//platform/projectModel-api:projectModel",

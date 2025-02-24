@@ -43,7 +43,6 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
@@ -949,13 +948,7 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
       if (needWIL) {
         {
           WriteIntentReadAction.run {
-            ThreadingAssertions.setImplicitLockOnEDT(true)
-            try {
-              runnable()
-            }
-            finally {
-              ThreadingAssertions.setImplicitLockOnEDT(false)
-            }
+            runnable()
           }
         }
       }

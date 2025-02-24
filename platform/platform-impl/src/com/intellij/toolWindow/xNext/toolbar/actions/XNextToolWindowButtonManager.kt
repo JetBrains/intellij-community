@@ -5,6 +5,8 @@ import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.toolbar.XNextBar
 import com.intellij.toolWindow.xNext.toolbar.actions.toolbar.XNextActionToolbar
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -25,10 +27,13 @@ internal class XNextToolWindowButtonManager(paneId: String, isPrimary: Boolean) 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
     return super.wrapWithControls(pane).apply {
       add(XNextBar().apply{
+        border = JBUI.Borders.empty()
         add(BorderLayoutPanel().apply {
           val toolbar = XNextActionToolbar()
+          border = JBUI.Borders.empty()
           toolbar.setTargetComponent(this)
           add(toolbar.component.apply {
+            toolbar.component.border = JBUI.Borders.empty()
             toolbar.component.isOpaque = true
           }, BorderLayout.CENTER)
         })

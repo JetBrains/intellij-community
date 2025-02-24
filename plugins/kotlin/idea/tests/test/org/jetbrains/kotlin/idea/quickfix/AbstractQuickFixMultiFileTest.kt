@@ -6,15 +6,11 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.impl.modcommand.ModCommandActionWrapper
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModChooseAction
-import com.intellij.modcommand.ModCommandWithContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -27,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -169,6 +164,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         editor,
                         actionShouldBeAvailable,
                         getTestName(false),
+                        null,
                         this::availableActions,
                         myFixture::doHighlighting,
                         pluginMode = pluginMode,
@@ -247,6 +243,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         editor,
                         actionShouldBeAvailable,
                         beforeFilePath,
+                        null,
                         this::availableActions,
                         myFixture::doHighlighting,
                         pluginMode = pluginMode,
@@ -335,6 +332,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             editor: Editor,
             actionShouldBeAvailable: Boolean,
             testFilePath: String,
+            actionHint: ActionHint?,
             getAvailableActions: () -> List<IntentionAction>,
             doHighlighting: () -> List<HighlightInfo>,
             shouldBeAvailableAfterExecution: Boolean = false,
@@ -346,9 +344,21 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             }
         ) {
             val pattern = IntentionActionNamePattern(text)
-
             val availableActions = getAvailableActions()
-            val action = pattern.findActionByPattern(availableActions, acceptMatchByFamilyName = !actionShouldBeAvailable)
+            val project = psiFile.project
+            val action =
+                if (actionHint != null) {
+                    val actionContext = ActionContext.from(editor, psiFile)
+                    project.computeOnBackground {
+                        runReadAction {
+                            actionHint.findAndCheck(availableActions, actionContext) {
+                                "Intention action with text '$text' is not ${if (actionShouldBeAvailable) "available" else "not available"}"
+                            }
+                        }
+                    }
+                } else {
+                    pattern.findActionByPattern(availableActions, acceptMatchByFamilyName = !actionShouldBeAvailable)
+                }
 
             if (action == null) {
                 if (actionShouldBeAvailable) {
@@ -373,31 +383,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     TestCase.fail("Action '$text' is available (but must not) in test $testFilePath")
                 }
 
-
-                val unwrap = IntentionActionDelegate.unwrap(action)
-                if (unwrap is ModCommandActionWrapper) {
-                    val modCommandAction = unwrap.asModCommandAction()
-                    val actionContext = ActionContext.from(editor, psiFile)
-                    val project = psiFile.project
-                    project.computeOnBackground {
-                        runReadAction {
-                            val modCommand = modCommandAction.perform(actionContext)
-                            if (modCommand is ModChooseAction) {
-                                val firstAvailableChoose = modCommand.actions.firstOrNull { it.getPresentation(actionContext) != null }
-                                firstAvailableChoose?.perform(actionContext)
-                            } else {
-                                modCommand
-                            }
-                        }
-                    }?.let { command ->
-                        val commandWithContext = ModCommandWithContext(actionContext, command)
-                        runInEdtAndWait {
-                            commandWithContext.executeInteractively(editor)
-                        }
-                    }
-                } else {
-                    CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
-                }
+                CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
 
                 if (!shouldBeAvailableAfterExecution) {
                     val afterAction = pattern.findActionByPattern(getAvailableActions(), acceptMatchByFamilyName = true)

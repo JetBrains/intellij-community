@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -51,6 +52,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   init {
     // add existing options
+    LOG.info("Initialize event logger provider for '$recorderId'")
     val configOptionsService = EventLogConfigOptionsService.getInstance()
     recorderOptionsProvider = RecorderOptionProvider(configOptionsService.getOptions(recorderId).allOptions)
 
@@ -188,7 +190,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
    * Remove once CLion Nova is deployed 100%
    */
   private fun detectClionNova(): Boolean {
-    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler"
+    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
   }
 }
 

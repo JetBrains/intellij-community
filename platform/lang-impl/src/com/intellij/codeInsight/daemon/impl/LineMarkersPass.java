@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
@@ -80,7 +81,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
+      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId());
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -110,7 +111,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
-                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info, myHighlightingSession);
                });
              queryProviders(elements.outside(), root, providersList,
                (__, info) -> {
@@ -183,7 +184,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           catch (IndexNotReadyException e) {
             continue;
           }
-          catch (ProcessCanceledException e) {
+          catch (CancellationException e) {
             throw e;
           }
           catch (Exception e) {

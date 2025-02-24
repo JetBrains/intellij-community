@@ -26,8 +26,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
-
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
 
@@ -65,10 +63,5 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.gradle.statistics.ComposeLibraryUsagesCollector"/>
   </extensions>
-
-  <actions>
-    <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.gradle.actions.ShowKotlinGradleDslLogs">
-    </action>
-  </actions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

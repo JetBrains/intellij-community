@@ -4507,6 +4507,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("classField.kt")
+            public void testClassField() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/classField.kt");
+            }
+
             @TestMetadata("collected.kt")
             public void testCollected() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/collected.kt");
@@ -4540,6 +4545,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("nestedUsed.kt")
             public void testNestedUsed() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/nestedUsed.kt");
+            }
+
+            @TestMetadata("operatorFun.kt")
+            public void testOperatorFun() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/operatorFun.kt");
             }
 
             @TestMetadata("passedToFunction.kt")
@@ -17719,6 +17729,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("reified.kt")
         public void testReified() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reified.kt");
+        }
+
+        @TestMetadata("reifiedUsedParameter.kt")
+        public void testReifiedUsedParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedUsedParameter.kt");
         }
 
         @TestMetadata("reifiedWithClassLiteral.kt")

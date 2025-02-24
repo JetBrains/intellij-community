@@ -14,7 +14,6 @@ interface Component {
   val width: Int
   val height: Int
   fun getBounds(): Rectangle
-  fun isVisible(): Boolean
   fun isShowing(): Boolean
   fun isEnabled(): Boolean
   fun requestFocus()

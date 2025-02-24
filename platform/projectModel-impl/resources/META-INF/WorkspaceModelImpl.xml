@@ -1,0 +1,56 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin>
+  <!--Model-->
+  <extensionPoints>
+    <extensionPoint name="workspaceModel.entityLifecycleSupporter" dynamic="true"
+                    interface="com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModel"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
+
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
+
+  <!--Index-->
+  <extensionPoints>
+    <extensionPoint name="directoryIndexExcludePolicy" area="IDEA_PROJECT" dynamic="true"
+                    interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"/>
+    <!--suppress PluginXmlDynamicPlugin -->
+    <extensionPoint name="workspaceModel.fileIndexContributor"
+                    interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"/>
+    <extensionPoint name="workspaceModel.optionalExclusionContributor" dynamic="true"
+                    interface="com.intellij.workspaceModel.core.fileIndex.OptionalExclusionContributor"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.roots.SingleFileSourcesTracker"
+                    serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
+                    serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
+    <projectServiceInitializer.essential id="workspaceFileIndexInitializer"
+                                         implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
+
+    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
+                 description="Enable additional checks after replaceBySource and applyChangesFrom"/>
+    <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
+                 description="Enable workspace model consistency checking after every update"/>
+    <registryKey key="ide.workspace.model.assertions.on.long.listeners" defaultValue="true" restartRequired="true"
+                 description="Enable workspace model checking for listeners that execute more than 200ms"/>
+    <registryKey key="ide.workspace.model.assertions.bridges.usage" defaultValue="false" restartRequired="true"
+                 description="Enable workspace model checking for accessing bridges from WSM listeners"/>
+    <registryKey key="ide.workspace.model.sdk.remove.custom.processing" defaultValue="true" restartRequired="true"
+                 description="Removes custom processing of Global Libraries and SDKs in the Workspace Model"/>
+    <registryKey key="ide.workspace.model.per.environment.model.separation" defaultValue="false" restartRequired="true"
+                 description="Enable existence of multiple workspace models, one per each isolated environment"/>
+
+    <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
+  </extensions>
+</idea-plugin>

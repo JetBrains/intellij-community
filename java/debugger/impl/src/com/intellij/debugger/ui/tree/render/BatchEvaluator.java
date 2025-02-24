@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.MethodNotFoundException;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IntelliJProjectUtil;
@@ -59,12 +60,13 @@ public final class BatchEvaluator {
     }
   }
 
-  public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
-    BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
+  public static BatchEvaluator getBatchEvaluator(EvaluationContext evaluationContext) {
+    VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getVirtualMachineProxy();
+    BatchEvaluator batchEvaluator = virtualMachineProxy.getUserData(BATCH_EVALUATOR_KEY);
 
     if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator();
-      debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
+      virtualMachineProxy.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }
     return batchEvaluator;
   }

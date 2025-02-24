@@ -93,6 +93,9 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
   }
 
 
+/*
+ todo: commented until IDEA-367746 is fixed
+
   @Test
   fun `test java module compilation`() = runBlocking {
     createProjectSubFile("src/main/java/module-info.java", """
@@ -107,7 +110,7 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
       <artifactId>project</artifactId>
       <version>1</version>
       <properties>
-        <maven.compiler.release>9</maven.compiler.release>  
+        <maven.compiler.release>9</maven.compiler.release>
       </properties>
       <build>
         <plugins>
@@ -123,6 +126,10 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
                     <compileSourceRoots>
                       <root>${'$'}{project.basedir}/src/main/java-additional</root>
                     </compileSourceRoots>
+                    <compilerArgs>
+                      <arg>--patch-module</arg>
+                      <arg>project=${'$'}{project.basedir}/src/main/java-additional</arg>
+                    </compilerArgs>
                   </configuration>
                 </execution>
               </executions>
@@ -145,4 +152,5 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
     assertExists("target/classes/A.class")
     assertExists("target/classes/B.class")
   }
+*/
 }

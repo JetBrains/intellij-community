@@ -57,7 +57,7 @@ internal class StatisticsEventLogProvidersHolder {
       }
       val pluginInfo = getPluginInfo(extension::class.java)
 
-      return if (recorderId == "MLSE" || recorderId == "ML" || recorderId == "IJ_MAP") {
+      return if (recorderId == "MLSE" || recorderId == "ML") {
         pluginInfo.isDevelopedByJetBrains()
       }
       else {

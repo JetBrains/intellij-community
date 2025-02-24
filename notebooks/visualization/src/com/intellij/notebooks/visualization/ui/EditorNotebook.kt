@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.register
@@ -29,6 +30,9 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
 
   val readOnly: ObservableProperty<Boolean>
     get() = _readOnly
+
+  val showCellToolbar: ObservableMutableProperty<Boolean> = AtomicBooleanProperty(true)
+    .distinct()
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
 

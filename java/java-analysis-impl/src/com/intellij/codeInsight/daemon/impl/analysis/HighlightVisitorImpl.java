@@ -1,14 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
@@ -22,7 +20,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -38,6 +35,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -45,18 +43,12 @@ import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
-  private final Map<String, String> myTooltipStyles = Map.of(
-    JavaCompilationError.JAVA_DISPLAY_INFORMATION, "color: " + ColorUtil.toHtmlColor(NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()),
-    JavaCompilationError.JAVA_DISPLAY_GRAYED, "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()),
-    JavaCompilationError.JAVA_DISPLAY_PARAMETER, "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())+"; background-color: " + ColorUtil.toHtmlColor(
-      EditorColorsUtil.getGlobalOrDefaultColorScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).getBackgroundColor()),
-    JavaCompilationError.JAVA_DISPLAY_ERROR, "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()
-    ));
+  private final Map<String, String> myTooltipStyles = initTooltipStyles();
+
   private @NotNull HighlightInfoHolder myHolder;
   private @NotNull LanguageLevel myLanguageLevel;
 
   private @NotNull PsiFile myFile;
-  private PsiJavaModule myJavaModule;
   private JavaErrorCollector myCollector;
 
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
@@ -64,6 +56,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   protected HighlightVisitorImpl() {
+  }
+
+  private static @NotNull Map<String, String> initTooltipStyles() {
+    Color parameterBgColor = EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).getBackgroundColor();
+    String parameterBgStyle = parameterBgColor == null ? "" : "; background-color: " + ColorUtil.toHtmlColor(parameterBgColor);
+    return Map.of(
+      JavaCompilationError.JAVA_DISPLAY_INFORMATION,
+      "color: " + ColorUtil.toHtmlColor(NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()),
+      JavaCompilationError.JAVA_DISPLAY_GRAYED,
+      "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()),
+      JavaCompilationError.JAVA_DISPLAY_PARAMETER,
+      "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()) + parameterBgStyle,
+      JavaCompilationError.JAVA_DISPLAY_ERROR,
+      "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()));
   }
 
   @Contract(pure = true)
@@ -120,7 +127,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     finally {
-      myJavaModule = null;
       myFile = null;
       myHolder = null;
       myCollector = null;
@@ -137,7 +143,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaPsiModuleUtil.findDescriptorByElement(file) : null;
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
     myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
   }
@@ -178,7 +183,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
     errorFixProvider.processFixes(error, consumer);
     ErrorFixExtensionPoint.registerFixes(consumer, error.psi(), error.kind().key());
-    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
+    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS, ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED)
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
@@ -188,10 +193,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitElement(@NotNull PsiElement element) {
     myCollector.processElement(element);
-  }
-
-  public static @Nullable JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
-    return reference instanceof PsiJavaReference psiJavaReference ? psiJavaReference.advancedResolve(false) : null;
   }
 
   private boolean add(@Nullable HighlightInfo.Builder builder) {
@@ -220,30 +221,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitIdentifier(@NotNull PsiIdentifier identifier) {
-    PsiElement parent = identifier.getParent();
-    if (parent instanceof PsiClass aClass) {
-      if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
-        add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
-      }
-    }
-
-    super.visitIdentifier(identifier);
-  }
-
-  @Override
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
     super.visitImportStaticReferenceElement(ref);
     JavaResolveResult[] results = ref.multiResolve(false);
     if (!hasErrorResults() && results.length == 1) {
       add(HighlightUtil.checkReference(ref, results[0]));
     }
-  }
-
-  @Override
-  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
-    super.visitImportModuleStatement(statement);
-    if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
   }
 
   static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
@@ -269,12 +252,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!hasErrorResults()) {
       visitElement(expression);
-      if (hasErrorResults()) return;
-    }
-
-    PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
-      add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
     }
   }
 
@@ -309,70 +286,24 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+    super.visitSwitchExpression(expression);
     checkSwitchBlock(expression);
-    if (!hasErrorResults()) HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression, myErrorSink);
-    if (!hasErrorResults()) super.visitSwitchExpression(expression);
   }
 
   private void checkSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
     SwitchBlockHighlightingModel model = SwitchBlockHighlightingModel.createInstance(myLanguageLevel, switchBlock, myFile);
     if (model == null) return;
-    if (!hasErrorResults()) model.checkSwitchBlockStatements(myErrorSink);
-    if (!hasErrorResults()) model.checkSwitchSelectorType(myErrorSink);
     if (!hasErrorResults()) model.checkSwitchLabelValues(myErrorSink);
   }
 
   @Override
-  public void visitModule(@NotNull PsiJavaModule module) {
-    super.visitModule(module);
-    if (!hasErrorResults()) ModuleHighlightUtil.checkUnusedServices(module, myFile, myErrorSink);
-  }
-
-  @Override
-  public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
-    super.visitRequiresStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
-    }
-  }
-
-  @Override
-  public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
-    super.visitPackageAccessibilityStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageReference(statement, myFile));
-    }
-  }
-
-  @Override
-  public void visitModuleReferenceElement(@NotNull PsiJavaModuleReferenceElement refElement) {
-    super.visitModuleReferenceElement(refElement);
-    PsiJavaModuleReference ref = refElement.getReference();
-    if (refElement.getParent() instanceof PsiPackageAccessibilityStatement && 
-        ref != null && ref.multiResolve(true).length == 0) {
-      String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
-      add(info);
-    }
-  }
-
-  @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    super.visitReferenceElement(ref);
     if (!(ref instanceof PsiExpression)) {
       JavaResolveResult result = resolveOptimised(ref, myFile);
       if (result != null) {
         add(HighlightUtil.checkReference(ref, result));
       }
     }
-  }
-
-  @Override
-  public void visitProvidesStatement(@NotNull PsiProvidesStatement statement) {
-    super.visitProvidesStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
-    }
+    if (!hasErrorResults()) super.visitReferenceElement(ref);
   }
 }

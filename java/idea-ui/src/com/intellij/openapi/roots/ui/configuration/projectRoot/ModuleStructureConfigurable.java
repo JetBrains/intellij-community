@@ -56,6 +56,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator, Configurable.WithEpDependencies {
+public final class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator, Configurable.WithEpDependencies {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
     final NamedConfigurable<?> configurable1 = o1.getConfigurable();
     final NamedConfigurable<?> configurable2 = o2.getConfigurable();
@@ -170,7 +171,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected @NotNull List<? extends AnAction> createCopyActions(boolean fromPopup) {
-    return Collections.singletonList(new MyCopyAction());
+    return List.of(new MyCopyAction());
   }
 
   @Override
@@ -201,7 +202,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-
   @Override
   protected boolean isAutoScrollEnabled() {
     return myAutoScrollEnabled;
@@ -214,7 +214,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
-    return Collections.singletonList(ModuleStructureExtension.EP_NAME);
+    return List.of(ModuleStructureExtension.EP_NAME);
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
@@ -228,7 +228,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       facetConfigurable.getEditor().onFacetSelected();
     }
   }
-
 
   private void createProjectNodes() {
     ModuleGrouper moduleGrouper = getModuleGrouper();
@@ -422,7 +421,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  public @Nullable @NonNls String getHelpTopic() {
+  public @NonNls @NotNull String getHelpTopic() {
     final String topic = super.getHelpTopic();
     if (topic != null) {
       return topic;
@@ -916,7 +915,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected @Nullable String getEmptySelectionString() {
+  protected @NotNull String getEmptySelectionString() {
     return JavaUiBundle.message("empty.module.selection.string");
   }
 
@@ -1015,7 +1014,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  static final class CopiedModuleBuilder extends ModuleBuilder {
+  @ApiStatus.Internal
+  public static final class CopiedModuleBuilder extends ModuleBuilder {
     private final @NotNull ModifiableRootModel myRootModel;
     private final @NotNull Path myComponentPath;
     private final @NotNull Project myProject;
@@ -1085,7 +1085,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private static class MergingComparator<T> implements Comparator<T> {
+  private static final class MergingComparator<T> implements Comparator<T> {
     private final List<? extends Comparator<T>> myDelegates;
 
     MergingComparator(final List<? extends Comparator<T>> delegates) {

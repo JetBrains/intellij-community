@@ -34,8 +34,9 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
-class JCefImageViewerUI(private val myContentComponent: Component,
-                        private val myViewer: JCefImageViewer
+class JCefImageViewerUI(
+  private val myContentComponent: Component,
+  private val myViewer: JCefImageViewer,
 ) : JPanel(), UiDataProvider, Disposable {
   private val myInfoLabel: JLabel
   private val myViewPort: JPanel
@@ -115,7 +116,7 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     }
 
     val toolbarPanel = actionToolbar.component
-    toolbarPanel.background = JBColor.lazy { background ?: UIUtil.getPanelBackground()}
+    toolbarPanel.background = JBColor.lazy { background ?: UIUtil.getPanelBackground() }
     val topPanel: JPanel = NonOpaquePanel(BorderLayout())
     topPanel.add(toolbarPanel, BorderLayout.WEST)
 
@@ -128,7 +129,7 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     myViewPort.setLayout(CardLayout())
     myViewer.preferredFocusedComponent.addMouseWheelListener(MOUSE_WHEEL_LISTENER)
     myViewPort.add(myContentComponent, IMAGE_PANEL)
-    myContentComponent.background = JBColor.lazy { background ?: UIUtil.getPanelBackground()}
+    myContentComponent.background = JBColor.lazy { background ?: UIUtil.getPanelBackground() }
 
     val errorLabel = JLabel(
       ImagesBundle.message("error.broken.image.file.format"),

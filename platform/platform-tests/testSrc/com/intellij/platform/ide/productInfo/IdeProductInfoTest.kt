@@ -31,7 +31,12 @@ class IdeProductInfoTest {
     assertEquals("2024.3.1", loadProductInfo("idea-2024.3.1-macOS").version)
     assertEquals("2024.3.1", loadProductInfo("idea-2024.3.1-macOS/Contents").version)
   }
-  
+
+  @Test
+  fun `idea 2025_1 cross platform`() {
+    assertEquals("2025.1", loadProductInfo("idea-2025.1-cross-platform").version)
+  }
+
   @Test
   fun `idea community 2022_1_4`() {
     assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)

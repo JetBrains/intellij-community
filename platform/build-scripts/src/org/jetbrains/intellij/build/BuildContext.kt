@@ -121,8 +121,6 @@ interface BuildContext : CompilationContext {
    */
   fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
-  suspend fun includeBreakGenLibraries(): Boolean
-
   fun patchInspectScript(path: Path)
 
   /**

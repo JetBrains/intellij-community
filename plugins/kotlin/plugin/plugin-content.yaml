@@ -120,7 +120,9 @@
   - name: kotlin.ide
   - name: kotlin.idea
   - name: kotlin.fir.frontend-independent
-  - name: kotlin.jvm
+  - name: kotlin.jvm.shared
+  - name: kotlin.jvm.k2
+  - name: kotlin.jvm.k1
   - name: kotlin.compiler-reference-index
   - name: kotlin.compiler-plugins.parcelize.common
   - name: kotlin.compiler-plugins.parcelize.k1
@@ -162,6 +164,9 @@
   - name: kotlin.gradle.gradle-java
   - name: kotlin.gradle.gradle-java.k1
   - name: kotlin.gradle.gradle-java.k2
+  - name: kotlin.gradle.scripting.k1
+  - name: kotlin.gradle.scripting.k2
+  - name: kotlin.gradle.scripting.shared
   - name: kotlin.gradle.code-insight-groovy
   - name: kotlin.gradle.code-insight-toml
   - name: kotlin.native

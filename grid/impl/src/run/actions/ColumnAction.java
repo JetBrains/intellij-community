@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,8 @@ public abstract class ColumnAction extends DumbAwareAction implements UserDataHo
     }
   }
 
-  private abstract static class SortAction extends ColumnAction {
+  @ApiStatus.Internal
+  public abstract static class SortAction extends ColumnAction {
     protected final RowSortOrder.Type mySortOrder;
     private final boolean myAdditive;
     private final Supplier<@Nls String> myMenuText;

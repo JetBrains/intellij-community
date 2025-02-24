@@ -334,7 +334,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val line = editor.offsetToVisualLine(offset, true)
       editor.visualLineToY(line)
     }
-    return Rectangle(this.x + JBUI.scale(5), y, JBUI.scale(8), editor.lineHeight)
+    val highlightingWidth = JBUI.scale(8)
+    return Rectangle(this.x + this.width - highlightingWidth, y, highlightingWidth, editor.lineHeight)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

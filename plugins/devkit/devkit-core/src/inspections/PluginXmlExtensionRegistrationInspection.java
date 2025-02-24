@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -30,6 +30,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -41,7 +42,8 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
 import java.util.Objects;
 
-final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
+@ApiStatus.Internal
+public final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
   protected void checkDomElement(@NotNull DomElement element,

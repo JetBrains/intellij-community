@@ -5,14 +5,15 @@ package org.jetbrains.kotlin.jsr223
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.script.IdeConsoleRootType
-import com.intellij.openapi.application.PathManager
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.scriptClassPath
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import kotlin.io.path.nameWithoutExtension
 import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.experimental.jvm.dependenciesFromClassContext
+import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.templates.standard.ScriptTemplateWithBindings
 
@@ -39,18 +40,17 @@ class ScriptDefinitionForExtensionAndIdeConsoleRootsSource : ScriptDefinitionsSo
 
 private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : ScriptCompilationConfiguration(
     {
+        dependencies(JvmDependency(scriptClassPath))
         baseClass(KotlinType(ScriptTemplateWithBindings::class))
         displayName(SCRIPT_DEFINITION_NAME)
         jvm {
-            val kotlincLibraryName =
-                PathManager.getJarForClass(KotlinVersion::class.java)?.nameWithoutExtension
-                    ?: error("unable to locate Kotlin standard library")
-            // This approach works, but could be quite expensive, since it forces indexing of the whole IDEA classpath
+            val kotlincLibraryName = KotlinArtifacts.kotlinc.name
+                //PathManager.getJarForClass(KotlinVersion::class.java)?.nameWithoutExtension
+                //    ?: error("unable to locate Kotlin standard library")
+             //This approach works, but could be quite expensive, since it forces indexing of the whole IDEA classpath
             // more economical approach would be to list names (without versions and .jar extension) of all jars
             // required for the scripts after the kotlin stdlib/script-runtime, and set wholeClasspath to false
-            dependenciesFromClassContext(
-                ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots::class,
-                kotlincLibraryName,
+            dependenciesFromCurrentContext(
                 wholeClasspath = true
             )
             // todo commented out until we figure out why it is needed and how to implement it safely

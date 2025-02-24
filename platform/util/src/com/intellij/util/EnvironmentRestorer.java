@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +14,7 @@ import java.util.Map;
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public final class EnvironmentRestorer {
-
-  static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
+  public static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
 
   /**
    * For each variable from {@code envs} which name matches

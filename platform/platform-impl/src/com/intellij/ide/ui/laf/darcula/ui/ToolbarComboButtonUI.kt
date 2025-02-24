@@ -64,11 +64,12 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     assert(!StringUtil.isEmpty(text) || rightIcons.isEmpty()) { "Right icons are only allowed when text is not empty" }
 
     val innerRect = SwingUtilities.calculateInnerArea(c, null)
-    val g2 = g.create(innerRect.x, innerRect.y, innerRect.width, innerRect.height) as Graphics2D
-    val paintRect = Rectangle(0, 0, innerRect.width, innerRect.height )
+    val paintRect = Rectangle(innerRect)
     JBInsets.removeFrom(paintRect, c.margin)
     val maxTextWidth = calcMaxTextWidth(combo, paintRect)
+    val g2 = g.create() as Graphics2D
     try {
+      g2.clip(paintRect)
       GraphicsUtil.setupAAPainting(g2)
       if (!leftIcons.isEmpty()) {
         val iconsRect = paintIcons(leftIcons, combo, g2, paintRect)

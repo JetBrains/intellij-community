@@ -87,7 +87,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    * @deprecated Use {@link #applyIndentOptionsFromProviders(Project, VirtualFile)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public void applyIndentOptionsFromProviders(@NotNull PsiFile file) {
     applyIndentOptionsFromProviders(file.getProject(), file.getVirtualFile());

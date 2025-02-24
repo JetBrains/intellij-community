@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
@@ -25,6 +25,7 @@ import com.intellij.pom.wrappers.PsiEventWrapperAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -205,7 +206,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void reparseParallelTrees(PsiFile changedFile, PsiToDocumentSynchronizer synchronizer) {
-    List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
+    List<PsiFile> allFiles = getAllFiles(changedFile);
     if (allFiles.size() <= 1) {
       return;
     }
@@ -224,6 +225,16 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         synchronizer.setIgnorePsiEvents(false);
       }
     }
+  }
+
+  private static @NotNull List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
+    VirtualFile file = changedFile.getVirtualFile();
+    if (file == null) {
+      return changedFile.getViewProvider().getAllFiles();
+    }
+    FileManager fileManager = ((PsiManagerEx)changedFile.getManager()).getFileManager();
+    List<FileViewProvider> providers = fileManager.findCachedViewProviders(file);
+    return ContainerUtil.flatMap(providers, p -> p.getAllFiles());
   }
 
   /**

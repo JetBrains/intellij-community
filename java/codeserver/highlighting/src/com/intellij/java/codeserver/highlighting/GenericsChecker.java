@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
@@ -925,5 +926,104 @@ final class GenericsChecker {
         }
       }
     }
+  }
+
+  void checkMemberSignatureTypesAccessibility(@NotNull PsiReferenceExpression ref) {
+    PsiClass psiClass = null;
+
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression expression) {
+      JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method != null) {
+        Set<PsiClass> classes = new HashSet<>();
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        GlobalSearchScope resolveScope = ref.getResolveScope();
+
+        psiClass = getInaccessibleClass(substitutor.substitute(method.getReturnType()), classes, resolveScope, facade);
+        if (psiClass == null) {
+          for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
+            psiClass = getInaccessibleClass(type, classes, resolveScope, facade);
+            if (psiClass != null) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    else {
+      PsiElement resolve = ref.resolve();
+      if (resolve instanceof PsiField psiField) {
+        GlobalSearchScope resolveScope = ref.getResolveScope();
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+        psiClass = getInaccessibleClass(psiField.getType(), new HashSet<>(), resolveScope, facade);
+      }
+    }
+
+    if (psiClass != null) {
+      myVisitor.report(JavaErrorKinds.CLASS_NOT_ACCESSIBLE.create(ref, psiClass));
+    }
+  }
+
+  private static @Nullable PsiClass getInaccessibleClass(@Nullable PsiType type,
+                                                         @NotNull Set<? super PsiClass> classes,
+                                                         @NotNull GlobalSearchScope resolveScope,
+                                                         @NotNull JavaPsiFacade factory) {
+    return getInaccessibleClass(type, classes, false, true, resolveScope, factory);
+  }
+
+  private static @Nullable PsiClass getInaccessibleClass(@Nullable PsiType type,
+                                                         @NotNull Set<? super PsiClass> classes,
+                                                         boolean checkParameters,
+                                                         boolean checkSuperTypes,
+                                                         @NotNull GlobalSearchScope resolveScope,
+                                                         @NotNull JavaPsiFacade factory) {
+    type = PsiClassImplUtil.correctType(type, resolveScope);
+
+    PsiClass aClass = PsiUtil.resolveClassInType(type);
+    if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) {
+        return null;
+      }
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) {
+        return null;
+      }
+
+      PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
+      String qualifiedName = aClass.getQualifiedName();
+      if (parentImplicitClass == null && qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+        return aClass;
+      }
+
+      if (!checkParameters){
+        return null;
+      }
+
+      if (type instanceof PsiClassType classType) {
+        for (PsiType parameterType : classType.getParameters()) {
+          PsiClass cls = getInaccessibleClass(parameterType, classes, true, false, resolveScope, factory);
+          if (cls != null) {
+            return cls;
+          }
+        }
+      }
+
+      if (!checkSuperTypes) {
+        return null;
+      }
+
+      boolean isInLibrary = !index.isInContent(vFile);
+      for (PsiClassType superType : aClass.getSuperTypes()) {
+        PsiClass cls = getInaccessibleClass(superType, classes, !isInLibrary, true, resolveScope, factory);
+        if (cls != null) {
+          return cls;
+        }
+      }
+    }
+
+    return null;
   }
 }

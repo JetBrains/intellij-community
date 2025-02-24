@@ -24,6 +24,7 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core",
     "//platform/util/coroutines",
+    "//platform/kernel/pasta",
   ],
   exports = [
     "//platform/kernel/rpc",

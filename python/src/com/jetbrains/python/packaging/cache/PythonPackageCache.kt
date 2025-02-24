@@ -3,8 +3,8 @@ package com.jetbrains.python.packaging.cache
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-interface PythonPackageCache<K> {
+@ApiStatus.Internal
+internal interface PythonPackageCache<K> {
   val packages: List<String>
   operator fun contains(key: K): Boolean
   fun isEmpty(): Boolean

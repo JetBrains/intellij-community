@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaTypeRelationChecker
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -25,6 +26,7 @@ internal class ShadowedCallablesFilter {
         val newImportStrategy: ImportStrategy? = null,
     )
 
+    private val processed = HashSet<SimplifiedSignature>()
     private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, CompletionSymbolOrigin>()
 
     /**
@@ -45,13 +47,20 @@ internal class ShadowedCallablesFilter {
         requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
     ): FilterResult {
         val (importStrategy, insertionStrategy) = options
-        fun createSimplifiedSignature(considerContainer: Boolean) = when (callableSignature) {
+        val fullSimplifiedSignature = when (callableSignature) {
             is KaVariableSignature<*> -> when (insertionStrategy) {
-                is CallableInsertionStrategy.AsCall -> FunctionLikeSimplifiedSignature.create(callableSignature, considerContainer)
-                else -> VariableLikeSimplifiedSignature.create(callableSignature, considerContainer)
+                is CallableInsertionStrategy.AsCall -> FunctionLikeSimplifiedSignature.create(callableSignature)
+                else -> VariableLikeSimplifiedSignature.create(callableSignature)
             }
 
-            is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature.create(callableSignature, considerContainer, requiresTypeArguments)
+            is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature.create(callableSignature) { requiresTypeArguments(it) }
+        } ?: return FilterResult(excludeFromCompletion = false)
+
+        if (!processed.add(fullSimplifiedSignature)) return FilterResult(excludeFromCompletion = true)
+
+        val simplifiedSignature = when (fullSimplifiedSignature) {
+            is VariableLikeSimplifiedSignature -> fullSimplifiedSignature.copy(containerFqName = null)
+            is FunctionLikeSimplifiedSignature -> fullSimplifiedSignature.copy(containerFqName = null)
         }
 
         fun isAlreadyImported() = with(importStrategyDetector) {
@@ -65,63 +74,56 @@ internal class ShadowedCallablesFilter {
             && (symbolOrigin is CompletionSymbolOrigin.Scope || isAlreadyImported())
         ) {
             val newImportStrategy = ImportStrategy.DoNothing
-            val excludeFromCompletion = processSignatureConsideringOptions(
-                importStrategy = newImportStrategy,
-                symbolOrigin = symbolOrigin,
-                createSimplifiedSignature = ::createSimplifiedSignature,
-            )
+            val excludeFromCompletion =
+                processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, newImportStrategy, symbolOrigin)
             if (!excludeFromCompletion) {
                 return FilterResult(excludeFromCompletion = false, newImportStrategy)
             }
         }
 
-        val excludeFromCompletion = processSignatureConsideringOptions(importStrategy, symbolOrigin) { considerContainer ->
-            createSimplifiedSignature(considerContainer)
-        }
+        val excludeFromCompletion =
+            processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, importStrategy, symbolOrigin)
         return FilterResult(excludeFromCompletion)
     }
 
     context(KaSession)
     private fun processSignatureConsideringOptions(
+        fullSimplifiedSignature: SimplifiedSignature,
+        simplifiedSignature: SimplifiedSignature,
         importStrategy: ImportStrategy,
         symbolOrigin: CompletionSymbolOrigin,
-        createSimplifiedSignature: (considerContainer: Boolean) -> SimplifiedSignature?,
     ): Boolean {
-        val simplifiedSignature = createSimplifiedSignature(importStrategy is ImportStrategy.InsertFqNameAndShorten)
-            ?: return false
+        return when (importStrategy) {
+            ImportStrategy.DoNothing -> processSignature(simplifiedSignature, symbolOrigin)
 
-        if (importStrategy !is ImportStrategy.AddImport) {
-            return processSignature(simplifiedSignature, symbolOrigin)
-        }
+            is ImportStrategy.InsertFqNameAndShorten -> processSignature(fullSimplifiedSignature, symbolOrigin)
 
-        // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
-        val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
-        val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]
-        return if (shadowingCallableOrigin == null) {
-            // no callable with unspecified container shadows current callable
-            // if origin is `Index` and there is no shadowing callable,
-            // import is required and container needs to be considered
-            val simplifiedSignature = createSimplifiedSignature(considerContainer)
+            is ImportStrategy.AddImport -> {
+                // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
+                val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
+                val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]
+                if (shadowingCallableOrigin == null) {
+                    // no callable with unspecified container shadows current callable
+                    // if origin is `Index` and there is no shadowing callable,
+                    // import is required and container needs to be considered
+                    processSignature(
+                        simplifiedSignature = if (considerContainer) fullSimplifiedSignature else simplifiedSignature,
+                        symbolOrigin = symbolOrigin,
+                    )
+                } else {
+                    if (!considerContainer) return true
 
-            simplifiedSignature != null
-                    && processSignature(simplifiedSignature, symbolOrigin)
-        } else {
-            if (!considerContainer) return true
+                    // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
+                    // explicit simple importing scope, then it won't shadow target callable after import is inserted
+                    when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+                        is KaScopeKind.PackageMemberScope,
+                        is KaScopeKind.DefaultSimpleImportingScope,
+                        is KaScopeKind.ExplicitStarImportingScope,
+                        is KaScopeKind.DefaultStarImportingScope -> processSignature(fullSimplifiedSignature, symbolOrigin)
 
-            // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
-            // explicit simple importing scope, then it won't shadow target callable after import is inserted
-            when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
-                is KaScopeKind.PackageMemberScope,
-                is KaScopeKind.DefaultSimpleImportingScope,
-                is KaScopeKind.ExplicitStarImportingScope,
-                is KaScopeKind.DefaultStarImportingScope -> {
-                    val simplifiedSignature = @Suppress("KotlinConstantConditions") createSimplifiedSignature(considerContainer)
-
-                    simplifiedSignature != null
-                            && processSignature(simplifiedSignature, symbolOrigin)
+                        else -> true
+                    }
                 }
-
-                else -> true
             }
         }
     }
@@ -208,6 +210,7 @@ internal class ShadowedCallablesFilter {
 
 
 private sealed class SimplifiedSignature {
+
     abstract val name: Name
 
     /**
@@ -224,9 +227,8 @@ private sealed class SimplifiedSignature {
 
     companion object {
 
-        context(KaSymbolProvider) fun KaCallableSymbol.getContainerFqName(considerContainer: Boolean): FqName? {
-            if (!considerContainer) return null
-
+        context(KaSymbolProvider)
+        fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
             return when (location) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
@@ -254,10 +256,9 @@ private data class VariableLikeSimplifiedSignature(
         context(KaSymbolProvider)
         fun create(
             signature: KaVariableSignature<*>,
-            considerContainer: Boolean,
         ) = VariableLikeSimplifiedSignature(
             name = signature.name,
-            containerFqName = signature.symbol.getContainerFqName(considerContainer),
+            containerFqName = signature.symbol.getContainerFqName(),
         )
     }
 }
@@ -268,7 +269,7 @@ private class FunctionLikeSimplifiedSignature(
     private val requiredTypeArgumentsCount: Int,
     private val valueParameterTypes: Lazy<List<KaType>>,
     private val varargValueParameterIndices: List<Int>,
-    private val analysisSession: KaSession,
+    private val typeRelationChecker: KaTypeRelationChecker,
 ) : SimplifiedSignature() {
 
     companion object {
@@ -276,10 +277,9 @@ private class FunctionLikeSimplifiedSignature(
         context(KaSession)
         fun create(
             signature: KaVariableSignature<*>,
-            considerContainer: Boolean,
         ) = FunctionLikeSimplifiedSignature(
             name = signature.name,
-            containerFqName = signature.symbol.getContainerFqName(considerContainer),
+            containerFqName = signature.symbol.getContainerFqName(),
             requiredTypeArgumentsCount = 0,
             valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) {
                 val functionalType = signature.returnType
@@ -287,13 +287,12 @@ private class FunctionLikeSimplifiedSignature(
                 functionalType.parameterTypes
             },
             varargValueParameterIndices = emptyList(),
-            analysisSession = this@KaSession,
+            typeRelationChecker = this@KaSession,
         )
 
         context(KaSession)
         fun create(
             signature: KaFunctionSignature<*>,
-            considerContainer: Boolean,
             requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
         ): FunctionLikeSimplifiedSignature? {
             val symbol = signature.symbol as? KaNamedFunctionSymbol
@@ -302,14 +301,26 @@ private class FunctionLikeSimplifiedSignature(
             val valueParameters = signature.valueParameters
             return FunctionLikeSimplifiedSignature(
                 name = symbol.name,
-                containerFqName = symbol.getContainerFqName(considerContainer),
+                containerFqName = symbol.getContainerFqName(),
                 requiredTypeArgumentsCount = if (requiresTypeArguments(symbol)) symbol.typeParameters.size else 0,
-                valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { valueParameters.map { it.returnType } },
+                valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) {
+                    listOfNotNull(symbol.receiverType) +
+                            valueParameters.map { it.returnType }
+                },
                 varargValueParameterIndices = valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                analysisSession = this@KaSession,
+                typeRelationChecker = this@KaSession,
             )
         }
     }
+
+    fun copy(containerFqName: FqName?) = FunctionLikeSimplifiedSignature(
+        name = name,
+        containerFqName = containerFqName,
+        requiredTypeArgumentsCount = requiredTypeArgumentsCount,
+        valueParameterTypes = valueParameterTypes,
+        varargValueParameterIndices = varargValueParameterIndices,
+        typeRelationChecker = typeRelationChecker,
+    )
 
     override fun hashCode(): Int {
         var result = name.hashCode()
@@ -319,27 +330,25 @@ private class FunctionLikeSimplifiedSignature(
         return result
     }
 
-    override fun equals(other: Any?): Boolean = this === other ||
-            other is FunctionLikeSimplifiedSignature &&
-            other.name == name &&
-            other.containerFqName == containerFqName &&
-            other.requiredTypeArgumentsCount == requiredTypeArgumentsCount &&
-            other.varargValueParameterIndices == varargValueParameterIndices &&
-            areValueParameterTypesEqualTo(other)
-
     /**
      * We need to use semantic type equality instead of the default structural equality of [KaType] to check if two signatures overlap.
      */
-    private fun areValueParameterTypesEqualTo(other: FunctionLikeSimplifiedSignature): Boolean {
-        val types1 = other.valueParameterTypes.value
-        val types2 = valueParameterTypes.value
-        if (types1.size != types2.size) return false
-
-        with(analysisSession) {
-            for (i in types1.indices) {
-                if (!types1[i].semanticallyEquals(types2[i])) return false
-            }
-            return true
+    override fun equals(other: Any?): Boolean =
+        this === other || other is FunctionLikeSimplifiedSignature
+                && name == other.name
+                && containerFqName == other.containerFqName
+                && requiredTypeArgumentsCount == other.requiredTypeArgumentsCount
+                && varargValueParameterIndices == other.varargValueParameterIndices
+                && with(typeRelationChecker) {
+            valueParameterTypes.value
+                .all(other.valueParameterTypes.value) { (left, right) ->
+                    left.semanticallyEquals(right)
+                }
         }
-    }
 }
+
+private fun <T> List<T>.all(
+    other: List<T>,
+    predicate: (Pair<T, T>) -> Boolean,
+): Boolean = size == other.size
+        && zip(other).all(predicate)

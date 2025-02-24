@@ -34,10 +34,10 @@ class CanUnescapeDollarLiteralInspection :
         return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.problem.description")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): KotlinModCommandQuickFix<KtStringTemplateExpression> = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String {
             return KotlinBundle.message("replace.with.dollar.literals")
         }
@@ -84,7 +84,7 @@ class CanUnescapeDollarLiteralInspection :
                 }
             }
         }
-    })
+    }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix?.textLength?.let { it > 1 } != true

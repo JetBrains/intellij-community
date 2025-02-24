@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.jetbrains.python.PyBundle;
@@ -6,17 +6,13 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersRefactoringBaseProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- *
- *
- * @author Ilya.Kazakevich
- */
-class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
+@ApiStatus.Internal
+public final class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
 
   PyPullUpProcessor(final @NotNull PyClass from, final @NotNull PyClass to, final @NotNull Collection<PyMemberInfo<PyElement>> membersToMove) {
     super(from.getProject(), membersToMove, from, to);
@@ -39,12 +35,12 @@ class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
   }
 
   @Override
-  public @Nullable String getCommentReferencesText(final int usagesCount, final int filesCount) {
+  public @NotNull String getCommentReferencesText(final int usagesCount, final int filesCount) {
     return getCodeReferencesText(usagesCount, filesCount);
   }
 
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected @NotNull String getRefactoringId() {
     return "refactoring.python.pull.up";
   }
 }

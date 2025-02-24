@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
@@ -606,37 +609,55 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-      PsiFile psiFile = vfile.isValid() ? myManager.findFile(vfile) : null;
+      if (!vfile.isValid()) return;
 
-      if (psiFile instanceof PsiBinaryFile binaryFile) {
-        PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);
-        if (originalPsiFile != null) {
-          psiFile = originalPsiFile;
-        }
+      List<CodeInsightContext> allContexts;
+      boolean skipDefaultContext;
+      if (CodeInsightContextKt.isSharedSourceSupportEnabled(myManager.getProject())) {
+        allContexts = CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(vfile);
+        skipDefaultContext = ContainerUtil.find(allContexts, c -> c != CodeInsightContextKt.defaultContext()) != null;
       }
+      else {
+        allContexts = Collections.singletonList(CodeInsightContextKt.defaultContext());
+        skipDefaultContext = false;
+      }
+      for (CodeInsightContext context : allContexts) {
+        if (skipDefaultContext && context == CodeInsightContextKt.defaultContext()) continue;
 
-      if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
-        Project project = myManager.getProject();
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        if (!DumbUtil.getInstance(project).mayUseIndices()) {
-          throw ApplicationUtil.CannotRunReadActionException.create();
+        PsiFile psiFile = myManager.findFile(vfile, context);
+
+
+
+        if (psiFile instanceof PsiBinaryFile binaryFile) {
+          PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);
+          if (originalPsiFile != null) {
+            psiFile = originalPsiFile;
+          }
         }
 
-        FileViewProvider provider = psiFile.getViewProvider();
-        List<PsiFile> psiRoots = provider.getAllFiles();
-        Set<PsiFile> processed = new HashSet<>(psiRoots.size() * 2, (float)0.5);
-        for (PsiFile psiRoot : psiRoots) {
-          ProgressManager.checkCanceled();
-          assert psiRoot != null : "One of the roots of file " + psiFile + " is null. All roots: " + psiRoots + "; ViewProvider: " +
-                                   provider + "; Virtual file: " + provider.getVirtualFile();
-          if (!processed.add(psiRoot)) continue;
-          if (!psiRoot.isValid()) {
-            continue;
+        if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+          Project project = myManager.getProject();
+          if (project.isDisposed()) throw new ProcessCanceledException();
+          if (!DumbUtil.getInstance(project).mayUseIndices()) {
+            throw ApplicationUtil.CannotRunReadActionException.create();
           }
 
-          if (!localProcessor.process(new CandidateFileInfo(vfile, psiRoot))) {
-            stopped.set(true);
-            break;
+          FileViewProvider provider = psiFile.getViewProvider();
+          List<PsiFile> psiRoots = provider.getAllFiles();
+          Set<PsiFile> processed = new HashSet<>(psiRoots.size() * 2, (float)0.5);
+          for (PsiFile psiRoot : psiRoots) {
+            ProgressManager.checkCanceled();
+            assert psiRoot != null : "One of the roots of file " + psiFile + " is null. All roots: " + psiRoots + "; ViewProvider: " +
+                                     provider + "; Virtual file: " + provider.getVirtualFile();
+            if (!processed.add(psiRoot)) continue;
+            if (!psiRoot.isValid()) {
+              continue;
+            }
+
+            if (!localProcessor.process(new CandidateFileInfo(vfile, psiRoot))) {
+              stopped.set(true);
+              break;
+            }
           }
         }
       }
@@ -1019,7 +1040,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Collection<T> processors = entry.getValue();
       GlobalSearchScope commonScope = uniteScopes(processors);
       // files which are target of the search
-      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> processors.stream().flatMap(p -> p.getSearchSession().getTargetVirtualFiles().stream()).filter(commonScope::contains).collect(Collectors.toSet()));
+      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> {
+        return processors.stream().flatMap(p -> {
+            List<VirtualFile> files = p.getSearchSession().getTargetVirtualFiles();
+            return files.stream();
+          }).filter(commonScope::contains)
+          .collect(Collectors.toSet());
+      });
       // directories in which target files are contained
       Set<VirtualFile> thisTargetDirectories = ContainerUtil.map2SetNotNull(thisTargetFiles, f -> f.getParent());
       Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, key);

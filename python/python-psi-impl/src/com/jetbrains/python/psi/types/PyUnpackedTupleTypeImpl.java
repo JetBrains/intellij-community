@@ -85,4 +85,12 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
       return PyTupleType.create(anchor, getElementTypes());
     }
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyUnpackedTupleType(this);
+    }
+    return visitor.visitPyType(this);
+  }
 }

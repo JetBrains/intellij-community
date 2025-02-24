@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
+import com.intellij.codeInsight.multiverse.isEventSystemEnabled
 import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.application.ApplicationManager
@@ -60,7 +61,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
     document: Document,
     reason: @NonNls Any,
     modality: ModalityState,
-    cachedViewProvider: FileViewProvider,
+    cachedViewProviders: List<FileViewProvider>,
   ) {
     assert(!isDisposed) { "already disposed" }
     if (!project.isInitialized()) {
@@ -69,9 +70,9 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
 
     require(documentManager.myProject === project) { "Wrong project: $project; expected: ${documentManager.myProject}" }
 
-    assert(cachedViewProvider.isEventSystemEnabled()) {
+    assert(cachedViewProviders.isEventSystemEnabled()) {
       "Asynchronous commit is only supported for physical PSI, " +
-      "document=$document, cachedViewProvider=$cachedViewProvider (${cachedViewProvider.javaClass})"
+      "document=$document, cachedViewProviders=$cachedViewProviders (${cachedViewProviders.map { it.javaClass }})"
     }
     TransactionGuard.getInstance().assertWriteSafeContext(modality)
 
@@ -81,7 +82,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
       reason = reason,
       myCreationModality = modality,
       myLastCommittedText = documentManager.getLastCommittedText(document),
-      cachedViewProvider = cachedViewProvider,
+      cachedViewProviders = cachedViewProviders,
     )
     ReadAction
       .nonBlocking(Callable { commitUnderProgress(task = task, synchronously = false, documentManager = documentManager) })
@@ -109,7 +110,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
       reason = "Sync commit",
       myCreationModality = ModalityState.defaultModalityState(),
       myLastCommittedText = documentManager.getLastCommittedText(document),
-      cachedViewProvider = psiFile.getViewProvider(),
+      cachedViewProviders = listOf(psiFile.getViewProvider()),
     )
 
     commitUnderProgress(task = task, synchronously = true, documentManager = documentManager)()
@@ -122,40 +123,43 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
     val finishProcessors = SmartList<BooleanRunnable>()
     val reparseInjectedProcessors = SmartList<BooleanRunnable>()
 
-    val viewProvider = documentManager.getCachedViewProvider(document)
-    if (viewProvider == null) {
+    val viewProviders = documentManager.getCachedViewProviders(document)
+    if (viewProviders.isEmpty()) {
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager))
     }
     else {
       // While we were messing around transferring things to background thread, the ViewProvider can become obsolete
       // when, e.g., a virtual file was renamed.
       // Store new provider to retain it from GC
-      task.cachedViewProvider = viewProvider
+      task.cachedViewProviders = viewProviders
 
-      for (file in viewProvider.getAllFiles()) {
-        val oldFileNode = file.getNode()
-        if (oldFileNode == null) {
-          throw AssertionError("No node for " + file.javaClass + " in " + file.getViewProvider().javaClass +
-                               " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
-                               " (is too large = " + SingleRootFileViewProvider
-                                 .isTooLargeForIntelligence(viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
-        }
-        val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
-          file,
-          document,
-          task.myLastCommittedText,
-          document.getImmutableCharSequence(),
-        )
-        if (changedPsiRange != null) {
-          val finishProcessor = doCommit(
-            task = task,
-            file = file,
-            oldFileNode = oldFileNode,
-            changedPsiRange = changedPsiRange,
-            outReparseInjectedProcessors = reparseInjectedProcessors,
-            documentManager = documentManager,
+      // todo ijpl-339 check if this is correct
+      for (viewProvider in viewProviders) {
+        for (file in viewProvider.getAllFiles()) {
+          val oldFileNode = file.getNode()
+          if (oldFileNode == null) {
+            throw AssertionError("No node for " + file.javaClass + " in " + file.getViewProvider().javaClass +
+                                 " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
+                                 " (is too large = " + SingleRootFileViewProvider
+                                   .isTooLargeForIntelligence(viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
+          }
+          val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
+            file,
+            document,
+            task.myLastCommittedText,
+            document.getImmutableCharSequence(),
           )
-          finishProcessors.add(finishProcessor)
+          if (changedPsiRange != null) {
+            val finishProcessor = doCommit(
+              task = task,
+              file = file,
+              oldFileNode = oldFileNode,
+              changedPsiRange = changedPsiRange,
+              outReparseInjectedProcessors = reparseInjectedProcessors,
+              documentManager = documentManager,
+            )
+            finishProcessors.add(finishProcessor)
+          }
         }
       }
     }
@@ -172,7 +176,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
       if (synchronously || success) {
         assert(!documentManager.isInUncommittedSet(document))
       }
-      if (!success && viewProvider != null && viewProvider.isEventSystemEnabled()) {
+      if (!success && viewProviders.isEventSystemEnabled()) {
         // add a document back to the queue
         commitAsynchronously(
           project = project,
@@ -180,7 +184,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
           document = document,
           reason = "Re-added back",
           modality = task.myCreationModality,
-          cachedViewProvider = viewProvider,
+          cachedViewProviders = viewProviders,
         )
       }
     }
@@ -215,7 +219,7 @@ private class CommitTask(
   @JvmField val myCreationModality: ModalityState,
   @JvmField val myLastCommittedText: CharSequence,
   // to retain viewProvider to avoid surprising getCachedProvider() == null half-way through commit
-  @JvmField @field:Volatile var cachedViewProvider: FileViewProvider,
+  @JvmField @field:Volatile var cachedViewProviders: List<FileViewProvider>,
 ) {
   // store initial document modification sequence here to check if it changed later before commit in EDT
   private val modificationSequence = (document as DocumentEx).modificationSequence
@@ -245,7 +249,7 @@ private fun handleCommitWithoutPsi(
   documentManager: PsiDocumentManagerBase,
 ): BooleanRunnable {
   return BooleanRunnable {
-    if (task.isStillValid && documentManager.getCachedViewProvider(task.document) == null) {
+    if (task.isStillValid && documentManager.getCachedViewProviders(task.document).isEmpty()) {
       documentManager.handleCommitWithoutPsi(task.document)
       true
     }
@@ -295,14 +299,15 @@ private fun doCommit(
   catch (e: Throwable) {
     LOG.error(e)
     return BooleanRunnable {
-      documentManager.forceReload(file.getViewProvider().getVirtualFile(), file.getViewProvider())
+      documentManager.forceReload(file.getViewProvider().getVirtualFile(), listOf(file.getViewProvider()))
       true
     }
   }
 
   return BooleanRunnable {
     val viewProvider = file.getViewProvider()
-    if (!task.isStillValid || documentManager.getCachedViewProvider(document) !== viewProvider) {
+    //todo IJPL-339 figure out correct check here
+    if (!task.isStillValid || viewProvider !in documentManager.getCachedViewProviders(document)) {
       // optimistic locking failed
       return@BooleanRunnable false
     }
@@ -324,7 +329,7 @@ private fun doCommit(
 
     assertAfterCommit(document, file, oldFileNode)
     // just to make an impression the field is used
-    Reference.reachabilityFence(task.cachedViewProvider)
+    Reference.reachabilityFence(task.cachedViewProviders)
     true
   }
 }

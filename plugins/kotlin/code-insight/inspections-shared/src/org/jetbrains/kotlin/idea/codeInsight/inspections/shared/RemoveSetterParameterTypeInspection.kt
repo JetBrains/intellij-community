@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveSetterParameterTypeInspection:
+internal class RemoveSetterParameterTypeInspection :
     KotlinApplicableInspectionBase.Simple<KtParameter, Unit>() {
     override fun getProblemDescription(
         element: KtParameter,
@@ -41,10 +41,10 @@ internal class RemoveSetterParameterTypeInspection:
         return typeReference.endOffset > typeReference.startOffset
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtParameter,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtParameter>> = arrayOf(object : KotlinModCommandQuickFix<KtParameter>() {
+    ): KotlinModCommandQuickFix<KtParameter> = object : KotlinModCommandQuickFix<KtParameter>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.explicit.type.specification")
@@ -56,5 +56,5 @@ internal class RemoveSetterParameterTypeInspection:
         ) {
             element.typeReference = null
         }
-    })
+    }
 }

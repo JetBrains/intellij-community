@@ -44,7 +44,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     GlobalSearchScope resolveScope = parameters.getOriginalFile().getResolveScope();
     for (String name : codeInsightSettings.getAllIncludedAutoStaticNames()) {
       PsiClass aClass = javaPsiFacade.findClass(name, resolveScope);
-      if (aClass != null) {
+      if (aClass != null && isAccessibleClass(aClass)) {
         importMembersOf(aClass);
       }
       else {
@@ -52,7 +52,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
         String containingMemberName = StringUtil.getPackageName(name);
         if (containingMemberName.isEmpty() || shortMemberName.isEmpty()) continue;
         PsiClass containingClass = javaPsiFacade.findClass(containingMemberName, resolveScope);
-        if (containingClass != null) {
+        if (containingClass != null && isAccessibleClass(containingClass)) {
           for (PsiMethod method : containingClass.findMethodsByName(shortMemberName, true)) {
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
               importMember(method);
@@ -65,6 +65,17 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
         }
       }
     }
+  }
+
+  private boolean isAccessibleClass(@NotNull PsiClass importFromClass) {
+    boolean importFromDefaultPackage = importFromClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageName().isBlank();
+    if (importFromDefaultPackage) {
+      boolean targetClassInDefaultPackage = myOriginalPosition.getContainingFile() instanceof PsiJavaFile targetClass && targetClass.getPackageName().isBlank();
+      if(!targetClassInDefaultPackage) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -80,13 +91,17 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
     if (ref instanceof PsiReferenceExpression) {
       JavaResolveResult[] results = ((PsiReferenceExpression)ref).multiResolve(true);
-      if (results.length > 0) {
-        PsiClass memberContainingClass = member.getContainingClass();
-        boolean shouldBeAutoImported = memberContainingClass != null &&
-                                       member.hasModifierProperty(PsiModifier.STATIC) &&
-                                       member.getName() != null &&
-                                       JavaCodeStyleManager.getInstance(member.getProject())
-                                         .isStaticAutoImportName(memberContainingClass.getQualifiedName() + "." + member.getName());
+      PsiClass memberContainingClass = member.getContainingClass();
+      boolean shouldBeAutoImported = memberContainingClass != null &&
+                                     member.hasModifierProperty(PsiModifier.STATIC) &&
+                                     member.getName() != null &&
+                                     JavaCodeStyleManager.getInstance(member.getProject())
+                                       .isStaticAutoImportName(memberContainingClass.getQualifiedName() + "." + member.getName());
+      if (shouldBeAutoImported && member.getContainingFile() instanceof PsiJavaFile javaFile &&
+          javaFile.getPackageName().isBlank()) {
+        shouldImport = false;
+      }
+      else if (results.length > 0) {
         if (shouldBeAutoImported) {
           shouldImport = !ContainerUtil.exists(results, result -> {
             PsiElement element = result.getElement();

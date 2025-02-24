@@ -1,5 +1,6 @@
 // "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 // ERROR: Unresolved reference: ann
+// K2_AFTER_ERROR: Unresolved reference 'ann'.
 
 @Suppress("DIVISION_BY_ZERO")
 @ann fun foo() = 2 / <caret>0

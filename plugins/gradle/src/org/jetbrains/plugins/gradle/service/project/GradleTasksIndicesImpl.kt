@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex.getDataStorageCachedValue
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
 import com.intellij.util.ThreeState
-import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -22,9 +22,8 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
 
   private fun getModuleContext(modulePath: String): ModuleResolutionContext {
     ProgressManager.checkCanceled()
-    val reference = CachedValuesManager.getManager(project).getCachedValue(project) {
-      val dataStorage = ExternalProjectsDataStorage.getInstance(project)
-      CachedValueProvider.Result.create(AtomicReference<ModuleResolutionContext>(), dataStorage)
+    val reference = getDataStorageCachedValue(project, project, MODULE_CONTEXT_KEY) {
+      AtomicReference<ModuleResolutionContext>()
     }
     return reference.updateAndGet {
       if (it != null && it.path == modulePath) {
@@ -121,7 +120,7 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
 
     private fun calculateGradlePath(): String? {
       ProgressManager.checkCanceled()
-      val moduleNode = CachedModuleDataFinder.findMainModuleData(project, path)
+      val moduleNode = ExternalSystemModuleDataIndex.findModuleNode(project, path)
       return when {
         moduleNode == null -> null
         externalProjectPath == null -> null
@@ -224,6 +223,8 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
   }
 
   companion object {
+
+    private val MODULE_CONTEXT_KEY = Key.create<CachedValue<AtomicReference<ModuleResolutionContext>>>("GradleTasksIndicesImpl")
 
     private fun findModuleCompositeProject(project: Project, modulePath: String): BuildParticipant? {
       val settings = GradleSettings.getInstance(project)

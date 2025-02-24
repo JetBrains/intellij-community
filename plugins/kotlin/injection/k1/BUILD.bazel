@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True
 )
 
@@ -32,7 +31,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
   ],

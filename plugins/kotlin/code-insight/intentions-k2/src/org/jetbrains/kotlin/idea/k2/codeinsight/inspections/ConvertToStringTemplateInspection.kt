@@ -35,10 +35,10 @@ internal class ConvertToStringTemplateInspection :
 
     data class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.concatenation.to.template")
@@ -50,7 +50,7 @@ internal class ConvertToStringTemplateInspection :
         ) {
             context.replacement.element?.let { element.replaced(it) }
         }
-    })
+    }
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
         if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null

@@ -36,11 +36,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void scheduleUpdate() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,

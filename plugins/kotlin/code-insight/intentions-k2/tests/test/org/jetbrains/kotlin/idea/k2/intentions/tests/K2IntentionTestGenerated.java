@@ -5820,6 +5820,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/expectClass.kt");
         }
 
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/flexibleType.kt");
+        }
+
         @TestMetadata("functionReference.kt")
         public void testFunctionReference() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/functionReference.kt");
@@ -12245,6 +12250,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/parameterOfObjectFunction.kt");
         }
 
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/recursiveCall1.kt");
+        }
+
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/topLevelFun.kt");
@@ -12847,6 +12862,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("notExtension.kt")
         public void testNotExtension() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/notExtension.kt");
+        }
+
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/recursiveCall1.kt");
         }
 
         @TestMetadata("replaceThis.kt")

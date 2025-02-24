@@ -3,11 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
@@ -20,7 +22,6 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
             { runInEdtAndWait { project.invalidateCaches() } },
             { super.tearDown() },
         )
-
     }
 
     override fun doTest(beforeFileName: String) {
@@ -47,8 +48,9 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         }
     }
 
-    // TODO: Enable these as more actions/inspections are enabled, and/or add more FIR-specific directives
-    override fun checkForUnexpectedErrors() {}
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override val inspectionFileName: String
         get() = ".k2Inspection"

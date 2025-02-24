@@ -25,4 +25,6 @@ module fleet.util.core {
   requires fleet.preferences;
   requires fleet.reporting.api;
   requires fleet.util.os;
+
+  requires static fleet.util.multiplatform;
 }

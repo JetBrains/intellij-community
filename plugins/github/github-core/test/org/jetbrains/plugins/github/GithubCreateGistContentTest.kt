@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -8,7 +9,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
+import org.junit.Ignore
 
+@Ignore
+@IJIgnore(issue = "no server")
 class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
   private lateinit var editor: Editor
 

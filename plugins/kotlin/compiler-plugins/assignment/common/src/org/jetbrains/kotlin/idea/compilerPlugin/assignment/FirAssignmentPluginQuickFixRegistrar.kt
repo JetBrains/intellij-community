@@ -30,7 +30,7 @@ private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDi
     val project = element.project
 
     if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ && isAssignmentPluginEnabled(project, element)) {
-        ImportQuickFixProvider.getFixes(diagnostic)
+        ImportQuickFixProvider.run { createQuickFixes(diagnostic) }
     } else {
         emptyList()
     }

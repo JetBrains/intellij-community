@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.JavaPsiModifierUtil;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;

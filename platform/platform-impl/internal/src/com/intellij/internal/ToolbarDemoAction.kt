@@ -7,8 +7,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.SplitButtonAction
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarSplitButton
 import com.intellij.openapi.wm.impl.headertoolbar.createDemoToolbar
 import com.intellij.ui.JBColor
 import com.intellij.ui.RowIcon
@@ -68,6 +70,7 @@ private class TestSplitButtonAction: SplitButtonAction() {
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     super.updateCustomComponent(component, presentation)
     (component as? ToolbarSplitButton)?.apply {
+      border = JBUI.Borders.empty(5)
       text = "Split button"
       presentation.icon?.let { leftIcons = listOf(it) }
     }
@@ -90,6 +93,7 @@ private class TestComboButtonAction: ExpandableComboAction() {
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     super.updateCustomComponent(component, presentation)
     (component as? ToolbarComboButton)?.apply {
+      border = JBUI.Borders.empty(5)
       text = presentation.text
     }
   }

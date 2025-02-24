@@ -7,13 +7,16 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-  override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
 
   @Volatile
   private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()

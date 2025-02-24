@@ -100,5 +100,9 @@
       name="inline.completion.session.logs"
       interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionSessionLogsEP"
       dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.editorTypeResolver"
+      interface="com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorTypeResolver"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

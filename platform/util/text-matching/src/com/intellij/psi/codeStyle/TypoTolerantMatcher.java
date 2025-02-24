@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,14 +7,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.BitSet;
 import java.util.List;
 
-final class TypoTolerantMatcher extends MinusculeMatcher {
+@ApiStatus.Internal
+public final class TypoTolerantMatcher extends MinusculeMatcher {
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -36,7 +35,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
-  TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  @VisibleForTesting
+  public TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = Strings.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;

@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCollectionTypeUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -37,8 +38,11 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
 
   @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, PsiElement afterThis) throws IncorrectOperationException {
-    checkPyExpression(psiElement);
     checkPyExpression(afterThis);
+    if (psiElement.getNode().getElementType() == PyTokenTypes.COMMA) {
+      return super.addAfter(psiElement, afterThis);
+    }
+    checkPyExpression(psiElement);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
   }
 

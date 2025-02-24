@@ -201,8 +201,7 @@ public final class JavaBuilderUtil {
     if (isDepGraphEnabled() && graphConfig != null) {
       NodeSourcePathMapper mapper = graphConfig.getPathMapper();
 
-      ModulesBasedFileFilter mbf = new ModulesBasedFileFilter(context, chunk);
-      boolean incremental = LIBRARIES_STATE_UPDATER_KEY.getOrCreate(context, LibraryDependenciesUpdater::new).update(context, chunk, src -> mbf.belongsToCurrentTargetChunk(mapper.toPath(src).toFile()));
+      boolean incremental = LIBRARIES_STATE_UPDATER_KEY.getOrCreate(context, LibraryDependenciesUpdater::new).update(context, chunk);
       if (!incremental) {
         // for now conservative approach; no reaction
         LOG.warn("Libraries update for " + chunk.getPresentableShortName() + " returned non-incremental exitcode");

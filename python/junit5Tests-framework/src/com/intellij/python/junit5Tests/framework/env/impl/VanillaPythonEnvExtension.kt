@@ -8,7 +8,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.resolvePythonHome
 import java.nio.file.Path
 
 /**
@@ -28,7 +30,7 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
   }
 
   override fun onEnvFound(env: PythonBinary) {
-    val poetry = if (SystemInfoRt.isWindows) env.parent.resolve("Scripts/poetry.exe") else env.resolveSibling("poetry")
+    val poetry = env.resolvePythonHome().resolvePythonTool("poetry")
     if (poetry !in checkedPoetries) {
       val output = CapturingProcessHandler(GeneralCommandLine(poetry.toString(), "--version")).runProcess(60_000, true)
       assert(output.exitCode == 0) { "$poetry seems to be broken, output: $output. For Windows check `fix_path.cmd`" }
@@ -37,5 +39,11 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
     }
     // There is no API that accepts path to poetry: only this global object is used
     PropertiesComponent.getInstance().poetryPath = poetry.toString()
+
+    val uv = env.resolvePythonHome().resolvePythonTool("uv")
+    PropertiesComponent.getInstance().setValue(
+      "PyCharm.Uv.Path",
+      uv.toString()
+    )
   }
 }

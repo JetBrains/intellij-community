@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -190,10 +190,10 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
       myFileFilterPanel = new FileFilterPanel();
       myFileFilterPanel.init(getOptions());
       myInitialAnalysisScope = initialAnalysisScope;
+      super.init();
 
       //don't show if called for regexp inspection which makes no sense without injection
       setShowInspectInjectedCode(!(Language.findLanguageByID(toolWrapper.getLanguage()) instanceof InjectableLanguage));
-      super.init();
     }
 
     @Override

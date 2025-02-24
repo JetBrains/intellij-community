@@ -2,6 +2,9 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
+import com.intellij.java.codeserver.core.JpmsModuleInfo;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -12,9 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,6 +229,106 @@ final class ModuleChecker {
                        ? JavaErrorKinds.REFERENCE_PENDING.create(refElement)
                        : JavaErrorKinds.MODULE_NOT_FOUND.create(refElement));
       case 1 -> myVisitor.report(JavaErrorKinds.MODULE_NOT_ON_PATH.create(refElement));
-      default -> {}
+      default -> {
+        // ambiguous module is reported as warning
+      }
     }
-  }}
+  }
+
+  void checkServiceImplementations(@NotNull PsiProvidesStatement statement) {
+    PsiReferenceList implRefList = statement.getImplementationList();
+    if (implRefList == null) return;
+
+    PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
+    PsiElement intTarget = intRef != null ? intRef.resolve() : null;
+
+    Set<String> filter = new HashSet<>();
+    for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
+      String refText = implRef.getQualifiedName();
+      if (!filter.add(refText)) {
+        myVisitor.report(JavaErrorKinds.MODULE_DUPLICATE_IMPLEMENTATION.create(implRef));
+        continue;
+      }
+
+      if (!(intTarget instanceof PsiClass psiClass)) continue;
+
+      PsiElement implTarget = implRef.resolve();
+      if (implTarget instanceof PsiClass implClass) {
+        Module fileModule = ModuleUtilCore.findModuleForFile(myVisitor.file());
+        Module implModule = ModuleUtilCore.findModuleForFile(implClass.getContainingFile());
+        if (fileModule != implModule && !JavaMultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(implModule, fileModule)) {
+          myVisitor.report(JavaErrorKinds.MODULE_SERVICE_ALIEN.create(implRef));
+        }
+
+        PsiMethod provider = JavaServiceProviderUtil.findServiceProviderMethod(implClass);
+        if (provider != null) {
+          PsiType type = provider.getReturnType();
+          PsiClass typeClass = type instanceof PsiClassType classType ? classType.resolve() : null;
+          if (!InheritanceUtil.isInheritorOrSelf(typeClass, psiClass, true)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_PROVIDER_TYPE.create(implRef, implClass));
+          }
+        }
+        else if (InheritanceUtil.isInheritorOrSelf(implClass, psiClass, true)) {
+          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_ABSTRACT.create(implRef, implClass));
+          }
+          else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_INNER.create(implRef, implClass));
+          }
+          else if (!PsiUtil.hasDefaultConstructor(implClass)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_NO_CONSTRUCTOR.create(implRef, implClass));
+          }
+        }
+        else {
+          myVisitor.report(JavaErrorKinds.MODULE_SERVICE_IMPLEMENTATION_TYPE.create(
+            implRef, new JavaErrorKinds.SuperclassSubclassContext(psiClass, implClass)));
+        }
+      }
+    }
+  }
+
+  void checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
+    if (statement.getRole() == PsiPackageAccessibilityStatement.Role.OPENS) return;
+    PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
+    if (refElement == null) return;
+    JavaPsiModuleUtil.PackageReferenceState state = JavaPsiModuleUtil.checkPackageReference(statement);
+    if (state == JavaPsiModuleUtil.PackageReferenceState.VALID) return;
+    var kind = state == JavaPsiModuleUtil.PackageReferenceState.PACKAGE_NOT_FOUND
+               ? JavaErrorKinds.MODULE_REFERENCE_PACKAGE_NOT_FOUND
+               : JavaErrorKinds.MODULE_REFERENCE_PACKAGE_EMPTY;
+    myVisitor.report(kind.create(statement));
+  }
+  
+  JavaErrorKind.Parameterized<PsiElement, JpmsModuleAccessInfo> accessError(@NotNull JpmsModuleAccessInfo.JpmsModuleAccessProblem problem) {
+    return switch (problem) {
+      case FROM_NAMED -> JavaErrorKinds.MODULE_ACCESS_FROM_NAMED;
+      case FROM_UNNAMED -> JavaErrorKinds.MODULE_ACCESS_FROM_UNNAMED;
+      case TO_UNNAMED -> JavaErrorKinds.MODULE_ACCESS_TO_UNNAMED;
+      case PACKAGE_BAD_NAME -> JavaErrorKinds.MODULE_ACCESS_PACKAGE_BAD_NAME;
+      case BAD_NAME -> JavaErrorKinds.MODULE_ACCESS_BAD_NAME;
+      case PACKAGE_NOT_IN_GRAPH -> JavaErrorKinds.MODULE_ACCESS_PACKAGE_NOT_IN_GRAPH;
+      case NOT_IN_GRAPH -> JavaErrorKinds.MODULE_ACCESS_NOT_IN_GRAPH;
+      case PACKAGE_DOES_NOT_READ -> JavaErrorKinds.MODULE_ACCESS_PACKAGE_DOES_NOT_READ;
+      case DOES_NOT_READ -> JavaErrorKinds.MODULE_ACCESS_DOES_NOT_READ;
+      case JPS_DEPENDENCY_PROBLEM -> JavaErrorKinds.MODULE_ACCESS_JPS_DEPENDENCY_PROBLEM;
+    };
+  }
+
+  void checkModuleReference(@NotNull PsiImportModuleStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getModuleReference();
+    if (refElement == null) return;
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (ref == null) return;
+    PsiJavaModule target = ref.resolve();
+    if (target == null) {
+      reportUnresolvedJavaModule(refElement);
+      return;
+    }
+    JpmsModuleAccessInfo moduleAccess = new JpmsModuleInfo.TargetModuleInfo(target, "").accessAt(myVisitor.file().getOriginalFile());
+    JpmsModuleAccessInfo.JpmsModuleAccessProblem problem = moduleAccess.checkModuleAccess(statement);
+    if (problem != null) {
+      myVisitor.report(accessError(problem).create(statement, moduleAccess));
+    }
+  }
+
+}

@@ -15,7 +15,7 @@ import javax.swing.*;
  * <p>Describes a filetype.</p>
  *
  * <p>Must be registered via {@code com.intellij.fileType} extension point.
- * If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
+ * If file type depends on a given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
  * can be used for non-static mapping.</p>
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
@@ -50,7 +50,7 @@ public interface FileType {
   /**
    * Returns the icon used for showing files of the type, or {@code null} if no icon should be shown.
    */
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Returns {@code true} if files of the specified type contain binary data, {@code false} if the file is plain text.
@@ -75,9 +75,6 @@ public interface FileType {
    */
   default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
-    // if (isBinary()) {
-    //   throw new UnsupportedOperationException();
-    // }
     return null;
   }
 }

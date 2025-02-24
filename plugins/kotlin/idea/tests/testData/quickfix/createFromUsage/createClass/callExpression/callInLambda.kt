@@ -10,6 +10,7 @@
 // K2_ACTIONS_LIST: Specify explicit lambda signature
 // K2_ACTIONS_LIST: Create function 'Foo'
 // K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
+// K2_ACTIONS_LIST: Move lambda argument into parentheses
 fun <T> run(f: () -> T) = f()
 
 fun test() {

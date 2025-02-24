@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.images.editor.paste
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
@@ -53,12 +53,12 @@ internal class MarkdownFileDropHandler : FileDropHandler {
   }
 
   private suspend fun handleDrop(project: Project, files: Collection<File>, editor: Editor): Boolean {
-    return writeAction {
-      if (editor.isDisposed) return@writeAction false
+    return edtWriteAction {
+      if (editor.isDisposed) return@edtWriteAction false
 
       val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (file == null || !file.language.isMarkdownLanguage()) {
-        return@writeAction false
+        return@edtWriteAction false
       }
 
       val content = Manager.buildTextContent(files.map { it.toPath() }.asSequence(), file)

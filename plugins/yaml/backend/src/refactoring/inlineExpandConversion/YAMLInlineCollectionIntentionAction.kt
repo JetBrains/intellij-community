@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -160,9 +160,9 @@ class YAMLInlineCollectionIntentionAction : PsiElementBaseIntentionAction(), Low
 }
 
 internal suspend fun <T> executeWriteAction(action: () -> T?): T? {
-  return writeAction {
+  return edtWriteAction {
     var x: T? = null
     executeCommand { x = action() }
-    return@writeAction x
+    return@edtWriteAction x
   }
 }

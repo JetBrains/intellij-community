@@ -1,6 +1,5 @@
 // PROBLEM: none
 // WITH_STDLIB
-// ERROR: Unresolved reference: SubclassOptInRequired
 
 @file:OptIn(UnstableApiA::class, UnstableApiB::class, ExperimentalSubclassOptIn::class)
 

@@ -19,7 +19,7 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
   abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
 
-  abstract suspend fun refreshCashes()
+  abstract suspend fun refreshCaches()
 
   abstract suspend fun initCaches()
 

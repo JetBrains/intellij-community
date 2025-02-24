@@ -2401,9 +2401,6 @@ f:org.jetbrains.jps.incremental.dependencies.LibraryDef
 - s:isLibraryPath(java.lang.String):Z
 - s:isLibraryPath(java.nio.file.Path):Z
 - s:isLibraryPath(org.jetbrains.jps.dependency.NodeSource):Z
-f:org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater
-- <init>():V
-- update(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk,java.util.function.Predicate):Z
 f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver
 - org.jetbrains.jps.incremental.TargetBuilder
 - sf:TARGET_TYPE_ID:java.lang.String

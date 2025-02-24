@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
+import com.intellij.cce.core.Session
 import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.metric.Metric
@@ -40,7 +41,10 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   /**
    * which metrics to calculate and show in reports
    */
-  fun getMetrics(): List<Metric>
+  fun getMetrics(sessions: List<Session>): List<Metric> = getMetrics()
+
+  fun getMetrics(): List<Metric> = emptyList()
+
 
   /**
    * additional steps to set up evaluation

@@ -1055,6 +1055,7 @@ f:com.intellij.openapi.application.CoroutinesKt
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadActionBlocking(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadAndWriteAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:edtWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEDT(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - sf:readAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:readActionBlocking(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -2048,7 +2049,6 @@ a:com.intellij.openapi.progress.Task
 - a:isModal():Z
 - notifyFinished():com.intellij.openapi.progress.Task$NotificationInfo
 - onCancel():V
-- onError(java.lang.Exception):V
 - onFinished():V
 - onSuccess():V
 - onThrowable(java.lang.Throwable):V
@@ -2591,6 +2591,7 @@ c:com.intellij.openapi.vfs.VfsUtilCore
 - s:inputStreamSkippingBOM(java.io.InputStream,com.intellij.openapi.vfs.VirtualFile):java.io.InputStream
 - s:isAncestor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:isAncestor(java.io.File,java.io.File,Z):Z
+- s:isAncestorOrSelf(java.lang.String,com.intellij.openapi.vfs.VirtualFile):Z
 - s:isBrokenLink(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isEqualOrAncestor(java.lang.String,java.lang.String):Z
 - s:isInvalidLink(com.intellij.openapi.vfs.VirtualFile):Z
@@ -2604,6 +2605,7 @@ c:com.intellij.openapi.vfs.VfsUtilCore
 - s:loadText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:loadText(com.intellij.openapi.vfs.VirtualFile,I):java.lang.String
 - s:outputStreamAddingBOM(java.io.OutputStream,com.intellij.openapi.vfs.VirtualFile):java.io.OutputStream
+- s:pathEqualsTo(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 - s:pathToUrl(java.lang.String):java.lang.String
 - s:processFilesRecursively(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):Z
 - s:saveText(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
@@ -2853,7 +2855,7 @@ c:com.intellij.openapi.vfs.VirtualFileVisitor$Option
 f:com.intellij.openapi.vfs.VirtualFileVisitor$Result
 - f:skipChildren:Z
 - f:skipToParent:com.intellij.openapi.vfs.VirtualFile
-pc:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
+c:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable):V
 com.intellij.openapi.vfs.VirtualFileWithId
@@ -5136,7 +5138,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - sf:skipTokens(kotlin.sequences.Sequence,com.intellij.psi.tree.TokenSet):kotlin.sequences.Sequence
-- sf:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
+- sf:startOffsetInAncestor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
 - sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.psi.util.PsiUtilCore
 - sf:NULL_PSI_ELEMENT:com.intellij.psi.PsiElement
@@ -5690,8 +5692,6 @@ f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertReadAccess():V
 - s:assertWriteAccess():V
 - s:assertWriteIntentReadAccess():V
-- s:isImplicitLockOnEDT():Z
-- s:setImplicitLockOnEDT(Z):V
 - s:softAssertBackgroundThread():V
 - s:softAssertEventDispatchThread():V
 - s:softAssertReadAccess():V

@@ -610,6 +610,8 @@ org.jdom.output.EscapeStrategy
 - a:shouldEscape(C):Z
 f:org.jdom.output.Format
 - java.lang.Cloneable
+- expandEmptyElements:Z
+- mode:org.jdom.output.Format$TextMode
 - clone():org.jdom.output.Format
 - s:compact(java.lang.String):java.lang.String
 - s:getCompactFormat():org.jdom.output.Format

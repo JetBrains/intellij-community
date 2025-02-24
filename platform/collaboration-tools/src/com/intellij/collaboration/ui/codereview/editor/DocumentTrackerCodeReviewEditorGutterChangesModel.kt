@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
  * Changes model which uses [DocumentTracker] to track and shift changes between review head and current document state
  */
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please use com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil.trackDocumentDiffSync")
 class DocumentTrackerCodeReviewEditorGutterChangesModel(
   parentCs: CoroutineScope,

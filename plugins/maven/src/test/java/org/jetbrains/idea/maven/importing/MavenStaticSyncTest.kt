@@ -578,7 +578,8 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertContentRootSources("project", "${System.getProperty("user.home")}/some/path", "")
+      val expectedValue = "${getFileSystemMount()}${System.getProperty("user.home")}/some/path"
+      assertContentRootSources("project", expectedValue, "")
     }
   }
 

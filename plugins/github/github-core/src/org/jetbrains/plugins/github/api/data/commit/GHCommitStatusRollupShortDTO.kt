@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data.commit
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
 
-@GraphQLFragment("/graphql/query/getRepositoryCommitStatusShort.graphql")
+@GraphQLFragment("/graphql/fragment/commitStatusRollupShort.graphql")
 data class GHCommitStatusRollupShortDTO(
   val state: GHCommitStatusContextState
 )

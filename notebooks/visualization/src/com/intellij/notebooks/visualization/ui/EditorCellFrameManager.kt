@@ -56,6 +56,11 @@ class EditorCellFrameManager(
   }
 
   private fun updateCellFrameShowMarkdown() {
+    if (view.isUnderDiff) {
+      // under diff, it is necessary to make the selection more visible with blue frame for md cells
+      updateCellFrameShowCode()
+      return
+    }
     when (isSelected || isHovered) {
       true -> redrawBorders(defaultFrameColor)
       else -> clearFrame()

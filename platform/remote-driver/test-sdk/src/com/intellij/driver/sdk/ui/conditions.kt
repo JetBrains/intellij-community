@@ -70,8 +70,6 @@ fun <T : UiComponent> T.should(message: String? = null,
   return this
 }
 
-val visible: UiComponent.() -> Boolean = { isVisible() }
-
 val enabled: UiComponent.() -> Boolean = { isEnabled() }
 
 val notEnabled: UiComponent.() -> Boolean = { !isEnabled() }

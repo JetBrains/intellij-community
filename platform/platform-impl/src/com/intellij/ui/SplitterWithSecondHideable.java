@@ -54,10 +54,6 @@ public abstract class SplitterWithSecondHideable {
     mySplitter.setProportion(1.0f);
   }
 
-  public void setText(@NlsContexts.Separator String value) {
-    myTitledSeparator.setText(value);
-  }
-
   public @NotNull Splitter getComponent() {
     return mySplitter;
   }
@@ -76,14 +72,6 @@ public abstract class SplitterWithSecondHideable {
 
   public void setInitialProportion() {
     myTitledSeparator.setInitialProportion();
-  }
-
-  public void on() {
-    myTitledSeparator.on();
-  }
-
-  public void off() {
-    myTitledSeparator.off();
   }
 
   public boolean isOn() {

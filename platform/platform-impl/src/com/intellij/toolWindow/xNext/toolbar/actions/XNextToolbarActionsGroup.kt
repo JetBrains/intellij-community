@@ -8,17 +8,23 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
-  private val arrayOf = arrayListOf<AnAction>(ActionManager.getInstance().getAction("SearchEverywhere"), ActionManager.getInstance().getAction("MiniAiChat.Toggle"))
+  private val actionList = arrayListOf<AnAction>()
 
   init {
+    ActionManager.getInstance().getAction("MiniAiChat.Toggle")?.let {
+      actionList.add(AnActionWrapper(it) )
+    }
+
+    actionList.add(Separator.create())
+
     ActionManager.getInstance().getAction("HideAllWindows")?.let {
-      arrayOf.add(object : AnActionWrapper(it) {
+      actionList.add(object : AnActionWrapper(it) {
         init {
-          templatePresentation.icon = AllIcons.General.FitContent
+          templatePresentation.icon = AllIcons.Toolwindows.ToolWindowDevMode
         }
       })
     }
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf.toTypedArray()
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = actionList.toTypedArray()
 }

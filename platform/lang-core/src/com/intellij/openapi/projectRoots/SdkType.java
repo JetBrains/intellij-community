@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -8,13 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,9 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -37,12 +38,9 @@ import java.util.List;
  */
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
+  private static final Logger LOG = Logger.getInstance(SdkType.class);
 
   private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
-
-  public static final Key<String> HOMEPATH_KEY = new Key<>("sdk.homepath");
-  public static final Key<String> VERSION_KEY = new Key<>("sdk.version");
-  public static final Key<Boolean> IS_SYMLINK_KEY = new Key<>("sdk.is.symlink");
 
   private final String myName;
 
@@ -96,6 +94,7 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * Returns a list of all valid SDKs found on the host where {@code project} is located.
+   * If {@code project} is null, returns a list of all valid SDKs found on the host.
    * <p/>
    * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
    * <p/>
@@ -108,16 +107,46 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
+   * Contains information about a detected SDK.
+   * @param isSymlink true iff the SDK path contains a symlink
+   */
+  public record SdkEntry(@NotNull String homePath, @NotNull String versionString, boolean isSymlink) {
+    public SdkEntry(@NotNull String homePath, @NotNull String versionString) {
+      this(homePath, versionString, isSymlink(homePath));
+    }
+
+    private static boolean isSymlink(@NotNull String path) {
+      try {
+        final var p = Paths.get(path);
+        return !p.toRealPath().equals(p);
+      }
+      catch (IOException e) {
+        return false;
+      }
+    }
+  }
+
+  /**
    * Returns a list of all valid SDKs found on the host where {@code project} is located, with additional information.
    * Use {@link #suggestHomePaths(Project)} to only collect paths.
    */
-  public @Unmodifiable @NotNull Collection<KeyFMap> collectSdkDetails(@Nullable Project project) {
-    return ContainerUtil.map(suggestHomePaths(project), homePath -> {
-      var info = KeyFMap.EMPTY_MAP
-        .plus(HOMEPATH_KEY, homePath);
-      var version = getVersionString(homePath);
-      if (version != null) info = info.plus(VERSION_KEY, version);
-      return info;
+  public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
+    return ContainerUtil.mapNotNull(suggestHomePaths(project), homePath -> {
+      final String versionString;
+
+      try {
+        versionString = getVersionString(homePath);
+      }
+      catch (Exception e) {
+        LOG.warn("Failed to get the detected SDK version for " + this + " at " + homePath + ". " + e.getMessage(), e);
+        return null;
+      }
+      if (versionString == null) {
+        LOG.warn("No version is returned for detected SDK " + this + " at " + homePath);
+        return null;
+      }
+
+      return new SdkEntry(homePath, versionString);
     });
   }
 

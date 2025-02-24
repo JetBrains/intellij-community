@@ -68,7 +68,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun getModificationCount(): Long =
     PsiModificationTracker.getInstance(project).modificationCount
 
-  final override fun equals(other: Any?): Boolean =
+  override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
         && other is WebSymbolsScopeWithCache<*, *>
@@ -78,7 +78,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
         && other.project == project
         && other.dataHolder == dataHolder)
 
-  final override fun hashCode(): Int =
+  override fun hashCode(): Int =
     Objects.hash(framework, project, dataHolder, key)
 
   private fun getNamesProviderToMapCache(): NamesProviderToMapCache {

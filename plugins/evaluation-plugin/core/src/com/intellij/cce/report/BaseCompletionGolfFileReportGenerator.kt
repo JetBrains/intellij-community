@@ -63,24 +63,6 @@ abstract class BaseCompletionGolfFileReportGenerator(
             label("labelText") { +"Filters check " }
             span("stats-absent") { +"skipped" }
           }
-          div("wrong-filters") {
-            label("labelText") { +"Highlight wrong filters: " }
-            select {
-              id = "wrong-filters"
-              option {
-                value = "no"
-                label = "no"
-              }
-              option {
-                value = "raw-filter"
-                label = "raw"
-              }
-              option {
-                value = "analyzed-filter"
-                label = "analyzed"
-              }
-            }
-          }
           div("model-skipped") {
             label("labelText") { +"Highlight skipped by model: " }
             select {

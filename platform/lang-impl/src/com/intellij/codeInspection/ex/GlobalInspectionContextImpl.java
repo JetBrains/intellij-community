@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
@@ -538,7 +539,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
     DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
-    HighlightingSessionImpl.runInsideHighlightingSession(file, null, new ProperTextRange(file.getTextRange()), false, session -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, new ProperTextRange(file.getTextRange()), false, session -> {
       InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
         try {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =

@@ -59,19 +59,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   companion object {
     /**
-     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
+     * Waits until the element specified is found within the parent search context.
      *
      * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
      */
     fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
       findThisComponent(timeout)
-      return this
-    }
-
-    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is visible", timeout = timeout) {
-        component.isVisible()
-      }
       return this
     }
   }
@@ -308,16 +301,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return withComponent { it.isFocusOwner() }
   }
 
-  fun isVisible(): Boolean {
-    return withComponent { it.isVisible() }
-  }
-
   fun isEnabled(): Boolean {
     return withComponent { it.isEnabled() }
   }
 
   fun hasVisibleComponent(component: UiComponent): Boolean {
-    return hasComponent(component, Component::isVisible)
+    return hasComponent(component, Component::isShowing)
   }
 
   fun hasComponent(component: UiComponent, check: (Component) -> Boolean): Boolean {
@@ -341,68 +330,44 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   // Mouse
-  fun click(point: Point? = null, silent: Boolean = false) {
+  fun click(point: Point? = null) {
+    LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Click at $this: $point")
-      }
       withComponent { robot.click(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Click at '$this'")
-      }
       withComponent { robot.click(it) }
     }
   }
 
-  fun doubleClick(point: Point? = null, silent: Boolean = false) {
+  fun doubleClick(point: Point? = null) {
+    LOG.info("Double click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Double click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 2) }
     }
     else {
-      if (!silent) {
-        LOG.info("Double click at '$this'")
-      }
       withComponent { robot.doubleClick(it) }
     }
   }
 
-  fun rightClick(point: Point? = null, silent: Boolean = false) {
+  fun rightClick(point: Point? = null) {
+    LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Right click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.RIGHT, 1) }
     }
     else {
-      if (!silent) {
-        LOG.info("Right click at $this")
-      }
       withComponent { robot.rightClick(it) }
     }
   }
 
-  fun moveMouse(point: Point? = null, silent: Boolean = false) {
+  fun moveMouse(point: Point? = null) {
+    LOG.info("Move mouse to $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Move mouse to $this: $point")
-      }
       withComponent { robot.moveMouse(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Move mouse to $this")
-      }
       withComponent { robot.moveMouse(it) }
     }
-  }
-
-  fun hasFocus(): Boolean {
-    return withComponent { it.isFocusOwner() }
   }
 
   fun mousePressMoveRelease(from: Point, to: Point) {

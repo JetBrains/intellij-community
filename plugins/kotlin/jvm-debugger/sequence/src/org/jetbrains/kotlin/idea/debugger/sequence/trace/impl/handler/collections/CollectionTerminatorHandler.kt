@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.trace.TerminatorCallHandler
-import com.intellij.debugger.streams.trace.dsl.CodeBlock
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.core.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 
 class CollectionTerminatorHandler(
     private val call: TerminatorStreamCall,
@@ -41,7 +41,7 @@ class CollectionTerminatorHandler(
         var result: Expression = TextExpression(resultExpression)
         for (call in additionalCallsAfter) {
             val args = call.arguments.map { TextExpression(it.text) }.toTypedArray()
-            result = result.call(call.name, *args)
+            result = result.call(call.name + call.genericArguments, *args)
         }
 
         return result

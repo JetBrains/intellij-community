@@ -105,7 +105,7 @@ enum TestEnum
 {
     A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>), B(A);
     TestEnum(TestEnum other) {
-      <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
+      <error descr="Call to 'super' is not allowed in enum constructor">super(null, 0)</error>;
     }
 }
 

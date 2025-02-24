@@ -1,5 +1,6 @@
 // "Create extension property 'Int.foo'" "true"
 // WITH_STDLIB
+// K2_AFTER_ERROR: Extension property must have accessors or be abstract.
 
 class A<T>(val n: T)
 

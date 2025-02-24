@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
 import com.intellij.debugger.streams.psi.ChainDetector;
 import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.psi.PsiUtil;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;

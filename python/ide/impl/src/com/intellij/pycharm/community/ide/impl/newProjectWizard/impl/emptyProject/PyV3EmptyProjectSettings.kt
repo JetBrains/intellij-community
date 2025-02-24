@@ -2,7 +2,7 @@
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -18,7 +18,7 @@ class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV
 
   override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit, PyError> {
     if (!generateWelcomeScript) return Result.success(Unit)
-    val file = writeAction {
+    val file = edtWriteAction {
       PyWelcome.prepareFile(module.project, baseDir)
     }
     withContext(Dispatchers.EDT) {

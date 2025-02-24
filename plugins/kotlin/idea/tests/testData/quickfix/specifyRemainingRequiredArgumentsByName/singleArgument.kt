@@ -1,5 +1,6 @@
 // "Specify remaining required arguments by name" "false"
 // ERROR: No value passed for parameter 'a'
+// K2_AFTER_ERROR: No value passed for parameter 'a'.
 // WITH_STDLIB
 fun foo(a: Int) {}
 

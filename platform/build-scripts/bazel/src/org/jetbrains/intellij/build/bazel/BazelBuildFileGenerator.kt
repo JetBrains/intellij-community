@@ -277,11 +277,13 @@ internal class BazelBuildFileGenerator(
     return result
   }
 
+  @Suppress("DuplicatedCode")
   private fun BuildFile.generateBazelBuildFile(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList) {
     //todo testResources
     val module = moduleDescriptor.module
     val jvmTarget = getLanguageLevel(module)
-    val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget) ?: "@community//:k$jvmTarget".takeIf { jvmTarget != "17" }
+    val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget)
+                              ?: (if (jvmTarget == 17) null else "@community//:k$jvmTarget")
     val javacOptionsLabel = computeJavacOptions(module, jvmTarget)
 
     val resourceDependencies = mutableListOf<String>()
@@ -443,8 +445,8 @@ internal class BazelBuildFileGenerator(
     }
   }
 
-  private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: String): String? {
-    val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE[module.name] ?: return null
+  private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: Int): String? {
+    val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.name) ?: return null
     val exports = addExportsRegex.findAll(extraJavacOptions).map { it.groupValues[1] + "=ALL-UNNAMED" }.toList()
     if (exports.isEmpty()) {
       return null
@@ -455,7 +457,7 @@ internal class BazelBuildFileGenerator(
     target("kt_javac_options") {
       option("name", customJavacOptionsName)
       // release is not compatible with --add-exports (*** java)
-      require(jvmTarget == "17")
+      require(jvmTarget == 17)
       option("x_ep_disable_all_checks", true)
       option("warn", "off")
       option("add_exports", exports)
@@ -463,14 +465,14 @@ internal class BazelBuildFileGenerator(
     return ":$customJavacOptionsName"
   }
 
-  private fun getLanguageLevel(module: JpsModule): String {
+  private fun getLanguageLevel(module: JpsModule): Int {
     val languageLevel = javaExtensionService.getLanguageLevel(module)
     return when {
-      languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> "8"
-      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> "11"
-      languageLevel == LanguageLevel.JDK_17 -> "17"
+      languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> 8
+      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> 11
+      languageLevel == LanguageLevel.JDK_17 -> 17
       languageLevel != null -> error("Unsupported language level: $languageLevel")
-      else -> "17"
+      else -> 17
     }
   }
 }
@@ -627,7 +629,7 @@ private fun resolveRelativeToBazelBuildFileDirectory(childDir: Path, contentRoot
   return bazelBuildDir.relativize(childDir)
 }
 
-private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor, jvmTarget: String): String? {
+private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor, jvmTarget: Int): String? {
   val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.Companion.KIND) ?: return null
   val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments ?: return null
   // see create_kotlinc_options
@@ -639,6 +641,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   }
   if (mergedCompilerArguments.contextReceivers) {
     options.put("context_receivers", true)
+  }
+  if (mergedCompilerArguments.whenGuards) {
+    options.put("when_guards", true)
   }
   if (effectiveOptIn.isNotEmpty()) {
     options.put("opt_in", effectiveOptIn)
@@ -656,7 +661,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   }
   buildFile.target("create_kotlinc_options") {
     option("name", kotlincOptionsName)
-    option("jvm_target", jvmTarget.toInt())
+    if (jvmTarget != 17) {
+      option("jvm_target", jvmTarget)
+    }
     for ((name, value) in options.entries.sortedBy { it.key }) {
       option(name, value)
     }

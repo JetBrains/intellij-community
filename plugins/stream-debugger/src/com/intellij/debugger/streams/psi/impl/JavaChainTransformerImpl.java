@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.core.wrapper.CallArgument;
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall;
+import com.intellij.debugger.streams.core.wrapper.impl.*;
 import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.CallArgument;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
-import com.intellij.debugger.streams.wrapper.impl.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -64,7 +64,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
       final String name = resolveMethodName(callExpression);
       final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
+      result.add(new IntermediateStreamCallImpl(name, "", args, typeBefore, type, callExpression.getTextRange()));
       typeBefore = type;
     }
 
@@ -75,7 +75,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
+    return new TerminatorStreamCallImpl(name, "", args, typeBefore, resultType, expression.getTextRange(), resultType.equals(JavaTypes.INSTANCE.getVOID()));
   }
 
   private static @NotNull List<CallArgument> resolveArguments(@NotNull PsiMethodCallExpression methodCall) {

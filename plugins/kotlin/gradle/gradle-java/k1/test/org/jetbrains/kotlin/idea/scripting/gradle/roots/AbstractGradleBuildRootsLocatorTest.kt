@@ -7,10 +7,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptConfigurationInputs
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.*
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
+import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {

@@ -109,9 +109,9 @@ public fun TabContentScope.SimpleTabContent(
 
 @Composable
 internal fun TabImpl(
-    modifier: Modifier = Modifier,
     isActive: Boolean,
     tabData: TabData,
+    modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val tabStyle =

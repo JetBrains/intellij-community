@@ -302,8 +302,8 @@ class PluginDescriptorTest {
 
   @Test
   fun `use first plugin if both versions the same`() {
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDirPath.resolve("foo_another"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_another"))
 
     val pluginSet = PluginSetTestBuilder(pluginDirPath).build()
     val plugins = pluginSet.enabledPlugins

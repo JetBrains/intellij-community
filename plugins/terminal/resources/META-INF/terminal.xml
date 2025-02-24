@@ -49,19 +49,12 @@
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
-    <actionPromoter implementation="org.jetbrains.plugins.terminal.action.SendShortcutToTerminalActionPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
     <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretUpHandler"
                          id="terminalUp" order="first"/>
     <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindNextHandler"
-                         id="terminalFindNext" order="first"/>
-    <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindPreviousHandler"
-                         id="terminalFindPrevious" order="first"/>
-    <editorActionHandler action="Replace" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalReplaceHandler"
-                         id="terminalReplace" order="first"/>
     <editorActionHandler action="Terminal.SearchInCommandHistory"
                          implementationClass="org.jetbrains.plugins.terminal.block.history.CommandSearchSelectNextHandler"
                          id="terminalCommandSearchSelectNext" order="first"/>
@@ -91,24 +84,18 @@
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
     <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
 
-    <lang.parserDefinition language="TerminalOutput"
-                           implementationClass="org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputParserDefinition"/>
-    <lang.lineWrapStrategy language="TerminalOutput"
-                           implementationClass="org.jetbrains.plugins.terminal.block.reworked.lang.TerminalLineWrapPositionStrategy"/>
-
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
+
+    <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CancelSelection" />
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CloseSearch" />
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.SelectEditor" />
 
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
@@ -134,8 +121,8 @@
                     interface="org.jetbrains.plugins.terminal.block.history.TerminalCommandHistoryProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
                     interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
-                    interface="org.jetbrains.plugins.terminal.action.TerminalEscapeHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
 
   <projectListeners>

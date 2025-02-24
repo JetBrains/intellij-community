@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -31,10 +33,13 @@ class KotlinScriptSearchScope(project: Project, baseScope: GlobalSearchScope) : 
 
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
-    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
+    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? =
+        getResolveScope(file, defaultContext(), project)
+
+    override fun getResolveScope(file: VirtualFile, context: CodeInsightContext, project: Project): GlobalSearchScope? {
         if (!file.isKotlinFileType()) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
+        val ktFile = PsiManager.getInstance(project).findFile(file, context) as? KtFile ?: return null
         val scriptDefinition = ktFile.findScriptDefinition() ?: return null
 
         // This is a workaround for completion in REPL to provide module dependencies

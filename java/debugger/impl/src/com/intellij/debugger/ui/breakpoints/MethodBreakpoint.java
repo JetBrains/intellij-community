@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -96,7 +96,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
     SourcePosition sourcePosition = getSourcePosition();
     if (sourcePosition != null) {
-      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      MethodDescriptor descriptor = computeMethodDescriptor(sourcePosition);
       if (descriptor != null) {
         setMethodName(descriptor.methodName);
         mySignature = descriptor.methodSignature;
@@ -105,10 +105,20 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
     }
-    PsiClass psiClass = getPsiClass();
-    if (psiClass != null) {
-      getProperties().myClassPattern = psiClass.getQualifiedName();
+    String classPattern = computeClassPattern();
+    if (classPattern != null) {
+      getProperties().myClassPattern = classPattern;
     }
+  }
+
+  protected @Nullable String computeClassPattern() {
+    PsiClass psiClass = getPsiClass();
+    if (psiClass == null) return null;
+    return psiClass.getQualifiedName();
+  }
+
+  protected @Nullable MethodDescriptor computeMethodDescriptor(@NotNull SourcePosition sourcePosition) {
+    return getMethodDescriptor(myProject, sourcePosition);
   }
 
   private static void createRequestForSubClasses(@NotNull MethodBreakpointBase breakpoint,
@@ -201,10 +211,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     StreamEx<Method> methods = lambdaMethod != null
                                ? StreamEx.of(lambdaMethod)
                                : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
-    boolean found = false;
+    boolean scanSubClasses = false;
     for (Method original : methods) {
-      found = true;
-
       Method bridgeTarget = MethodBytecodeUtil.getBridgeTargetMethod(original, classesByName);
       Method method = bridgeTarget != null ? bridgeTarget : original;
 
@@ -213,7 +221,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         breakpoint.disableEmulation();
         return;
       }
+      if (!method.isStatic() && !method.isPrivate() && !method.isFinal()) {
+        scanSubClasses = true;
+      }
       if (method.isAbstract()) {
+        scanSubClasses = true;
         continue;
       }
 
@@ -248,7 +260,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         MethodBytecodeUtil.visit(method, new BytecodeVisitor(), false);
       }
     }
-    if (base && found) {
+    if (base && scanSubClasses) {
       // desired class found - now also track all new classes
       createRequestForSubClasses(breakpoint, debugProcess, classType);
     }

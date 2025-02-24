@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
@@ -80,7 +80,9 @@ internal fun generateDeps(
 
       if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
           dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
+          dependencyModuleName == "intellij.android.adt.ui.compose" ||
           dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
+          dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
           dependencyModuleName == "intellij.platform.jewel.foundation") {
         plugins.add("@lib//:compose-plugin")
       }
@@ -212,10 +214,9 @@ internal fun generateDeps(
 
       val libName = element.libraryReference.libraryName
       if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
-          libName == "jetbrains.kotlin.compose.compiler.plugin") {
+          libName == "jetbrains.kotlin.compose.compiler.plugin" ||
+          libName == "jetbrains-compose-ui-test-junit4-desktop") {
         plugins.add("@lib//:compose-plugin")
-        // poko fails with "java.lang.NoSuchMethodError: 'org.jetbrains.kotlin.com.intellij.psi.PsiElement org.jetbrains.kotlin.js.resolve.diagnostics.SourceLocationUtilsKt.findPsi(org.jetbrains.kotlin.descriptors.DeclarationDescriptor)'"
-        //plugins.add("@lib//:poko-plugin")
       }
     }
   }

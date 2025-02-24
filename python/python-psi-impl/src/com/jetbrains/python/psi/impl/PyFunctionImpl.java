@@ -22,10 +22,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.PyRaiseInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -389,6 +386,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return ControlFlowUtil.Operation.CONTINUE;
       }
       if (instruction instanceof PyRaiseInstruction) {
+        return ControlFlowUtil.Operation.CONTINUE;
+      }
+      if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
         return ControlFlowUtil.Operation.CONTINUE;
       }
       final PsiElement element = instruction.getElement();

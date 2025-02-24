@@ -9,6 +9,7 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,6 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
+import java.nio.file.Path
 
 internal val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
 private const val JAVAC_ID = "javac"
@@ -115,7 +117,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
                                ideCompilerConfiguration: CompilerConfigurationImpl,
                                defaultCompilerExtension: MavenCompilerExtension?) {
     mavenProjectWithModule.forEach { (mavenProject, modules) ->
-      val compoundModule = modules.firstOrNull { getMavenModuleType(project, it.name) == StandardMavenModuleType.COMPOUND_MODULE }
+      val compoundModule = modules.firstOrNull { it.getMavenModuleType() == StandardMavenModuleType.COMPOUND_MODULE }
       modules.forEach { module ->
         applyCompilerExtensionConfiguration(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
         configureTargetLevel(mavenProject, module, compoundModule, ideCompilerConfiguration, defaultCompilerExtension)
@@ -129,8 +131,8 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
                                                   module: Module,
                                                   ideCompilerConfiguration: CompilerConfigurationImpl,
                                                   defaultCompilerExtension: MavenCompilerExtension?) {
-    val isTestModule = isTestModule(module.project, module.name)
-    val mavenConfiguration = collectRawMavenData(mavenProject, isTestModule)
+    val isTestModule = isTestModule(module)
+    val mavenConfiguration = collectRawMavenData(module, mavenProject, isTestModule)
     val projectCompilerId = if (mavenProject.packaging == "pom") {
       null
     }
@@ -146,7 +148,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
 
       val compilerOptions = compilerExtension.getCompiler(module.project)?.options
       if (applyThisExtension && !mavenConfiguration.isEmpty()) {
-        compilerExtension.configureOptions(compilerOptions, module, mavenProject, collectCompilerArgs(mavenConfiguration))
+        compilerExtension.configureOptions(compilerOptions, module, mavenProject, collectCompilerArgs(module, mavenProject, mavenConfiguration))
       }
       else {
         // cleanup obsolete options
@@ -157,7 +159,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     }
   }
 
-  private fun collectRawMavenData(mavenProject: MavenProject, forTests: Boolean): MavenCompilerConfigurationRawData {
+  private fun collectRawMavenData(module: Module, mavenProject: MavenProject, forTests: Boolean): MavenCompilerConfigurationRawData {
     val pluginConfig = getConfig(mavenProject)
     val propertyConfig = mavenProject.properties[MAVEN_COMPILER_PARAMETERS]
 
@@ -167,7 +169,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
       }
       else {
         mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.getCompileExecutionConfigurations()
-      }?.firstOrNull()
+      }.findApplicable(module, mavenProject)
     return MavenCompilerConfigurationRawData(forTests, propertyConfig?.toString(), pluginConfig, executionConfig)
   }
 
@@ -181,8 +183,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     MavenLog.LOG.debug("Bytecode target level $targetLevel in module $moduleName, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
       var level: LanguageLevel? = null
-      val project = module.project
-      val type = getMavenModuleType(project, moduleName)
+      val type = module.getMavenModuleType()
       if (type == StandardMavenModuleType.TEST_ONLY) {
         level = MavenImportUtil.getTestTargetLanguageLevel(mavenProject)
       }
@@ -199,7 +200,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
       if (level == null) {
         level = MavenImportUtil.getDefaultLevel(mavenProject)
       }
-      level = MavenImportUtil.adjustLevelAndNotify(project, level)
+      level = MavenImportUtil.adjustLevelAndNotify(module.project, level)
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!
       targetLevel = level.toJavaVersion().toString()
     }
@@ -254,7 +255,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     return getResolvedText(it.textTrim)
   }
 
-  private fun collectCompilerArgs(configData: MavenCompilerConfigurationRawData): List<String> {
+  private fun collectCompilerArgs(module: Module, mavenProject: MavenProject, configData: MavenCompilerConfigurationRawData): List<String> {
     val result = LinkedHashSet<String>()
     configData.propertyCompilerParameters?.let {
       if (it.toBoolean()) {
@@ -284,6 +285,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
 
     return result.toList()
   }
+
 
   private fun collectCompilerArgs(element: Element): List<String> {
     val result = ArrayList<String>()
@@ -353,9 +355,36 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     return result
   }
 
-  private fun isTestModule(project: Project, moduleName: String): Boolean {
-    val type = getMavenModuleType(project, moduleName)
+  private fun isTestModule(module: Module): Boolean {
+    val type = module.getMavenModuleType()
     return type == StandardMavenModuleType.TEST_ONLY
+  }
+}
+
+private fun getSourceRoots(module: Module): List<Path> {
+  return ModuleRootManager.getInstance(module).sourceRoots
+    .map { it.toNioPath() }
+}
+
+private fun List<Element>?.findApplicable(module: Module, mavenProject: MavenProject): Element? {
+  if (this == null || isEmpty()) return null
+  if (size == 1) {
+    return firstOrNull()
+  }
+  else {
+    val type = module.getMavenModuleType()
+    return when (type) {
+      StandardMavenModuleType.AGGREGATOR -> firstOrNull()
+      StandardMavenModuleType.SINGLE_MODULE -> firstOrNull()
+      StandardMavenModuleType.COMPOUND_MODULE -> firstOrNull()
+      StandardMavenModuleType.MAIN_ONLY -> this.firstOrNull { it.getChild("compileSourceRoots") == null }
+      StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> firstOrNull { el ->
+        val sourceRoots = getSourceRoots(module)
+        MavenJDOMUtil.findChildrenValuesByPath(el, "compileSourceRoots", "compileSourceRoot")
+          .any { it in sourceRoots.map { it.toString() } }
+      }
+      StandardMavenModuleType.TEST_ONLY -> firstOrNull()
+    }
   }
 }
 

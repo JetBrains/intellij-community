@@ -40,6 +40,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.gradle.java.maven",
   "intellij.gradle.analysis",
   "intellij.vcs.git",
+  "intellij.vcs.git.commit.modal",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
   "intellij.groovy",
@@ -51,6 +52,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.java.decompiler",
   "intellij.eclipse",
   "intellij.platform.langInjection",
+  "intellij.debugger.streams.core",
   "intellij.java.debugger.streams",
   "intellij.completionMlRanking",
   "intellij.completionMlRankingModels",
@@ -136,6 +138,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
       for (moduleName in arrayOf(
         "intellij.java.testFramework",
+        "intellij.java.testFramework.shared",
         "intellij.platform.debugger.testFramework",
         "intellij.platform.uast.testFramework",
       )) {

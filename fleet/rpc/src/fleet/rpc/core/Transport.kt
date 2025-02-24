@@ -15,8 +15,10 @@ import kotlin.time.TimeSource
 
 private val logger = logger<Transport<*>>()
 
-class Transport<T>(val outgoing: SendChannel<T>,
-                   val incoming: ReceiveChannel<T>)
+class Transport<T>(
+  val outgoing: SendChannel<T>,
+  val incoming: ReceiveChannel<T>,
+)
 
 fun interface FleetTransportFactory {
   /*
@@ -24,9 +26,19 @@ fun interface FleetTransportFactory {
    * If the connection isn't possible, rethrow the cause as [TransportDisconnectedException].
    * When the underlying transport is broken, e.g. a socket is closed, both channels should be closed with [TransportDisconnectedException]
    */
-  suspend fun connect(transportStats: MutableStateFlow<TransportStats>?,
-                      body: suspend CoroutineScope.(Transport<TransportMessage>) -> Unit)
+  suspend fun connect(
+    transportStats: MutableStateFlow<TransportStats>?,
+    body: suspend CoroutineScope.(Transport<TransportMessage>) -> Unit,
+  )
 }
+
+/**
+ * Use this function when you want to re-create your factory on each connection attempt.
+ */
+fun dynamicTransportFactory(f: suspend () -> FleetTransportFactory): FleetTransportFactory =
+  FleetTransportFactory { socketStats, body ->
+    f().connect(socketStats, body)
+  }
 
 enum class DebugConnectionState {
   Connect,

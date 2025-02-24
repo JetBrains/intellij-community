@@ -10,7 +10,10 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.Label
+import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -65,16 +68,6 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
     }
   }
   return PropertyBinding(prop.getter, prop.setter)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use MutableProperty and Kotlin UI DSL 2", level = DeprecationLevel.HIDDEN)
-fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
-  return PropertyBinding({ get() }, { set(it!!) })
-}
-
-private fun <T> PropertyBinding<T>.intToNullable(): PropertyBinding<T?> {
-  return PropertyBinding({ get() }, { set(it!!) })
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -134,19 +127,6 @@ interface CellBuilder<out T : JComponent> {
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun <V> withBinding(
-    componentGet: (T) -> V,
-    componentSet: (T, V) -> Unit,
-    modelBinding: PropertyBinding<V>
-  ): CellBuilder<T> {
-    onApply { modelBinding.set(componentGet(component)) }
-    onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { componentGet(component) != modelBinding.get() }
-    return this
-  }
-
-  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun <V> withBindingInt(
@@ -159,16 +139,6 @@ interface CellBuilder<out T : JComponent> {
     onIsModified { componentGet(component) != modelBinding.get() }
     return this
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> {
-  return also { task(component) }
 }
 
 private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Unit): CellBuilder<T> {
@@ -180,12 +150,6 @@ private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Un
 fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
   return withBindingInt(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
-
-@get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-@get:ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-val CellBuilder<AbstractButton>.selected: ComponentPredicate
-  get() = component.selected
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
@@ -231,13 +195,6 @@ abstract class Cell : BaseBuilder {
            style: UIUtil.ComponentStyle? = null,
            action: () -> Unit): CellBuilder<JComponent> {
     val result = Link(text, style, action)
-    return component(result)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun browserLink(text: @LinkLabel String, url: String): CellBuilder<JComponent> {
-    val result = BrowserLink(text, url)
     return component(result)
   }
 
@@ -378,17 +335,5 @@ class InnerCell(val cell: Cell) : Cell() {
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
-  }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer instead", level = DeprecationLevel.HIDDEN)
-fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): SimpleListCellRenderer<T?> {
-  return object : SimpleListCellRenderer<T?>() {
-    override fun customize(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      if (value != null) {
-        renderer(this, value, index, selected)
-      }
-    }
   }
 }

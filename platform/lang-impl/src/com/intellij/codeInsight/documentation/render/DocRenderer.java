@@ -415,7 +415,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
-        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
         JBHtmlPaneConfiguration.builder()
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
           .customStyleSheetProvider(bg -> getStyleSheet(editor))

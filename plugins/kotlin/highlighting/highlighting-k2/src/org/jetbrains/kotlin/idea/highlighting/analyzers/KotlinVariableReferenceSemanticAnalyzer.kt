@@ -90,10 +90,31 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         symbol: KaKotlinPropertySymbol,
         expression: KtSimpleNameExpression
     ): List<HighlightInfo.Builder> {
-        val result = mutableListOf<HighlightInfo.Builder>()
-        if (!symbol.isVal) {
-            highlightName(expression, MUTABLE_VARIABLE)?.let { result.add(it) }
+        val extHighlightInfoType = getHighlightingInfoTypeForPropertyCallFromExtension(expression)
+        if (extHighlightInfoType != null) return listOf(extHighlightInfoType)
+
+        return getDefaultHighlightingInfoForPropertyCall(symbol, expression)
+    }
+
+    private fun getHighlightingInfoTypeForPropertyCallFromExtension(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
+        val highlightInfoType = with(session) {
+            val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return@with null
+            getHighlightInfoTypeForCallFromExtension(expression, call)
         }
+
+        return highlightInfoType?.let { infoType -> highlightName(expression, infoType) }
+    }
+
+    private fun getDefaultHighlightingInfoForPropertyCall(
+        symbol: KaKotlinPropertySymbol,
+        expression: KtSimpleNameExpression
+    ): List<HighlightInfo.Builder> {
+        val results = mutableListOf<HighlightInfo.Builder>()
+
+        if (!symbol.isVal) {
+            results.addIfNotNull(highlightName(expression, MUTABLE_VARIABLE))
+        }
+
         val hasExplicitGetterOrSetter = symbol.getter?.hasBody == true || symbol.setter?.hasBody == true
         val color = when {
             symbol.isExtension -> EXTENSION_PROPERTY
@@ -107,17 +128,9 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
                 else -> INSTANCE_PROPERTY
             }
         }
-        (expression.parent as? KtDotQualifiedExpression)?.let { dotQualifiedExpression ->
-            if (dotQualifiedExpression.selectorExpression == expression) {
-                with(session) {
-                    val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return@with
-                    val highlightInfoType = getHighlightInfoTypeForCallFromExtension(expression, call) ?: return@with
-                    highlightName(expression, highlightInfoType)?.let { result.add(it) }
-                }
-            }
-        }
-        highlightName(expression, color)?.let { result.add(it) }
-        return result
+        results.addIfNotNull(highlightName(expression, color))
+
+        return results
     }
 
     private fun highlightBackingField(symbol: KaBackingFieldSymbol, expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {

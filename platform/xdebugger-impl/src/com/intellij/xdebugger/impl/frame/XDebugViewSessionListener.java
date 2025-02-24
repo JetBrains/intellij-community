@@ -3,18 +3,25 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
-  private final XDebugSession mySession;
+  private final XDebugSessionProxy mySession;
 
-  private XDebugViewSessionListener(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
+  private XDebugViewSessionListener(@NotNull XDebugView debugView, @NotNull XDebugSessionProxy session) {
     myDebugView = debugView;
     mySession = session;
   }
 
   public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
+    XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session);
+    attach(debugView, proxy);
+  }
+
+  @ApiStatus.Internal
+  public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSessionProxy session) {
     session.addSessionListener(new XDebugViewSessionListener(debugView, session), debugView);
   }
 

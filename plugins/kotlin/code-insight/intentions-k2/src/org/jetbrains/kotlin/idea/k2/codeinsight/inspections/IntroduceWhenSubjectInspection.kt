@@ -26,10 +26,10 @@ internal class IntroduceWhenSubjectInspection :
         context: String,
     ): String = KotlinBundle.message("introduce.0.as.subject.0.when", context)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtWhenExpression,
         context: String,
-    ): Array<KotlinModCommandQuickFix<KtWhenExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtWhenExpression>() {
+    ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -50,7 +50,7 @@ internal class IntroduceWhenSubjectInspection :
 
         override fun getFamilyName(): String =
             KotlinBundle.message("introduce.when.subject")
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -12,6 +12,7 @@ import com.intellij.ide.ui.IdeUiService
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
-import com.intellij.psi.util.JavaPsiVariableUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle

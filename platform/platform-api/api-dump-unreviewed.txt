@@ -3311,13 +3311,10 @@ c:com.intellij.openapi.ui.DialogBuilder
 - title(java.lang.String):com.intellij.openapi.ui.DialogBuilder
 com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - a:getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-c:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
+f:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$CustomizableAction
-- p:myText:java.lang.String
 - <init>():V
-- getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- setText(java.lang.String):V
 c:com.intellij.openapi.ui.DialogBuilder$CloseDialogAction
 - com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
 - <init>():V
@@ -3336,13 +3333,10 @@ a:com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
 - pa:createAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
 - setDefault(Z):V
-c:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
+f:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$CustomizableAction
-- p:myText:java.lang.String
 - <init>():V
-- getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- setText(java.lang.String):V
 f:com.intellij.openapi.ui.DialogEarthquakeShaker
 - s:shake(java.awt.Window):V
 - startShake():V
@@ -3353,7 +3347,6 @@ f:com.intellij.openapi.ui.DialogPanel
 - f:apply():V
 - f:getApplyCallbacks():java.util.Map
 - f:getComponentValidateCallbacks():java.util.Map
-- f:getCustomValidationRequestors():java.util.Map
 - f:getPreferredFocusedComponent():javax.swing.JComponent
 - f:getResetCallbacks():java.util.Map
 - f:getValidateCallbacks():java.util.List
@@ -3368,7 +3361,6 @@ f:com.intellij.openapi.ui.DialogPanel
 - f:reset():V
 - f:setApplyCallbacks(java.util.Map):V
 - f:setComponentValidateCallbacks(java.util.Map):V
-- f:setCustomValidationRequestors(java.util.Map):V
 - f:setModifiedCallbacks(java.util.Map):V
 - f:setPreferredFocusedComponent(javax.swing.JComponent):V
 - f:setResetCallbacks(java.util.Map):V
@@ -3415,7 +3407,9 @@ a:com.intellij.openapi.ui.DialogWrapper
 - centerRelativeToParent():V
 - clickDefaultButton():V
 - f:close(I):V
+- f:close(I,com.intellij.openapi.ui.ExitActionType):V
 - f:close(I,Z):V
+- f:close(I,Z,com.intellij.openapi.ui.ExitActionType):V
 - p:continuousValidation():Z
 - p:createActions():javax.swing.Action[]
 - p:createButtonsPanel(java.util.List):javax.swing.JPanel
@@ -4351,6 +4345,7 @@ f:com.intellij.openapi.ui.cellvalidators.ValidationUtils
 c:com.intellij.openapi.ui.messages.MessageDialog
 - com.intellij.openapi.ui.DialogWrapper
 - p:myDefaultOptionIndex:I
+- p:myExitActionTypes:com.intellij.openapi.ui.ExitActionType[]
 - p:myFocusedOptionIndex:I
 - p:myIcon:javax.swing.Icon
 - p:myMessage:java.lang.String
@@ -4359,12 +4354,12 @@ c:com.intellij.openapi.ui.messages.MessageDialog
 - p:<init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String):V
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String):V
+- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,Z):V
 - <init>(com.intellij.openapi.project.Project,Z):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):V
 - p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String):V
-- p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String,java.lang.String):V
+- p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createIconPanel():javax.swing.JPanel
@@ -8545,18 +8540,6 @@ e:com.intellij.ui.dsl.gridLayout.HorizontalAlign
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.HorizontalAlign
 - s:values():com.intellij.ui.dsl.gridLayout.HorizontalAlign[]
-f:com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- <init>():V
-- <init>(I,I):V
-- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:copy(I,I):com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.HorizontalGaps,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- equals(java.lang.Object):Z
-- f:getLeft():I
-- f:getRight():I
-- hashCode():I
 com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - sf:Companion:com.intellij.ui.dsl.gridLayout.UnscaledGaps$Companion
 - sf:EMPTY:com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -8602,21 +8585,6 @@ e:com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:values():com.intellij.ui.dsl.gridLayout.VerticalAlign[]
-f:com.intellij.ui.dsl.gridLayout.VerticalGaps
-- sf:Companion:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
-- sf:EMPTY:com.intellij.ui.dsl.gridLayout.VerticalGaps
-- <init>():V
-- <init>(I,I):V
-- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:copy(I,I):com.intellij.ui.dsl.gridLayout.VerticalGaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.VerticalGaps,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.VerticalGaps
-- equals(java.lang.Object):Z
-- f:getBottom():I
-- f:getTop():I
-- hashCode():I
-f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
@@ -8758,24 +8726,6 @@ c:com.intellij.ui.messager.CalloutComponent
 - p:myTargetWindow:java.awt.Window
 - <init>(javax.swing.JComponent):V
 - show(I,com.intellij.ui.awt.RelativePoint):V
-c:com.intellij.ui.navigation.BackAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:doUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- ps:getHistory(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ui.navigation.History
-- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.ui.navigation.ForwardAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:doUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- ps:getHistory(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ui.navigation.History
-- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ui.navigation.History
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.ui.navigation.Place$Navigator):V
@@ -11124,11 +11074,11 @@ a:com.intellij.util.ui.StatusText
 - appendLine(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - appendLine(javax.swing.Icon,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - appendSecondaryText(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
+- appendText(I,I,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
+- appendText(I,I,javax.swing.Icon,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - appendText(java.lang.String):com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
-- appendText(Z,I,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
-- appendText(Z,I,javax.swing.Icon,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - attachTo(java.awt.Component):V
 - attachTo(java.awt.Component,java.awt.Component):V
 - clear():com.intellij.util.ui.StatusText
@@ -11344,9 +11294,6 @@ f:com.intellij.util.ui.tree.TreeUtil
 - s:visitVisibleRows(javax.swing.JTree,java.util.function.Function,java.util.function.Consumer):V
 com.intellij.util.ui.tree.TreeUtil$Traverse
 - a:accept(java.lang.Object):Z
-a:com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
-- com.intellij.ui.breadcrumbs.BreadcrumbsProvider
-- <init>():V
 a:com.intellij.xml.breadcrumbs.BreadcrumbsItem
 - <init>():V
 - a:getDisplayText():java.lang.String

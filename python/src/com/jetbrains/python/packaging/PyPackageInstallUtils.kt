@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Version
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -21,13 +22,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyPackageInstallUtils {
+  fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
+    if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
+      return false
+    }
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val repositoryManager = packageManager.repositoryManager
+    return repositoryManager.allPackages().any { it == packageName }
+  }
+
+
   suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String) {
     val isConfirmed = withContext(Dispatchers.EDT) {
       confirmInstall(project, packageName)
     }
     if (!isConfirmed)
       return
-    installPackage(project, sdk, packageName)
+    val result = withBackgroundProgress(project = project, PyBundle.message("python.packaging.installing.package", packageName),
+                                        cancellable = true) {
+      installPackage(project, sdk, packageName)
+    }
+    result.getOrThrow()
   }
 
   fun confirmInstall(project: Project, packageName: String): Boolean {
@@ -70,7 +85,7 @@ object PyPackageInstallUtils {
     val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
-    return pythonPackageManager.installPackage(packageSpecification, emptyList<String>())
+    return pythonPackageManager.installPackage(packageSpecification, emptyList())
   }
 
   /**

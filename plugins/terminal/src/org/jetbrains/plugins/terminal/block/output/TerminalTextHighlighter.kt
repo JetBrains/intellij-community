@@ -12,7 +12,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -96,7 +95,8 @@ internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<Highlight
   return map { HighlightingInfo(adjustmentValue + it.startOffset, adjustmentValue + it.endOffset, it.textAttributesProvider) }
 }
 
-internal class TerminalTextHighlighter(
+@ApiStatus.Internal
+class TerminalTextHighlighter(
   private val highlightingsSnapshotProvider: () -> TerminalOutputHighlightingsSnapshot,
 ) : EditorHighlighter {
   private var editor: HighlighterClient? = null
@@ -126,7 +126,7 @@ internal class TerminalTextHighlighter(
       return highlightings[curInd].textAttributesProvider.getTextAttributes()
     }
 
-    override fun getTokenType(): IElementType = TerminalOutputTokenTypes.TEXT
+    override fun getTokenType(): IElementType? = null
 
     override fun advance() {
       if (curInd < highlightings.size) curInd++

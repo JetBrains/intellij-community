@@ -44,7 +44,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Format", ignoreCase = true) })
+        selectItem(elements.first { element -> element.lookupString.equals("Format", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun main() {

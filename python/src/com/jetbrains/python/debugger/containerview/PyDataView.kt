@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -184,6 +184,7 @@ class PyDataView(private val project: Project) : DumbAware {
 
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.isCloseable = true
+    content.displayName = PyBundle.message("debugger.data.view.empty.tab")
     if (frameAccessor is PydevConsoleCommunication) {
       content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
@@ -193,7 +194,10 @@ class PyDataView(private val project: Project) : DumbAware {
       content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", frameAccessor.session.sessionName)
     }
 
-    content.setActions(DefaultActionGroup(NewViewerAction(frameAccessor)), "DataView", panel)
+    val window: ToolWindow? = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID)
+    if (window is ToolWindowEx) {
+      window.setTabActions(NewViewerAction(frameAccessor))
+    }
     panel.addListener(PyDataViewerPanel.Listener {
       content.displayName = it
     })

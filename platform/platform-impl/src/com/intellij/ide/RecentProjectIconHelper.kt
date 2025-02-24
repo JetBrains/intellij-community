@@ -34,9 +34,9 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import javax.swing.Icon
 
-private fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+internal fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
 
-private fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
+internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
 private const val IDEA_DIR = Project.DIRECTORY_STORE_FOLDER
 
@@ -134,20 +134,33 @@ class RecentProjectIconHelper {
     }
   }
 
-  fun getProjectIcon(path: @SystemIndependent String,
-                     isProjectValid: Boolean = true,
-                     iconSize: Int = unscaledProjectIconSize(),
-                     name: String? = null): Icon {
+  fun getProjectIcon(
+    path: @SystemIndependent String,
+    isProjectValid: Boolean = true,
+    iconSize: Int = unscaledProjectIconSize(),
+    name: String? = null,
+  ): Icon {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
     }
 
     return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(path, isProjectValid, iconSize)) {
-      getCustomIcon(path = it.first, isProjectValid = it.second, iconSize) ?: getGeneratedProjectIcon(path = it.first,
-                                                                                                      isProjectValid = it.second, iconSize,
-                                                                                                      name)
+      getCustomIcon(path = it.first, isProjectValid = it.second, iconSize)
+      ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize, name)
     }
   }
+
+  fun getNonLocalProjectIcon(
+    id: String,
+    isProjectValid: Boolean = true,
+    iconSize: Int = unscaledProjectIconSize(),
+    name: String? = null,
+  ): Icon {
+    return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(id, isProjectValid, iconSize)) {
+      getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize, name)
+    }
+  }
+
 
   fun hasCustomIcon(project: Project): Boolean =
     ProjectWindowCustomizerService.projectPath(project)?.let { getCustomIconFileInfo(it) } != null

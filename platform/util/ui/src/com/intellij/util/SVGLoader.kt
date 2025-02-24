@@ -9,8 +9,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import org.w3c.dom.Element
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -98,19 +96,6 @@ object SVGLoader {
       field = colorPatcher
       IconLoader.clearCache()
     }
-
-  @ScheduledForRemoval
-  @Deprecated("Please use SvgAttributePatcher")
-  @Suppress("unused")
-  interface SvgElementColorPatcher {
-    fun patchColors(svg: Element) {
-    }
-
-    /**
-     * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
-     */
-    fun digest(): ByteArray?
-  }
 
   interface SvgElementColorPatcherProvider {
     fun attributeForPath(path: String): SvgAttributePatcher? = null

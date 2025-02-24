@@ -9,6 +9,7 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
+        "@lib//:assert_j",
         "//src/jps-builder:worker-lib",
     ],
 )
@@ -21,16 +22,16 @@ java_binary(
 )
 
 java_binary(
+    name = "output-jar-test",
+    runtime_deps = [":jps-builder-test-lib"],
+    main_class = "org.jetbrains.bazel.jvm.jps.test.TestOutputJar",
+)
+
+java_binary(
     name = "test-worker",
     runtime_deps = [":jps-builder-test-lib"],
-    data = [
-        "@kotlinc//:kotlinc_dist",
-        "@kotlin-serialization-compiler-plugin//file",
-    ],
     main_class = "org.jetbrains.bazel.jvm.jps.test.TestJpsBuildWorker",
     jvm_flags = get_jvm_flags([
         "-Djps.use.experimental.storage=true",
-        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
-        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
 )

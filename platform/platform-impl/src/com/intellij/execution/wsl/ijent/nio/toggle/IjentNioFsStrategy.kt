@@ -31,6 +31,8 @@ class IjentWslNioFsToggleStrategy(
 ) {
   internal val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
 
+  private val providersCache = ContainerUtil.createConcurrentWeakMap<String, IjentWslNioFileSystemProvider>()
+
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
@@ -87,22 +89,17 @@ class IjentWslNioFsToggleStrategy(
       // Nothing.
     }
 
-    recomputeEel(distro) { underlyingProvider, previousFs ->
-      if (previousFs is IjentWslNioFileSystem) {
-        LOG.debug {
-          "Tried to switch $distro to IJent WSL nio.FS, but it had already been so. The old filesystem: $previousFs"
-        }
-        previousFs
-      }
-      else {
-        val fileSystem = IjentWslNioFileSystemProvider(
+    recomputeEel(distro) { underlyingProvider, _ ->
+      val fileSystemProvider = providersCache.computeIfAbsent(distro.id) {
+        IjentWslNioFileSystemProvider(
           wslDistribution = distro,
           ijentFsProvider = ijentFsProvider,
           originalFsProvider = TracingFileSystemProvider(underlyingProvider),
-        ).getFileSystem(distro.getUNCRootPath().toUri())
-        LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
-        fileSystem
+        )
       }
+      val fileSystem = fileSystemProvider.getFileSystem(distro.getUNCRootPath().toUri())
+      LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
+      fileSystem
     }
   }
 
@@ -116,22 +113,36 @@ class IjentWslNioFsToggleStrategy(
   }
 
   fun unregisterAll() {
+    val service = EelNioBridgeService.getInstanceSync()
+
     enabledInDistros.forEachGuaranteed { distro ->
-      val descriptor = WslEelDescriptor(distro)
-      val service = EelNioBridgeService.getInstanceSync()
-      service.deregister(descriptor)
+      service.deregister(WslEelDescriptor(distro))
     }
   }
 }
 
-private fun FileSystemProvider.getLocalFileSystem(): FileSystem =
-  getFileSystem(URI.create("file:/"))
+private fun FileSystemProvider.getLocalFileSystem(): FileSystem = getFileSystem(URI.create("file:/"))
 
 private val LOG = logger<IjentWslNioFsToggleStrategy>()
 
-private fun recomputeEel(distro: WSLDistribution, action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?) {
+private val WSLDistribution.roots: Set<String>
+  get() {
+    val localRoots = mutableSetOf(getWindowsPath("/"))
+    localRoots.single().let {
+      localRoots += it.replace("wsl.localhost", "wsl$")
+      localRoots += it.replace("wsl$", "wsl.localhost")
+    }
+    return localRoots
+  }
+
+private fun recomputeEel(
+  distro: WSLDistribution,
+  action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?,
+) {
   val service = EelNioBridgeService.getInstanceSync()
-  val localRoot = distro.getWindowsPath("/")
   val descriptor = WslEelDescriptor(distro)
-  service.register(localRoot, descriptor, distro.id, false, false, action)
+
+  distro.roots.forEachGuaranteed { localRoot ->
+    service.register(localRoot, descriptor, distro.id, false, false, action)
+  }
 }

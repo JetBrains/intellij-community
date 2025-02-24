@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -48,7 +49,19 @@ internal class SettingsFileEditor(
 
   override fun getName(): @TabTitle String = com.intellij.CommonBundle.settingsTitle()
 
-  override fun setState(state: FileEditorState) {}
+  override fun setState(state: FileEditorState) {
+    if (state !is NavigationState)
+      return
+    settingsFile.setConfigurableId(state.pathId)
+  }
+
+
+  override fun getState(level: FileEditorStateLevel): FileEditorState {
+    if (level != FileEditorStateLevel.NAVIGATION)
+      return super.getState(level)
+    val configurableId = settingsFile.getConfigurableId() ?: return super.getState(level)
+    return NavigationState(configurableId)
+  }
 
   override fun isModified(): Boolean {
     return settingsFile.isModified()
@@ -74,5 +87,22 @@ internal class SettingsFileEditor(
 
   override fun <T> putUserData(key: Key<T?>, value: T?) {
     // do nothing
+  }
+
+
+  private class NavigationState(val pathId: String) : FileEditorState {
+
+    override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
+      if (otherState !is NavigationState || level != FileEditorStateLevel.NAVIGATION) {
+        return false
+      }
+      return pathId == otherState.pathId
+    }
+
+    override fun toString(): String {
+      return "NavigationState(pathId='$pathId')"
+    }
+
+
   }
 }

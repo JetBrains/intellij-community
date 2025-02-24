@@ -1,19 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PinyinMatcher extends MinusculeMatcher {
-  static final int BASE_CODE_POINT = 0x3400;
-  static final char BASE_CHAR = '!';
+  @ApiStatus.Internal
+  public static final int BASE_CODE_POINT = 0x3400;
+  @ApiStatus.Internal
+  public static final char BASE_CHAR = '!';
 
   /**
    * To generate {@code ENCODING} and {@code DATA}, see {@code PinyinMatcherDataTest} class in tests.
    */
-  static final String ENCODING =
+  @ApiStatus.Internal
+  public static final String ENCODING =
     "a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,r,s,t,w,x,y,z,ab,ad,ae,ag,ah,aj,ak,al,an,ap,aq,at,aw,ax,ay,az,bc,bd,b" +
     "e,bf,bg,bh,bj,bk,bl,bm,bn,bp,bq,bs,bt,bx,by,bz,cd,ce,cf,cg,ch,cj,ck,cl,cm,cn,cp,cq,cr,cs,ct,cw,cx,cy," +
     "cz,de,df,dg,dh,dj,dl,dm,dn,dq,dr,ds,dt,dw,dx,dy,dz,eg,eh,ej,ek,el,en,eo,ep,eq,er,es,et,ew,ex,ey,ez,fg" +
@@ -36,7 +40,9 @@ public final class PinyinMatcher extends MinusculeMatcher {
     "dsty,dstz,dsyz,dtxy,dtxz,dtyz,egqy,ehkw,ejwy,enyz,foqx,ghjk,gkoq,hjkq,hmtw,hswx,hsxy,hwxy,jlqy,jlqz,j" +
     "lxy,jlyz,jsty,jsyz,klxy,ksyz,nsyz,qsyz,stxz,bcjxz,bjlmx,cdstz,djstz,dltyz,dqxyz,ghkwx,cdjstyz,gjklqyz";
 
-  @SuppressWarnings("UnnecessaryUnicodeEscape") static final String DATA =
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
+  @ApiStatus.Internal
+  public static final String DATA =
     "03  *46     6         5     #    -  u   55 5++5657$4/1 ,e6\u0117-#&   7&!47 7$260\u00D0+-72   5  2)$-" +
     "2k+6\"   +,6+)6+#   (5(1 7 (536(),+367767%10#4(3220+2  \u00AD/3\u017B6.3 ,\u0113$6\u00E4)-56  #&++ + " +
     ")    0 #+', '2  ,,02+ 4*$73  \"($'# 0)+5 -5 \")2 ' 650/$\u008D+\u00A403\"'#\u00C5+  2$+(\u0109/$1%06|" +

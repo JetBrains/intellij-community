@@ -54,11 +54,11 @@ class CanConvertToMultiDollarStringInspection :
         return element.findTextRangesInParentForEscapedDollars()
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: MultiDollarConversionInfo,
-    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> {
-        return arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): KotlinModCommandQuickFix<KtStringTemplateExpression> {
+        return object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
             override fun getFamilyName(): @IntentionFamilyName String {
                 return KotlinBundle.message("add.interpolation.prefix")
             }
@@ -71,6 +71,6 @@ class CanConvertToMultiDollarStringInspection :
                 val multiDollarVersion = convertToMultiDollarString(element, context)
                 simplifyDollarEntries(multiDollarVersion)
             }
-        })
+        }
     }
 }

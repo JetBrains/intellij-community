@@ -165,14 +165,14 @@ interface InlineCompletionEvent {
   }
 
   /**
-   * Represents a backspace hit for removal of characters in an editor. Backspace is allowed if:
-   * * There is no selection
-   * * There is only one caret
-   * * Only one character is removed
+   * Represents a backspace or delete hit for removal of characters in an editor. Supported cases:
+   * * Backspace/delete with selection.
+   * * Backspace/delete without selection.
+   * * Backspace/delete that removes entire words.
    *
-   * More or fewer cases may be supported in the future.
+   * It is triggered after the backspace/delete is processed.
    *
-   * It is triggered after the backspace is processed.
+   * At this point, it's impossible to get what exactly is removed from an editor.
    *
    * **Note**: for now, it's impossible to update a session with this event. Inline Completion will be hidden once a backspace is pressed.
    */
@@ -315,6 +315,16 @@ interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor), Builtin
+
+  /**
+   * Triggered when an editor becomes active.
+   */
+  @ApiStatus.Experimental
+  class EditorFocused @ApiStatus.Internal constructor(val editor: Editor) : Builtin {
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+  }
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {

@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-final class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
+@ApiStatus.Internal
+public final class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
 
   PostfixTemplateDescriptionNotFoundInspection() {
     super(DescriptionType.POSTFIX_TEMPLATES);

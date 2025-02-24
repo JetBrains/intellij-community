@@ -24,6 +24,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",
     "@lib//:kotlin-tooling-core",

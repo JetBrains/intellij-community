@@ -1,30 +1,44 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
-import com.intellij.platform.core.nio.fs.DelegatingFileSystem
-import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
-import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
-import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
+import com.intellij.platform.core.nio.fs.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
 import java.io.File
 import java.net.URI
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isSameFileAs
 import kotlin.io.path.pathString
 
 private fun Path.unwrap(): Path = if (this is MultiRoutingFsPath) delegate else this
+private fun Path.toIjentPath(): IjentNioPath = when (val path = unwrap()) {
+  is IjentEphemeralRootAwarePath -> path.originalPath
+  is IjentNioPath -> path
+  else -> throw IllegalArgumentException("Unsupported path type: $path")
+}
 
 /**
  * The `RootAwarePath `class delegates all operations to the original IjentNioPath.
  * The root is used only as an information holder and for computing the `toUri` and `toString`.
  */
 @Suppress("NAME_SHADOWING")
-internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath: IjentNioPath) : Path {
+internal class IjentEphemeralRootAwarePath(
+  val rootPath: Path,
+  val originalPath: IjentNioPath,
+) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
   override fun getFileSystem(): FileSystem {
     return originalPath.fileSystem
+  }
+
+  override fun invalidate() {
+    originalPath.invalidate()
+    super.invalidate()
   }
 
   override fun isAbsolute(): Boolean {
@@ -133,6 +147,13 @@ internal class IjentEphemeralRootAwareFileSystemProvider(
     return IjentEphemeralRootAwareFileSystem(this, delegateFs)
   }
 
+  override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
+    return when {
+      SystemInfo.isWindows -> delegate.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
+      else -> super.readAttributes(path, type, *options)
+    }
+  }
+
   override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider {
     return delegate
   }
@@ -182,6 +203,7 @@ internal class IjentEphemeralRootAwareFileSystem(
   private val originalFs: FileSystem,
 ) : DelegatingFileSystem<IjentEphemeralRootAwareFileSystemProvider>() {
   private val root: Path = rootAwareFileSystemProvider.root
+  private val invariantSeparatorRootPathString = root.invariantSeparatorsPathString.removeSuffix("/")
 
   override fun getDelegate(): FileSystem {
     return originalFs
@@ -192,9 +214,9 @@ internal class IjentEphemeralRootAwareFileSystem(
   }
 
   override fun getPath(first: String, vararg more: String): Path {
-    if (first.startsWith(root.pathString)) {
-      val parts = more.flatMap { it.split("/") }.filter(String::isNotEmpty).toTypedArray()
-      val ijentNioPath = originalFs.getPath(first.removePrefix(root.pathString).nullize() ?: "/", *parts) as IjentNioPath
+    if (isPathUnderRoot(first)) {
+      val parts = more.flatMap { it.split(root.fileSystem.separator) }.filter(String::isNotEmpty).toTypedArray()
+      val ijentNioPath = originalFs.getPath(relativizeToRoot(first), *parts) as IjentNioPath
       return IjentEphemeralRootAwarePath(root, ijentNioPath)
     }
 
@@ -203,5 +225,14 @@ internal class IjentEphemeralRootAwareFileSystem(
 
   override fun provider(): IjentEphemeralRootAwareFileSystemProvider {
     return rootAwareFileSystemProvider
+  }
+
+  private fun isPathUnderRoot(path: String): Boolean {
+    return toSystemIndependentName(path).startsWith(invariantSeparatorRootPathString)
+  }
+
+  // TODO: improve this function when we will support ijent on windows
+  private fun relativizeToRoot(path: String): String {
+    return (toSystemIndependentName(path).removePrefix(invariantSeparatorRootPathString)).nullize() ?: "/"
   }
 }

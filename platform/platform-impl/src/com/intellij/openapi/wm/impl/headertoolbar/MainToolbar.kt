@@ -45,6 +45,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
 import com.jetbrains.WindowDecorations
+import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -71,7 +72,7 @@ private sealed interface MainToolbarFlavor {
 
 private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
-                                                   frame: JFrame) : MainToolbarFlavor {
+                                                   frame: JFrame, toolbar: MainToolbar) : MainToolbarFlavor {
 
 
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
@@ -81,13 +82,17 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
     val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
     mainMenuButton.expandableMenu = expandableMenu
     mainMenuButton.rootPane = frame.rootPane
+    toolbar.addWidthCalculationListener(object : ToolbarWidthCalculationListener {
+      override fun onToolbarCompressed(event: ToolbarWidthCalculationEvent) {
+        mainMenuWithButton.recalculateWidth(toolbar)
+      }
+    })
   }
 
   override fun addWidget() {
     addWidget(widget = mainMenuWithButton, parent = headerContent, position = HorizontalLayout.Group.LEFT)
   }
 
-  fun recalculateWidth(toolbar: MainToolbar) = mainMenuWithButton.recalculateWidth(toolbar)
 }
 
 private data object DefaultMainToolbarFlavor : MainToolbarFlavor
@@ -103,12 +108,13 @@ class MainToolbar(
   private val isFullScreen: () -> Boolean,
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
+  private val widthCalculationListeners = ConcurrentHashSet<ToolbarWidthCalculationListener>()
 
   init {
     this.background = background
     this.isOpaque = isOpaque
     flavor = if (isMenuButtonInToolbar(UISettings.shadowInstance)) {
-      MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
+      MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame, toolbar = this)
     }
     else {
       DefaultMainToolbarFlavor
@@ -123,12 +129,9 @@ class MainToolbar(
       preferredSizeFunction = { component ->
         when (component) {
           is ActionToolbar -> {
+            notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
             val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
             CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
-          }
-          is MainMenuWithButton -> {
-            (flavor as? MenuButtonInToolbarMainToolbarFlavor)?.recalculateWidth(this@MainToolbar)
-            component.preferredSize
           }
           else -> {
             component.preferredSize
@@ -304,10 +307,24 @@ class MainToolbar(
     addMouseMotionListener(listener)
   }
 
+  internal fun addWidthCalculationListener(listener: ToolbarWidthCalculationListener) {
+    widthCalculationListeners.add(listener)
+  }
+
+  internal fun removeWidthCalculationListener(listener: ToolbarWidthCalculationListener) {
+    widthCalculationListeners.remove(listener)
+  }
+
+  private fun notifyToolbarWidthCalculation(event: ToolbarWidthCalculationEvent) {
+    widthCalculationListeners.forEach { it.onToolbarCompressed(event) }
+  }
+
+
   override fun removeNotify() {
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
+      widthCalculationListeners.clear()
     }
   }
 
@@ -384,10 +401,6 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
     }
   }
 
-  override fun updateActionsOnAdd() {
-    // do nothing - called explicitly
-  }
-
   fun updateActions() {
     updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
   }
@@ -454,8 +467,9 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun updateUI() {
+    @Suppress("UNNECESSARY_SAFE_CALL") // you know, the old "this thing is called from a superclass constructor" pitfall
+    iconUpdater?.clearCache()
     super.updateUI()
-
     updateFont()
   }
 
@@ -518,7 +532,7 @@ private fun getMainToolbarGroups(): Sequence<GroupInfo> {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
+private fun adjustIconForHeader(icon: Icon): Icon = IconLoader.getDarkIcon(icon = icon, dark = isDarkHeader())
 
 private class HeaderIconUpdater {
   val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
@@ -534,6 +548,11 @@ private class HeaderIconUpdater {
     iconCache[sourceIcon] = WeakReference(replaceIcon)
     alreadyUpdated.add(replaceIcon)
     return replaceIcon
+  }
+
+  fun clearCache() {
+    iconCache.clear()
+    alreadyUpdated.clear()
   }
 }
 

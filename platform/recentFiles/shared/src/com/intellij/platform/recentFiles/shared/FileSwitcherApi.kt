@@ -34,10 +34,10 @@ sealed interface RecentFilesBackendRequest {
   val projectId: ProjectId
 
   @Serializable
-  data class NewSearchWithParameters(val onlyEdited: Boolean, val pinned: Boolean, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class NewSearchWithParameters(val onlyEdited: Boolean, val pinned: Boolean, val frontendEditorSelectionHistory: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
-  data class HideFile(val fileToHide: SwitcherRpcDto.File, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class HideFiles(val filesToHide: List<SwitcherRpcDto.File>, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
   data class ScheduleRehighlighting(override val projectId: ProjectId) : RecentFilesBackendRequest
@@ -65,11 +65,14 @@ sealed interface SwitcherRpcDto {
 @Serializable
 sealed interface RecentFilesEvent {
   @Serializable
-  class ItemAdded(val entry: SwitcherRpcDto) : RecentFilesEvent
+  class ItemsAdded(val batch: List<SwitcherRpcDto>) : RecentFilesEvent
 
   @Serializable
-  class ItemRemoved(val entry: SwitcherRpcDto) : RecentFilesEvent
+  class ItemsRemoved(val batch: List<SwitcherRpcDto>) : RecentFilesEvent
 
   @Serializable
   class AllItemsRemoved : RecentFilesEvent
+
+  @Serializable
+  class EndOfUpdates : RecentFilesEvent
 }

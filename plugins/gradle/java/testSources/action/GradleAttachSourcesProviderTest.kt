@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.action
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.internal.daemon.DaemonState
 import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject

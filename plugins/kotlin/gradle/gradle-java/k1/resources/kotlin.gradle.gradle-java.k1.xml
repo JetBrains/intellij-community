@@ -3,9 +3,6 @@
   <dependencies>
     <module name="kotlin.gradle.gradle-java"/>
     <plugin id="com.intellij.modules.kotlin.k1"/>
+    <module name="kotlin.gradle.scripting.k1"/>
   </dependencies>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor"/>
-  </extensions>
 </idea-plugin>

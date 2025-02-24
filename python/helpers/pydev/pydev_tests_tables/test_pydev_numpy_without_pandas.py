@@ -140,10 +140,7 @@ def test_get_tables_display_options():
     max_cols, max_colwidth, max_rows = numpy_tables_helpers.__get_tables_display_options()
     assert max_cols is None
     assert max_rows is None
-    if sys.version_info < (3, 0):
-        assert max_colwidth == numpy_tables_helpers.MAX_COLWIDTH
-    else:
-        assert max_colwidth is None
+    assert max_colwidth is None
 
 
 # 8

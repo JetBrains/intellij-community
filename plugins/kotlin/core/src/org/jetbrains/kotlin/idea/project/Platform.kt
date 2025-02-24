@@ -14,6 +14,12 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform as platformNew
 @get:ApiStatus.ScheduledForRemoval
 val KtElement.builtIns: KotlinBuiltIns get() = getResolutionFacade().moduleDescriptor.builtIns
 
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
+    ReplaceWith("platform", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
     ReplaceWith("platform", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
@@ -23,6 +29,11 @@ val KtElement.builtIns: KotlinBuiltIns get() = getResolutionFacade().moduleDescr
 val Module.platform: TargetPlatform
     get() = platformNew
 
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
+    ReplaceWith("platform", "org.jetbrains.kotlin.idea.base.facet.platform.getPlatform.platform")
+)
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
     ReplaceWith("platform", "org.jetbrains.kotlin.idea.base.facet.platform.getPlatform.platform")

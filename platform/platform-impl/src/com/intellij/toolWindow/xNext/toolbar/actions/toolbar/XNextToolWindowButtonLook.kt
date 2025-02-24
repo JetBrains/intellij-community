@@ -2,6 +2,7 @@
 package com.intellij.toolWindow.xNext.toolbar.actions.toolbar
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.util.ui.JBInsets
@@ -33,7 +34,10 @@ internal class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
           rect.height -= JBUI.scale(2)
           shape.subtract(Area(rect))
 
-          g2.color = JBUI.CurrentTheme.DefaultTabs.underlineColor()
+          rect.height = JBUI.scale(2)
+
+          g2.paint = InternalUICustomization.getInstance()?.aiComponentMarker?.getCustomDefaultButtonFillPaint(component, rect, JBUI.CurrentTheme.DefaultTabs.underlineColor())
+
           g2.fill(shape)
         } finally {
           g2.dispose()

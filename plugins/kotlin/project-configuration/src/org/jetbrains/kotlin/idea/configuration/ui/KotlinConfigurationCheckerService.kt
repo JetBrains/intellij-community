@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.configuration.ui
 
 import com.intellij.facet.ProjectFacetManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfiguration
 import org.jetbrains.kotlin.platform.idePlatformKind
 import java.util.concurrent.atomic.AtomicInteger
 
+@InternalIgnoreDependencyViolation
 private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
@@ -111,7 +113,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
             }
         }
         if (writeActionContinuations.isNotEmpty()) {
-            writeAction {
+            edtWriteAction {
                 writeActionContinuations.forEach { it.invoke() }
             }
         }

@@ -126,6 +126,8 @@
     <orderEntry type="module" module-name="intellij.tools.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.terminal.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
@@ -133,6 +135,7 @@
     <orderEntry type="module" module-name="intellij.completionMlRankingModels.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
@@ -238,6 +241,9 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.commit.modal" scope="RUNTIME" />
   </component>

@@ -35,11 +35,11 @@ internal class AssignedValueIsNeverReadInspection :
     override fun getProblemHighlightType(element: KtSimpleNameExpression, context: Unit): ProblemHighlightType =
         ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtSimpleNameExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtSimpleNameExpression>> =
-        arrayOf(object : KotlinModCommandQuickFix<KtSimpleNameExpression>() {
+    ): KotlinModCommandQuickFix<KtSimpleNameExpression> =
+        object : KotlinModCommandQuickFix<KtSimpleNameExpression>() {
             override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.assignment")
             override fun applyFix(
                 project: Project,
@@ -49,7 +49,7 @@ internal class AssignedValueIsNeverReadInspection :
                 val parent = element.parent as? KtBinaryExpression ?: return
                 parent.delete()
             }
-        })
+        }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

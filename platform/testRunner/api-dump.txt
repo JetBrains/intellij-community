@@ -125,6 +125,7 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
 - sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
+- sf:SHOW_AUTO_TEST_TOOLBAR:com.intellij.util.config.BooleanProperty
 - sf:SHOW_INLINE_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SHOW_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SORT_ALPHABETICALLY:com.intellij.util.config.BooleanProperty
@@ -355,7 +356,6 @@ com.intellij.execution.testframework.autotest.AutoTestWatcher
 f:com.intellij.execution.testframework.autotest.DelayedDocumentWatcher
 - com.intellij.execution.testframework.autotest.AutoTestWatcher
 - <init>(com.intellij.openapi.project.Project,I,com.intellij.execution.testframework.autotest.AbstractAutoTestManager,java.util.function.Predicate):V
-- <init>(com.intellij.openapi.project.Project,I,com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
 - activate():V
 - deactivate():V
 - getProject():com.intellij.openapi.project.Project

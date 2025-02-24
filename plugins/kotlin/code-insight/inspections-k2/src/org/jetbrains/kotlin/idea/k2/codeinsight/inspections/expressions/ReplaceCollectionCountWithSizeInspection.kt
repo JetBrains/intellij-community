@@ -52,10 +52,10 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
                 && receiverClassId in COLLECTION_CLASS_IDS).asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
@@ -67,7 +67,7 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
         ) {
             element.replace(KtPsiFactory(element.project).createExpression("size"))
         }
-    })
+    }
 }
 
 context(KaSession)

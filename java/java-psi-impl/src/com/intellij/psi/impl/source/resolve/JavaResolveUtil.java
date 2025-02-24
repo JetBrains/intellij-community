@@ -326,11 +326,25 @@ public final class JavaResolveUtil {
     return JavaDirectoryService.getInstance().getPackage(directory);
   }
 
+  /**
+   * Processes exported packages of a Java module, replacing "import module..." semantics
+   * for all on-demand imports from these packages.
+   *
+   * @param module     the Java module whose exported packages should be processed
+   * @param processor  the processor used to handle scope declarations
+   * @param state      the current resolution state of the resolver
+   * @param lastParent the parent element from which processing originated
+   * @param place      the code location where this method is called
+   * @return {@code true} if processing should continue, {@code false} if it should stop immediately
+   */
   public static boolean processJavaModuleExports(@NotNull PsiJavaModule module,
                                                  @NotNull PsiScopeProcessor processor,
                                                  @NotNull ResolveState state,
                                                  @Nullable PsiElement lastParent,
                                                  @NotNull PsiElement place) {
+    // Skip processing if inside the module - otherwise, imports within the module won't work because the system would rely only on exports
+    if (PsiTreeUtil.isAncestor(module, place, false)) return true;
+
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, module);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;

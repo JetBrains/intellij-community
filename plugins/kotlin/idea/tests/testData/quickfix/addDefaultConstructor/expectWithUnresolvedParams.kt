@@ -5,6 +5,10 @@
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: y
 // ERROR: Unresolved reference: z
+// K2_AFTER_ERROR: Unresolved reference '<init>'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'y'.
+// K2_AFTER_ERROR: Unresolved reference 'z'.
 
 expect open class A
 

@@ -292,6 +292,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       tweakActionComponentUI(component);
     }
     updateMinimumButtonSize();
+    if (getParent() != null) { // check to avoid the warning inside
+      updateActionsAsync(); // update presentations, as something might have changed (e.g. Compact Mode on/off making icons smaller/larger)
+    }
   }
 
   @Override
@@ -1011,7 +1014,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @ApiStatus.Internal
   @RequiresEdt
   protected void updateActionsWithoutLoadingIcon(boolean includeInvisible) {
-    myUpdater.updateActions(true, false, includeInvisible);
+    if (myUpdater != null) { // null when called through updateUI from a superclass constructor
+      myUpdater.updateActions(true, false, includeInvisible);
+    }
   }
 
   private void updateActionsImpl(boolean forced) {

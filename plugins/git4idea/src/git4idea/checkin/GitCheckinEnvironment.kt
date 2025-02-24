@@ -231,7 +231,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   private fun markRootDirty(root: VirtualFile) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
-    VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root)
+    VcsDirtyScopeManager.getInstance(myProject).rootDirty(root)
   }
 
   override fun getPostCommitChangeConverter(): PostCommitChangeConverter {

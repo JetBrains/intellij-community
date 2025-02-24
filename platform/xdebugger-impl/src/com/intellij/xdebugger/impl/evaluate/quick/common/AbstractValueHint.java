@@ -541,6 +541,11 @@ public abstract class AbstractValueHint {
   }
 
   @ApiStatus.Internal
+  protected @Nullable EditorMouseEvent getEditorMouseEvent() {
+    return myEditorMouseEvent;
+  }
+
+  @ApiStatus.Internal
   protected void resizePopup(int widthDelta, int hightDelta) {
     if (myCurrentPopup == null) return;
     final Window popupWindow = SwingUtilities.windowForComponent(myCurrentPopup.getContent());

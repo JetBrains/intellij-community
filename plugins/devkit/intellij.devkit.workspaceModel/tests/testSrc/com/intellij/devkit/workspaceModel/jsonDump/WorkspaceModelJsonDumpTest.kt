@@ -155,6 +155,7 @@ class WorkspaceModelJsonDumpTest {
           },
           "name": "mock module entity",
           "type": null,
+          "dependenciesCount": 3,
           "dependencies": [
             {
               "fqName": "com.intellij.platform.workspace.jps.entities.InheritedSdkDependency"
@@ -169,6 +170,7 @@ class WorkspaceModelJsonDumpTest {
               "productionOnTest": true
             }
           ],
+          "contentRootsCount": 1,
           "contentRoots": [
             {
               "fqName": "com.intellij.platform.workspace.jps.entities.ContentRootEntity",
@@ -177,13 +179,17 @@ class WorkspaceModelJsonDumpTest {
                 "virtualFileUrl": null
               },
               "url": "file:///tmp",
+              "excludedPatternsCount": 1,
               "excludedPatterns": [
                 "excludedPattern"
               ],
+              "sourceRootsCount": 0,
               "sourceRoots": [],
+              "excludedUrlsCount": 0,
               "excludedUrls": []
             }
           ],
+          "facetsCount": 0,
           "facets": []
         }
       """.trimIndent()

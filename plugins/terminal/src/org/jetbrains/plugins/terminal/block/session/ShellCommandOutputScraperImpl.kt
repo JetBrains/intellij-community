@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
-import com.jediterm.terminal.TextStyle
+import com.intellij.terminal.session.StyleRange
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.session.scraper.*
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
@@ -94,8 +95,8 @@ internal class ShellCommandOutputScraperImpl(
   }
 }
 
-internal data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
-internal data class StyleRange(val startOffset: Int, val endOffset: Int, val style: TextStyle)
+@ApiStatus.Internal
+data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
 
 internal interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}
@@ -109,7 +110,8 @@ internal const val NEW_LINE_STRING: String = NEW_LINE.toString()
  * Positive indexes for the screen lines, negative - for the history.
  * So, the 0th line is the first screen line, -1 line is the last history line.
  */
-internal fun TerminalTextBuffer.collectLines(
+@ApiStatus.Internal
+fun TerminalTextBuffer.collectLines(
   terminalLinesCollector: TerminalLinesCollector,
   startLine: Int = -historyLinesCount,
 ) {

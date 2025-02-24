@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.file
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -120,7 +119,7 @@ class JarCreator(
 
     val content = manifestContentImpl(existingFile = manifestFile)
 
-    out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(content), name = MANIFEST_NAME_BYTES)
+    out.writeDataRawEntryWithoutCrc(name = MANIFEST_NAME_BYTES, data = content)
   }
 
   override fun close() {

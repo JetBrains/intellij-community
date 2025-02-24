@@ -107,7 +107,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
 
     // Returns whether or not [source] exports [packageName] to [target]
     private fun exports(source: PsiJavaModule, packageName: String, target: PsiJavaModule): Boolean =
-        source is LightJavaModule || JavaModuleGraphUtil.exports(source, packageName, target)
+      source is LightJavaModule || JavaPsiModuleUtil.exports(source, packageName, target)
 
     companion object {
         private const val MODULE_ANNOTATIONS_CACHE_SIZE = 10000

@@ -491,7 +491,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  public void testEnumMembers() {
+  public void testTypeNarrowingIsOrEquals() {
     doTestByText(
       """
         from enum import Enum
@@ -508,7 +508,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
         def foo(v: Color | str) -> None:
             if v is Color.RED:
                 r: Literal[Color.R] = v
-            elif v is Color.G:
+            elif v == Color.G:
                 g: Literal[Color.G] = v
             elif v is Color.B:
                 b: Literal[Color.B] = v
@@ -527,8 +527,77 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             else:
                 s: Literal["1"] = v
                 c: Color = <warning descr="Expected type 'Color', got 'Literal[\\"1\\"]' instead">v</warning>
+        
+        def buz(v: Color):
+            if v is not Color.B and v != Color.RED:
+                g: Literal[Color.G] = v
+                s: str = <warning descr="Expected type 'str', got 'Literal[Color.G]' instead">v</warning>
         """
     );
+  }
+
+  // PY-79164
+  public void testTypeNarrowingIn() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def expects_bad_status(status: Literal["MALFORMED", "ABORTED"]): ...
+                   
+                   def expects_pending_status(status: Literal["PENDING"]): ...
+                   
+                   def parse_status(status: str) -> None:
+                       if status in ("MALFORMED", "ABORTED"):
+                           return expects_bad_status(status)
+                   
+                       if status == "PENDING":
+                           expects_pending_status(status)
+                   """);
+    doTestByText("""
+                   from typing import Literal
+                   from enum import Enum
+                   
+                   class Color(Enum):
+                       R = 1
+                       G == 2
+                       B == 3
+                       RED = R
+                       BLUE = B
+                   
+                   def expects_red_or_blue(v: Literal[Color.RED, Color.B]): ...
+                   
+                   def expects_green(v: Literal[Color.G]): ...
+                   
+                   def foo(v: Color):
+                       if v in (Color.R, Color.BLUE):
+                           expects_red_or_blue(v)
+                       else:
+                           expects_green(v)
+                   
+                       if v not in (Color.R, Color.BLUE):
+                           expects_green(v)
+                       else:
+                           expects_red_or_blue(v)
+                   """);
+
+    doTestByText("""
+                   from enum import Enum
+                   
+                   class MyEnum(Enum):
+                       A = 1
+                       B = 2
+                       C = 3
+                       D = 4
+                   
+                   def foo(v: MyEnum):
+                       if v == MyEnum.A:
+                           pass
+                       elif v in (MyEnum.B, MyEnum.C):
+                           b_or_c: Literal[MyEnum.B, MyEnum.C] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.B, MyEnum.C]' instead">v</warning>
+                       else:
+                           d: Literal[MyEnum.D] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.D]' instead">v</warning>
+                   """);
   }
 
   // PY-77937
@@ -1063,6 +1132,55 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
 
                    transform(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>)""");
+  }
+
+  // PY-79098
+  public void testCallableConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   def f[**P2](fn: Callable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type '(**P2) -> None', got 'None' instead">Callable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: Callable[Concatenate[int, P3], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(Concatenate(int, **P3)) -> None' instead">fn</warning>)
+                       def longer_concat[**P3](fn: Callable[Concatenate[int, int, int, P3], None]):
+                           f(fn)
+                       def empty(fn: Callable[[], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '() -> None' instead">fn</warning>)
+                       def param_spec[**P3](fn: Callable[P3, None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(**P3) -> None' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: Callable[[int], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(int) -> None' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: Callable[[int, int], None]):
+                           f(fn)
+                       def longer_param_list[**P3](fn: Callable[[int, int, int], None]):
+                           f(fn)
+                   """);
+  }
+
+  // PY-79098
+  public void testUserGenericConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   class MyCallable[**P, R]:
+                       pass
+                   
+                   def g[**P2](fn: MyCallable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type 'MyCallable[**P2, None]', got 'None' instead">MyCallable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: MyCallable[Concatenate[int, P3], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[Concatenate(int, **P3), None]' instead">fn</warning>)
+                       def longer_concat[**P3](fn: MyCallable[Concatenate[int, int, int, P3], None]):
+                           g(fn)
+                       def empty(fn: MyCallable[[], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[], None]' instead">fn</warning>)
+                       def param_spec[**P3](fn: MyCallable[P3, None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[**P3, None]' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: MyCallable[[int], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[int], None]' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: MyCallable[[int, int], None]):
+                           g(fn)
+                       def longer_param_list[**P3](fn: MyCallable[[int, int, int], None]):
+                           g(fn)
+                   """);
   }
 
   // PY-50337
@@ -2500,6 +2618,47 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    asdict(MyDataClass(name="Bob"))
                    asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
+                   """);
+  }
+
+  // PY-79129
+  public void testTupleIndexOutOfRange() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def foo(t: tuple[int, str], i: Literal[1], j: Literal[3], k: Literal[-3]):
+                       t[i]
+                       t[-1]
+                       t[<warning descr="Tuple index out of range">j</warning>]
+                       t[<warning descr="Tuple index out of range">2</warning>]
+                       t[<warning descr="Tuple index out of range">k</warning>]
+                       t[<warning descr="Tuple index out of range">-4</warning>]
+                   
+                   def bar(t: tuple[int, ...]):
+                       t[10]
+                   """);
+  }
+
+  // PY-79163
+  public void testLiteralTypeInferredForFinalVariableOrAttribute() {
+    doTestByText("""
+                   from typing import Literal, Final
+                   
+                   foo: Final = 3
+                   def expects_three(x: Literal[3]) -> None: ...
+                   
+                   expects_three(foo)
+                   
+                   def bar():
+                       var: Final = 3
+                       expects_three(var)
+                   """);
+    doTestByText("""
+                   from typing import Literal, Final
+                   v: Final = [1, 2]
+                   def expects_list(l: list[int]): ...
+                   
+                   expects_list(v)
                    """);
   }
 }

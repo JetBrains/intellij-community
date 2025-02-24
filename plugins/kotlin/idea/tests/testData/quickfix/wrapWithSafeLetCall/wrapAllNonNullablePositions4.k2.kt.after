@@ -1,5 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
+// K2_AFTER_ERROR: Missing return statement.
 
 fun test(s: String?): String? {
     if (true) {

@@ -7,15 +7,22 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
+import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -40,6 +47,7 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -50,6 +58,8 @@ import java.util.jar.JarFile
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+    
+    myFixture.enableInspections(JavaModuleDefinitionInspection())
 
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
@@ -84,7 +94,24 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testModuleImportDeclarationUnresolvedModule() {
+  fun testModuleImportDeclarationInModuleInfoFileFix() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
+        <error descr="Import module is not allowed">import module <caret>M2;</error>
+        module my.module {
+          requires M2;
+        }
+      """.trimIndent()))
+
+      val availableIntentions = myFixture.availableIntentions
+      val available = availableIntentions
+        .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+        .map { it.simpleName }
+      assertThat(available).describedAs(availableIntentions.toString()).contains("ReplaceOnDemandImportAction")
+    }
+  }
+
+    fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
@@ -101,7 +128,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testPackageStatement() {
     highlight("package pkg;")
     highlight("""
-        <error descr="A module file should not have 'package' statement">package pkg;</error>
+        <error descr="A module file should not have a 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
     fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix", "FixAllHighlightingProblems"))
   }
@@ -204,8 +231,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
-          requires <error descr="Cyclic dependence: M1">M1</error>;
-          requires <error descr="Cyclic dependence: M1, M2">M2</error>;
+          requires <error descr="Cyclic dependency: M1">M1</error>;
+          requires <error descr="Cyclic dependency: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;
@@ -272,7 +299,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWeakModule() {
-    highlight("""open module M { <error descr="'opens' is not allowed in an open module">opens pkg.missing;</error> }""")
+    highlight("""open module M { <error descr="'opens' is not allowed in an open module">opens <warning descr="Package not found: pkg.missing">pkg.missing</warning>;</error> }""")
   }
 
   fun testUses() {
@@ -310,6 +337,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import pkg.main.Impl6;
         module M {
           requires M2;
+          exports pkg.main;
           provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation type must be a subtype of the service interface type, or have a public static no-args 'provider' method">Impl2</error>;
@@ -942,6 +970,39 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       }""".trimIndent(), MR_JAVA9)
   }
 
+  fun testImportJavaSe() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("Main.java", """
+        <error descr="Module 'java.se' is missing from the module graph">import module java.se;</error>
+        import module jdk.httpserver;
+        import module java.smartcardio;
+
+        public class Main {
+          private <error descr="Reference to 'Date' is ambiguous, both 'java.sql.Date' and 'java.util.Date' match">Date</error> date;
+          private HttpsServer http;
+          private ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
+  fun testSmartCardio9() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_1_9) {
+      highlight("Main.java", """
+        public class Main {
+          private <error descr="Package 'javax.smartcardio' is declared in module 'java.smartcardio', which is not in the module graph">javax.smartcardio</error>.ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
+  fun testSmartCardio11() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_11) {
+      highlight("Main.java", """
+        public class Main {
+          private javax.smartcardio.ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -956,12 +1017,42 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions
-      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .map { ReportingClassSubstitutor.getClassToReport(it) }
       .filter { it.name.startsWith("com.intellij.codeInsight.") &&
                 !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
+                && !it.name.endsWith("DisableHighlightingIntentionAction")
                 && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
+  }
+
+  private fun withInternalJdk(moduleDescriptor: ModuleDescriptor, level: LanguageLevel, block: () -> Unit) {
+    val name = "INTERNAL_JDK_TEST"
+
+    val module = getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
+    try {
+
+      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+        val jdk = ProjectJdkTable.getInstance().findJdk(name)
+                  ?: JavaSdk.getInstance().createJdk(name, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!, false)
+
+        ProjectJdkTable.getInstance().addJdk(jdk, project)
+        ModuleRootModificationUtil.setModuleSdk(module, jdk)
+      })
+
+      IdeaTestUtil.withLevel(module, level) {
+        block()
+      }
+
+    }
+    finally {
+      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+        ModuleRootModificationUtil.setModuleSdk(module, projectDescriptor.sdk)
+        ProjectJdkTable.getInstance().findJdk(name)?.also { jdk ->
+          ProjectJdkTable.getInstance().removeJdk(jdk)
+        }
+      })
+    }
   }
 
   private fun ModuleDescriptor.createSourceRoot(srcPathPrefix: String): VirtualFile? {

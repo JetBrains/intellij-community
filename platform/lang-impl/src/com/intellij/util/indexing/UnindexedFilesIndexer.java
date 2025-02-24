@@ -243,7 +243,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     catch (Throwable e) {
       taskToken.markUnsuccessful();
-      projectDumbIndexingHistory.setWasInterrupted();
+      projectDumbIndexingHistory.setWasCancelled(e.getMessage());
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
       }

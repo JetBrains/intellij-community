@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,8 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
-
+@ApiStatus.Internal
+public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
   @SuppressWarnings("unchecked")
   public static final Class<? extends UElement>[] HINTS = new Class[]{UBinaryExpression.class};
 

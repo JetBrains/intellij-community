@@ -18,8 +18,8 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
 
         typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.DefaultFieldEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "data", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.TestData", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf())), withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "data", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.TestData", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf())), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "anotherVersion", valueType = primitiveTypeIntNotNullable, withDefault = true),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description", valueType = primitiveTypeStringNotNullable, withDefault = true)), extProperties = listOf(), isAbstract = false)
 
@@ -27,8 +27,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", metadataHash = 124467804)
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.TestData", metadataHash = 589453437)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", metadataHash = -1646169674)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.TestData", metadataHash = -898117917)
     }
 
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.util.whenDocumentChanged
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -109,7 +110,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                                                   /*oneLineMode*/ true,
                                                   /*autoPopup*/ true,
                                                   /*forceAutoPopup*/ false,
-                                                  /*showHint*/ false).apply { minimumSize = JBUI.size(332, 0) }
+                                                  /*showHint*/ false)
+      .apply {
+        minimumSize = JBUI.size(332, 0)
+        setupCleanBranchNameAndAdjustCursorIfNeeded()
+      }
     row(GitBundle.message("new.branch.dialog.branch.name")) {
       cell(branchNameField)
         .bind({ c -> c.text }, { c, v -> c.text = v }, ::branchName.toMutableProperty())
@@ -227,11 +232,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private fun validateBranchName(onApply: Boolean, overwriteCheckbox: JCheckBox, repositoriesComboBox: ComboBox<GitRepository?>)
     : ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
 
-    // Do not change Document inside DocumentListener callback
-    invokeLater {
-      it.cleanBranchNameAndAdjustCursorIfNeeded()
-    }
-
     val selectedRepositories = (repositoriesComboBox.selectedItem as GitRepository?)
                                                             ?.let(::listOf) ?: allRepositories
 
@@ -252,6 +252,15 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                 .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")).toString())
       }
       else error(localBranchConflict.message)
+    }
+  }
+
+  private fun TextFieldWithCompletion.setupCleanBranchNameAndAdjustCursorIfNeeded() {
+    whenDocumentChanged(disposable) {
+      // Do not change Document inside DocumentListener callback
+      invokeLater {
+        cleanBranchNameAndAdjustCursorIfNeeded()
+      }
     }
   }
 

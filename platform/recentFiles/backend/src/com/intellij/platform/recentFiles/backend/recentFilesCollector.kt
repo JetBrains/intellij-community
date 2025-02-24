@@ -3,12 +3,13 @@ package com.intellij.platform.recentFiles.backend
 
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FileStatusManager
@@ -28,17 +29,18 @@ import kotlin.io.path.pathString
 import kotlin.math.max
 
 @RequiresReadLock
-internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boolean): List<SwitcherRpcDto.File> {
+internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boolean, filesFromFrontendEditorSelectionHistory: List<VirtualFileId>): List<SwitcherRpcDto.File> {
   val filesData = ArrayList<SwitcherRpcDto.File>()
   val editors = ArrayList<SwitcherRpcDto.File>()
-  val addedFiles = LinkedHashSet<SwitcherRpcDto.File>()
+  val addedFiles = LinkedHashSet<VirtualFile>()
   if (!pinned) {
-    for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()) {
-      editors.add(createRecentFileViewModel(pair.first, project))
+    for (hint in filesFromFrontendEditorSelectionHistory) {
+      val virtualFile = hint.virtualFile() ?: continue
+      editors.add(createRecentFileViewModel(virtualFile, project))
     }
 
     for (editor in editors) {
-      addedFiles.add(editor)
+      addIfNotNull(addedFiles, editor.virtualFileId.virtualFile())
       filesData.add(editor)
       if (filesData.size >= SWITCHER_ELEMENTS_LIMIT) {
         break
@@ -68,7 +70,7 @@ internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boole
         }
       }
       if (add) {
-        if (addedFiles.add(info)) {
+        if (addIfNotNull(addedFiles, info.virtualFileId.virtualFile())) {
           filesData.add(info)
         }
       }
@@ -76,11 +78,16 @@ internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boole
   }
 
   if (editors.size == 1 && (filesData.isEmpty() || editors[0] != filesData[0])) {
-    if (addedFiles.add(editors[0])) {
+    if (addIfNotNull(addedFiles, editors[0].virtualFileId.virtualFile())) {
       filesData.add(0, editors[0])
     }
   }
   return filesData
+}
+
+private fun <T: Any> addIfNotNull(targetCollection: MutableCollection<T>, item: T?): Boolean {
+  if (item == null) return false
+  return targetCollection.add(item)
 }
 
 private fun getRecentFiles(project: Project): List<VirtualFile> {

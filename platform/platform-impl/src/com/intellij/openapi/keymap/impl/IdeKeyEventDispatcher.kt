@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -804,7 +804,8 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
   return false
 }
 
-data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+@ApiStatus.Internal
+data class UpdateResult(@JvmField val action: AnAction, @JvmField val event: AnActionEvent, @JvmField val startedAt: Long)
 
 private suspend fun doUpdateActionsInner(actions: List<AnAction>,
                                          updater: suspend (AnAction) -> Presentation,

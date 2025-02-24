@@ -3918,36 +3918,6 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFacto
 - f:getSuitableToFileProviders(com.intellij.psi.PsiFile):java.util.List
 - f:scheduleRecompute(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
 - f:updateModificationStamp(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-f:com.intellij.codeInsight.hints.declarative.impl.InlayData
-- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):V
-- f:component1():com.intellij.codeInsight.hints.declarative.InlayPosition
-- f:component2():java.lang.String
-- f:component3():com.intellij.codeInsight.hints.declarative.HintFormat
-- f:component4():com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-- f:component5():java.lang.String
-- f:component6():Z
-- f:component7():java.util.List
-- f:component8():java.lang.Class
-- f:component9():java.lang.String
-- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- equals(java.lang.Object):Z
-- f:getDisabled():Z
-- f:getHintFormat():com.intellij.codeInsight.hints.declarative.HintFormat
-- f:getPayloads():java.util.List
-- f:getPosition():com.intellij.codeInsight.hints.declarative.InlayPosition
-- f:getProviderClass():java.lang.Class
-- f:getProviderId():java.lang.String
-- f:getSourceId():java.lang.String
-- f:getTooltip():java.lang.String
-- f:getTree():com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-- hashCode():I
-f:com.intellij.codeInsight.hints.declarative.impl.InlayTreeSinkImpl
-- com.intellij.codeInsight.hints.declarative.InlayTreeSink
-- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class,java.lang.String):V
-- addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1):V
-- f:finish():java.util.List
-- whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
 f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Companion
 - <init>(B,java.lang.Object):V
@@ -3955,9 +3925,12 @@ f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - f:getBytePayload(B):B
 - f:getDataPayload(B):java.lang.Object
 - f:getSize():I
+- f:isSameAs(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):Z
+- bs:isSameAs$default(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,I,java.lang.Object):Z
 - f:processChildren(B,kotlin.jvm.functions.Function1):V
 - f:reverseChildren():V
 - f:setBytePayload(B,B):V
+- f:setDataPayload(java.lang.Object,B):V
 - f:syncProcessChildren(B,B,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2):V
 f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Companion
 a:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Externalizer
@@ -4297,11 +4270,9 @@ f:com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 - reset():V
 - sf:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language):V
 - sf:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.util.function.Predicate):V
-- sf:updateInlayHintsUI():V
 f:com.intellij.codeInsight.hints.settings.InlayHintsConfigurable$Companion
 - f:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language):V
 - f:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.util.function.Predicate):V
-- f:updateInlayHintsUI():V
 f:com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.Configurable$NoScroll
@@ -5032,7 +5003,7 @@ f:com.intellij.codeInsight.navigation.IncrementalSearchHandler$UpHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 - isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
-f:com.intellij.codeInsight.navigation.ItemWithPresentation
+Fc:com.intellij.codeInsight.navigation.ItemWithPresentation
 - com.intellij.model.Pointer
 - <init>(java.lang.Object,com.intellij.platform.backend.presentation.TargetPresentation):V
 - dereference():com.intellij.psi.PsiElement
@@ -7223,6 +7194,7 @@ f:com.intellij.find.FindUtil
 - s:searchBack(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):V
 - s:selectSearchResultInEditor(com.intellij.openapi.editor.Editor,com.intellij.find.FindResult,I):Z
 - s:selectSearchResultsInEditor(com.intellij.openapi.editor.Editor,java.util.Iterator,I):V
+- s:selectSearchResultsInEditor(com.intellij.openapi.editor.Editor,java.util.Iterator,I,Z):V
 - s:showInUsageView(com.intellij.psi.PsiElement,java.lang.String,com.intellij.openapi.project.Project,com.intellij.psi.SmartPsiElementPointer[]):com.intellij.usages.UsageView
 - s:showInUsageView(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.openapi.project.Project):com.intellij.usages.UsageView
 - s:showInUsageView(com.intellij.psi.PsiElement,java.lang.Object[],com.intellij.util.Function,java.lang.String,com.intellij.util.Consumer,com.intellij.openapi.project.Project):com.intellij.usages.UsageView
@@ -9294,6 +9266,17 @@ f:com.intellij.ide.extensionResources.ExtensionsRootType
 - getOwner(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.extensions.PluginId
 - s:regularFileFilter():java.util.function.Predicate
 - substituteName(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- updateBundledResources(com.intellij.openapi.extensions.PluginId):V
+- updatePluginResources(com.intellij.openapi.extensions.PluginId):V
+f:com.intellij.ide.extensionResources.ExternalResourcesUnpackExtensionBean
+- com.intellij.openapi.extensions.PluginAware
+- unpackTo:java.lang.String
+- <init>():V
+- s:allPluginsWithExtension():java.util.List
+- s:getPluginBeans(com.intellij.openapi.extensions.PluginId):java.util.List
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- s:getPluginsBeUnpackedTo(com.intellij.openapi.extensions.PluginId):java.util.List
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer
 - sf:CREATE_FROM_TEMPLATE_REPLACER:com.intellij.openapi.extensions.ExtensionPointName
 - a:replaceCreateFromFileTemplateAction(com.intellij.ide.fileTemplates.FileTemplate):com.intellij.openapi.actionSystem.AnAction
@@ -10604,7 +10587,6 @@ c:com.intellij.ide.projectView.impl.ProjectViewTree
 - com.intellij.ide.dnd.aware.DnDAwareTree
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
-- p:<init>(com.intellij.openapi.project.Project,javax.swing.tree.TreeModel):V
 - <init>(javax.swing.tree.TreeModel):V
 - p:createCellRenderer():javax.swing.tree.TreeCellRenderer
 - expandPath(javax.swing.tree.TreePath):V
@@ -10955,6 +10937,7 @@ a:com.intellij.ide.scratch.LRUPopupBuilder
 f:com.intellij.ide.scratch.ScratchFileActions
 - <init>():V
 - s:doCreateNewScratch(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context):com.intellij.psi.PsiFile
+- s:doCreateNewScratch(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context,com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiFile
 c:com.intellij.ide.scratch.ScratchFileActions$ChangeLanguageAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -13899,8 +13882,8 @@ c:com.intellij.openapi.roots.ui.configuration.SdkDetector
 - getDetectedSdksWithUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - s:getInstance():com.intellij.openapi.roots.ui.configuration.SdkDetector
 com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener
+- onSdkDetected(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.projectRoots.SdkType$SdkEntry):V
 - a:onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String):V
-- onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String,com.intellij.util.keyFMap.KeyFMap):V
 - onSearchCompleted():V
 - onSearchStarted():V
 a:com.intellij.openapi.roots.ui.configuration.SdkListItem
@@ -13951,7 +13934,7 @@ f:com.intellij.openapi.roots.ui.configuration.SdkListItem$SdkReferenceItem
 f:com.intellij.openapi.roots.ui.configuration.SdkListItem$SuggestedItem
 - com.intellij.openapi.roots.ui.configuration.SdkListItem
 - f:homePath:java.lang.String
-- f:info:com.intellij.util.keyFMap.KeyFMap
+- f:isSymlink:java.lang.Boolean
 - f:sdkType:com.intellij.openapi.projectRoots.SdkType
 - f:version:java.lang.String
 f:com.intellij.openapi.roots.ui.configuration.SdkListModel

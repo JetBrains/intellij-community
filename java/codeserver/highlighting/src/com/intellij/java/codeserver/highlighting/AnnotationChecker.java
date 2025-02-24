@@ -28,6 +28,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 final class AnnotationChecker {
   private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
@@ -410,7 +412,7 @@ final class AnnotationChecker {
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         String name = attribute.getName();
-        names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+        names.add(requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
       PsiMethod[] annotationMethods = psiClass.getMethods();
@@ -595,7 +597,7 @@ final class AnnotationChecker {
     if (identifier == null && pair.getParent() instanceof PsiAnnotationParameterList list) {
       PsiNameValuePair[] attributes = list.getAttributes();
       if (attributes.length > 1) {
-        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING.create(pair));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NAME_MISSING.create(pair));
         return;
       }
     }
@@ -615,7 +617,7 @@ final class AnnotationChecker {
     }
     PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
-      PsiType expectedType = Objects.requireNonNull(annotationMethod.getReturnType());
+      PsiType expectedType = requireNonNull(annotationMethod.getReturnType());
       checkMemberValueType(value, expectedType, annotationMethod);
     }
     checkDuplicateAttribute(pair);
@@ -628,8 +630,8 @@ final class AnnotationChecker {
       if (attribute == pair) break;
       String name = pair.getName();
       if (Objects.equals(attribute.getName(), name)) {
-        myVisitor.report(
-          JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+        break;
       }
     }
   }

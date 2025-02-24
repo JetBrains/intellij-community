@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,4 +73,13 @@ public interface PyType {
   boolean isBuiltin();
 
   void assertValid(String message);
+
+  /**
+   * For nullable {@code PyType} instance use {@link PyTypeVisitor#visit(PyType, PyTypeVisitor)}
+   * to visit {@code null} values with {@link PyTypeVisitor#visitUnknownType()}.
+   */
+  @ApiStatus.Experimental
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyType(this);
+  }
 }

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
@@ -13,11 +12,11 @@ import java.util.concurrent.TimeUnit
 
 class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) : TextMateSyntaxMatcher {
   companion object {
-    private val CACHE: Cache<MatchKey?, TextMateLexerState> = Caffeine.newBuilder()
+    private val CACHE = Caffeine.newBuilder()
       .maximumSize(100000)
       .expireAfterAccess(1, TimeUnit.MINUTES)
       .executor(Dispatchers.Default.asExecutor())
-      .build<MatchKey?, TextMateLexerState?>()
+      .build<MatchKey, TextMateLexerState>()
   }
 
   override fun matchRule(

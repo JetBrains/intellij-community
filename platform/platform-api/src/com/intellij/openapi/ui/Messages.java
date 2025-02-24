@@ -290,7 +290,8 @@ public class Messages {
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
                                @Nullable String invocationPlace) {
     return MessagesService.getInstance()
-      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null, invocationPlace);
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null,
+                         invocationPlace, new ExitActionType[0]);
   }
 
   /**
@@ -1086,6 +1087,7 @@ public class Messages {
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
         final int exitCode = i;
+        ExitActionType exitType = myExitActionTypes.length > i ? myExitActionTypes[i] : ExitActionType.UNDEFINED;
         if (i == 0) { // "OK" is default button. It has index 0.
           actions[0] = getOKAction();
           actions[0].putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
@@ -1104,7 +1106,7 @@ public class Messages {
           actions[i] = new AbstractAction(option) {
             @Override
             public void actionPerformed(ActionEvent e) {
-              close(exitCode);
+              close(exitCode, exitType);
             }
           };
         }

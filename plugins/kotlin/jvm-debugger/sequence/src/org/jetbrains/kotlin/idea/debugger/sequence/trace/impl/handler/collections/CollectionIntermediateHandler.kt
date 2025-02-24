@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.trace.IntermediateCallHandler
-import com.intellij.debugger.streams.trace.dsl.CodeBlock
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.trace.IntermediateCallHandler
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 
 class CollectionIntermediateHandler(
     order: Int,

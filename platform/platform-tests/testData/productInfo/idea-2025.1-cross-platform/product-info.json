@@ -1,0 +1,121 @@
+{
+  "name": "IntelliJ IDEA",
+  "version": "2025.1",
+  "versionSuffix": "EAP",
+  "buildNumber": "251.21418.34",
+  "productCode": "IU",
+  "envVarBaseName": "IDEA",
+  "dataDirectoryName": "IntelliJIdea2025.1",
+  "svgIconPath": "bin/idea.svg",
+  "productVendor": "JetBrains",
+  "launch": [
+    {
+      "os": "Windows",
+      "arch": "amd64",
+      "launcherPath": "bin/idea.bat",
+      "vmOptionsFilePath": "bin/win/idea64.exe.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:%IDE_HOME%/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    },
+    {
+      "os": "Linux",
+      "arch": "amd64",
+      "launcherPath": "bin/idea.sh",
+      "vmOptionsFilePath": "bin/linux/idea64.vmoptions",
+      "startupWmClass": "jetbrains-idea",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$IDE_HOME/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    },
+    {
+      "os": "macOS",
+      "arch": "amd64",
+      "launcherPath": "bin/idea.sh",
+      "vmOptionsFilePath": "bin/mac/idea.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$APP_PACKAGE/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    },
+    {
+      "os": "Windows",
+      "arch": "aarch64",
+      "launcherPath": "bin/idea.bat",
+      "vmOptionsFilePath": "bin/win/idea64.exe.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:%IDE_HOME%/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    },
+    {
+      "os": "Linux",
+      "arch": "aarch64",
+      "launcherPath": "bin/idea.sh",
+      "vmOptionsFilePath": "bin/linux/idea64.vmoptions",
+      "startupWmClass": "jetbrains-idea",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$IDE_HOME/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    },
+    {
+      "os": "macOS",
+      "arch": "aarch64",
+      "launcherPath": "bin/idea.sh",
+      "vmOptionsFilePath": "bin/mac/idea.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$APP_PACKAGE/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"
+      ],
+      "mainClass": "com.intellij.idea.Main"
+    }
+  ],
+  "bundledPlugins": [
+    "AngularJS"
+  ],
+  "modules": [
+    "com.intellij.java.frontback.impl"
+  ],
+  "fileExtensions": [
+    "*.java"
+  ],
+  "layout": [
+  ]
+}

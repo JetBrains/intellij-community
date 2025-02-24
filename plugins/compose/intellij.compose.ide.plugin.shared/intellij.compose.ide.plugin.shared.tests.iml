@@ -20,6 +20,9 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.shared" />
 </module>

@@ -5,18 +5,21 @@ load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt"]),
+    srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
+        "//zip:build-zip",
         "@lib//:opentelemetry",
-        "//src/compiler-util",
-        "//src/worker-framework",
-        "@rules_java//java/runfiles",
+        "//src/worker-util",
         ":jps-standalone",
+        "//src/abi",
+        "//src/kotlin-compiler",
+        "//src/worker-framework",
+        # before kotlin-jps-plugin
+        "//:kotlin-compiler",
         "//:kotlin-jps-plugin",
-        "//src/jps-builder/packager",
         "@lib//:hash4j",
         "@lib//:mvstore",
         "//:arrow-vector",
@@ -39,8 +42,6 @@ kt_jvm_library(
         "@lib//:aalto-xml",
         "@lib//:caffeine",
         "@lib//:platform-jps-build-qdox-java-parser",
-        # JPS plugin to compile Kotlin requires it
-        "@lib//:kotlin-reflect",
         "//:kotlin-build-tools-api",
         "//:kotlin-metadata",
         "//:kotlin-util-klib",
@@ -64,16 +65,10 @@ jvm_import(
 java_binary(
     name = "worker-jvm",
     runtime_deps = [":worker-lib"],
-    data = [
-        "@kotlinc//:kotlinc_dist",
-        "@kotlin-serialization-compiler-plugin//file",
-    ],
     main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
     jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
-        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
-        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
     visibility = ["//visibility:public"],
 )

@@ -287,8 +287,11 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           }
           else if ("wbr".equals(t.toString())) {
             var elementSpec = parseBuffer.lastElement();
+            // Swing HTML control does not accept elements with no text.
+            // Use zero-width space. It needs to be removed in `getSelectedText()`
+            // to avoid this char showing up while copy/pasting.
             parseBuffer.set(parseBuffer.size() - 1, new ElementSpec(
-              elementSpec.getAttributes(), ElementSpec.ContentType));
+              elementSpec.getAttributes(), ElementSpec.ContentType, new char[]{'\u200B'}, 0, 1));
           }
         }
       }

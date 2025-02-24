@@ -205,7 +205,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
     onFoldProcessingStart();
     myEditor.myView.invalidateFoldRegionLayout(region);
-    if (myEditor.myAdView != null) myEditor.myAdView.invalidateFoldRegionLayout(region);
     onFoldRegionStateChange(region);
   }
 

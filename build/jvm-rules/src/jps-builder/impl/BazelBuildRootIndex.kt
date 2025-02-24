@@ -3,6 +3,7 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.io.FileFilters
+import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildRootIndex
 import org.jetbrains.jps.builders.BuildTarget
@@ -14,7 +15,7 @@ import java.io.FileFilter
 import java.nio.file.Path
 
 internal class BazelBuildRootIndex(target: BazelModuleBuildTarget) : BuildRootIndex {
-  @JvmField val fileToDescriptors = HashMap<Path, JavaSourceRootDescriptor>()
+  @JvmField val fileToDescriptors = hashMap<Path, JavaSourceRootDescriptor>()
   @JvmField val descriptors = target.computeRootDescriptors()
 
   init {
@@ -68,7 +69,7 @@ internal class BazelBuildRootIndex(target: BazelModuleBuildTarget) : BuildRootIn
     context: CompileContext?,
   ): Collection<R> {
     if (types == null || types.any { it == JavaSourceRootDescriptor::class.java }) {
-      return findAllParentDescriptors<R>(file, context)
+      return findAllParentDescriptors(file, context)
     }
     return java.util.List.of()
   }

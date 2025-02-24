@@ -100,8 +100,8 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     // todo IJPL-173737
   }
 
-  fun pathPrefix(): String {
-    return eel.descriptor.routingPrefix().toString().removeSuffix(FileSystems.getDefault().separator)
+  fun pathPrefixes(): Set<String> {
+    return eel.descriptor.routingPrefixes().map { it.toString().removeSuffix(FileSystems.getDefault().separator) }.toSet()
   }
 
   /**

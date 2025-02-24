@@ -41,7 +41,7 @@ import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
 import java.nio.file.Paths
-import java.util.Locale
+import java.util.*
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -117,7 +117,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                         myFixture.enableInspections(*inspections)
 
                         doKotlinQuickFixTest(beforeFileName)
-                        runInEdtAndWait { checkForUnexpectedErrors() }
+                        runInEdtAndWait {
+                            checkForErrorsAfter(beforeFile, myFixture.file as KtFile, beforeFileText)
+                        }
                     } finally {
                         myFixture.disableInspections(*inspections)
                     }
@@ -438,7 +440,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         )
     }
 
-    protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+    }
 
     override val additionalToolDirectives: Array<String>
         get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)

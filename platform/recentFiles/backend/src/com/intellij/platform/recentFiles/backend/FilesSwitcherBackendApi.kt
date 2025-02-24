@@ -2,7 +2,6 @@
 package com.intellij.platform.recentFiles.backend
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
@@ -24,7 +23,7 @@ private class FilesSwitcherBackendApi : FileSwitcherApi {
     val perProjectRecentFileEventsHolder = getProjectFileEventsHolderOrNull(request.projectId) ?: return false
     when (request) {
       is RecentFilesBackendRequest.NewSearchWithParameters -> perProjectRecentFileEventsHolder.emitRecentFiles(request)
-      is RecentFilesBackendRequest.HideFile -> perProjectRecentFileEventsHolder.hideAlreadyShownFile(request)
+      is RecentFilesBackendRequest.HideFiles -> perProjectRecentFileEventsHolder.hideAlreadyShownFiles(request)
       is RecentFilesBackendRequest.ScheduleRehighlighting -> perProjectRecentFileEventsHolder.scheduleRehighlightUnopenedFiles(request.projectId)
     }
     return true

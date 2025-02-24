@@ -31,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
   </component>
 </module>

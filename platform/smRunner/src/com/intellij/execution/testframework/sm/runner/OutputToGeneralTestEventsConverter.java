@@ -96,18 +96,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     mySplitter.process(text, outputType);
   }
 
-  /**
-   * Will be removed in 2020
-   *
-   * @deprecated use {@link #processConsistentText(String, Key)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected void processConsistentText(final @NotNull String text,
-                                       final Key<?> outputType,
-                                       @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {
-    processConsistentText(text, outputType);
-  }
-
   protected void processConsistentText(@NotNull String text, final @NotNull Key<?> outputType) {
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {

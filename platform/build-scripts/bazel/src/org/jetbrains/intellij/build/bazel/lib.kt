@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Path
@@ -137,7 +137,6 @@ internal fun BuildFile.generateMavenLib(
           option("exported_compiler_plugins", exportedCompilerPlugins)
         }
         if (targetName == "rhizomedb-compiler-plugin") {
-          //todo update to kotlin 2.1.0
           option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
         }
 

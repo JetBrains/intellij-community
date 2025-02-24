@@ -6,25 +6,46 @@ package org.jetbrains.bazel.jvm.jps
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.google.devtools.build.runfiles.Runfiles
 import org.jetbrains.annotations.Unmodifiable
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
-import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
-import org.jetbrains.jps.model.*
+import org.jetbrains.jps.api.GlobalOptions
+import org.jetbrains.jps.model.JpsCompositeElement
+import org.jetbrains.jps.model.JpsDummyElement
+import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsElementReference
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.JpsReferenceableElement
+import org.jetbrains.jps.model.ex.JpsElementBase
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
-import org.jetbrains.jps.model.library.*
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsLibraryReference
+import org.jetbrains.jps.model.library.JpsLibraryRoot
 import org.jetbrains.jps.model.library.JpsLibraryRoot.InclusionOptions
+import org.jetbrains.jps.model.library.JpsLibraryType
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsTypedLibrary
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 import org.jetbrains.jps.model.module.JpsDependenciesList
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.io.File
@@ -35,22 +56,23 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
 
-internal val runFiles by lazy {
-  Runfiles.preload().unmapped()
-}
-
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
+
+private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
+
+internal val isLibTracked = System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED).toBoolean()
 
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
-  classOutDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: Map<Path, ByteArray>?,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
+  digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
+  digests.set(TargetConfigurationDigestProperty.JPS_TRACK_LIB_DEPS, if (isLibTracked) 1 else 0)
   digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 1)
 
   // properties not needed for us (not implemented for java)
@@ -61,7 +83,6 @@ internal fun loadJpsModel(
     jpsElementFactory.createDummyElement(),
   )
   val jpsJavaModuleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module)
-  jpsJavaModuleExtension.outputUrl = classOutDir.toUri().toString()
 
   val languageLevelEnumName = "JDK_" + args.mandatorySingle(JvmBuilderFlags.JVM_TARGET).let { if (it == "8") "1_8" else it }
   val langLevel = LanguageLevel.valueOf(languageLevelEnumName)
@@ -77,28 +98,45 @@ internal fun loadJpsModel(
   // version
   configHash.putInt(1)
   configHash.putInt(langLevel.ordinal)
-  configureKotlinCompiler(module = module, args = args, classPathRootDir = classPathRootDir, configHash = configHash)
-  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
-  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val dependencyList = module.dependenciesList
   dependencyList.clear()
   configureJdk(model = model, module = module, dependencyList = dependencyList)
+  // must be after configureJdk; otherwise, for some reason, module output dir is not included in classpath
   dependencyList.addModuleSourceDependency()
 
-  configureClasspath(
+  val classPathFiles = configureClasspath(
     module = module,
     dependencyList = dependencyList,
     args = args,
     baseDir = classPathRootDir,
-    dependencyFileToDigest = dependencyFileToDigest,
+    dependencyFileToDigest = dependencyFileToDigest.takeIf { !isLibTracked },
     digests = digests,
   )
+
+  val kotlinArgs = configureKotlinCompiler(
+    module = module,
+    args = args,
+    classPathRootDir = classPathRootDir,
+    configHash = configHash,
+    classPathFiles = classPathFiles,
+    sources = sources,
+  )
+  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
+  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val project = model.project
   project.addModule(module)
 
   configureJavac(project, args)
+
+  module.container.setChild(BazelConfigurationHolder.KIND, BazelConfigurationHolder(
+    classPath = classPathFiles,
+    args = args,
+    kotlinArgs = kotlinArgs,
+    classPathRootDir = classPathRootDir,
+    sources = sources,
+  ))
 
   return model to digests
 }
@@ -123,10 +161,14 @@ private fun configureKotlinCompiler(
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
   configHash: HashStream64,
-) {
+  classPathFiles: Array<Path>,
+  sources: List<Path>,
+): K2JVMCompilerArguments {
   val kotlinFacetSettings = KotlinFacetSettings()
   kotlinFacetSettings.useProjectSettings = false
   val kotlinArgs = K2JVMCompilerArguments()
+  val moduleName = args.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME)
+  kotlinArgs.moduleName = moduleName
   kotlinFacetSettings.compilerArguments = kotlinArgs
   configureCommonCompilerArgs(kotlinArgs = kotlinArgs, args = args, workingDir = classPathRootDir)
 
@@ -137,26 +179,34 @@ private fun configureKotlinCompiler(
   configHash.putString(kotlinArgs.jvmDefault)
   configHash.putBoolean(kotlinArgs.inlineClasses)
   configHash.putBoolean(kotlinArgs.allowKotlinPackage)
+  configHash.putString(moduleName)
 
   val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   configHash.putInt(plugins.size)
   if (plugins.isNotEmpty()) {
-    val pluginClassPaths = mutableListOf<String>()
     @Suppress("UnusedVariable")
     for ((id, paths) in plugins) {
-      val propertyName = "$id.path"
-      val relativePath = System.getProperty(propertyName)
-      if (relativePath == null) {
-        throw IllegalArgumentException("Missing system property $propertyName")
-      }
-
       configHash.putString(id)
-      pluginClassPaths.add(runFiles.rlocation(relativePath))
     }
-    kotlinArgs.pluginClasspaths = pluginClassPaths.toTypedArray()
   }
 
+  kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
+  kotlinArgs.freeArgs = sources.map { it.toString() }
+
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))
+  return kotlinArgs
+}
+
+internal class BazelConfigurationHolder(
+  @JvmField val classPath: Array<Path>,
+  @JvmField val args: ArgMap<JvmBuilderFlags>,
+  @JvmField val kotlinArgs: K2JVMCompilerArguments,
+  @JvmField val classPathRootDir: Path,
+  @JvmField val sources: List<Path>,
+) : JpsElementBase<BazelConfigurationHolder>() {
+  companion object {
+    @JvmField val KIND: JpsElementChildRoleBase<BazelConfigurationHolder> = JpsElementChildRoleBase.create<BazelConfigurationHolder>("kotlin facet extension")
+  }
 }
 
 private fun configureJdk(
@@ -182,11 +232,11 @@ private fun configureClasspath(
   dependencyList: JpsDependenciesList,
   args: ArgMap<JvmBuilderFlags>,
   baseDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: Map<Path, ByteArray>?,
   digests: TargetConfigurationDigestContainer,
-) {
-  // REDUCED_CLASSPATH_MODE is not supported for JPS
-  val classPathRaw = args.mandatory(JvmBuilderFlags.CLASSPATH)
+): Array<Path> {
+  // no classpath if no source file (jvm_test without own sources)
+  val classPathRaw = args.optionalList(JvmBuilderFlags.CP)
   val files = Array<Path>(classPathRaw.size) {
     baseDir.resolve(classPathRaw[it]).normalize()
   }
@@ -199,17 +249,20 @@ private fun configureClasspath(
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_PATH_LIST, hash.asLong)
   hash.reset()
 
-  // todo JPS should support dependency as JARs, but for now we do include digest into hash
-  for (file in files) {
-    val digest = requireNotNull(dependencyFileToDigest.get(file)) {
-      "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+  if (dependencyFileToDigest != null) {
+    for (file in files) {
+      val digest = requireNotNull(dependencyFileToDigest.get(file)) {
+        "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+      }
+      hash.putBytes(digest)
     }
-    hash.putBytes(digest)
   }
   hash.putInt(files.size)
 
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, hash.asLong)
   hash.reset()
+
+  return files
 }
 
 @Suppress("SameParameterValue")
@@ -227,9 +280,6 @@ private class BazelJpsLibrary(
   private val files: List<Path>,
 ) : JpsNamedCompositeElementBase<BazelJpsLibrary>(name), JpsTypedLibrary<JpsDummyElement> {
   private val properties = JpsElementFactory.getInstance().createDummyElement()
-  //private val roots = files.map {
-  //  JpsLibraryRootImpl("jar://" + it.invariantSeparatorsPathString + "!/", JpsOrderRootType.COMPILED, InclusionOptions.ROOT_ITSELF)
-  //}
 
   override fun getType(): JpsJavaLibraryType = JpsJavaLibraryType.INSTANCE
 

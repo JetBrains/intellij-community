@@ -85,9 +85,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                             implementationClass="com.jetbrains.python.requirements.PoetryDependencyPackageNameCompletionContributor"/>
     <completion.contributor language="TOML"
                             implementationClass="com.jetbrains.python.requirements.PoetryDependencyVersionCompletionContributor"/>
-    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
-                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
-                    overrides="true"/>
     <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement" bundle="messages.PyBundle"
                      key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>

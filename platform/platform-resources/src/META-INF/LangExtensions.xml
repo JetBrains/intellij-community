@@ -98,6 +98,9 @@
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <initProjectActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVfsInitProjectActivity" order="first"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.ProjectModelContextBridge"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.ProjectModelContextBridgeImpl"/>
+
     <applicationService serviceInterface="com.intellij.util.indexing.EntityIndexingService"
                         serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
     <!--suppress PluginXmlCapitalization -->
@@ -267,11 +270,6 @@
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
-    <applicationService serviceInterface="com.intellij.util.gist.GistManager"
-                        serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"
-                        serviceImplementation="com.intellij.util.gist.storage.GistStorageImpl"/>
-
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineWrappingPostFormatProcessor" order="first"/>
@@ -330,6 +328,16 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl"/>
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeInitializer"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.module.ModuleManager"
+      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"
+      overrides="true"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
+    <initProjectActivity
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
+      order="first"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.psi.search.ProjectScopeBuilderImpl"/>
@@ -474,6 +482,7 @@
       implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsMouseMotionListener"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayActionService"/>
 
     <projectConfigurable provider="com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableProvider"
                          id="inlay.hints"
@@ -1028,6 +1037,7 @@
 
     <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
                     serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.structureView.StructureViewEventsCollector"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
     <documentationProvider implementation="com.intellij.codeInspection.actions.InspectionDescriptionDocumentationProvider"/>
@@ -1176,6 +1186,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInspection.ex.GlobalInspectionContextImpl$InspectionPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionCollector"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customValidationRule
@@ -1216,9 +1227,6 @@
       implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector$StatusBarWidgetFactoryValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.usages.impl.ScopeRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.ListValidationRule"/>
-
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.IJMapperEventLoggerProvider"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.eventLog.IJFUSMapper"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
@@ -1480,6 +1488,8 @@
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
 
+    <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
+    <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory"/>
@@ -1560,10 +1570,24 @@
       id="inline.completion.escape" action="EditorEscape"
       implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
+
     <editorActionHandler
       id="inline.completion.backspace" action="EditorBackSpace"
-      implementationClass="com.intellij.codeInsight.inline.completion.BackSpaceInlineCompletionHandler"
+      implementationClass="com.intellij.codeInsight.inline.completion.BackspaceDeleteInlineCompletionHandler"
       order="first"/>
+    <editorActionHandler
+      id="inline.completion.delete" action="EditorDelete"
+      implementationClass="com.intellij.codeInsight.inline.completion.BackspaceDeleteInlineCompletionHandler"
+      order="first"/>
+    <editorActionHandler
+      id="inline.completion.backspace.word" action="EditorDeleteToWordEnd"
+      implementationClass="com.intellij.codeInsight.inline.completion.BackspaceDeleteInlineCompletionHandler"
+      order="first"/>
+    <editorActionHandler
+      id="inline.completion.delete.word" action="EditorDeleteToWordStart"
+      implementationClass="com.intellij.codeInsight.inline.completion.BackspaceDeleteInlineCompletionHandler"
+      order="first"/>
+
     <editorActionHandler
       id="inline.completion.enter"
       action="EditorEnter"
@@ -1690,9 +1714,7 @@
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey key="ide.completion.command.enabled" defaultValue="false"
-                 description="Enable experimental support command completion" restartRequired="true"/>
-    <registryKey key="ide.completion.command.full.line.enabled" defaultValue="false"
-                 description="Enable experimental support command completion" restartRequired="true"/>
+                 description="Enable experimental support command completion" restartRequired="false"/>
 
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>
@@ -1747,6 +1769,7 @@
     <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
     <findInProjectExtension implementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl$SelectedFilesFindInProjectExtension" />
 
+    <registryKey defaultValue="false" description="Shows all inheritors and override methods in line markers" key="intellij.platform.shared.source.line.markers.show.all.inheritors"/>
     <!--  Inspection results -->
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
@@ -1836,6 +1859,19 @@
     <registryKey key="client.generator.inlay.action" defaultValue="false"
                  description="Enable open in client generator action"/>
   </extensions>
+
+  <!--suppress PluginXmlDynamicPlugin -->
+  <module-components>
+    <component>
+      <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.facet.FacetManager</interface-class>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge</implementation-class>
+    </component>
+  </module-components>
+
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider
       implementation="com.intellij.lang.documentation.symbol.impl.DefaultTargetSymbolDocumentationTargetProvider"/>

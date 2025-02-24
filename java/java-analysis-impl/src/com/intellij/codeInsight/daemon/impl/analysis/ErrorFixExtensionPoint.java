@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
@@ -78,11 +77,5 @@ public final class ErrorFixExtensionPoint implements PluginAware {
     for (ErrorFixExtensionPoint fix : fixes) {
       info.accept(fix.instantiate(context));
     }
-  }
-
-  public static void registerFixes(@NotNull HighlightInfo.Builder info,
-                                            @NotNull PsiElement context,
-                                            @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String code) {
-    registerFixes(HighlightUtil.asConsumer(info), context, code);
   }
 }

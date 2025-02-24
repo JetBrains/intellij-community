@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
@@ -269,9 +268,9 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
+  fun getDefaultDocStyleOptions(colorSchemeProvider: () -> EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
     JBHtmlPaneStyleConfiguration {
-      this.colorScheme = colorScheme
+      this.colorSchemeProvider = colorSchemeProvider
       this.editorInlineContext = editorInlineContext
       inlineCodeParentSelectors(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
                                 ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS")

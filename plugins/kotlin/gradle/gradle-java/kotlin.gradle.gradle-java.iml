@@ -22,7 +22,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -30,12 +29,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
-    <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-gradle-statistics" level="project" />
     <orderEntry type="library" name="kotlin-tooling-core" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea-proto" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
@@ -50,7 +44,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />

@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -693,7 +694,7 @@ final class ClassChecker {
 
   void checkClassDoesNotCallSuperConstructorOrHandleExceptions(PsiClass aClass) {
     if (aClass.isEnum()) return;
-    // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
+    // Check only no-ctr classes. Problem with a specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return;
     // find no-args base class ctr
     checkBaseClassDefaultConstructorProblem(aClass, aClass, PsiClassType.EMPTY_ARRAY);

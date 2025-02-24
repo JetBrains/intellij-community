@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Toolkit
 import java.awt.event.AWTEventListener
@@ -19,8 +20,11 @@ import javax.swing.JComponent
 import javax.swing.JPopupMenu
 import javax.swing.MenuSelectionManager
 
-internal class TerminalFocusModel(private val project: Project,
-                                  private val terminalView: BlockTerminalView) {
+@ApiStatus.Internal
+class TerminalFocusModel(
+  private val project: Project,
+  private val terminalView: BlockTerminalView,
+) {
   /** True, if focus is inside the terminal component */
   var isActive: Boolean = true
     private set(value) {

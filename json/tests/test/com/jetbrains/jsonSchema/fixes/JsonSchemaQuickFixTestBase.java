@@ -28,9 +28,9 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
     PsiFile psiFile = configureInitially(schema, text, "json");
     myFixture.checkHighlighting();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getFamilyName()));
+    IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getText()));
     if (action == null) {
-      String intentionsList = intentions.stream().map(i -> i.getFamilyName()).distinct().sorted().collect(Collectors.joining("\n"));
+      String intentionsList = intentions.stream().map(i -> i.getText()).distinct().sorted().collect(Collectors.joining("\n"));
       throw new IllegalStateException("No available intention found with name \"" + fixName + "\". Available intentions:\n" + intentionsList);
     }
     ApplicationManager.getApplication().invokeLater(() -> {

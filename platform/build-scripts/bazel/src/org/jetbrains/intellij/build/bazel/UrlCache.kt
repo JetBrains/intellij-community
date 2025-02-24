@@ -10,6 +10,8 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jdom.Namespace
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -31,6 +33,20 @@ internal data class CacheEntry(
 )
 
 internal data class JarRepository(@JvmField val url: String, @JvmField val isPrivate: Boolean)
+
+private fun getAuthFromSystemProperties(): Pair<String, String>? {
+  val username = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME)
+                 ?: TeamCityHelper.allProperties[BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME]
+  val password = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD)
+                 ?: TeamCityHelper.allProperties[BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD]
+  if (username.isNullOrBlank() || password.isNullOrBlank()) {
+    println("DEBUG: ${BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME} or ${BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD} is empty in system properties - skipping auth from system properties")
+    return null
+  }
+
+  println("DEBUG: got authentication from ${BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME} and ${BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD}")
+  return username to password
+}
 
 private fun getAuthFromMavenSettingsXml(): Pair<String, String>? {
   val settingsXmlFile = Paths.get(System.getProperty("user.home"), ".m2/settings.xml")
@@ -87,7 +103,8 @@ private fun getAuthFromNetrc(): Pair<String, String>? {
 }
 
 private val authHeaderValue by lazy {
-  val credentials = getAuthFromMavenSettingsXml() ?: getAuthFromNetrc() ?: error("Unable to get credentials from both settings.xml and .netrc")
+  val credentials = getAuthFromSystemProperties() ?: getAuthFromMavenSettingsXml() ?: getAuthFromNetrc()
+                    ?: error("Unable to get credentials from system properties, settings.xml, and .netrc")
   "Basic " + Base64.getEncoder().encodeToString("${credentials.first}:${credentials.second}".toByteArray())
 }
 

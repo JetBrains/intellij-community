@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class AnnotatorRunner {
+final class AnnotatorRunner {
   private static final Logger LOG = Logger.getInstance(AnnotatorRunner.class);
   private final Project myProject;
   private final PsiFile myPsiFile;
@@ -46,7 +46,7 @@ public final class AnnotatorRunner {
   private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
   private final List<HighlightInfo> results = Collections.synchronizedList(new ArrayList<>());
 
-  public AnnotatorRunner(@NotNull AnnotationSession annotationSession, boolean batchMode) {
+  AnnotatorRunner(@NotNull AnnotationSession annotationSession, boolean batchMode) {
     myProject = annotationSession.getFile().getProject();
     myPsiFile = annotationSession.getFile();
     myAnnotationSession = annotationSession;

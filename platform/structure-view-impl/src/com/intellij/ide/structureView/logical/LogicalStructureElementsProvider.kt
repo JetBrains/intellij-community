@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * Do not implement it itself, there are three extensions, use them depending on logical meaning:
  *  [ContainerElementsProvider] - to provide children for parent (e.g. entity attributes for an entity)
  *  [PropertyElementProvider] - to provide property for element (e.g. scope for a spring bean)
- *  [ConvertElementsProvider] - to provide logical view for element (e.g. entity/bean for a class)
 *  To build full model for some element, see [com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel]
  */
 @Experimental
@@ -35,7 +34,6 @@ interface LogicalStructureElementsProvider<P, C> {
  * Provides logical children with type [C] for logical object [P]
  */
 interface ContainerElementsProvider<P, C> : LogicalStructureElementsProvider<P, C> {
-  val containerName: String?
 }
 
 /**

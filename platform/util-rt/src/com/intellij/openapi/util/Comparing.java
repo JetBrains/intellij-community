@@ -115,6 +115,7 @@ public final class Comparing {
   /**
    * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static int compare(boolean o1, boolean o2) {
     return Boolean.compare(o1, o2);

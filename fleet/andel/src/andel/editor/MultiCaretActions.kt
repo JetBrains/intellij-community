@@ -14,6 +14,7 @@ import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.createCoroutineUnintercepted
 import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.time.TimeSource
 
 /**
  * An isolated editor given to each caret. See [MutableEditor.runForEachCaret].
@@ -128,11 +129,12 @@ private class PerCaretOrchestrator {
     while (continuations.isNotEmpty()) {
       val currentSet = ArrayList(continuations.values)
       continuations.clear()
-      logger.trace { "Start iteration. Millis=${System.currentTimeMillis()}" }
+      val initialTime = TimeSource.Monotonic.markNow()
+      logger.trace { "Start iteration. Millis=${initialTime.elapsedNow().inWholeMilliseconds}" }
       currentSet.forEach {
         it.resume(Unit)
       }
-      logger.trace { "Collected iteration. Millis=${System.currentTimeMillis()}" }
+      logger.trace { "Collected iteration. Millis=${initialTime.elapsedNow().inWholeMilliseconds}" }
 
       val accumulatedChanges = editors.map { it.document.accumulatedChanges }
       val operationsTreap = buildOperationTreap(accumulatedChanges)
@@ -178,7 +180,7 @@ private class PerCaretOrchestrator {
         originalEditor.addHistoryPlace()
       }
 
-      logger.trace { "Applied iteration. Millis=${System.currentTimeMillis()}" }
+      logger.trace { "Applied iteration. Millis=${initialTime.elapsedNow().inWholeMilliseconds}" }
     }
 
     if (exceptions.isNotEmpty()) {

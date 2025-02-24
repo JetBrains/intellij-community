@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,8 @@ import java.util.function.Supplier;
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+@ApiStatus.Internal
+public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
   MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
@@ -71,7 +73,8 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
+  @ApiStatus.Internal
+  public static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,

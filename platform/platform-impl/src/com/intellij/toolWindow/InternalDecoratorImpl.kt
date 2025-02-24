@@ -279,7 +279,7 @@ class InternalDecoratorImpl internal constructor(
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
 
-        InternalUICustomization.getInstance().internalCustomizer.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+        InternalUICustomization.getInstance()?.toolWindowUIDecorator?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
           add(it, BorderLayout.CENTER)
         } ?: run {
           add(dividerAndHeader, BorderLayout.NORTH)

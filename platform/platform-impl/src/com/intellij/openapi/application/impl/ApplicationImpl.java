@@ -68,6 +68,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.codeWithMe.ClientId.decorateCallable;
+import static com.intellij.codeWithMe.ClientId.decorateRunnable;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
@@ -76,8 +78,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
 
 @ApiStatus.Internal
-public final class ApplicationImpl extends ClientAwareComponentManager
-  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener {
+public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -88,10 +89,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
-  private final EventDispatcher<ReadActionListener> myReadActionListenerDispatcher = EventDispatcher.create(ReadActionListener.class);
-
-  private final EventDispatcher<WriteIntentReadActionListener> myWriteIntentReadActionListenerDispatcher =
-    EventDispatcher.create(WriteIntentReadActionListener.class);
+  private final LockDispatchListener myLockDispatcherListener = new LockDispatchListener();
 
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -104,19 +102,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
+  private final ThreadLocal<Boolean> myImpatientReader = ThreadLocal.withInitial(() -> false);
+
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
 
   private final @Nullable Disposable myLastDisposable;  // the last to be disposed
 
-  // defer reading isUnitTest flag until it's initialized
-  static final class Holder {
-    static final int ourDumpThreadsOnLongWriteActionWaiting =
-      ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
-  }
-
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
+
+  private static final LegacyProgressIndicatorProvider myLegacyIndicatorProvider = () -> {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    return indicator == null ? null : () -> {
+      if (indicator.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+    };
+  };
 
   @SuppressWarnings("Convert2Lambda")
   private final Supplier<OTelReadWriteActionsMonitor> otelMonitor = new SynchronizedClearableLazy<>(new Function0<>() {
@@ -184,12 +187,23 @@ public final class ApplicationImpl extends ClientAwareComponentManager
    */
   @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    getThreadingSupport().executeByImpatientReader(runnable);
+    if (EDT.isCurrentThreadEdt()) {
+      runnable.run();
+      return;
+    }
+
+    myImpatientReader.set(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      myImpatientReader.set(false);
+    }
   }
 
   @Override
   public boolean isInImpatientReader() {
-    return getThreadingSupport().isInImpatientReader();
+    return myImpatientReader.get();
   }
 
   @TestOnly
@@ -239,12 +253,64 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return getThreadingSupport().executeOnPooledThread(action, this::isDisposed);
+    Runnable actionDecorated = decorateRunnable(action);
+    return AppExecutorUtil.getAppExecutorService().submit(new Runnable() {
+      @Override
+      public void run() {
+        if (isDisposed()) {
+          return;
+        }
+
+        try {
+          actionDecorated.run();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable e) {
+          getLogger().error(e);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
+      }
+
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+    });
   }
 
   @Override
   public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return getThreadingSupport().executeOnPooledThread(action, this::isDisposed);
+    Callable<T> actionDecorated = decorateCallable(action);
+    return AppExecutorUtil.getAppExecutorService().submit(new Callable<T>() {
+      @Override
+      public T call() {
+        if (isDisposed()) {
+          return null;
+        }
+        try {
+          return actionDecorated.call();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable e) {
+          getLogger().error(e);
+        }
+        finally {
+          Thread.interrupted();
+        }
+        return null;
+      }
+
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+    });
   }
 
   @Override
@@ -302,8 +368,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   @Override
   public void dispose() {
-    getThreadingSupport().removeReadActionListener(this);
-    getThreadingSupport().removeWriteActionListener(this);
+    getThreadingSupport().removeReadActionListener(myLockDispatcherListener);
+    getThreadingSupport().removeWriteActionListener(myLockDispatcherListener);
+    getThreadingSupport().removeLockAcquisitionListener(myLockDispatcherListener);
+    getThreadingSupport().removeSuspendingWriteActionListener(myLockDispatcherListener);
+    getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
@@ -926,6 +995,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
+    ThreadingAssertions.softAssertReadAccess();
     return getThreadingSupport().hasWriteAction(actionClass);
   }
 
@@ -1046,6 +1116,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   public void executeSuspendingWriteAction(@Nullable Project project,
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
+    ThreadingAssertions.assertWriteIntentReadAccess();
     getThreadingSupport().executeSuspendingWriteAction(() -> {
       ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
         @Override
@@ -1091,6 +1162,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private void fireAfterWriteActionFinished(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().afterWriteActionFinished(action);
+    otelMonitor.get().writeActionExecuted();
   }
 
   @Override
@@ -1189,9 +1261,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager
       return true;
     }, app.getCoroutineScope());
 
-    getThreadingSupport().setReadActionListener(app);
-    getThreadingSupport().setWriteActionListener(app);
-    getThreadingSupport().setWriteIntentReadActionListener(app);
+    getThreadingSupport().setReadActionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setSuspendingWriteActionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -1211,46 +1286,28 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   }
 
   @Override
-  public void readActionFinished(@NotNull Class<?> action) {
-    myReadActionCacheImpl.clear();
-    myReadActionListenerDispatcher.getMulticaster().readActionFinished(action);
-    otelMonitor.get().readActionExecuted();
-  }
-
-  @Override
-  public void beforeWriteActionStart(@NotNull Class<?> action) {
-    ActivityTracker.getInstance().inc();
-    fireBeforeWriteActionStart(action);
-  }
-
-  @Override
-  public void writeActionStarted(@NotNull Class<?> action) {
-    fireWriteActionStarted(action);
+  public void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) {
+    myLockDispatcherListener.myWriteActionListenerDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
   public void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) {
-    myReadActionListenerDispatcher.addListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void readActionStarted(@NotNull Class<?> action) {
-    myReadActionListenerDispatcher.getMulticaster().readActionStarted(action);
-  }
-
-  @Override
-  public void beforeReadActionStart(@NotNull Class<?> action) {
-    myReadActionListenerDispatcher.getMulticaster().beforeReadActionStart(action);
-  }
-
-  @Override
-  public void afterReadActionFinished(@NotNull Class<?> action) {
-    myReadActionListenerDispatcher.getMulticaster().afterReadActionFinished(action);
+    myLockDispatcherListener.myReadActionListenerDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
   public void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) {
-    myWriteIntentReadActionListenerDispatcher.addListener(listener, parentDisposable);
+    myLockDispatcherListener.myWriteIntentReadActionListenerDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) {
+    myLockDispatcherListener.myLockAcquisitionListenerDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
+    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, failSoftly);
   }
 
   @Override
@@ -1259,35 +1316,125 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   }
 
   @Override
-  public void writeIntentReadActionStarted(@NotNull Class<?> action) {
-    myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionStarted(action);
+  public void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) {
+    myLockDispatcherListener.mySuspendingWriteActionListenerEventDispatcher.addListener(listener, parentDisposable);
   }
 
-  @Override
-  public void writeIntentReadActionFinished(@NotNull Class<?> action) {
-    myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionFinished(action);
+  /**
+   * inner class by intention
+   */
+  private class LockDispatchListener
+    implements ReadActionListener, WriteActionListener, WriteIntentReadActionListener, LockAcquisitionListener,
+               SuspendingWriteActionListener {
+
+    private final EventDispatcher<WriteActionListener> myWriteActionListenerDispatcher = EventDispatcher.create(WriteActionListener.class);
+
+    private final EventDispatcher<ReadActionListener> myReadActionListenerDispatcher = EventDispatcher.create(ReadActionListener.class);
+
+    private final EventDispatcher<WriteIntentReadActionListener> myWriteIntentReadActionListenerDispatcher =
+      EventDispatcher.create(WriteIntentReadActionListener.class);
+
+    private final EventDispatcher<LockAcquisitionListener> myLockAcquisitionListenerDispatcher =
+      EventDispatcher.create(LockAcquisitionListener.class);
+
+    private final EventDispatcher<SuspendingWriteActionListener> mySuspendingWriteActionListenerEventDispatcher =
+      EventDispatcher.create(SuspendingWriteActionListener.class);
+
+
+    @Override
+    public void writeActionFinished(@NotNull Class<?> action) {
+      ApplicationImpl.this.fireWriteActionFinished(action);
+      myWriteActionListenerDispatcher.getMulticaster().writeActionFinished(action);
+    }
+
+    @Override
+    public void afterWriteActionFinished(@NotNull Class<?> action) {
+      ApplicationImpl.this.fireAfterWriteActionFinished(action);
+      myWriteActionListenerDispatcher.getMulticaster().afterWriteActionFinished(action);
+    }
+
+    @Override
+    public void beforeWriteLockAcquired() {
+      myLockAcquisitionListenerDispatcher.getMulticaster().beforeWriteLockAcquired();
+    }
+
+    @Override
+    public void afterWriteLockAcquired() {
+      myLockAcquisitionListenerDispatcher.getMulticaster().afterWriteLockAcquired();
+    }
+
+    @Override
+    public void writeIntentReadActionStarted(@NotNull Class<?> action) {
+      myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionStarted(action);
+    }
+
+    @Override
+    public void writeIntentReadActionFinished(@NotNull Class<?> action) {
+      myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionFinished(action);
+    }
+
+    @Override
+    public void beforeWriteIntentReadActionStart(@NotNull Class<?> action) {
+      myWriteIntentReadActionListenerDispatcher.getMulticaster().beforeWriteIntentReadActionStart(action);
+    }
+
+    @Override
+    public void afterWriteIntentReadActionFinished(@NotNull Class<?> action) {
+      myWriteIntentReadActionListenerDispatcher.getMulticaster().afterWriteIntentReadActionFinished(action);
+    }
+
+    @Override
+    public void beforeWriteLockReacquired() {
+      mySuspendingWriteActionListenerEventDispatcher.getMulticaster().beforeWriteLockReacquired();
+    }
+
+
+    @Override
+    public void readActionStarted(@NotNull Class<?> action) {
+      myReadActionListenerDispatcher.getMulticaster().readActionStarted(action);
+    }
+
+    @Override
+    public void fastPathAcquisitionFailed() {
+      // Impatient reader not in non-cancellable session will not wait
+      if (myImpatientReader.get() && !Cancellation.isInNonCancelableSection()) {
+        throw ApplicationUtil.CannotRunReadActionException.create();
+      }
+    }
+
+    @Override
+    public void beforeReadActionStart(@NotNull Class<?> action) {
+      myReadActionListenerDispatcher.getMulticaster().beforeReadActionStart(action);
+    }
+
+    @Override
+    public void afterReadActionFinished(@NotNull Class<?> action) {
+      myReadActionListenerDispatcher.getMulticaster().afterReadActionFinished(action);
+    }
+
+    @Override
+    public void readActionFinished(@NotNull Class<?> action) {
+      myReadActionCacheImpl.clear();
+      myReadActionListenerDispatcher.getMulticaster().readActionFinished(action);
+      otelMonitor.get().readActionExecuted();
+    }
+
+    @Override
+    public void beforeWriteActionStart(@NotNull Class<?> action) {
+      ActivityTracker.getInstance().inc();
+      ApplicationImpl.this.fireBeforeWriteActionStart(action);
+      myWriteActionListenerDispatcher.getMulticaster().beforeWriteActionStart(action);
+    }
+
+    @Override
+    public void writeActionStarted(@NotNull Class<?> action) {
+      ApplicationImpl.this.fireWriteActionStarted(action);
+      myWriteActionListenerDispatcher.getMulticaster().writeActionStarted(action);
+    }
+
+
   }
 
-  @Override
-  public void beforeWriteIntentReadActionStart(@NotNull Class<?> action) {
-    myWriteIntentReadActionListenerDispatcher.getMulticaster().beforeWriteIntentReadActionStart(action);
-  }
-
-  @Override
-  public void afterWriteIntentReadActionFinished(@NotNull Class<?> action) {
-    myWriteIntentReadActionListenerDispatcher.getMulticaster().afterWriteIntentReadActionFinished(action);
-  }
-
-  @Override
-  public void writeActionFinished(@NotNull Class<?> action) {
-    fireWriteActionFinished(action);
-  }
-
-  @Override
-  public void afterWriteActionFinished(@NotNull Class<?> action) {
-    fireAfterWriteActionFinished(action);
-    otelMonitor.get().writeActionExecuted();
-  }
 
   @Override
   public CoroutineContext getLockStateAsCoroutineContext(CoroutineContext baseContext, boolean shared) {

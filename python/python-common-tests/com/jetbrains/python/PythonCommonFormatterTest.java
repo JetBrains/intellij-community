@@ -1577,4 +1577,50 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTest();
   }
+
+  // PY-26877
+  public void testTrailingCommaInListLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInDictLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInSetLiteral() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInTupleExpression() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInArgumentList() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaInParameterList() {
+    getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_PARAMETER_LIST = true;
+    doTest();
+  }
+
+  // PY-26877
+  public void testTrailingCommaMixed() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_COLLECTIONS = true;
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_PARAMETER_LIST = true;
+      getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
+      doTest();
+    });
+  }
 }

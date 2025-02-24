@@ -192,6 +192,7 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use addElement directly", ReplaceWith("addElement", "org.jetbrains.kotlin.idea.refactoring.addElement"))
 fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
    return addElement(element, addNewLine)

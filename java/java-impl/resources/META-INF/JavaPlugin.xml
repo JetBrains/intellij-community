@@ -12,6 +12,7 @@
   <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml"/>
   <xi:include href="/META-INF/JavaCodeServerCore.xml"/>
+  <xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml">
     <xi:fallback/>
@@ -79,6 +80,9 @@
     <extensionPoint qualifiedName="com.intellij.conversion.rule" interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.disableCompilationDependenciesResolutionTask"
+                    interface="com.intellij.jarRepository.DisableCompilationDependenciesResolutionTask"
                     dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint"
@@ -698,7 +702,6 @@
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
-    <console.folding implementation="com.intellij.execution.JavaRunnerRestrictedMethodCallConsoleFolding"/>
     <stacktrace.fold.line.modifier implementation="com.intellij.execution.JavaModuleNameStacktraceModifier"/>
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
@@ -1493,6 +1496,8 @@
     <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
     <codeInsight.completion.intention.skipper language="JAVA"
                                               implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandSkipper"/>
+    <codeInsight.completion.intention.offset.provider language="JAVA"
+                                                      implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandOffsetProvider"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateCommandCompletion" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaInlineVariableCompletionCommand" />
@@ -1512,6 +1517,7 @@
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaDeleteCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCopyFQNCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToImplementationCommandCompletion" />
+    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaChangeSignatureCompletionCommand" />
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
@@ -2814,10 +2820,6 @@
 
     <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
     <action id="AddJdkAction" class="com.intellij.ide.actions.AddJdkAction" icon="AllIcons.Nodes.PpJdk"/>
-
-    <action id="JavaAutoRunToggleFloatingToolbarAction" class="com.intellij.execution.testDiscovery.JavaAutoRunToggleFloatingToolbarAction">
-      <add-to-group group-id="ToolbarPanel.MoreActions" anchor="last"/>
-    </action>
   </actions>
 
   <actions resource-bundle="messages.JavaBundle">

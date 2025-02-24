@@ -76,11 +76,10 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
     if (PropertiesComponent.getInstance().getBoolean(BUTTON_CLICKED_PROPERTY)) {
       return false
     }
-    val facade = LicensingFacade.getInstance()
-    if (facade == null || facade.isEvaluationLicense) {
+    if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
       return false
     }
-    if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
+    if (LicensingFacade.getInstance()?.isEvaluationLicense == true) {
       return false
     }
 

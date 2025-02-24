@@ -112,6 +112,13 @@
     </group>
   </actions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.vcs.svn.mergerCommitMessage"
+                    interface="org.jetbrains.idea.svn.integrate.MergerCommitMessage"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="svn.use.incoming.optimization" defaultValue="false"
                  description="Use remotely (in svn repository) changed files list to optimize incoming revisions processing"/>
@@ -165,5 +172,8 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
     <notificationGroup id="Svn Roots Detection Errors" displayType="STICKY_BALLOON" bundle="messages.SvnBundle" key="notification.group.svn.roots"/>
+    <vcs.svn.mergerCommitMessage implementation="org.jetbrains.idea.svn.integrate.DefaultMergerCommitMessage"
+                                 id="svn.defaultMergerCommitMessage"
+                                 order="last"/>
   </extensions>
 </idea-plugin>

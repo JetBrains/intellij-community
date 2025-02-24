@@ -2,7 +2,7 @@
 package com.intellij.maven.testFramework
 
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
@@ -343,13 +343,13 @@ abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase
   protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit)  {
     val fixture = MavenProjectJDKTestFixture(project, jdkName)
     try {
-      writeAction {
+      edtWriteAction {
         fixture.setUp()
       }
       block()
     }
     finally {
-      writeAction {
+      edtWriteAction {
         fixture.tearDown()
       }
     }

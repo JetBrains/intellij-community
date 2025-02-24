@@ -9,7 +9,7 @@ import com.jediterm.terminal.model.TextBufferChangesListener
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min

@@ -57,10 +57,10 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
             ?.asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.quick.fix.text")
@@ -80,7 +80,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
             ShortenReferencesFacility.getInstance().shorten(newTypeArguments)
             element.valueArgumentList?.removeArgument(argument)
         }
-    })
+    }
 }
 
 private fun KtValueArgument.isClassLiteral(): Boolean =

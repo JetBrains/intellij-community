@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
@@ -15,11 +16,16 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 
 @Service(Service.Level.PROJECT)
 internal class RecentFileEventsPerProjectHolder {
-  private val recentFiles = MutableSharedFlow<RecentFilesEvent>()
+  private val recentFiles = MutableSharedFlow<RecentFilesEvent>(
+    extraBufferCapacity = 10,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
 
   fun getRecentFiles(): Flow<RecentFilesEvent> {
     LOG.debug("Switcher get recent files")
@@ -30,15 +36,22 @@ internal class RecentFileEventsPerProjectHolder {
     LOG.debug("Switcher emit recent files: $searchRequest")
 
     recentFiles.emit(RecentFilesEvent.AllItemsRemoved())
-    recentFiles.emitAll(fetchRecentFiles(searchRequest))
+    val freshRecentFiles = collectRecentFiles(searchRequest)
+    if (freshRecentFiles != null) {
+      recentFiles.emit(freshRecentFiles)
+    }
+    recentFiles.emit(RecentFilesEvent.EndOfUpdates())
   }
 
-  suspend fun hideAlreadyShownFile(hideFileRequest: RecentFilesBackendRequest.HideFile) {
-    LOG.debug("Switcher hide file: $hideFileRequest")
-    val project = hideFileRequest.projectId.findProjectOrNull() ?: return
-    val virtualFile = hideFileRequest.fileToHide.virtualFileId.virtualFile() ?: return
-    EditorHistoryManager.getInstance(project).removeFile(virtualFile)
-    recentFiles.emit(RecentFilesEvent.ItemRemoved(hideFileRequest.fileToHide))
+  suspend fun hideAlreadyShownFiles(hideFilesRequest: RecentFilesBackendRequest.HideFiles) {
+    LOG.debug("Switcher hide file: $hideFilesRequest")
+    val project = hideFilesRequest.projectId.findProjectOrNull() ?: return
+    val virtualFiles = hideFilesRequest.filesToHide.mapNotNull { it.virtualFileId.virtualFile() }
+    for (file in virtualFiles) {
+      EditorHistoryManager.getInstance(project).removeFile(file)
+    }
+    recentFiles.emit(RecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide))
+    recentFiles.emit(RecentFilesEvent.EndOfUpdates())
   }
 
   fun scheduleRehighlightUnopenedFiles(projectId: ProjectId) {
@@ -53,22 +66,17 @@ internal class RecentFileEventsPerProjectHolder {
     return recentFiles.subtract(openFiles.toSet()).toList()
   }
 
-  private fun fetchRecentFiles(filter: RecentFilesBackendRequest.NewSearchWithParameters): Flow<RecentFilesEvent> {
-    return flow {
-      LOG.debug("Switcher started fetching recent files")
-      val project = filter.projectId.findProjectOrNull() ?: return@flow
+  private suspend fun collectRecentFiles(filter: RecentFilesBackendRequest.NewSearchWithParameters): RecentFilesEvent? {
+    LOG.debug("Switcher started fetching recent files")
+    val project = filter.projectId.findProjectOrNull() ?: return null
 
-      val collectedFiles = readAction {
-        getFilesToShow(project, filter.onlyEdited, filter.pinned)
-      }
-      LOG.debug("Switcher collected ${collectedFiles.size} recent files")
-
-      emitAll(
-        collectedFiles
-          .asFlow()
-          .map { RecentFilesEvent.ItemAdded(it) }
-      )
+    val collectedFiles = readAction {
+      getFilesToShow(project, filter.onlyEdited, filter.pinned, filter.frontendEditorSelectionHistory)
     }
+    LOG.debug("Switcher collected ${collectedFiles.size} recent files")
+    LOG.trace { "Switcher collected recent files list: ${collectedFiles.joinToString(prefix = "\n", separator = "\n") { it.mainText }}" }
+
+    return RecentFilesEvent.ItemsAdded(collectedFiles)
   }
 
   companion object {

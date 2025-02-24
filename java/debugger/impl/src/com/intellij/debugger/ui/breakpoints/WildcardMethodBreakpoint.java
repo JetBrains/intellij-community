@@ -52,6 +52,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 import javax.swing.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
 public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
@@ -130,9 +131,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (isEmulated()) {
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
-      Pattern pattern = PatternUtil.fromMask(getClassPattern());
-      debugProcess.getVirtualMachineProxy().allClasses().stream()
-        .filter(c -> pattern.matcher(c.name()).matches())
+      matchingClasses(debugProcess)
         .filter(ReferenceType::isPrepared)
         .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
@@ -232,6 +231,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (className == null || methodName == null) {
       throw new InvalidDataException();
     }
+  }
+
+  protected @NotNull Stream<ReferenceType> matchingClasses(DebugProcessImpl debugProcess) {
+    Pattern pattern = PatternUtil.fromMask(getClassPattern());
+    return debugProcess.getVirtualMachineProxy().allClasses().stream()
+      .filter(c -> pattern.matcher(c.name()).matches());
   }
 
   @Override

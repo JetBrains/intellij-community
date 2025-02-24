@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * by the change, or {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} if the change affects an unknown number of files.
  */
 public interface FileTypeOverrider {
-  ExtensionPointName<FileTypeOverrider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeOverrider");
+  ExtensionPointName<FileTypeOverrider> EP_NAME = new ExtensionPointName<>("com.intellij.fileTypeOverrider");
 
   @Nullable FileType getOverriddenFileType(@NotNull VirtualFile file);
 }

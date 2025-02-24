@@ -12,10 +12,7 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RemoteConnection
-import com.intellij.execution.configurations.RemoteState
-import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.*
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -44,6 +41,7 @@ import org.jetbrains.idea.maven.execution.*
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.DaemonedMavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -52,7 +50,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Function
 import kotlin.io.path.Path
 
-class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteState {
+class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteState, PatchedRunnableState {
   private var myRemoteConnection: MavenRemoteConnection? = null
 
   @Throws(ExecutionException::class)
@@ -60,6 +58,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private fun startProcess(debug: Boolean): ProcessHandler {
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
+
+      val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
+
       val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
@@ -71,6 +72,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         }.build()
 
       val result = eelApi.exec.execute(processOptions)
+
       return@runWithModalProgressBlocking when (result) {
         is EelResult.Error -> {
           MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${result.error.errno}, message:  ${result.error.message}")
@@ -255,18 +257,25 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         if (isWindows()) "mvnw.cmd" else "./mvnw"
       }
       else {
-        if (isWindows()) "$relativePath/mvnw.cmd" else "$relativePath/mvnw"
+        if (isWindows()) relativePath.replace("/", "\\") + "\\mvnw.cmd" else "$relativePath/mvnw"
       }
     }
 
-    var mavenHome = MavenDistributionsCache.getInstance(myConfiguration.project)
-      .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath).mavenHome
+    val distribution = MavenDistributionsCache.getInstance(myConfiguration.project)
+      .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
+
+    var mavenHome = distribution.mavenHome
 
     if (type is BundledMaven3 || type is BundledMaven4) {
       mavenHome = transferContentsIfNonLocal(eel, mavenHome)
     }
 
-    return mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()
+    if (distribution is DaemonedMavenDistribution) {
+     return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
+    }
+    else {
+      return mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()
+    }
   }
 
   override fun getRemoteConnection(): RemoteConnection? {

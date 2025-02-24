@@ -73,6 +73,8 @@ jvm_library(
     "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
     "//platform/util/jdom",
     "//java/debugger/shared:java-debugger-impl-shared",
+    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//plugins/stream-debugger-core/testFramework:debugger-streams-core-testFramework",
   ],
   runtime_deps = [
     "//platform/core-api:core",

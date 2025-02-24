@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +39,8 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   private static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
 
   @VisibleForTesting
-  static final class RecordLayout {
+  @ApiStatus.Internal
+  public static final class RecordLayout {
     //@formatter:off
     static final int PARENT_REF_OFFSET        = 0;   //int32
     static final int NAME_REF_OFFSET          = 4;   //int32
@@ -52,7 +53,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     static final int TIMESTAMP_OFFSET         = 24;  //int64
     static final int LENGTH_OFFSET            = 32;  //int64
 
-    static final int RECORD_SIZE_IN_BYTES     = 40;
+    public static final int RECORD_SIZE_IN_BYTES     = 40;
     //@formatter:on
   }
 

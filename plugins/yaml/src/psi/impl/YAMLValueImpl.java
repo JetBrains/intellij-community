@@ -1,16 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
-abstract class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
+@ApiStatus.Internal
+public abstract class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
   YAMLValueImpl(@NotNull ASTNode node) {
     super(node);
   }

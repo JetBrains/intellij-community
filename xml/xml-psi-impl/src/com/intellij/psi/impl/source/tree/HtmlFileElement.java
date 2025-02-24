@@ -15,13 +15,9 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 import static com.intellij.psi.xml.XmlElementType.HTML_FILE;
 
 public class HtmlFileElement extends FileElement {
-  private static final Logger LOG = Logger.getInstance(HtmlFileElement.class);
-
   public HtmlFileElement(CharSequence text) {
     super(HTML_FILE, text);
   }

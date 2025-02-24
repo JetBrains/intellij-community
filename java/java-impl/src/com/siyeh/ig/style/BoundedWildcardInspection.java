@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -380,24 +378,20 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
   }
 
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
-    HighlightVisitor visitorImpl = ContainerUtil.find(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(method.getProject()),
-                                                      h -> h instanceof HighlightVisitorImpl);
-    if (visitorImpl == null) return true;
-    HighlightVisitor visitor = visitorImpl.clone();
-    HighlightInfoHolder holder = new HighlightInfoHolder(method.getContainingFile());
-    visitor.analyze(method.getContainingFile(), false, holder, () -> method.accept(new PsiRecursiveElementWalkingVisitor() {
+    Ref<Boolean> hasError = Ref.create(false);
+    JavaErrorCollector collector = new JavaErrorCollector(method.getContainingFile(), e -> hasError.set(true));
+    method.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (elementsToIgnore.contains(element)) return; // ignore sub-elements too
-        visitor.visit(element);
-        //System.out.println("element = " + element+"; holder: "+holder.hasErrorResults());
-        if (holder.hasErrorResults()) {
+        collector.processElement(element);
+        if (hasError.get()) {
           stopWalking();
         }
         super.visitElement(element);
       }
-    }));
-    return !holder.hasErrorResults();
+    });
+    return !hasError.get();
   }
 
   private static PsiElement skipParensAndCastsUp(@NotNull PsiElement element) {

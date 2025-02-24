@@ -1,14 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.listeners
 
+import com.intellij.codeInsight.inline.completion.InlineCompletion
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionHandlerUtils.hideInlineCompletion
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 // ML-1086
@@ -83,5 +87,16 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
   protected enum class Mode {
     ADAPTIVE,
     PROHIBIT_MOVEMENT
+  }
+}
+
+internal class InlineCompletionFocusListener : FocusChangeListener {
+  override fun focusGained(editor: Editor) {
+    if (editor.caretModel.caretCount != 1 || editor.caretModel.currentCaret.hasSelection()) {
+      return
+    }
+    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+    val event = InlineCompletionEvent.EditorFocused(editor)
+    handler.invokeEvent(event)
   }
 }

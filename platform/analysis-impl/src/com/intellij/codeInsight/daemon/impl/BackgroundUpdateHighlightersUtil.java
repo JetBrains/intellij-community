@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -105,7 +106,7 @@ public final class BackgroundUpdateHighlightersUtil {
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
       List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
 
-      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
+      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside((MarkupModelEx)markup, priorityRange.getStartOffset(), priorityRange.getEndOffset(), session.getCodeInsightContext(), processor);
       SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
@@ -157,7 +158,7 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     HighlighterRecycler.runWithRecycler(session, recycler -> {
-      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), session.getCodeInsightContext(), info -> {
         if (info.getGroup() == group) {
           int hiEnd = info.getEndOffset();
           boolean willBeRemoved = range.contains(info)
@@ -247,9 +248,14 @@ public final class BackgroundUpdateHighlightersUtil {
     int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
     int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
+    CodeInsightContext context = session.getCodeInsightContext();
+
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes);
+
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
+
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 

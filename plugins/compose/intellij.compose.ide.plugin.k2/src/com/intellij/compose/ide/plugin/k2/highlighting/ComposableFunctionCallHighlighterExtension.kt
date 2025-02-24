@@ -13,17 +13,22 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
+/**
+ * Used to apply styles for calls to @Composable functions.
+ *
+ * For K1 implementation
+ * @see com.intellij.compose.ide.plugin.k1.highlighting.ComposableHighlightingVisitorExtension
+ */
 internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighterExtension {
   context(KaSession)
   override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
     val memberCall = call as? KaCallableMemberCall<*, *> ?: return null
-    val callableSymbol = memberCall.symbol
-    if (!isComposableInvocation(callableSymbol)) return null
+    if (!isComposableInvocation(memberCall)) return null
 
     return if (isComposeEnabledInModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
       COMPOSABLE_CALL_TEXT_TYPE
@@ -31,16 +36,26 @@ internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighte
   }
 
   @OptIn(KaExperimentalApi::class)
-  private fun isComposableInvocation(callableSymbol: KaCallableSymbol): Boolean {
+  private fun isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boolean {
     fun hasComposableAnnotation(annotated: KaAnnotated?): Boolean {
       return annotated != null && COMPOSABLE_ANNOTATION_CLASS_ID in annotated.annotations
     }
 
-    val type = callableSymbol.returnType
-    if (hasComposableAnnotation(type)) return true
+    fun KaNamedFunctionSymbol.isInvokeOperatorCall() : Boolean {
+      return this.isOperator && this.name == OperatorNameConventions.INVOKE
+    }
 
-    return when (callableSymbol) {
-      is KaNamedFunctionSymbol -> hasComposableAnnotation(callableSymbol)
+    return when (val callableSymbol = memberCall.symbol) {
+      is KaNamedFunctionSymbol -> {
+        if (hasComposableAnnotation(callableSymbol)) return true
+
+        if (callableSymbol.isInvokeOperatorCall()) {
+          val typeInvokeOperatorIsCalledOn = memberCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
+          return hasComposableAnnotation(typeInvokeOperatorIsCalledOn)
+        }
+
+        return false
+      }
       is KaPropertySymbol -> hasComposableAnnotation(callableSymbol.getter)
       else -> false
     }

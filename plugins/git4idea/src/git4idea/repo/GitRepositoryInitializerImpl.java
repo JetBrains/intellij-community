@@ -45,7 +45,7 @@ final class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
 
       try {
         GitFileUtils.addFiles(project, root, Collections.singletonList(root));
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
+        VcsDirtyScopeManager.getInstance(project).rootDirty(root);
       }
       catch (VcsException e) {
         VcsNotifier.getInstance(project).notifyError(INIT_STAGE_FAILED, GitBundle.message("action.Git.Init.Stage.error"),

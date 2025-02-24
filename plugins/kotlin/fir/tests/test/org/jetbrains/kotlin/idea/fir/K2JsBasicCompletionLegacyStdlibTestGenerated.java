@@ -2238,6 +2238,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-30490.kt");
             }
 
+            @TestMetadata("Modifier.kt")
+            public void testModifier() throws Exception {
+                runTest("../../completion/testData/basic/common/primaryConstructor/Modifier.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
@@ -3389,6 +3394,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/InsideAnonymousClass.kt");
             }
 
+            @TestMetadata("InsideAnonymousObject.kt")
+            public void testInsideAnonymousObject() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideAnonymousObject.kt");
+            }
+
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
             public void testInterfaceNameBeforeRunBug() throws Exception {
                 runTest("../../completion/testData/basic/common/InterfaceNameBeforeRunBug.kt");
@@ -3969,6 +3979,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("enumInWhenWithPackage.kt")
             public void testEnumInWhenWithPackage() throws Exception {
                 runTest("../../completion/testData/basic/common/when/enumInWhenWithPackage.kt");
+            }
+
+            @TestMetadata("InnerSealedClassInWhen.kt")
+            public void testInnerSealedClassInWhen() throws Exception {
+                runTest("../../completion/testData/basic/common/when/InnerSealedClassInWhen.kt");
             }
 
             @TestMetadata("nestedSealedClassInWhen.kt")

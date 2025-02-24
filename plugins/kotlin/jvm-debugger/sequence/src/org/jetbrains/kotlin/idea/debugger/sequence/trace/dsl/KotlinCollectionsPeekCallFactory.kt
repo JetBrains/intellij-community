@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.OnEachCall
 
 class KotlinCollectionsPeekCallFactory : PeekCallFactory {

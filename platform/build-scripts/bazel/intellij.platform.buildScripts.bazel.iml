@@ -44,5 +44,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
   </component>
 </module>

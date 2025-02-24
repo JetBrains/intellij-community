@@ -562,7 +562,7 @@
 
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.inspections.JavaOutsideModuleDetector"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
@@ -584,7 +584,7 @@
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
-    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.git.KotlinDiffIgnoredRangeProvider"/>
+    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.diff.KotlinDiffIgnoredRangeProvider"/>
   </extensions>
 
   <actions>
@@ -595,7 +595,7 @@
 
     <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"

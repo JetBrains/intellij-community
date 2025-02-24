@@ -201,6 +201,7 @@ object Utils {
   fun wrapDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
   fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
@@ -372,6 +373,7 @@ object Utils {
     }
   }
 
+  @JvmStatic
   fun <T> computeWithProgressIcon(dataContext: DataContext,
                                   place: String,
                                   task: suspend () -> T): T {

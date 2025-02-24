@@ -9,10 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners

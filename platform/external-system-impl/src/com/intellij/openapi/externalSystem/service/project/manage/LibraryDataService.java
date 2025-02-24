@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
+import com.intellij.openapi.externalSystem.service.project.ModifiableWorkspaceModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -200,6 +201,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
     final List<Library> orphanIdeLibraries = new SmartList<>();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    final ModifiableWorkspaceModel workspaceModel = modelsProvider.getModifiableWorkspaceModel();
     final Map<String, Library> namesToLibs = new HashMap<>();
     final Set<Library> potentialOrphans = new HashSet<>();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<>() {
@@ -231,8 +233,8 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    for (Library lib: potentialOrphans) {
-      if (!modelsProvider.isSubstituted(lib.getName())) {
+    for (Library lib : potentialOrphans) {
+      if (!workspaceModel.isLibrarySubstituted(lib)) {
         orphanIdeLibraries.add(lib);
       }
     }

@@ -41,7 +41,7 @@ class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) 
   val gradleButton = stripeButton("Gradle")
   val mavenButton = stripeButton("Maven")
   val databaseButton = stripeButton("Database")
-  val aiAssistantButton = stripeButton("AI Assistant")
+  val aiAssistantButton = stripeButton("AIAssistant")
   val mesonButton = stripeButton("Meson")
 }
 

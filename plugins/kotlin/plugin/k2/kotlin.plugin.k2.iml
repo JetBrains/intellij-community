@@ -126,5 +126,9 @@
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.k2.internal" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k2" scope="RUNTIME" />
   </component>
 </module>

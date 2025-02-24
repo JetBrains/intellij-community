@@ -56,7 +56,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
       return SdkPopupFactory
         .newBuilder()
         .withProject(project)
-        //filter the same-named SDK from the list is needed for invalid sdk case
+        // filter out the invalid sdk
         .withSdkFilter(sdk -> !Objects.equals(sdk.getName(), sdkName))
         .withSdkTypeFilter(type -> Objects.equals(type, mySdk.mySdkType))
         .onSdkSelected(sdk -> {

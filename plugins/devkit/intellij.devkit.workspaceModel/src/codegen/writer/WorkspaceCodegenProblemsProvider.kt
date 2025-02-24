@@ -7,7 +7,7 @@ import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils.selectProjectErrorsTab
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
+import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,7 +18,6 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.startOffset
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
-import org.jetbrains.kotlin.resolve.source.getPsi
 import javax.swing.Icon
 
 @Service(Service.Level.PROJECT)
@@ -49,11 +48,10 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
   }
 
   private fun GenerationProblem.toProblem(): WorkspaceModelCodeGenerationProblem {
-    val sourceElement = when (val problemLocation = location) {
-      is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithSource).sourceElement
-      is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithSource).sourceElement
-    }
-    val psiElement = sourceElement.getPsi() ?: return WorkspaceModelCodeGenerationProblem(this) 
+    val psiElement = when (val problemLocation = location) {
+      is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithPsi).sourcePsi
+      is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithPsi).sourcePsi
+    } ?: return WorkspaceModelCodeGenerationProblem(this)
     val psiToHighlight = (psiElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psiElement
     val file = psiToHighlight.containingFile.virtualFile
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return WorkspaceModelCodeGenerationProblem(this)
@@ -84,4 +82,3 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
     override val column: Int
   ) : WorkspaceModelCodeGenerationProblem(originalProblem), FileProblem
 }
-

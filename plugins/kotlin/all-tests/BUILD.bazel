@@ -54,6 +54,7 @@ java_library(
     "//plugins/kotlin/code-insight/intentions-shared/tests/k1:kotlin-code-insight-intentions-shared-tests-k1",
     "//plugins/kotlin/code-insight/inspections-shared/tests/k1:kotlin-code-insight-inspections-shared-tests-k1",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/code-insight/live-templates-k1:kotlin-code-insight-live-templates-k1",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k1:kotlin-code-insight-k1",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -97,14 +97,16 @@ internal class LibraryModifiableModelBridgeImpl(
         }
       }
       else {
-        if (originalLibrary.project != null) {
-          WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
-            it.applyChangesFrom(diff)
+        when (val o = originalLibrary.origin) {
+          is LibraryOrigin.OfProject -> {
+            WorkspaceModel.getInstance(o.project).updateProjectModel("Library model commit") {
+              it.applyChangesFrom(diff)
+            }
           }
-        }
-        else {
-          GlobalWorkspaceModel.getInstance().updateModel("Library model commit") {
-            it.applyChangesFrom(diff)
+          is LibraryOrigin.OfDescriptor -> {
+            GlobalWorkspaceModel.getInstance(o.descriptor).updateModel("Library model commit") {
+              it.applyChangesFrom(diff)
+            }
           }
         }
       }
@@ -133,7 +135,7 @@ internal class LibraryModifiableModelBridgeImpl(
     update {
       val currentEntitySource = entitySource
       if (currentEntitySource is JpsFileEntitySource) {
-        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, originalLibrary.project!!.isExternalStorageEnabled)
+        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, (originalLibrary.origin as LibraryOrigin.OfProject).project.isExternalStorageEnabled)
       }
     }
   }

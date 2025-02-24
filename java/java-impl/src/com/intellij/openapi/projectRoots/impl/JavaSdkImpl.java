@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
@@ -43,7 +44,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
@@ -205,14 +205,19 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
-    return JavaHomeFinder.suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
-                                           false);
+    return JavaHomeFinder.suggestHomePaths(getEelDescriptor(project), false);
   }
 
   @Override
-  public @Unmodifiable @NotNull Collection<KeyFMap> collectSdkDetails(@Nullable Project project) {
-    return JavaHomeFinder.findJdks(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
-                                   false);
+  public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
+    return ContainerUtil.mapNotNull(
+      JavaHomeFinder.findJdks(getEelDescriptor(project), false),
+      JavaHomeFinder.JdkEntry::toSdkEntry
+    );
+  }
+
+  private static @NotNull EelDescriptor getEelDescriptor(@Nullable Project project) {
+    return project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project);
   }
 
   @Override

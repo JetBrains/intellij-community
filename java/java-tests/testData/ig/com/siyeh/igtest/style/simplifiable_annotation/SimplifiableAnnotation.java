@@ -18,7 +18,7 @@ public class SimplifiableAnnotation {
 @ArrayAnnotation(array = <warning descr="Unnecessary braces around '{\"first\"}' in annotation">{</warning>"first"<warning descr="Unnecessary braces around '{\"first\"}' in annotation">}</warning>)
 class MyClass {
 
-  @ <error descr="'value' missing though required">ValueAnnotation</error>
+  @ <error descr="'value' missing but required">ValueAnnotation</error>
   int foo(@ArrayAnnotation(array="") String s) {
     return -1;
   }

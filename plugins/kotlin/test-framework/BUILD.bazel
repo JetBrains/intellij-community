@@ -42,7 +42,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//java/testFramework",

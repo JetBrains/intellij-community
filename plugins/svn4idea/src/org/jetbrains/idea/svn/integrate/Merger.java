@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +31,7 @@ public class Merger implements IMerger {
   protected final @Nullable ProgressTracker myHandler;
   private final ProgressIndicator myProgressIndicator;
   protected final Url myCurrentBranchUrl;
-  private final @Nls @NotNull StringBuilder myCommitMessage = new StringBuilder();
+  private @Nls @NotNull String myCommitMessage = "";
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
   protected final @NotNull SvnVcs myVcs;
@@ -123,18 +124,14 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
-    if (myCommitMessage.isEmpty()) {
-      myCommitMessage.append(message("label.merged.from.branch", myBranchName));
-    }
-    for (CommittedChangeList list : myMergeChunk.changeLists()) {
-      myCommitMessage.append('\n');
-      myCommitMessage.append(message("merge.chunk.changelist.description", list.getComment().trim(), list.getNumber()));
-    }
+    myCommitMessage = StringUtil.notNullize(
+      MergerCommitMessage.EP_NAME.computeSafeIfAny(myProject, it -> it.getCommitMessage(this, myMergeChunk.changeLists()))
+    );
   }
 
   protected void doMerge() throws VcsException {
     Target source = Target.on(myCurrentBranchUrl);
-    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+    MergeClient client = getClientFactory().createMergeClient();
 
     client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
                  mySvnConfig.getMergeOptions(), myHandler);
@@ -162,7 +159,7 @@ public class Merger implements IMerger {
 
   @Override
   public @NotNull String getComment() {
-    return myCommitMessage.toString();
+    return myCommitMessage;
   }
 
   @Override
@@ -183,6 +180,14 @@ public class Merger implements IMerger {
 
       BackgroundTaskUtil.syncPublisher(myProject, COMMITTED_CHANGES_MERGED_STATE).event(processed);
     }
+  }
+
+  public @NotNull ClientFactory getClientFactory() {
+    return myVcs.getFactory(myTarget);
+  }
+
+  public @NotNull String getBranchName() {
+    return myBranchName;
   }
 
   @Topic.ProjectLevel

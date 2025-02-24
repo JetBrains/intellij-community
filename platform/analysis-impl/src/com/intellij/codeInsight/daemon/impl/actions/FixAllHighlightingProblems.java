@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
@@ -80,10 +82,11 @@ class FixAllHighlightingProblems implements IntentionAction {
       }
       return true;
     };
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ReadAction.run(() -> {
         DaemonCodeAnalyzerEx.processHighlights(
-          document, project, null, 0, document.getTextLength(), processor);
+          document, project, null, 0, document.getTextLength(), context, processor);
       });
     }, AnalysisBundle.message("command.name.gather.fixes"), true, project)) return;
 

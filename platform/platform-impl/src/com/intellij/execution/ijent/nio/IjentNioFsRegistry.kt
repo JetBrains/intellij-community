@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.ijent.IjentApi
@@ -32,7 +33,7 @@ fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalNam
     }
   }
 
-  val uri = URI("ijent", authority, root, null, null)
+  val uri = URI("ijent", authority, FileUtil.toSystemIndependentName(root), null, null)
 
   try {
     IjentNioFileSystemProvider.getInstance().newFileSystem(uri, IjentNioFileSystemProvider.newFileSystemMap(ijent.fs))

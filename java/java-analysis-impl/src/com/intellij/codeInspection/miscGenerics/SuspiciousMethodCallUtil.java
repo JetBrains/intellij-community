@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -15,10 +15,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -356,7 +353,8 @@ public final class SuspiciousMethodCallUtil {
     return false;
   }
 
-  static class PatternMethod {
+  @ApiStatus.Internal
+  public static final class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;
     int argIdx;

@@ -9,8 +9,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -19,6 +22,7 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -43,11 +47,13 @@ import static org.jetbrains.jps.javac.Iterators.*;
  *
  */
 // todo: implement as a Builder?
+@ApiStatus.Internal
 public final class LibraryDependenciesUpdater {
   private static final Logger LOG = Logger.getInstance(LibraryDependenciesUpdater.class);
   
   private static final String MODULE_INFO_FILE = "module-info.java";
 
+  private static final GlobalContextKey<Set<BuildTarget<?>>> PROCESSED_TARGETS_KEY = GlobalContextKey.create("__library_deps_updater_processed_targets__");
   private boolean myIsInitialized;
   private final Map<String, List<Path>> myDeletedRoots = new HashMap<>(); // namespace -> collection of roots, not associated with any module in the project
   private final Map<Path, String> myNamespaces = new HashMap<>(); // library root -> namespace
@@ -57,7 +63,7 @@ public final class LibraryDependenciesUpdater {
   /**
    * @return true if can continue incrementally, false if non-incremental
    */
-  public synchronized boolean update(CompileContext context, ModuleChunk chunk, Predicate<? super NodeSource> chunkStructureFilter) throws IOException {
+  public synchronized boolean update(CompileContext context, ModuleChunk chunk) throws IOException {
 
     if (!JavaBuilderUtil.isTrackLibraryDependenciesEnabled() || context.isCanceled()) {
       return true;
@@ -75,7 +81,9 @@ public final class LibraryDependenciesUpdater {
     Set<Path> deletedRoots = new SmartHashSet<>();
     Set<Path> updatedRoots = new SmartHashSet<>();
     LibraryRoots libraryRoots = dataManager.getLibraryRoots();
-
+    
+    boolean errorsDetected = false;
+    Set<ModuleBuildTarget> chunkTargets = chunk.getTargets();
     try {
       if (!myIsInitialized) {
         myIsInitialized = true;
@@ -173,11 +181,12 @@ public final class LibraryDependenciesUpdater {
           context, JpsBuildBundle.message("progress.message.processing.library", libRoot.getFileName(), nodeCount)
         );
       }
-
+      Set<BuildTarget<?>> processedTargets = Collections.unmodifiableSet(getProcessedTargets(context));
       DifferentiateParameters diffParams = DifferentiateParametersBuilder.create("libraries of " + chunk.getName())
-        .withAffectionFilter(s -> !LibraryDef.isLibraryPath(s))
+        // affect project files that do not belong to already processed targets
+        .withAffectionFilter(excludedFrom(processedTargets, context, pathMapper))
         .calculateAffected(!isFullRebuild)
-        .withChunkStructureFilter(chunkStructureFilter)
+        .withChunkStructureFilter(includedIn(chunkTargets, context, pathMapper))
         .get();
       DifferentiateResult diffResult = graph.differentiate(delta, diffParams);
 
@@ -206,6 +215,7 @@ public final class LibraryDependenciesUpdater {
       return diffResult.isIncremental();
     }
     catch (Throwable e) {
+      errorsDetected = true;
       for (Path path : updatedRoots) {
         // data from these libraries can be updated only partially
         // ensure they will be parsed next time
@@ -214,11 +224,37 @@ public final class LibraryDependenciesUpdater {
       throw e;
     }
     finally {
+      if (!errorsDetected) {
+        getProcessedTargets(context).addAll(chunkTargets);
+      }
       myTotalTimeNano += (System.nanoTime() - start);
       if (LOG.isDebugEnabled()) {
         LOG.debug("LibraryDependencyUpdater took " + TimeUnit.NANOSECONDS.toSeconds(myTotalTimeNano) + " seconds so far");
       }
     }
+  }
+
+  private static Set<BuildTarget<?>> getProcessedTargets(CompileContext context) {
+    return PROCESSED_TARGETS_KEY.getOrCreate(context, () -> new HashSet<>());
+  }
+
+  private static Predicate<? super NodeSource> excludedFrom(Set<? extends BuildTarget<?>> targets, CompileContext context, NodeSourcePathMapper pathMapper) {
+    return s -> {
+      BuildTarget<?> fileTarget = getFileTarget(context, pathMapper.toPath(s));
+      return fileTarget != null && !targets.contains(fileTarget);
+    };
+  }
+
+  private static Predicate<? super NodeSource> includedIn(Set<? extends BuildTarget<?>> targets, CompileContext context, NodeSourcePathMapper pathMapper) {
+    return s -> {
+      BuildTarget<?> fileTarget = getFileTarget(context, pathMapper.toPath(s));
+      return fileTarget != null && targets.contains(fileTarget);
+    };
+  }
+
+  private static @Nullable BuildTarget<?> getFileTarget(CompileContext context, Path path) {
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, path.toFile());
+    return rd != null? rd.target : null;
   }
 
   private static void markAffectedFilesDirty(CompileContext context, ModuleChunk chunk, Iterable<? extends Path> affectedFiles) throws IOException {

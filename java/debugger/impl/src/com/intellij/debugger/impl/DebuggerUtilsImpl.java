@@ -375,13 +375,80 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
   }
 
+  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
+
   @Override
-  protected Value internalInvokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
-                                               @NotNull ObjectReference objRef,
-                                               @NotNull Method method,
-                                               @NotNull List<? extends Value> args) throws EvaluateException {
-    return ((EvaluationContextImpl)evaluationContext).getDebugProcess()
-      .invokeInstanceMethod(evaluationContext, objRef, method, args, 0, true);
+  protected String getValueAsStringImpl(@NotNull EvaluationContext evaluationContext, @Nullable Value value) throws EvaluateException {
+    try {
+      if (value == null) {
+        return "null";
+      }
+      if (value instanceof StringReference) {
+        ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
+        return ((StringReference)value).value();
+      }
+      if (isInteger(value)) {
+        return String.valueOf(((PrimitiveValue)value).longValue());
+      }
+      if (value instanceof FloatValue) {
+        return String.valueOf(((FloatValue)value).floatValue());
+      }
+      if (value instanceof DoubleValue) {
+        return String.valueOf(((DoubleValue)value).doubleValue());
+      }
+      if (value instanceof BooleanValue) {
+        return String.valueOf(((PrimitiveValue)value).booleanValue());
+      }
+      if (value instanceof CharValue) {
+        return String.valueOf(((PrimitiveValue)value).charValue());
+      }
+      if (value instanceof ObjectReference objRef) {
+        // We can not pretty print arrays here, otherwise evaluation may fail unexpectedly, check IDEA-358202
+        //if (value instanceof ArrayReference arrayRef) {
+        //  final StringJoiner joiner = new StringJoiner(",", "[", "]");
+        //  for (final Value element : arrayRef.getValues()) {
+        //    joiner.add(getValueAsString(evaluationContext, element));
+        //  }
+        //  return joiner.toString();
+        //}
+
+        EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+        VirtualMachineProxyImpl virtualMachineProxy = evaluationContextImpl.getVirtualMachineProxy();
+        Method toStringMethod = virtualMachineProxy.getUserData(TO_STRING_METHOD_KEY);
+        if (toStringMethod == null) {
+          try {
+            ReferenceType refType = getObjectClassType(objRef.virtualMachine());
+            toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
+            virtualMachineProxy.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
+          }
+          catch (Exception ignored) {
+            throw EvaluateExceptionUtil.createEvaluateException(
+              JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+          }
+        }
+        if (toStringMethod == null) {
+          throw EvaluateExceptionUtil.createEvaluateException(
+            JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+        }
+        Method finalToStringMethod = toStringMethod;
+        return processCollectibleValue(
+          () -> evaluationContextImpl.getDebugProcess()
+            .invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0, true),
+          result -> {
+            // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
+            // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
+            if (result == null) {
+              return "null";
+            }
+            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+          },
+          evaluationContext);
+      }
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
+    }
+    catch (ObjectCollectedException ignored) {
+      throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
   }
 
   // compilable version of array class for compiling evaluator

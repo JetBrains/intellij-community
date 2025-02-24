@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.openapi.Disposable
@@ -14,9 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.application
-import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -45,10 +44,9 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
   private val updateRecentProjectsSignal =
     MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = Caffeine.newBuilder()
+  private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = CaffeineUtil.withIoExecutor()
     .refreshAfterWrite(REFRESH_IN)
     .expireAfterAccess(EXPIRE_IN)
-    .executor(AppExecutorUtil.getAppExecutorService())
     .buildAsync(BranchesLoader())
 
   init {
@@ -81,20 +79,25 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {
-    override fun asyncLoad(key: String, executor: Executor) =
-      loadBranch(key, null, executor)
+    override fun asyncLoad(key: String, executor: Executor) = loadBranch(projectPath = key, previousValue = null, executor = executor)
 
-    override fun asyncReload(key: String, oldValue: GitRecentProjectCachedBranch, executor: Executor) =
-      loadBranch(key, oldValue, executor)
+    override fun asyncReload(key: String, oldValue: GitRecentProjectCachedBranch, executor: Executor): CompletableFuture<GitRecentProjectCachedBranch> {
+      return loadBranch(projectPath = key, previousValue = oldValue, executor = executor)
+    }
 
-    private fun loadBranch(projectPath: String, previousValue: GitRecentProjectCachedBranch?, executor: Executor): CompletableFuture<GitRecentProjectCachedBranch>? =
-      coroutineScope
+    private fun loadBranch(
+      projectPath: String,
+      previousValue: GitRecentProjectCachedBranch?,
+      executor: Executor,
+    ): CompletableFuture<GitRecentProjectCachedBranch> {
+      return coroutineScope
         .future { loadBranch(previousValue, projectPath) }
         .whenCompleteAsync(
           { branch, _ ->
             if (branch != null && branch != previousValue) updateRecentProjectsSignal.tryEmit(Unit)
           }, executor
         )
+    }
   }
 
   companion object {
@@ -105,7 +108,9 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
 
     @VisibleForTesting
     internal suspend fun loadBranch(previousValue: GitRecentProjectCachedBranch?, projectPath: String): GitRecentProjectCachedBranch {
-      if (previousValue == GitRecentProjectCachedBranch.Unknown) return previousValue
+      if (previousValue == GitRecentProjectCachedBranch.Unknown) {
+        return previousValue
+      }
 
       return try {
         val headFile = previousValue?.headFilePath?.let(Path::of) ?: findGitHead(projectPath)

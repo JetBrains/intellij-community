@@ -2,6 +2,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,21 +37,37 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   public abstract void restart(@NotNull Object reason);
 
+  // todo ijpl-339 mark deprecated
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
                                           int startOffset,
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-    return processHighlights(model, project, minSeverity, startOffset, endOffset, processor);
+    return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContextKt.anyContext(), processor);
   }
 
+  // todo ijpl-339 mark experimental
+  @ApiStatus.Internal
+  public static boolean processHighlights(@NotNull Document document,
+                                          @NotNull Project project,
+                                          @Nullable("null means all") HighlightSeverity minSeverity,
+                                          int startOffset,
+                                          int endOffset,
+                                          @NotNull CodeInsightContext context,
+                                          @NotNull Processor<? super HighlightInfo> processor) {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
+  }
+
+  // todo ijpl-339 mark experimental
+  @ApiStatus.Internal
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
                                           int startOffset,
                                           int endOffset,
+                                          @NotNull CodeInsightContext context,
                                           @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
@@ -57,20 +77,33 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       if (info == null) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
              || info.getHighlighter() == null
+             || !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker)
              || processor.process(info);
     });
   }
 
-  static boolean processHighlightsOverlappingOutside(@NotNull Document document,
-                                                     @NotNull Project project,
+  // todo ijpl-339 mark deprecated
+  public static boolean processHighlights(@NotNull MarkupModelEx model,
+                                          @NotNull Project project,
+                                          @Nullable("null means all") HighlightSeverity minSeverity,
+                                          int startOffset,
+                                          int endOffset,
+                                          @NotNull Processor<? super HighlightInfo> processor) {
+    return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContextKt.anyContext(), processor);
+  }
+
+  static boolean processHighlightsOverlappingOutside(MarkupModelEx model,
                                                      int startOffset,
                                                      int endOffset,
+                                                     @NotNull CodeInsightContext context,
                                                      @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
-      return info == null || info.getHighlighter() == null || processor.process(info);
+      return info == null ||
+             info.getHighlighter() == null ||
+             !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker) ||
+             processor.process(info);
     });
   }
 
@@ -115,8 +148,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   }
 
   public static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
-    return fileEditor instanceof TextEditor textEditor
-           && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
+    if (!(fileEditor instanceof TextEditor textEditor)) {
+      return false;
+    }
+
+    Document document = textEditor.getEditor().getDocument();
+    CodeInsightContext context = EditorContextManager.getEditorContext(textEditor.getEditor(), project);
+    return getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
   }
 
   @ApiStatus.Internal

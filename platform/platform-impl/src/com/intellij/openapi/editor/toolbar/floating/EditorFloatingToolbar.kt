@@ -88,6 +88,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
             ignoreMouseMotionRectangle = Rectangle(location, size)
           }
           hideImmediately()
+          provider.onHiddenByEsc(editor.dataContext)
         }
       }
     }

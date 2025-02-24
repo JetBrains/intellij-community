@@ -3,7 +3,7 @@ package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -93,7 +93,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         while (true) {
           isRunning.combine(nextTaskExecutionAllowed) { running, allowed -> !running && allowed }.first { it }
           // write action is needed, because otherwise we may get "Constraint inSmartMode cannot be satisfied" in NBRA
-          writeAction {
+          edtWriteAction {
             // we should only set the flag here (if needed), not clear it,
             // otherwise, isRunning may become false in the middle of scanning task execution
             isRunning.value = isRunning.value || scanningTask.value != null

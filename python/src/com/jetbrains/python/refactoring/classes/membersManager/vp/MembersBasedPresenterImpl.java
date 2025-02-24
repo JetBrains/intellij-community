@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.intellij.refactoring.RefactoringBundle;
@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,7 +24,8 @@ import java.util.Collection;
  * @param <M> Type of model {@link #myModel}
  * @author Ilya.Kazakevich
  */
-abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
+@ApiStatus.Internal
+public abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
   M extends MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> implements MembersBasedPresenter {
   protected final @NotNull T myView;
   protected final @NotNull PyClass myClassUnderRefactoring;

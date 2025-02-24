@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
@@ -552,11 +553,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
+
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(file); // todo ijpl-339 ???
+
     waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.runAllowingDirt(canChangeDocument, () -> {
       for (int ignoreId : passesToIgnore) {
-        fileStatusMap.markFileUpToDate(document, ignoreId);
+        fileStatusMap.markFileUpToDate(document, context, ignoreId);
       }
       ThrowableRunnable<Exception> doRunPasses = () -> doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
       if (isDebugMode) {
@@ -577,7 +581,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       VirtualFile virtualFile = textEditor.getFile();
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       assert document != null : "Document is null for " + virtualFile + "; file type=" + virtualFile.getFileType();
-      PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document);
+
+      Editor editor = textEditor.getEditor();
+      CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
+      PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
       FileASTNode fileNode = psiFile.getNode();
       HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore);
       if (session == null) {
@@ -854,20 +861,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     return document != null &&
            PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.allDirtyScopesAreNull(document);
+           myFileStatusMap.allDirtyScopesAreNull(document, context);
   }
 
   @Override
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, psiFile, Pass.UPDATE_ALL) == null;
+           myFileStatusMap.getFileDirtyScope(document, context, psiFile, Pass.UPDATE_ALL) == null;
   }
 
   @Override
@@ -875,6 +884,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return myFileStatusMap;
   }
 
+  @Override
   public synchronized boolean isRunning() {
     for (DaemonProgressIndicator indicator : myUpdateProgress.values()) {
       if (!indicator.isCanceled()) {
@@ -981,16 +991,36 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     });
   }
 
-  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document, int offset, boolean includeFixRange) {
-    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION);
+  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
+                                                       int offset,
+                                                       boolean includeFixRange,
+                                                       @NotNull CodeInsightContext context) {
+    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, context);
   }
 
   @Nullable
   HighlightInfo findHighlightByOffset(@NotNull Document document,
                                       int offset,
                                       boolean includeFixRange,
-                                      @NotNull HighlightSeverity minSeverity) {
-    return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity);
+                                      @NotNull HighlightSeverity minSeverity,
+                                      @NotNull CodeInsightContext context) {
+    return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity, true, context);
+  }
+
+
+  /*
+  *  todo ijpl-339 deprecate findHighlightByOffset when multiverse gets more mature
+  *  @deprecated This method is deprecated because it does not support contexts.
+  *             Use {@link #findHighlightByOffset(Document, int, boolean, CodeInsightContext)} instead.
+  */
+
+  /**
+   * Collects HighlightInfo intersecting with a certain offset.
+   */
+  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
+                                                       int offset,
+                                                       boolean includeFixRange) {
+    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, CodeInsightContextKt.anyContext());
   }
 
   /**
@@ -1011,6 +1041,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         @NotNull HighlightSeverity minSeverity) {
     return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, true);
   }
+
   @ApiStatus.Internal
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
                                                         int offset,
@@ -1018,7 +1049,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         boolean highestPriorityOnly,
                                                         @NotNull HighlightSeverity minSeverity,
                                                         boolean includeFileLevel) {
-    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel);
+    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, includeFileLevel,
+                                  CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity,
+                                                        boolean includeFileLevel,
+                                                        @NotNull CodeInsightContext context) {
+    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel, context);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();
   }
@@ -1061,10 +1104,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;
     private final boolean myIncludeFileLevel;
+    private final @NotNull CodeInsightContext highlightingContext;
 
-    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel) {
+    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel, @NotNull CodeInsightContext context) {
       this.highestPriorityOnly = highestPriorityOnly;
       myIncludeFileLevel = includeFileLevel;
+      highlightingContext = context;
     }
 
     @Override
@@ -1085,6 +1130,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         else if (compare > 0) {
           return true;
         }
+      }
+      if (info.getHighlighter() != null && !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, info.getHighlighter())) {
+        return true;
       }
       foundInfoList.add(info);
       return true;
@@ -1325,7 +1373,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       Document document = editor == null ? FileDocumentManager.getInstance().getCachedDocument(virtualFile) : editor.getDocument();
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile);
+      CodeInsightContext context = editor != null
+                                   ? EditorContextManager.getEditorContext(editor, myProject)
+                                   : CodeInsightContextKt.anyContext();
+      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
                         : "queuePassesCreation: psiFile is null for "+virtualFile+"; PsiDocumentManager.getPsiFile()="+PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -1337,8 +1388,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             if (!myProject.isDisposed()) {
               // refresh current file and cache it (in background) so that FileDocumentManager.getCachedDocument above could retrieve it later
               Document renewedDocument = editor == null ? FileDocumentManager.getInstance().getDocument(virtualFile) : editor.getDocument();
+              CodeInsightContext renewedContext = editor != null
+                                                  ? EditorContextManager.getEditorContext(editor, myProject)
+                                                  : CodeInsightContextKt.anyContext();
               if (renewedDocument != null) {
-                TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument);
+                TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument, renewedContext);
               }
             }
           });
@@ -1347,7 +1401,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         return null;
       }
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
-      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
+      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
       JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
             submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session))),
             // manifest exceptions in EDT to avoid storing them in the Future and abandoning
@@ -1416,7 +1470,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
+          myPassExecutorService.submitPasses(document, session.getCodeInsightContext(), virtualFile, psiFile, fileEditor, passes, progress);
         }
         ProgressManager.checkCanceled();
       }), progress);

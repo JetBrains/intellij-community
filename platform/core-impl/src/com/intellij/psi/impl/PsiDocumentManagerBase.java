@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
@@ -94,11 +97,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    return getPsiFile(document, CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
       return null;
     }
 
-    PsiFile psiFile = getCachedPsiFile(document);
+    PsiFile psiFile = getCachedPsiFile(document, context);
     if (psiFile != null) {
       return ensureValidFile(psiFile, "Cached PSI");
     }
@@ -106,7 +115,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
 
-    psiFile = getPsiFile(virtualFile);
+    psiFile = getFileManager().findFile(virtualFile, context);
     if (psiFile == null) return null;
 
     fireFileCreated(document, psiFile);
@@ -133,9 +142,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public final PsiFile getCachedPsiFile(@NotNull Document document) {
+  public final @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
+    return getCachedPsiFile(document, CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile);
+    return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, context);
   }
 
   /**
@@ -143,17 +158,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
-  public PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile) {
+  public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
     FileManagerImpl manager = ((FileManagerImpl)getFileManager());
-    return manager.getRawCachedFile(virtualFile);
+    return manager.getRawCachedFile(virtualFile, context);
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public FileViewProvider getCachedViewProvider(@NotNull Document document) {
+  public final @NotNull List<FileViewProvider> getCachedViewProviders(@NotNull Document document) {
     VirtualFile virtualFile = getVirtualFile(document);
-    if (virtualFile == null) return null;
-    return getFileManager().findCachedViewProvider(virtualFile);
+    if (virtualFile == null) return Collections.emptyList();
+    return getFileManager().findCachedViewProviders(virtualFile);
   }
 
   private static @Nullable VirtualFile getVirtualFile(@NotNull Document document) {
@@ -162,14 +176,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return virtualFile;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile) {
-    return getFileManager().getCachedPsiFile(virtualFile);
-  }
-
-  private @Nullable PsiFile getPsiFile(@NotNull VirtualFile virtualFile) {
-    return getFileManager().findFile(virtualFile);
+  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
+    return getFileManager().getCachedPsiFile(virtualFile, context);
   }
 
   private @NotNull FileManager getFileManager() {
@@ -383,8 +392,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   boolean isEventSystemEnabled(@NotNull Document document) {
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    return viewProvider != null && viewProvider.isEventSystemEnabled();
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    return FileViewProviderUtil.isEventSystemEnabled(viewProviders);
   }
 
   boolean finishCommit(@NotNull Document document,
@@ -434,13 +443,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       getSmartPointerManager().fastenBelts(virtualFile);
     }
 
-    FileViewProvider viewProvider = getCachedViewProvider(document);
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
 
     AtomicBoolean success = new AtomicBoolean(true);
     executeInsideCommit(()-> {
       try {
         success.set(ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-          if (viewProvider == null) {
+          if (viewProviders.isEmpty()) {
             handleCommitWithoutPsi(document);
             return true;
           }
@@ -449,10 +458,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       catch (Throwable e) {
         try {
-          forceReload(virtualFile, viewProvider);
+          forceReload(virtualFile, viewProviders);
         }
         finally {
-          LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+          LOG.error("Exception while committing " + viewProviders + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
         }
       }
       finally {
@@ -483,8 +492,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (virtualFile != null) {
       getSmartPointerManager().updatePointerTargetsAfterReparse(virtualFile);
     }
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider != null) {
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    for (FileViewProvider viewProvider : viewProviders) {
       viewProvider.contentsSynchronized();
     }
     for (BooleanRunnable runnable : reparseInjectedProcessors) {
@@ -493,9 +502,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return true;
   }
 
-  void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
-    if (viewProvider != null) {
-      DebugUtil.performPsiModification("psi.forceReload", () -> ((AbstractFileViewProvider)viewProvider).markInvalidated());
+  void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<FileViewProvider> viewProviders) {
+    if (!viewProviders.isEmpty()) {
+      DebugUtil.performPsiModification("psi.forceReload", () -> {
+        for (FileViewProvider viewProvider : viewProviders) {
+          ((AbstractFileViewProvider)viewProvider).markInvalidated();
+        }
+      });
     }
     if (virtualFile != null) {
       ((FileManagerImpl)getFileManager()).forceReload(virtualFile);
@@ -926,26 +939,31 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       associateUncommittedInfo(document, new UncommittedInfo((DocumentImpl)document));
     }
 
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    boolean inMyProject = viewProvider != null && viewProvider.getManager() == myPsiManager;
-    if (!isRelevant || !inMyProject) {
-      return;
-    }
-
-    List<PsiFile> files = viewProvider.getAllFiles();
-    PsiFile psiCause = null;
-    for (PsiFile file : files) {
-      if (file == null) {
-        throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    for (FileViewProvider viewProvider : viewProviders) {
+      boolean inMyProject = viewProvider.getManager() == myPsiManager;
+      if (!isRelevant || !inMyProject) {
+        return;
       }
 
-      if (PsiToDocumentSynchronizer.isInsideAtomicChange(file)) {
-        psiCause = file;
-      }
-    }
+      List<PsiFile> files = viewProvider.getAllFiles();
+      PsiFile psiCause = null;
+      for (PsiFile file : files) {
+        if (file == null) {
+          throw new AssertionError("View provider " + viewProvider +
+                                   " (" + viewProvider.getClass() + ") returned null in its files array: " +
+                                   files + " for file " +
+                                   viewProvider.getVirtualFile());
+        }
 
-    if (psiCause == null) {
-      beforeDocumentChangeOnUnlockedDocument(viewProvider);
+        if (PsiToDocumentSynchronizer.isInsideAtomicChange(file)) {
+          psiCause = file;
+        }
+      }
+
+      if (psiCause == null) {
+        beforeDocumentChangeOnUnlockedDocument(viewProvider);
+      }
     }
   }
 
@@ -963,18 +981,21 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
 
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider == null) {
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    if (viewProviders.isEmpty()) {
       handleCommitWithoutPsi(document);
       return;
     }
-    boolean inMyProject = viewProvider.getManager() == myPsiManager;
+
+    // todo ijpl-339 is this check correct at all? How can we get view providers from an alien project here???
+    boolean inMyProject = ContainerUtil.exists(viewProviders, viewProvider -> viewProvider.getManager() == myPsiManager);
     if (!isRelevant || !inMyProject) {
       clearUncommittedInfo(document);
       return;
     }
 
-    List<PsiFile> files = viewProvider.getAllFiles();
+
+    List<PsiFile> files = ContainerUtil.flatMap(viewProviders, p -> p.getAllFiles());
     if (files.isEmpty()) {
       handleCommitWithoutPsi(document);
       return;
@@ -1026,11 +1047,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private void retainProviderAndCommitAsync(@NotNull Document document,
                                             @NotNull Object reason,
                                             @NotNull ModalityState modality) {
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider != null && viewProvider.isEventSystemEnabled()) {
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    if (FileViewProviderUtil.isEventSystemEnabled(viewProviders)) {
       ThreadingAssertions.assertEventDispatchThread();
       // make cached provider non-gcable temporarily (until commit end) to avoid surprising getCachedProvider()==null
-      myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality, viewProvider);
+      myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality, viewProviders);
     }
   }
 
@@ -1229,8 +1250,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public @NonNls String someDocumentDebugInfo(@NotNull Document document) {
-    FileViewProvider viewProvider = getCachedViewProvider(document);
-    return "cachedProvider: " + viewProvider +
+    @NotNull List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    return "cachedProvider: " + viewProviders +
            "; isEventSystemEnabled: " + isEventSystemEnabled(document) +
            "; isCommitted:"+isCommitted(document)+
            "; myIsCommitInProgress:"+isCommitInProgress()+

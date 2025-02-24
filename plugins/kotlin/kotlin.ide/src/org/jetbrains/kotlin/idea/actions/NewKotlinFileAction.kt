@@ -211,19 +211,24 @@ private fun List<String>.cutExistentPath(targetDir: PsiDirectory): List<String> 
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
 
-private fun removeKotlinExtensionIfPresent(name: String): String = when {
-    name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION") -> name.removeSuffix(".$KOTLIN_WORKSHEET_EXTENSION")
-    name.endsWith(".$STD_SCRIPT_SUFFIX") -> name.removeSuffix(".$STD_SCRIPT_SUFFIX")
-    name.endsWith(".${KotlinFileType.EXTENSION}") -> name.removeSuffix(".${KotlinFileType.EXTENSION}")
-    else -> name
-}
+private val KOTLIN_KNOWS_SUFFIXES = arrayOf(
+    ".$KOTLIN_WORKSHEET_EXTENSION",
+    ".gradle.$STD_SCRIPT_SUFFIX",
+    ".main.$STD_SCRIPT_SUFFIX",
+    ".$STD_SCRIPT_SUFFIX",
+    ".${KotlinFileType.EXTENSION}"
+)
+
+private fun removeKotlinExtensionIfPresent(name: String): String =
+    KOTLIN_KNOWS_SUFFIXES.firstOrNull { name.endsWith(it) }?.let { name.removeSuffix(it) } ?: name
 
 private fun createKotlinFileFromTemplate(dir: PsiDirectory, fileName: String, template: FileTemplate): PsiFile? {
     val project = dir.project
+    val extraExtension = template.name.substringAfterLast('.', "").takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""
     val className = fileName.substringBefore('.')
     val attributesDefaults = AttributesDefaults(className).withFixedName(true)
     val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties.apply {
-        put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName)
+        put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName + extraExtension)
     }
     val element = try {
         CreateFromTemplateDialog(
@@ -255,6 +260,8 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
         "Kotlin File" -> FILE_SEPARATORS
         "Kotlin Worksheet" -> FILE_SEPARATORS
         "Kotlin Script" -> FILE_SEPARATORS
+        "Kotlin Gradle Build Kts.gradle" -> FILE_SEPARATORS
+        "Kotlin Main Kts.main" -> FILE_SEPARATORS
         else -> FQNAME_SEPARATORS
     }
 
@@ -262,7 +269,12 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
 
     val service = DumbService.getInstance(dir.project)
     return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
-        val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+        val adjustedDir =
+            if (KotlinScriptFileTemplate.entries.any { it.fileName == template.name }) {
+                targetDir
+            } else {
+                CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+            }
         val psiFile = createKotlinFileFromTemplate(adjustedDir, fileName, template)
         if (psiFile is KtFile) {
             val singleClass = psiFile.declarations.singleOrNull() as? KtClass
@@ -277,10 +289,16 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
     }
 }
 
-internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinFileTemplate) =
+internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinTemplate) =
     addKind(t.title, t.icon, t.fileName)
 
-internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, val icon: Icon, val fileName: String) {
+internal interface KotlinTemplate {
+    val title: String
+    val icon: Icon
+    val fileName: String
+}
+
+internal enum class KotlinFileTemplate(@NlsContexts.ListItem override val title: String, override val icon: Icon, override val fileName: String): KotlinTemplate {
     Class(KotlinBundle.message("action.new.file.dialog.class.title"), KotlinIcons.CLASS, "Kotlin Class"),
     File(
         KotlinBundle.message("action.new.file.dialog.file.title"),

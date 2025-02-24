@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -116,7 +116,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         USELESS_CAST.registerFactory(RemoveUselessCastFix)
 
-        USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
+        USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFixFactory, RemoveUselessIsCheckFixForWhenFactory)
 
         WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
         WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFixFactory)

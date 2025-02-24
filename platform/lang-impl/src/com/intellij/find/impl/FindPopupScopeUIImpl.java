@@ -19,10 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -78,7 +76,6 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myModuleComboBox = new ComboBox<>(names);
     myModuleComboBox.setSwingPopup(false);
     myModuleComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300)); // as ScopeChooser
-    myModuleComboBox.setRenderer(SimpleListCellRenderer.create("", Functions.id()));
 
     ActionListener restartSearchListener = e -> scheduleResultsUpdate();
     myModuleComboBox.addActionListener(restartSearchListener);

@@ -134,8 +134,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @ApiStatus.Internal
   public static final Key<Boolean> IGNORE_RANGE_GUARDS_ON_FULL_UPDATE = Key.create("IGNORE_RANGE_GUARDS_ON_FULL_UPDATE");
 
-  static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
-  static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
+  @ApiStatus.Internal
+  public static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
+  @ApiStatus.Internal
+  public static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
     processQueue();

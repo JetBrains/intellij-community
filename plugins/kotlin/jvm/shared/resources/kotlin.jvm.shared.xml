@@ -1,0 +1,107 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.jvm.shared">
+  <actions>
+    <!-- Kotlin Console REPL-->
+    <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
+      <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
+    </action>
+
+    <action id="CreateIncrementalCompilationBackup"
+            class="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.CreateIncrementalCompilationBackup" internal="true">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+
+    <action id="ReactivePostOpenProjectActionsAction"
+            class="org.jetbrains.kotlin.idea.jvm.shared.actions.internal.ReactivePostOpenProjectActionsAction"
+            text="Kotlin Project Post-Open Activity" internal="true">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
+
+    <buildProcess.parametersProvider
+            implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
+
+    <framework.type implementation="org.jetbrains.kotlin.idea.jvm.shared.framework.JavaFrameworkType"/>
+
+    <library.presentationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.framework.JavaRuntimePresentationProvider"/>
+
+    <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
+
+    <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
+
+    <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider"/>
+
+    <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
+
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>
+
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
+
+    <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                       bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
+
+    <registryKey key="kotlin.ultra.light.classes.empty.text.range"
+                 description="Return 'null' text range as in old light class implementation"
+                 defaultValue="false"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.uast.force.uinjectionhost"
+                 description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.uast.use.psi.type.precheck"
+                 description="Whether to use Psi Source type checking optimization"
+                 defaultValue="true"
+                 restartRequired="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+    <declarationAttributeAltererExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
+    <!--suppress KotlinObjectExtensionRegistration -->
+    <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
+
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
+    <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
+  </extensions>
+
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileModuleInfoProvider"
+              topic="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+  </projectListeners>
+</idea-plugin>

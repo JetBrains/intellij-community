@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -22,10 +23,10 @@ import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
-import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -46,9 +47,11 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.TerminalLine
+import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -71,13 +74,18 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.max
 
-internal object TerminalUiUtils {
+@ApiStatus.Internal
+object TerminalUiUtils {
   fun createOutputEditor(
     document: Document,
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
     installContextMenu: Boolean,
   ): EditorImpl {
+    // Terminal does not need Editor's Undo/Redo functionality.
+    // So, it is better to disable it to not store the document changes in UndoManager cache.
+    UndoUtil.disableUndoFor(document)
+
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
     editor.isRendererMode = true
@@ -273,6 +281,12 @@ internal object TerminalUiUtils {
     return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
   }
 
+  const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
+
+  fun getDefaultMaxOutputLength(): Int {
+    return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
+  }
+
   private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
 
   const val GREEN_COLOR_INDEX: Int = 2
@@ -356,11 +370,14 @@ private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMI
  * It should be used only to indicate internal programmatic actions that are not explicitly caused by the user interaction.
  * For example, terminal output text update, or adding inlays to create insets between command blocks.
  */
-internal var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
+var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
   get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
   set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
 
-internal inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
+@ApiStatus.Internal
+inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
   isTerminalOutputScrollChangingActionInProgress = true
   try {
     return action()
@@ -386,8 +403,9 @@ internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
   }
 }
 
+@ApiStatus.Internal
 @RequiresEdt
-internal inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
+inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
   scrollingModel.disableAnimation()
   return try {
     action()
@@ -446,7 +464,8 @@ internal fun CharBuffer.normalize(): String {
   return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
 }
 
-internal fun TerminalLine.getLengthWithoutDwc(): Int {
+@ApiStatus.Internal
+fun TerminalLine.getLengthWithoutDwc(): Int {
   val dwcCount = entries.fold(0) { curCount, entry ->
     val dwcInEntryCount = entry.text.count { it == CharUtils.DWC }
     curCount + dwcInEntryCount
@@ -454,6 +473,16 @@ internal fun TerminalLine.getLengthWithoutDwc(): Int {
   return length() - dwcCount
 }
 
-internal fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
+inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T): T {
+  lock()
+  return try {
+    callable(this)
+  }
+  finally {
+    unlock()
+  }
+}
+
+fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
   add(component, layer as Any) // Any is needed to resolve to the correct overload.
 }

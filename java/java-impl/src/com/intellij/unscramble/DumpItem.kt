@@ -56,6 +56,19 @@ interface DumpItem {
 }
 
 @ApiStatus.Internal
+object IconsCache {
+  private val virtualIcons: MutableMap<Icon, IconWithVirtualOverlay> = mutableMapOf()
+  private val daemonIcons: MutableMap<Icon, IconWithDaemonOverlay> = mutableMapOf()
+
+  fun getIconWithVirtualOverlay(baseIcon: Icon): Icon =
+    virtualIcons.computeIfAbsent(baseIcon) { IconWithVirtualOverlay(it) }
+
+  fun getIconWithDaemonOverlay(baseIcon: Icon): Icon =
+    daemonIcons.computeIfAbsent(baseIcon) { IconWithDaemonOverlay(it) }
+}
+
+
+@ApiStatus.Internal
 interface MergeableToken {
   override fun equals(other: Any?): Boolean
   override fun hashCode(): Int
@@ -139,8 +152,8 @@ class JavaThreadDumpItem(private val threadState: ThreadState) : DumpItem {
         else -> AllIcons.Actions.Resume
       }
       return when {
-        threadState.isVirtual -> virtualIcons.computeIfAbsent(baseIcon) { IconWithVirtualOverlay(it) }
-        threadState.isDaemon -> daemonIcons.computeIfAbsent(baseIcon) { IconWithDaemonOverlay(it) }
+        threadState.isVirtual -> IconsCache.getIconWithVirtualOverlay(baseIcon)
+        threadState.isDaemon -> IconsCache.getIconWithDaemonOverlay(baseIcon)
         else -> baseIcon
       }
     }
@@ -162,11 +175,7 @@ class JavaThreadDumpItem(private val threadState: ThreadState) : DumpItem {
 
   private inner class JavaMergeableToken : MergeableToken {
     private val comparableStackTrace: String =
-      stackTrace
-        .lineSequence()
-        .drop(min(stackTrace.length, 1))
-        .map { it.replace("<0x.+>\\s".toRegex(), "<merged>") }
-        .joinToString("\n")
+      stackTrace.substringAfter("\n").replace("<0x.+>\\s".toRegex(), "<merged>")
 
     override val item: JavaThreadDumpItem get() = this@JavaThreadDumpItem
 
@@ -199,11 +208,6 @@ class JavaThreadDumpItem(private val threadState: ThreadState) : DumpItem {
         comparableStackTrace
       )
     }
-  }
-
-  companion object {
-    private val daemonIcons: MutableMap<Icon, IconWithDaemonOverlay> = mutableMapOf()
-    private val virtualIcons: MutableMap<Icon, IconWithVirtualOverlay> = mutableMapOf()
   }
 }
 

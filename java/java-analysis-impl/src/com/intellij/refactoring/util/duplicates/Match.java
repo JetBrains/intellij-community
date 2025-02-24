@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -19,6 +19,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,8 @@ public final class Match {
   private final ControlFlow myControlFlow;
   private ReturnValue myReturnValue;
   private Ref<PsiExpression> myInstanceExpression;
-  final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
+  @ApiStatus.Internal
+  public final Map<PsiVariable, PsiType> changedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
   private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
   private final Map<DuplicatesFinder.Parameter, List<Pair.NonNull<PsiExpression, PsiExpression>>> myFoldedExpressionMappings = new HashMap<>();
@@ -135,7 +137,7 @@ public final class Match {
       else {
         if (isVararg) {
           if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type) && !((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)) {
-            myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
+            changedParams.put(psiVariable, new PsiEllipsisType(parameterType));
           }
         } else {
           if (!myIgnoreParameterTypes && !parameterType.isAssignableFrom(type)) return false;  //todo

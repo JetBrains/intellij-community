@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl:ide-impl",
+    "//platform/kernel/pasta",
   ],
   runtime_deps = [":editor_resources"]
 )

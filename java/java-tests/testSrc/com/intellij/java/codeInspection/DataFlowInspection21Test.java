@@ -166,4 +166,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyReturnFromParameterized() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

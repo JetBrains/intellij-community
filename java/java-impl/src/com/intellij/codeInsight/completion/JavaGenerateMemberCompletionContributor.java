@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -176,7 +177,7 @@ public final class JavaGenerateMemberCompletionContributor {
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
         result.addElement(
           createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, null));
-        if (GenerateEqualsHandler.hasNonStaticFields(parent)) {
+        if (GenerateEqualsHandler.hasNonStaticFields(parent) && !Registry.is("ide.completion.command.enabled")) {
           if (MethodUtils.isEquals(baseMethod) || MethodUtils.isHashCode(baseMethod)) {
             result.addElement(
               createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, context -> {

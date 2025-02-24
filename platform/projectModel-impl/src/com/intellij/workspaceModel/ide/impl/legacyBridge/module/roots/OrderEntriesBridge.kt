@@ -126,8 +126,6 @@ internal class ModuleOrderEntryBridge(
 
   override fun getFiles(type: OrderRootType): Array<VirtualFile> = getEnumerator(type)?.roots ?: VirtualFile.EMPTY_ARRAY
 
-  override fun getUrls(rootType: OrderRootType): Array<String> = getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
-
   private fun getEnumerator(rootType: OrderRootType) = ownerModuleBridge.let {
     getEnumeratorForType(rootType, it).usingCache()
   }
@@ -346,8 +344,6 @@ internal class InheritedSdkOrderEntryBridge(rootModel: ModuleRootModelBridge, in
 internal class ModuleSourceOrderEntryBridge(rootModel: ModuleRootModelBridge, index: Int, item: ModuleSourceDependency)
   : OrderEntryBridge(rootModel, index, item, null), ModuleSourceOrderEntry, ClonableOrderEntry {
   override fun getFiles(type: OrderRootType): Array<out VirtualFile> = if (type == OrderRootType.SOURCES) rootModel.sourceRoots else VirtualFile.EMPTY_ARRAY
-
-  override fun getUrls(rootType: OrderRootType): Array<out String> = if (rootType == OrderRootType.SOURCES) rootModel.sourceRootUrls else ArrayUtil.EMPTY_STRING_ARRAY
 
   override fun getPresentableName(): String = ProjectModelBundle.message("project.root.module.source")
 

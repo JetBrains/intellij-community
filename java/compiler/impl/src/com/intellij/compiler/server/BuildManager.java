@@ -97,6 +97,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import com.intellij.workspaceModel.ide.impl.InternalEnvironmentNameImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -1381,7 +1382,8 @@ public final class BuildManager implements Disposable {
       wslPath = null;
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
-      cmdLine.addParameter("-Dide.jps.remote.path.prefix=" + eelBuilder.pathPrefix().replace('\\', '/'));
+      cmdLine.addParameter("-Dide.jps.remote.path.prefixes=" + eelBuilder.pathPrefixes().stream()
+        .map(e -> e.replace('\\', '/')).collect(Collectors.joining(";")));
       buildProcessConnectHost = "127.0.0.1";
       int listenPort = listenSocketAddress.getPort();
       buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
@@ -1464,13 +1466,17 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djna.noclasspath=true");
     }
     if (Registry.is("jps.build.use.workspace.model")) {
+      // todo: upload workspace model to remote side because it runs with eel
+      String globalCacheId = "Local";
+
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
       WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
       GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
-        cmdLine.addParameter("-Djps.workspace.storage.global.cache.path=" + globalCache.getCacheFile());
+        cmdLine.addParameter(
+          "-Djps.workspace.storage.global.cache.path=" + globalCache.cacheFile(new InternalEnvironmentNameImpl(globalCacheId)));
         cmdLine.addParameter("-Djps.workspace.storage.relative.paths.in.cache=" + Registry.is("ide.workspace.model.store.relative.paths.in.cache", false));
       }
       else {

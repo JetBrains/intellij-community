@@ -92,7 +92,7 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
   /**
    * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
    */
-  static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
     PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
     }

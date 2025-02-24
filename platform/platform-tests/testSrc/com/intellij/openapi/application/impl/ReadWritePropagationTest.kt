@@ -56,7 +56,7 @@ class ReadWritePropagationTest {
 
   @RepeatedTest(REPETITIONS)
   fun `write action is inherited by structured concurrency`() {
-    checkInheritanceViaStructureConcurrency(::writeAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
+    checkInheritanceViaStructureConcurrency(::edtWriteAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
   }
 
   private fun checkInheritanceViaNewContext(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean, innerChecker: () -> Boolean = checker): Unit = timeoutRunBlocking {
@@ -120,7 +120,7 @@ class ReadWritePropagationTest {
 
   @RepeatedTest(REPETITIONS)
   fun `write action is not inherited by non-structured concurrency`() {
-    checkNoInheritanceViaNonStructuredConcurrency(::writeAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
+    checkNoInheritanceViaNonStructuredConcurrency(::edtWriteAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
   }
 
   @RepeatedTest(REPETITIONS)

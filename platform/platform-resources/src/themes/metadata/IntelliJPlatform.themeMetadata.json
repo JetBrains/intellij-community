@@ -837,6 +837,10 @@
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },
     {
+      "key": "GotItTooltip.borderSimplifiedColor",
+      "description": "GotIt tooltip border color if enabled power save mode or we are in RDP session"
+    },
+    {
       "key": "GotItTooltip.linkForeground",
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
@@ -1600,6 +1604,11 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
+      "key": "Settings.Spotlight.backgroundColor",
+      "description": "Color of the background of the highlighted items when searching in the Settings dialog",
+      "since": "2025.1"
+    },
+    {
       "key": "Shortcut.backgroundColor",
       "description": "Shortcut elements background",
       "since": "2024.2"
@@ -2035,8 +2044,18 @@
       "since": "2025.1"
     },
     {
+      "key": "TrialWidget.Default.hoverForeground",
+      "description": "Hover foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
       "key": "TrialWidget.Default.hoverBackground",
       "description": "Hover background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBorderColor",
+      "description": "Hover border color of trial widget in default state. Use transparent color if no border needed",
       "since": "2025.1"
     },
     {
@@ -2055,8 +2074,18 @@
       "since": "2025.1"
     },
     {
+      "key": "TrialWidget.Active.hoverForeground",
+      "description": "Hover foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
       "key": "TrialWidget.Active.hoverBackground",
       "description": "Hover background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBorderColor",
+      "description": "Hover border color of trial widget in active state. Use transparent color if no border needed",
       "since": "2025.1"
     },
     {
@@ -2075,8 +2104,18 @@
       "since": "2025.1"
     },
     {
+      "key": "TrialWidget.Alert.hoverForeground",
+      "description": "Hover foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
       "key": "TrialWidget.Alert.hoverBackground",
       "description": "Hover background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBorderColor",
+      "description": "Hover border color of trial widget in alert state. Use transparent color if no border needed",
       "since": "2025.1"
     },
     {
@@ -2095,8 +2134,18 @@
       "since": "2025.1"
     },
     {
+      "key": "TrialWidget.Expiring.hoverForeground",
+      "description": "Hover foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
       "key": "TrialWidget.Expiring.hoverBackground",
       "description": "Hover background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBorderColor",
+      "description": "Hover border color of trial widget in expiring state. Use transparent color if no border needed",
       "since": "2025.1"
     },
     {

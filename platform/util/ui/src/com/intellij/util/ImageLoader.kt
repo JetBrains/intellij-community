@@ -10,6 +10,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.imgscalr.Scalr
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -111,6 +112,7 @@ object ImageLoader {
   }
 
   @Suppress("unused")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Do not use")
   class Dimension2DDouble(var width: Double, var height: Double) {
     fun setSize(@Suppress("DEPRECATION") size: Dimension2DDouble) {

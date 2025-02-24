@@ -4,14 +4,15 @@ package com.intellij.platform.editor.backend
 import com.intellij.codeWithMe.clientId
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.ad.AdDocumentEntity
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.platform.editor.EditorEntity
 import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.util.kernelCoroutineContext
+import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
 import fleet.kernel.shared
+import fleet.util.UID
 import kotlinx.coroutines.*
 
 internal class BackendEditorState(
@@ -32,7 +33,7 @@ internal class BackendEditorState(
     val clientId = requireNotNull(currentCoroutineContext().clientId())
     val editorEntity = change {
       shared {
-        val document = AdDocumentEntity.fromString(editor.document.text, editor.document.modificationStamp)
+        val document = DocumentEntity.fromText(UID.random(), editor.document.text)
         EditorEntity.new {
           it[EditorEntity.idAttr] = editor.editorId()
           it[EditorEntity.clientIdAttr] = clientId

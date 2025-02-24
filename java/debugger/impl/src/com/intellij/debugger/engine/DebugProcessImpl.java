@@ -205,7 +205,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private DebuggerManagerThreadImpl createManagerThread() {
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    return new DebuggerManagerThreadImpl(disposable, projectScope);
+    return new DebuggerManagerThreadImpl(disposable, projectScope, this);
   }
 
   private void reloadRenderers() {
@@ -980,7 +980,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myReturnValueWatcher = null;
           myNodeRenderersMap.clear();
           myRenderers.clear();
-          DebuggerUtils.cleanupAfterProcessFinish(this);
           myState.compareAndSet(State.DETACHING, State.DETACHED);
           try {
             forEachSafe(myDebugProcessListeners, it -> it.processDetached(this, closedByUser));
@@ -2802,6 +2801,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public boolean isEvaluationPossible() {
     return getSuspendManager().getPausedContext() != null
            || DebuggerImplicitEvaluationContextUtil.getImplicitEvaluationThread(this) != null;
+  }
+
+  public static boolean isInSuspendCommand(SuspendContextImpl suspendContext) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerCommandImpl command = DebuggerManagerThreadImpl.getCurrentCommand();
+    return command instanceof SuspendContextCommandImpl suspendContextCommand
+           && suspendContextCommand.getSuspendContext() == suspendContext;
+  }
+
+  public boolean isEvaluationPossibleInCurrentCommand(SuspendContextImpl suspendContext) {
+    return isInSuspendCommand(suspendContext) && isEvaluationPossible(suspendContext);
   }
 
   public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {

@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
@@ -53,7 +54,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-internal class BlockTerminalView(
+@ApiStatus.Internal
+class BlockTerminalView(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,

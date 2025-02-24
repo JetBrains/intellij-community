@@ -48,17 +48,11 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - getBuildEvent():com.intellij.build.events.BuildEvent
 com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 - *:resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.model.DataNode
-*:com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor
-- a:findProjectId(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 - com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 - com.intellij.openapi.util.UserDataHolder
 - *a:findModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- *a:findModuleByPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):java.lang.String
 - *a:getModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- *a:isSubstituted(java.lang.String):Z
-- *a:registerModulePublication(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
-- *a:trySubstitute(com.intellij.openapi.module.Module,com.intellij.openapi.roots.LibraryOrderEntry,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):com.intellij.openapi.roots.ModuleOrderEntry
 *:com.intellij.openapi.externalSystem.service.project.ModifiableModel
 - a:commit():V
 - a:dispose():V

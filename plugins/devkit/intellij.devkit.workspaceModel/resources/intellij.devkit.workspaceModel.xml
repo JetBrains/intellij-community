@@ -1,10 +1,13 @@
 <idea-plugin package="com.intellij.devkit.workspaceModel">
+
   <dependencies>
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
   </dependencies>
+
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
+
   <actions>
     <group id="WorkspaceModel" popup="true">
       <action id="WorkspaceEntitiesJsonClipboard" internal="true"

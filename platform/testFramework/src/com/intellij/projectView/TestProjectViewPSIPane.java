@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView;
 
 import com.intellij.icons.AllIcons;
@@ -8,12 +8,14 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
+@ApiStatus.Internal
+public final class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
   private final TestProjectTreeStructure myTestTreeStructure;
   private final int myWeight;
 

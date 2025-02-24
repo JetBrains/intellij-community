@@ -7295,6 +7295,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertParameterToReceiver/parameterOfObjectFunction.kt");
         }
 
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/recursiveCall1.kt");
+        }
+
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/topLevelFun.kt");
@@ -7962,6 +7972,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("notExtension.kt")
         public void testNotExtension() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/notExtension.kt");
+        }
+
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/recursiveCall1.kt");
         }
 
         @TestMetadata("replaceThis.kt")
@@ -14958,115 +14978,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/moveLambdaInsideParentheses")
-    public static class MoveLambdaInsideParentheses extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inapplicable1.kt")
-        public void testInapplicable1() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/inapplicable1.kt");
-        }
-
-        @TestMetadata("inapplicable2.kt")
-        public void testInapplicable2() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/inapplicable2.kt");
-        }
-
-        @TestMetadata("javaMethod.kt")
-        public void testJavaMethod() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/javaMethod.kt");
-        }
-
-        @TestMetadata("moveLabeledLambda1.kt")
-        public void testMoveLabeledLambda1() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLabeledLambda1.kt");
-        }
-
-        @TestMetadata("moveLabeledLambda2.kt")
-        public void testMoveLabeledLambda2() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLabeledLambda2.kt");
-        }
-
-        @TestMetadata("moveLambda1.kt")
-        public void testMoveLambda1() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda1.kt");
-        }
-
-        @TestMetadata("moveLambda10.kt")
-        public void testMoveLambda10() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda10.kt");
-        }
-
-        @TestMetadata("moveLambda11.kt")
-        public void testMoveLambda11() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda11.kt");
-        }
-
-        @TestMetadata("moveLambda12.kt")
-        public void testMoveLambda12() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda12.kt");
-        }
-
-        @TestMetadata("moveLambda13.kt")
-        public void testMoveLambda13() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda13.kt");
-        }
-
-        @TestMetadata("moveLambda14.kt")
-        public void testMoveLambda14() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda14.kt");
-        }
-
-        @TestMetadata("moveLambda2.kt")
-        public void testMoveLambda2() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda2.kt");
-        }
-
-        @TestMetadata("moveLambda3.kt")
-        public void testMoveLambda3() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda3.kt");
-        }
-
-        @TestMetadata("moveLambda4.kt")
-        public void testMoveLambda4() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda4.kt");
-        }
-
-        @TestMetadata("moveLambda5.kt")
-        public void testMoveLambda5() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda5.kt");
-        }
-
-        @TestMetadata("moveLambda6.kt")
-        public void testMoveLambda6() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda6.kt");
-        }
-
-        @TestMetadata("moveLambda7.kt")
-        public void testMoveLambda7() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda7.kt");
-        }
-
-        @TestMetadata("moveLambda8.kt")
-        public void testMoveLambda8() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda8.kt");
-        }
-
-        @TestMetadata("moveLambda9.kt")
-        public void testMoveLambda9() throws Exception {
-            runTest("testData/intentions/moveLambdaInsideParentheses/moveLambda9.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveMemberToTopLevel")
     public static class MoveMemberToTopLevel extends AbstractK1IntentionTest {
         @java.lang.Override
@@ -15354,6 +15265,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("expectClass.kt")
         public void testExpectClass() throws Exception {
             runTest("testData/intentions/movePropertyToConstructor/expectClass.kt");
+        }
+
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("testData/intentions/movePropertyToConstructor/flexibleType.kt");
         }
 
         @TestMetadata("functionReference.kt")

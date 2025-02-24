@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -56,6 +56,7 @@ public enum JavaFeature {
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   NESTMATES(LanguageLevel.JDK_11, "feature.nestmates"),
+  AUTO_ROOT_MODULES(LanguageLevel.JDK_11, "feature.auto.root.modules"),
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
   SERIAL_ANNOTATION(LanguageLevel.JDK_14, "feature.serial.annotation"),

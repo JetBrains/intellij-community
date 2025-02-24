@@ -1,0 +1,18 @@
+<idea-plugin package="org.jetbrains.kotlin.gradle.scripting.k1">
+  <dependencies>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k1.KotlinDslScriptSyncContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptNotificationProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionsContributor"/>
+  </extensions>
+</idea-plugin>

@@ -55,18 +55,19 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
-private class ProjectWindowCustomizerIconCache(private val project: Project) {
+private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
   val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
-    val busConnection = project.messageBus.simpleConnect()
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+    val projectConnection = project.messageBus.connect(coroutineScope)
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    projectConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    appConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
+    projectConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
       override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
@@ -76,7 +77,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
     val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = size, name = project.name)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
 
@@ -328,7 +329,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
-           InternalUICustomization.getInstance().isProjectCustomDecorationActive &&
+           InternalUICustomization.getInstance()?.isProjectCustomDecorationActive != false &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 
@@ -372,7 +373,9 @@ class ProjectWindowCustomizerService : Disposable {
     val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
-    val projectComboBtn = ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
+    val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+      it.text == project.name
+    } ?: ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
       it.text == project.name
     }
     val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f

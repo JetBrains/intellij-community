@@ -118,7 +118,9 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.i18n" exported="" />
-    <orderEntry type="module" module-name="kotlin.jvm" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" exported="" />
@@ -216,5 +218,8 @@
     <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
     <orderEntry type="module" module-name="kotlin.k2.internal" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k2" exported="" />
   </component>
 </module>

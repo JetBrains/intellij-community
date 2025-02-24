@@ -48,10 +48,10 @@ internal class RedundantUnitReturnTypeInspection :
         return null
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtElement,
         context: CallableReturnTypeUpdaterUtils.TypeInfo,
-    ): Array<KotlinModCommandQuickFix<KtElement>> = arrayOf(object : KotlinModCommandQuickFix<KtElement>() {
+    ): KotlinModCommandQuickFix<KtElement> = object : KotlinModCommandQuickFix<KtElement>() {
 
         override fun getFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
 
@@ -63,5 +63,5 @@ internal class RedundantUnitReturnTypeInspection :
             val function = element.getParentOfType<KtNamedFunction>(strict = true) ?: return
             CallableReturnTypeUpdaterUtils.updateType(function, context, project, updater)
         }
-    })
+    }
 }

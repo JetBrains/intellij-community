@@ -35,6 +35,7 @@
     <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.multiReleaseSupport" interface="com.intellij.psi.util.JavaMultiReleaseModuleSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
     </extensionPoint>

@@ -3,6 +3,7 @@
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
+  <depends>org.jetbrains.platform.debugger.streams</depends>
   <depends>com.intellij.java</depends>
 
   <description><![CDATA[
@@ -30,27 +31,9 @@
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
 
-  <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
-
-  <extensionPoints>
-    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider" dynamic="true"/>
-  </extensionPoints>
-
-  <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
+  <extensions defaultExtensionNs="org.jetbrains.platform.debugger.streams">
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-  </extensions>
-
-  <actions>
-    <action id="StreamTracerAction"
-            class="com.intellij.debugger.streams.action.TraceStreamAction"
-            icon="JavaDebuggerStreamsIcons.Stream_debugger">
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-    </action>
-  </actions>
 </idea-plugin>

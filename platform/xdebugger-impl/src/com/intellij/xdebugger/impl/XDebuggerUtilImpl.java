@@ -278,7 +278,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   /**
    * @deprecated use {@link #toggleAndReturnLineBreakpoint(Project, List, XSourcePosition, boolean, boolean, Editor, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(final @NotNull Project project,
                                                                                  @NotNull List<? extends XLineBreakpointType> types,
                                                                                  final @NotNull XSourcePosition position,

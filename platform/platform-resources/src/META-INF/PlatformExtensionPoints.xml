@@ -585,6 +585,10 @@
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="recentProjectsProvider"
+                    interface="com.intellij.ide.RecentProjectProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="applicationSettings"
                     beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
                     dynamic="true">

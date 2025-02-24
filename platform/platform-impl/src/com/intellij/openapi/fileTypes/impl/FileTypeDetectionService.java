@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -36,6 +36,7 @@ import com.intellij.util.xmlb.Constants;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,7 +51,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
-final class FileTypeDetectionService {
+@ApiStatus.Internal
+public final class FileTypeDetectionService {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
 
   private static final boolean LOG_ACCESSED_FILES = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.LOG_ACCESSED_FILES", false);

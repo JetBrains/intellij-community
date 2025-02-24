@@ -15,11 +15,13 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.*
-import com.jetbrains.python.packaging.conda.*
+import com.jetbrains.python.packaging.conda.CondaPackage
+import com.jetbrains.python.packaging.conda.CondaPackageCache
+import com.jetbrains.python.packaging.conda.CondaPackageManager
+import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.runPackagingTool
-import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -105,7 +107,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
   override fun reloadAllPackages(): List<RepoPackage> {
     return runBlocking {
-      manager.repositoryManager.refreshCashes()
+      manager.repositoryManager.refreshCaches()
       allPackages
     }
   }
@@ -223,16 +225,8 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification {
-    return when(manager) {
-      is CondaPackageManager -> when {
-        useConda -> CondaPackageSpecification(packageName, version)
-        else -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
-      }
-      is PipPythonPackageManager -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
-      else -> error("Unknown package manager")
-    }
-  }
+  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification =
+    PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 

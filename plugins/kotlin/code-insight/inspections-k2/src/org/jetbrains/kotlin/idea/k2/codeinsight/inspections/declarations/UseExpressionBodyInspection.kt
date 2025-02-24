@@ -132,10 +132,10 @@ internal class UseExpressionBodyInspection :
         else -> false
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDeclarationWithBody,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtDeclarationWithBody>> = arrayOf(object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
+    ): KotlinModCommandQuickFix<KtDeclarationWithBody> = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.to.expression.body.fix.text")
@@ -160,5 +160,5 @@ internal class UseExpressionBodyInspection :
                 updater.moveCaretTo(newBody.startOffset)
             }
         }
-    })
+    }
 }

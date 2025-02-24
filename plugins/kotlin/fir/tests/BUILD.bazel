@@ -5,7 +5,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -73,6 +72,7 @@ jvm_library(
     "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform_test_lib",
     "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/project-wizard/idea:kotlin-project-wizard-idea",
   ]
 )
 

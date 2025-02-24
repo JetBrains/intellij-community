@@ -69,6 +69,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/analysis-api:analysis",
     "@lib//:jna",
     "@lib//:download-pgp-verifier",

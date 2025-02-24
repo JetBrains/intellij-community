@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 
 internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.Simple<KtProperty, Unit>() {
 
-    private fun KaSession.isCompanionObject(type: KaType): Boolean {
+    private fun isCompanionObject(type: KaType): Boolean {
         val symbol = type.symbol as? KaClassSymbol ?: return false
         return symbol.classKind == KaClassKind.COMPANION_OBJECT
     }
@@ -86,10 +86,10 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
     override fun getProblemDescription(element: KtProperty, context: Unit): String =
         KotlinBundle.message("explicitly.given.type.is.redundant.here")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtProperty,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtProperty>> = arrayOf(RemoveRedundantTypeFix())
+    ): KotlinModCommandQuickFix<KtProperty> = RemoveRedundantTypeFix()
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         return element.typeReference != null

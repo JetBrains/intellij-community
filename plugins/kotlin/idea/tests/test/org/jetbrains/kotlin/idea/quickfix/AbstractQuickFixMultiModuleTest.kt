@@ -64,18 +64,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
-    private fun VirtualFile.toIOFile(): File? {
-        val paths = mutableListOf<String>()
-        var vFile: VirtualFile? = this
-        while (vFile != null) {
-            vFile.sourceIOFile()?.let {
-                return File(it, paths.reversed().joinToString("/"))
-            }
-            paths.add(vFile.name)
-            vFile = vFile.parent
-        }
-        return null
-    }
+    protected open val actionPrefix: String? = null
 
     private fun doQuickFixTest(dirPath: String) {
         KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
@@ -92,7 +81,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         project.executeCommand("") {
             var expectedErrorMessage = ""
             try {
-                val actionHint = ActionHint.parse(actionFile, actionFileText)
+                val actionHint = ActionHint.parse(actionFile, actionFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                 val text = actionHint.expectedText
 
                 val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -121,6 +110,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         editor,
                         actionShouldBeAvailable,
                         actionFileName,
+                        actionHint,
                         this::availableActions,
                         this::doHighlighting,
                         pluginMode = pluginMode,
@@ -179,7 +169,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: FileComparisonFailedError) {
+            } catch (_: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

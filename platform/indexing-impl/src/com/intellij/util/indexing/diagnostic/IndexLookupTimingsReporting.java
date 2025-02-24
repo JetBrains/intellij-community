@@ -123,13 +123,12 @@ public final class IndexLookupTimingsReporting {
     "IndexLookupTimingsReporting.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true
   );
 
-
   /**
    * How many recursive lookups to allow before suspect it is not a recursive lookup, but
    * just buggy code (missed {@linkplain IndexOperationFusCollector.LookupTraceBase#close()} call) and throw exception
    */
   @VisibleForTesting
-  static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexLookup.MAX_LOOKUP_DEPTH", 16);
+  public static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexLookup.MAX_LOOKUP_DEPTH", 16);
   /**
    * If true -> throw exception if tracing methods are (likely) called in incorrect order (e.g. .finish() before start(),
    * or .finish() without .start() beforehand).
@@ -137,7 +136,7 @@ public final class IndexLookupTimingsReporting {
    * <p>
    */
   @VisibleForTesting
-  static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexLookup.THROW_ON_INCORRECT_USAGE", false);
+  public static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexLookup.THROW_ON_INCORRECT_USAGE", false);
 
 
   /* ================== EVENTS GROUPS: ====================================================== */

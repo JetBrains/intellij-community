@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Insets
@@ -61,6 +62,8 @@ object ReviewDetailsUIUtil {
       newUI = Insets(16, NEW_UI_LEFT_GAP, 16, RIGHT_GAP),
     )
 
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Description should not be shown in details panel")
   @Deprecated("Description should not be shown in details panel")
   @Suppress("UseDPIAwareInsets")
   val DESCRIPTION_GAPS: Insets

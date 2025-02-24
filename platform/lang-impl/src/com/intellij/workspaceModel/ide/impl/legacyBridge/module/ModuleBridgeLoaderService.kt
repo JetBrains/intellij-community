@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.application.backgroundWriteAction
@@ -21,6 +21,7 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
@@ -77,7 +78,7 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
                       targetUnloadedEntitiesBuilder = null,
                       loadedFromCache = workspaceModel.loadedFromCache)
         }
-        val globalWorkspaceModel = serviceAsync<GlobalWorkspaceModel>()
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(project.getEelDescriptor())
         backgroundWriteAction {
           globalWorkspaceModel.applyStateToProject(project)
         }

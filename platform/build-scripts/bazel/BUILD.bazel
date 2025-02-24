@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kaml",
     "@lib//:hash4j",
     "@rules_jvm//zip:build-zip",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
   ],
   runtime_deps = [
     "//jps/model-impl",

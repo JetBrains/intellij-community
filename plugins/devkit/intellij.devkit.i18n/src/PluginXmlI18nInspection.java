@@ -46,10 +46,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
@@ -62,7 +59,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
+@ApiStatus.Internal
+public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlI18nInspection.class);
 
   @Override

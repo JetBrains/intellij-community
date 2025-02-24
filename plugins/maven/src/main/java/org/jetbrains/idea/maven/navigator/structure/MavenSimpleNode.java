@@ -15,6 +15,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,8 @@ import java.util.List;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.*;
 
-abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
+@ApiStatus.Internal
+public abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
   private MavenSimpleNode myParent;
   private MavenProjectsStructure.ErrorLevel myErrorLevel = MavenProjectsStructure.ErrorLevel.NONE;
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;

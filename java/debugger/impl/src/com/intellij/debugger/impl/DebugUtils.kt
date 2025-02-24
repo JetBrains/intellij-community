@@ -4,7 +4,6 @@ package com.intellij.debugger.impl
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.withDebugContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,7 +12,6 @@ import com.sun.jdi.*
 import com.sun.jdi.event.ClassPrepareEvent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -75,7 +73,7 @@ fun preloadAllClasses(vm: VirtualMachine) {
   val allClasses = DebuggerUtilsAsync.allCLasses(vm)
   if (!Registry.`is`("debugger.preload.types.hierarchy", true)) return
 
-  val channel = Channel<ReferenceType>(capacity = Channel.Factory.UNLIMITED)
+  val channel = Channel<ReferenceType>(capacity = Channel.UNLIMITED)
   try {
     DebugProcessEvents.enableNonSuspendingRequest(vm.eventRequestManager().createClassPrepareRequest()) { event ->
       channel.trySend((event as ClassPrepareEvent).referenceType())
@@ -86,13 +84,20 @@ fun preloadAllClasses(vm: VirtualMachine) {
 
   val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
   managerThread.coroutineScope.launch {
-    val allClasses = allClasses.await()
-    allClasses.forEach { channel.send(it) }
-    channel.consumeEach { type ->
-      withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
-        DebuggerUtilsAsync.supertypes(type).await()
+    launch {
+      val classes = allClasses.await()
+      for (type in classes) {
+        channel.trySend(type)
       }
-      delay(1)
+    }
+    channel.consumeEach { type ->
+      managerThread.schedule(PrioritizedTask.Priority.LOWEST) {
+        try {
+          DebuggerUtilsAsync.supertypes(type)
+        }
+        catch (_: ObjectCollectedException) {
+        }
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.imports;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -49,9 +49,13 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
     if (importStatementBase instanceof PsiImportModuleStatement || importStatementBase instanceof PsiImportStatement) {
       final PsiClass[] classes = javaFile.getClasses();
       final ClassCollector visitor = ClassCollector.create(importStatementBase);
-      if(visitor==null) return;
+      if (visitor == null) return;
       for (PsiClass aClass : classes) {
         aClass.accept(visitor);
+      }
+      PsiJavaModule psiJavaModule = javaFile.getModuleDeclaration();
+      if (psiJavaModule != null) {
+        psiJavaModule.accept(visitor);
       }
       ImportUtils.ImplicitImportChecker checker = ImportUtils.createImplicitImportChecker(javaFile);
       final PsiClass[] importedClasses = Arrays.stream(visitor.getImportedClasses())

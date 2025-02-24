@@ -22,7 +22,7 @@ class PsiSourcedWebSymbolReference(
 
   internal val newName: Ref<String> = Ref()
 
-  fun createRenameHandler() =
+  fun createRenameHandler(): RenameHandler =
     RenameHandler(this)
 
   override fun getElement(): PsiElement =

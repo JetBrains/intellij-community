@@ -17,8 +17,10 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.File;
@@ -71,7 +73,9 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  final class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {

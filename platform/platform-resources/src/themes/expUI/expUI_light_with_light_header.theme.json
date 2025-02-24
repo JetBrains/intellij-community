@@ -60,6 +60,41 @@
       }
     },
 
+    "TrialWidget": {
+      "Default": {
+        "foreground": "Gray5",
+        "background": "Gray13",
+        "borderColor": "Gray6",
+        "hoverForeground": "Gray5",
+        "hoverBackground": "Gray12",
+        "hoverBorderColor": "Gray6"
+      },
+      "Active": {
+        "foreground": "Green5",
+        "background": "Green13",
+        "borderColor": "Green4",
+        "hoverForeground": "Green5",
+        "hoverBackground": "Green11",
+        "hoverBorderColor": "Green4"
+      },
+      "Alert": {
+        "foreground": "Orange3",
+        "background": "Gray13",
+        "borderColor": "Orange4",
+        "hoverForeground": "Orange3",
+        "hoverBackground": "Orange9",
+        "hoverBorderColor": "Orange4"
+      },
+      "Expiring": {
+        "foreground": "Red12",
+        "background": "Red4",
+        "borderColor": "Red4",
+        "hoverForeground": "Red12",
+        "hoverBackground": "Red5",
+        "hoverBorderColor": "Red5"
+      }
+    },
+
     "TitlePane.Button.hoverBackground": "#0000000D",
 
     "MenuBar.borderColor": "Gray12",
@@ -126,6 +161,7 @@
     "GotItTooltip": {
       "background": "Gray14",
       "borderColor": "Gray14",
+      "borderSimplifiedColor": "Gray10",
       "foreground": "Gray1",
       "stepForeground": "Gray7",
       "secondaryActionForeground": "Gray7",
@@ -239,11 +275,14 @@
         "keymapLabel": "Gray9"
       }
     },
-    
-    "DataSummary.Chart.background": "Blue4",
 
     "ManagedIdeBadgeBorder": "Gray11",
     "ManagedIdeBadgeBackground": "Gray13",
-    "ManagedIdeBadgeBackgroundHover": "Gray12"
+    "ManagedIdeBadgeBackgroundHover": "Gray12",
+
+    "Settings.Spotlight": {
+      "borderColor": "#E08855FF",
+      "backgroundColor": "#F0F1F280"
+    }
   }
 }

@@ -108,6 +108,8 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
       val row = items.withIndex().single { predicate(it.value) }.index
       clickCell(row, 0)
     }
+
+    fun getComponentAt(row: Int) = getComponentAt(row, 0)
   }
 
   companion object {

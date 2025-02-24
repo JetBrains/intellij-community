@@ -6,11 +6,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.plist.PlistReader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,7 +25,7 @@ import static org.jetbrains.plugins.textmate.Constants.*;
 /**
  * @deprecated use `{@link VSCBundleReaderKt#readVSCBundle}`
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class VSCBundle extends Bundle {
   private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final Map<String, Collection<String>> configToScopes = new HashMap<>();
@@ -152,16 +150,6 @@ public class VSCBundle extends Bundle {
     loadExtensions();
     //noinspection SSBasedInspection
     return configToScopes.keySet().stream().map(config -> new File(bundleFile, config)).collect(Collectors.toList());
-  }
-
-  @Override
-  public List<Pair<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
-    Plist fromJson = loadLanguageConfig(file);
-    //noinspection SSBasedInspection
-    return configToScopes.get(FileUtilRt.toSystemIndependentName(
-      Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file)))).stream()
-      .map(scope -> new Pair<String, Plist>(scope, fromJson))
-      .collect(Collectors.toList());
   }
 
   private static @NotNull Plist loadLanguageConfig(File languageConfig) throws IOException {

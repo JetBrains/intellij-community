@@ -553,8 +553,10 @@ public class ProjectSdksModel implements SdkModel {
     // model with an expectation it would be updated later on
     String suggestedName = downloadTask.getSuggestedSdkName();
     String homeDir = FileUtil.toSystemIndependentName(downloadTask.getPlannedHomeDir());
-    if (WslPath.isWslUncPath(homeDir)) {
-      suggestedName += " (WSL)";
+    if (!Registry.is("ide.workspace.model.per.environment.model.separation", false)) {
+      if (WslPath.isWslUncPath(homeDir)) {
+        suggestedName += " (WSL)";
+      }
     }
 
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, sdks);

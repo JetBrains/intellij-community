@@ -10,9 +10,11 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import kotlin.collections.none
+import javax.swing.Icon
 
 internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
@@ -31,11 +33,21 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         with(builder) {
             setTitle(KotlinBundle.message("action.new.script.dialog.title"))
-            addKind(KotlinFileTemplate.Script)
+            builder
+                .addKind(KotlinScriptFileTemplate.GradleKts)
+                .addKind(KotlinScriptFileTemplate.MainKts)
+                .addKind(KotlinScriptFileTemplate.CustomKts)
+
             setValidator(NewKotlinFileNameValidator)
         }
     }
 
     override fun getActionName(directory: PsiDirectory, newName: String, templateName: String): String =
         KotlinBundle.message("action.Kotlin.NewScript.text")
+}
+
+internal enum class KotlinScriptFileTemplate(@NlsContexts.ListItem override val title: String, override val icon: Icon, override val fileName: String): KotlinTemplate {
+    GradleKts(KotlinBundle.message("action.new.gradle.script.name"), KotlinIcons.GRADLE_SCRIPT, "Kotlin Gradle Build Kts.gradle"),
+    MainKts(KotlinBundle.message("action.new.main.script.name"), KotlinIcons.SCRIPT, "Kotlin Main Kts.main"),
+    CustomKts(KotlinBundle.message("action.new.custom.script.name"), KotlinIcons.SCRIPT, "Kotlin Script"),
 }

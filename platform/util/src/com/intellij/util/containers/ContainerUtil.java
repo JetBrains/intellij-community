@@ -660,7 +660,7 @@ public final class ContainerUtil {
 
   public enum MergeResult { COPIED_FROM_LIST1, MERGED_EQUAL_FROM_BOTH, COPIED_FROM_LIST2 }
   /**
-   * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in the merged list result.
+   * Process elements from the both sorted lists in order defined by {@code comparator} and call {@code processor} for each element in the merged list result.
    * When equal elements occurred, then if {@code mergeEqualItems} then output only the element from the {@code list1} and ignore the second,
    * else output them both in unspecified order.
    * {@code processor} is invoked for each output element, with the following arguments:
@@ -813,7 +813,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+  public static <T> @Nullable T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
     for (T element : array) {
       if (condition.value(element)) return element;
     }
@@ -1137,21 +1137,6 @@ public final class ContainerUtil {
   public static void removeDuplicates(@NotNull Collection<?> collection) {
     Set<Object> collected = new HashSet<>();
     collection.removeIf(t -> !collected.add(t));
-  }
-
-  /**
-   * @deprecated use {@link Map#of}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @Unmodifiable @NotNull Map<String, String> stringMap(String @NotNull ... keyValues) {
-    Map<String, String> result = new HashMap<>();
-    for (int i = 0; i < keyValues.length - 1; i+=2) {
-      result.put(keyValues[i], keyValues[i+1]);
-    }
-
-    return result;
   }
 
   @Contract(pure = true)

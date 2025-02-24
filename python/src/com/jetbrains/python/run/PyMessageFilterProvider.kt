@@ -2,8 +2,13 @@
 package com.jetbrains.python.run
 
 import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.run.filter.PythonInstallPackageFilter
 
 class PyMessageFilterProvider : ConsoleFilterProvider {
-  override fun getDefaultFilters(project: Project) = arrayOf(PythonTracebackFilter(project))
+  override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(
+    PythonTracebackFilter(project),
+    PythonInstallPackageFilter(project)
+  )
 }

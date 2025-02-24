@@ -7,11 +7,11 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/checkSuite.graphql")
 data class GHCheckSuite(
-  val checkRuns: CheckRunConnection
+  val checkRuns: CheckRunConnection?
 ) {
   class CheckRunConnection(
     pageInfo: GraphQLCursorPageInfoDTO,
-    nodes: List<GHCheckRun>
+    nodes: List<GHCheckRun> = listOf()
   ) : GraphQLConnectionDTO<GHCheckRun>(pageInfo, nodes)
 }
 

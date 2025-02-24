@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
@@ -1987,6 +1988,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         paintShadow(g);
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget);
       }
+    }
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      Graphics componentGraphics = super.getComponentGraphics(graphics);
+      InternalUICustomization service = InternalUICustomization.getInstance();
+      if(service == null) return componentGraphics;
+      return service.transformGraphics(this, componentGraphics);
     }
 
     private void paintShadow(Graphics graphics) {

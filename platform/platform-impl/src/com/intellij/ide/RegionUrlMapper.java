@@ -1,15 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.JsonParseException;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.io.HttpRequests;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +20,13 @@ import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @see Region
@@ -55,12 +62,9 @@ public final class RegionUrlMapper {
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
     .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
-  private RegionUrlMapper() {
-  }
+  private RegionUrlMapper() { }
 
-  /**
-   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
-   */
+  /** @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context */
   @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
@@ -68,9 +72,7 @@ public final class RegionUrlMapper {
     return tryMapUrlBlocking(url);
   }
 
-  /**
-   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
-   */
+  /** @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context */
   @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
@@ -137,7 +139,26 @@ public final class RegionUrlMapper {
   }
 
   private static @NotNull CompletableFuture<@NotNull RegionMapping> tryLoadMappingOrEmpty(@NotNull Region region) {
-    return loadMapping(region).exceptionally(t -> RegionMapping.empty());
+    return loadMapping(region).exceptionally(t -> {
+      while (t instanceof CompletionException || t instanceof ExecutionException) {
+        t = t.getCause();
+      }
+      if (t instanceof CancellationException || t instanceof ControlFlowException) {
+        LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
+      }
+      else if (t instanceof IOException) {
+        // legitimate failure when using the IDE offline; just log it without the stack trace
+        LOG.info("Failed to fetch regional URL mappings (using non-regional URL as fallback): " + t);
+      }
+      else if (t instanceof JsonParseException) {
+        LOG.warn("Failed to parse regional URL mappings (using non-regional URL as fallback): " + t);
+      }
+      else {
+        // never suppress errors indicating programmatic bugs or an IDE misconfiguration
+        LOG.error("Failed to load regional URL mappings (using non-regional URL as fallback)", t);
+      }
+      return RegionMapping.empty();
+    });
   }
 
   /**
@@ -150,16 +171,27 @@ public final class RegionUrlMapper {
     return ourCache.get(region);
   }
 
-  private static @NotNull RegionMapping doLoadMappingOrThrow(@NotNull Region reg) throws IOException {
-    String configUrl = getConfigUrl(reg);
-    try {
-      String json = HttpRequests.request(configUrl).readString();
-      return RegionMapping.fromJson(json);
+  private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
+    var configUrl = getConfigUrl(reg);
+    var client = HttpClient.newBuilder()
+      .executor(ExecutorsKt.asExecutor(Dispatchers.getIO()))
+      .connectTimeout(Duration.ofMillis(HttpRequests.CONNECTION_TIMEOUT))
+      .followRedirects(HttpClient.Redirect.NORMAL)
+      .build();
+    var request = HttpRequest.newBuilder(new URI(configUrl)).build();
+    var response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+      .get(HttpRequests.READ_TIMEOUT, TimeUnit.MILLISECONDS);
+    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+      var message = (String)null;
+      if (response.statusCode() == HttpRequests.CUSTOM_ERROR_CODE) {
+        message = response.headers().firstValue("Error-Message").orElse(null);
+      }
+      if (message == null) {
+        message = IdeCoreBundle.message("error.connection.failed.status", response.statusCode());
+      }
+      throw new HttpRequests.HttpStatusException(message, response.statusCode(), configUrl);
     }
-    catch (Throwable e) {
-      LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
-      throw e;
-    }
+    return RegionMapping.fromJson(response.body());
   }
 
   private static @NotNull String getConfigUrl(@NotNull Region reg) {
@@ -169,7 +201,7 @@ public final class RegionUrlMapper {
 
   /**
    * Mapper for a given region.
-   * Represents the contents of the JSON configuration loaded for a particular region,
+   * Represents the contents of the JSON configuration loaded for a particular region
    * and provides the methods for applying the mapping rules found in that configuration.
    */
   public static final class RegionMapping {

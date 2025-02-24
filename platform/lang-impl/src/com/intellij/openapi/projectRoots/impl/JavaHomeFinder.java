@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. aversionributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -17,7 +16,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +63,6 @@ public abstract class JavaHomeFinder {
     }
   }
 
-  public static final Key<JdkVersionDetector.JdkVersionInfo> JDK_VERSION_KEY = new Key<>("jdk.version.info");
-
   /**
    * Tries to find existing Java SDKs on this computer.
    * If no JDK found, returns possible directories to start file chooser.
@@ -101,30 +97,41 @@ public abstract class JavaHomeFinder {
 
   @ApiStatus.Internal
   public static @NotNull List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
-    return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), map -> map.get(SdkType.HOMEPATH_KEY));
+    return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), JdkEntry::path);
+  }
+
+  @ApiStatus.Internal
+  public record JdkEntry(@NotNull String path, @Nullable JdkVersionDetector.JdkVersionInfo versionInfo) implements Comparable<JdkEntry> {
+    /// An entry should appear before another one if it has a **more recent** version or a shorter path.
+    @Override
+    public int compareTo(@NotNull JavaHomeFinder.JdkEntry o) {
+      final var v1 = versionInfo != null ? versionInfo.version : null;
+      final var v2 = o.versionInfo != null ? o.versionInfo.version : null;
+      final int v = Comparing.compare(v2, v1);
+      if (v != 0) return v;
+      return Comparing.compare(path, o.path);
+    }
+
+    public @Nullable SdkType.SdkEntry toSdkEntry() {
+      if (versionInfo == null) return null;
+      return new SdkType.SdkEntry(path, versionInfo.displayVersionString());
+    }
   }
 
   /**
-   * Returns a list of {@link KeyFMap} containing information about the JDKs detected on the computer.
-   * See keys in {@link SdkType} and {@link JavaHomeFinder#JDK_VERSION_KEY}.
+   * Returns a list of {@link JdkEntry} containing information about the JDKs detected on the computer.
    */
   @ApiStatus.Internal
-  public static @NotNull List<KeyFMap> findJdks(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+  public static @NotNull List<JdkEntry> findJdks(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
     JavaHomeFinderBasic javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
     return findJdks(javaFinder);
   }
 
-  private static @NotNull ArrayList<KeyFMap> findJdks(JavaHomeFinderBasic javaFinder) {
-    ArrayList<KeyFMap> paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
-    paths.sort((o1, o2) -> {
-      final var v1 = o1.get(JDK_VERSION_KEY);
-      final var v2 = o2.get(JDK_VERSION_KEY);
-      final int v = Comparing.compare(v2 != null ? v2.version : null, v1 != null ? v1.version : null);
-      if (v != 0) return v;
-      return Comparing.compare(o1.get(SdkType.HOMEPATH_KEY), o2.get(SdkType.HOMEPATH_KEY));
-    });
+  private static @NotNull ArrayList<JdkEntry> findJdks(JavaHomeFinderBasic javaFinder) {
+    ArrayList<JdkEntry> paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
+    ContainerUtil.sort(paths);
     return paths;
   }
 

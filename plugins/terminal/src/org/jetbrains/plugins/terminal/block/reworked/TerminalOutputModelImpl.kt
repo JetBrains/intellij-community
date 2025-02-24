@@ -4,25 +4,25 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.terminal.TerminalColorPalette
+import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalOutputModelState
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import kotlin.math.max
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
- *
- * Note that this implementation is not thread-safe, and it does not acquire write action
- * or [CommandProcessor][com.intellij.openapi.command.CommandProcessor]'s command during document modification.
- * So, it is client responsibility to ensure that for [updateContent] call.
  */
-internal class TerminalOutputModelImpl(
+@ApiStatus.Internal
+class TerminalOutputModelImpl(
   override val document: Document,
   private val maxOutputLength: Int,
 ) : TerminalOutputModel {
@@ -33,8 +33,11 @@ internal class TerminalOutputModelImpl(
 
   private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
 
-  private var trimmedLinesCount: Int = 0
-  private var trimmedCharsCount: Int = 0
+  @VisibleForTesting
+  var trimmedLinesCount: Int = 0
+
+  @VisibleForTesting
+  var trimmedCharsCount: Int = 0
 
   private var contentUpdateInProgress: Boolean = false
 
@@ -125,7 +128,7 @@ internal class TerminalOutputModelImpl(
    * Document changes in this model are allowed only inside [block] of this function.
    * [block] should return an offset from which document content was changed.
    */
-  private inline fun changeDocumentContent(block: () -> Int) {
+  private fun changeDocumentContent(block: () -> Int) {
     dispatcher.multicaster.beforeContentChanged()
 
     contentUpdateInProgress = true
@@ -153,6 +156,28 @@ internal class TerminalOutputModelImpl(
     dispatcher.addListener(listener, parentDisposable)
   }
 
+  override fun dumpState(): TerminalOutputModelState {
+    return TerminalOutputModelState(
+      text = document.text,
+      trimmedLinesCount = trimmedLinesCount,
+      trimmedCharsCount = trimmedCharsCount,
+      cursorOffset = cursorOffsetState.value,
+      highlightings = highlightingsModel.dumpState()
+    )
+  }
+
+  override fun restoreFromState(state: TerminalOutputModelState) {
+    changeDocumentContent {
+      trimmedLinesCount = state.trimmedLinesCount
+      trimmedCharsCount = state.trimmedCharsCount
+      document.setText(state.text)
+      highlightingsModel.restoreFromState(state.highlightings)
+      mutableCursorOffsetState.value = state.cursorOffset
+
+      0  // the document is changed from right from the start
+    }
+  }
+
   private inner class HighlightingsModel {
     private val colorPalette: TerminalColorPalette = BlockTerminalColorPalette()
 
@@ -161,7 +186,7 @@ internal class TerminalOutputModelImpl(
      * Indexes of the ranges are absolute to support trimming the start of the list
      * without reassigning indexes for the remaining ranges: [removeBefore].
      */
-    private val highlightings: MutableList<HighlightingInfo> = ArrayDeque()
+    private val styleRanges: MutableList<StyleRange> = ArrayDeque()
 
     /**
      * Contains sorted ranges of the highlightings that cover all document length.
@@ -174,8 +199,8 @@ internal class TerminalOutputModelImpl(
         return highlightingsSnapshot!!
       }
 
-      val documentRelativeHighlightings = highlightings.map {
-        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, it.textAttributesProvider)
+      val documentRelativeHighlightings = styleRanges.map {
+        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, TextStyleAdapter(it.style, colorPalette))
       }
       val snapshot = TerminalOutputHighlightingsSnapshot(document, documentRelativeHighlightings)
       highlightingsSnapshot = snapshot
@@ -185,12 +210,12 @@ internal class TerminalOutputModelImpl(
     fun addHighlightings(documentOffset: Int, styles: List<StyleRange>) {
       val absoluteOffset = documentOffset + trimmedCharsCount
 
-      check(highlightings.isEmpty() || highlightings.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
+      check(styleRanges.isEmpty() || styleRanges.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
 
-      val newHighlightings = styles.map {
-        HighlightingInfo(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
+      val adjustedStyles = styles.map {
+        StyleRange(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, it.style)
       }
-      highlightings.addAll(newHighlightings)
+      styleRanges.addAll(adjustedStyles)
 
       highlightingsSnapshot = null
     }
@@ -202,13 +227,13 @@ internal class TerminalOutputModelImpl(
     fun insertEmptyHighlightings(documentOffset: Int, length: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
 
-      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val updateFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val updateFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
 
-      if (updateFromIndex < highlightings.size) {
-        for (ind in (updateFromIndex until highlightings.size)) {
-          val cur = highlightings[ind]
-          highlightings[ind] = HighlightingInfo(cur.startOffset + length, cur.endOffset + length, cur.textAttributesProvider)
+      if (updateFromIndex < styleRanges.size) {
+        for (ind in (updateFromIndex until styleRanges.size)) {
+          val cur = styleRanges[ind]
+          styleRanges[ind] = StyleRange(cur.startOffset + length, cur.endOffset + length, cur.style)
         }
 
         highlightingsSnapshot = null
@@ -217,10 +242,10 @@ internal class TerminalOutputModelImpl(
 
     fun removeAfter(documentOffset: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
-      val highlightingIndex = highlightings.binarySearch { it.endOffset.compareTo(absoluteOffset) }
-      val removeFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex + 1
-      for (ind in (highlightings.size - 1) downTo removeFromIndex) {
-        highlightings.removeAt(ind)
+      val styleIndex = styleRanges.binarySearch { it.endOffset.compareTo(absoluteOffset) }
+      val removeFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex + 1
+      for (ind in (styleRanges.size - 1) downTo removeFromIndex) {
+        styleRanges.removeAt(ind)
       }
 
       highlightingsSnapshot = null
@@ -228,11 +253,22 @@ internal class TerminalOutputModelImpl(
 
     fun removeBefore(documentOffset: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
-      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val removeUntilHighlightingIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val removeUntilHighlightingIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
       repeat(removeUntilHighlightingIndex) {
-        highlightings.removeAt(0)
+        styleRanges.removeAt(0)
       }
+
+      highlightingsSnapshot = null
+    }
+
+    fun dumpState(): List<StyleRange> {
+      return styleRanges.toList()
+    }
+
+    fun restoreFromState(state: List<StyleRange>) {
+      styleRanges.clear()
+      styleRanges.addAll(state)
 
       highlightingsSnapshot = null
     }

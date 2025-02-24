@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,11 @@ public final class SetupProjectSdkUtil {
       });
     });
     return sdkRef.get();
+  }
+
+  @VisibleForTesting
+  public static boolean isApplicationLoaded(){
+    return LoadingState.COMPONENTS_LOADED.isOccurred();
   }
 
   @VisibleForTesting

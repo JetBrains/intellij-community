@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
+import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.New
-import org.jetbrains.kotlin.idea.gradleJava.scripting.runPartialGradleImport
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -21,7 +21,7 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
     class Regular : PartialGradleImportTest() {
         /**
          * Regular Gradle sync / import should not run in 'classpath' mode to prevent swallowing issues described in:
-         * Only when running the special [org.jetbrains.kotlin.idea.gradleJava.scripting.LoadKtGradleConfigurationAction]
+         * Only when running the special [org.jetbrains.kotlin.gradle.scripting.shared.LoadKtGradleConfigurationAction]
          * this special mode shall be used.
          * https://youtrack.jetbrains.com/issue/KT-48823
          * https://youtrack.jetbrains.com/issue/KTIJ-19823

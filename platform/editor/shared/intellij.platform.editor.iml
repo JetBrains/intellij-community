@@ -13,5 +13,6 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.pasta" />
   </component>
 </module>

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,15 +11,22 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Query;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.codeInsight.multiverse.CodeInsightContextKt.isShowAllInheritorsEnabled;
 
 public class ImplementationSearcher {
   public PsiElement @Nullable [] searchImplementations(Editor editor, PsiElement element, int offset) {
@@ -58,8 +66,76 @@ public class ImplementationSearcher {
     return result.get();
   }
 
-  protected Query<PsiElement> search(PsiElement element, Editor editor) {
-    return DefinitionsScopedSearch.search(element, getSearchScope(element, editor), isSearchDeep());
+  @RequiresReadLock
+  private static @Nullable PsiElement findSimilarElement(@NotNull PsiFile file, @NotNull PsiElement targetElement) {
+    int targetOffset = targetElement.getTextOffset();
+
+    PsiElement elementAtOffset = file.findElementAt(targetOffset);
+
+    if (elementAtOffset == null) {
+      return null;
+    }
+    String targetName = ReadAction.compute(() -> {
+      return targetElement.getText();
+    });
+    PsiElement candidate = elementAtOffset;
+    PsiElement bestMatch = null;
+    int count = 0;
+    int limit = 50;
+    while (candidate != null && count < limit) {
+      if (candidate.getText().equals(targetName)) {
+        if (candidate.getClass().equals(targetElement.getClass())) {
+          return candidate;
+        }
+        bestMatch = candidate;
+      }
+      candidate = candidate.getParent();
+      count++;
+    }
+    return bestMatch != null ? bestMatch : elementAtOffset;
+  }
+
+  protected @NotNull Query<PsiElement> search(@NotNull PsiElement element, Editor editor) {
+    List<PsiElement> elements = isShowAllInheritorsEnabled() ? findSimilarElements(element, editor) : List.of(element);
+    return searchForPsiElements(elements, editor);
+  }
+
+  private static @NotNull List<PsiElement> findSimilarElements(@NotNull PsiElement element, @NotNull Editor editor) {
+    var project = element.getProject();
+    var currentPsiFile = element.getContainingFile();
+    var curretVirtualFile = currentPsiFile.getVirtualFile();
+    var psiManager = PsiManager.getInstance(project);
+
+    List<PsiElement> elements = new ArrayList<>();
+    elements.add(element);
+
+    CodeInsightContextManager contextManager = CodeInsightContextManager.getInstance(project);
+    var contextList = contextManager.getCodeInsightContexts(curretVirtualFile);
+
+    for (var context : contextList) {
+      PsiFile psiFileInModule = ReadAction.compute(() -> psiManager.findFile(curretVirtualFile, context)
+      );
+      if (psiFileInModule == null) continue;
+      if (psiFileInModule.equals(currentPsiFile)) continue;
+      var similarElement = ReadAction.compute(() -> {
+        return psiFileInModule.isValid() ? findSimilarElement(psiFileInModule, element) : null;
+      });
+      if (similarElement != null) {
+        elements.add(similarElement);
+      }
+    }
+    return elements;
+  }
+
+  private @NotNull Query<PsiElement> searchForPsiElements(@NotNull List<PsiElement> allElements, Editor editor) {
+    List<Query<PsiElement>> queries = new ArrayList<>();
+    for (var element : allElements) {
+      SearchScope scope = getSearchScope(element, editor);
+      Query<PsiElement> query = DefinitionsScopedSearch.search(element, scope, isSearchDeep());
+      queries.add(query);
+    }
+    if (queries.size() == 1) return queries.get(0);
+    return new ConcatenationQuery<>(queries);
   }
 
   protected boolean isSearchDeep() {

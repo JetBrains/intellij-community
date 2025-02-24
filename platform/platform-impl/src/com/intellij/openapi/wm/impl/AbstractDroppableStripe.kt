@@ -78,6 +78,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   private var lastLayoutData: LayoutData? = null
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()
+  private val buttonAddedRemovedListeners = mutableListOf<() -> Unit>()
 
   abstract val isNewStripes: Boolean
   abstract val anchor: ToolWindowAnchor
@@ -112,10 +113,15 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
   fun getButtons(): List<StripeButtonManager> = buttons
 
+  internal fun addButtonAddedRemovedListener(listener: () -> Unit) {
+    buttonAddedRemovedListeners.add(listener)
+  }
+
   fun addButton(button: StripeButtonManager) {
     computedPreferredSize = null
     buttons.add(button)
     add(button.getComponent())
+    buttonAddedRemovedListeners.forEach { it() }
     revalidate()
   }
 
@@ -123,6 +129,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     computedPreferredSize = null
     buttons.remove(button)
     remove(button.getComponent())
+    buttonAddedRemovedListeners.forEach { it() }
     revalidate()
     repaint()
   }

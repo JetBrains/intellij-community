@@ -43,8 +43,10 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   // Requests
   @ICRequest
   suspend fun createLookup(type: CompletionType = CompletionType.BASIC) {
-    coroutineToIndicator {
-      fixture.complete(type)
+    withContext(Dispatchers.EDT) {
+      coroutineToIndicator {
+        fixture.complete(type)
+      }
     }
   }
 
@@ -230,7 +232,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICUtil
   suspend fun <T> withWriteAction(block: () -> T): T {
     return withContext(Dispatchers.EDT) {
-      writeAction(block)
+      edtWriteAction(block)
     }
   }
 

@@ -5,14 +5,21 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.jetbrains.annotations.NotNull;
 
 final class ThumbnailSelectInTarget implements SelectInTarget, DumbAware {
   ThumbnailSelectInTarget() {
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project) {
+    return Registry.is("thumbnails.toolwindow.enabled", false);
   }
 
   @Override

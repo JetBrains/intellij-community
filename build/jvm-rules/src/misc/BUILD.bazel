@@ -22,6 +22,7 @@ java_binary(
     jvm_flags = [
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
+        "-Dio.netty.allocator.type=pooled",
     ],
     visibility = ["//visibility:public"],
 )

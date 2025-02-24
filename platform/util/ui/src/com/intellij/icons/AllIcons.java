@@ -87,7 +87,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByPrefix = load("actions/GroupByPrefix.svg", -1453880873, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", "actions/groupByTestProduction.svg", -1535893700, 2);
     /** 16x16 */ public static final @NotNull Icon Help = load("expui/general/help.svg", "actions/help.svg", 1634111868, 2);
-    /** 16x16 */ public static final @NotNull Icon Highlighting = load("actions/highlighting.svg", -207354251, 2);
+    /** 16x16 */ public static final @NotNull Icon Highlighting = load("expui/actions/highlighting.svg", "actions/highlighting.svg", -207354251, 2);
     /** 9x5 */ public static final @NotNull Icon InlayDropTriangle = load("actions/inlayDropTriangle.svg", -995758888, 0);
     /** 12x12 */ public static final @NotNull Icon InlayGear = load("expui/codeInsight/inlaySettings.svg", "actions/inlayGear.svg", 1238199129, 0);
     /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("expui/codeInsight/inlayGlobe.svg", "actions/inlayGlobe.svg", 2099234919, 0);
@@ -908,7 +908,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Alias = load("expui/nodes/alias.svg", "nodes/alias.svg", -1977759261, 0);
     /** 16x16 */ public static final @NotNull Icon Annotationtype = load("expui/nodes/annotation.svg", "nodes/annotationtype.svg", 155742257, 0);
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("expui/nodes/classAnonymous.svg", "nodes/anonymousClass.svg", -1373375692, 0);
-    /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", 1929766435, 0);
+    /** 16x16 */ public static final @NotNull Icon Artifact = load("expui/nodes/artifact.svg", "nodes/artifact.svg", 1929766435, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 1476698583, 0);
     /** 16x16 */ public static final @NotNull Icon Bookmark = load("expui/bookmarks/bookmark.svg", "nodes/bookmark.svg", 2046286300, 2);
     /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("expui/bookmarks/bookmarksList.svg", "nodes/bookmarkGroup.svg", -1602832368, 0);
@@ -1319,11 +1319,11 @@ public class AllIcons {
   /** 16x16 */ public static final @NotNull Icon Stub = load("expui/stub.svg", -784127213, 2);
 
   public static final class Survey {
-    /** 16x16 */ public static final @NotNull Icon Dissatisfied = load("expui/survey/dissatisfied.svg", 1799600033, 2);
-    /** 16x16 */ public static final @NotNull Icon Neutral = load("expui/survey/neutral.svg", 19446713, 2);
-    /** 16x16 */ public static final @NotNull Icon Satisfied = load("expui/survey/satisfied.svg", -670378856, 2);
-    /** 16x16 */ public static final @NotNull Icon VeryDissatisfied = load("expui/survey/veryDissatisfied.svg", 229691784, 2);
-    /** 16x16 */ public static final @NotNull Icon VerySatisfied = load("expui/survey/verySatisfied.svg", -116389630, 2);
+    /** 20x20 */ public static final @NotNull Icon Dissatisfied = load("expui/survey/dissatisfied.svg", 814615320, 2);
+    /** 20x20 */ public static final @NotNull Icon Neutral = load("expui/survey/neutral.svg", -768478795, 2);
+    /** 20x20 */ public static final @NotNull Icon Satisfied = load("expui/survey/satisfied.svg", -1133994044, 2);
+    /** 20x20 */ public static final @NotNull Icon VeryDissatisfied = load("expui/survey/veryDissatisfied.svg", -614260991, 2);
+    /** 20x20 */ public static final @NotNull Icon VerySatisfied = load("expui/survey/verySatisfied.svg", 641677345, 2);
   }
 
   public static final class Table {
@@ -1375,14 +1375,17 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Task = load("expui/toolwindows/task.svg", -1024942290, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("expui/toolwindows/dataflow.svg", "toolwindows/toolWindowAnalyzeDataflow.svg", -1971803045, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("expui/toolwindows/ant.svg", "toolwindows/toolWindowAnt.svg", -835486132, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowAskAI = load("expui/toolwindows/toolWindowAskAI.svg", "toolwindows/toolWindowAskAI.svg", -1185265807, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("expui/toolwindows/bookmarks.svg", "toolwindows/toolWindowBookmarks.svg", 1090576904, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("expui/toolwindows/build.svg", "toolwindows/toolWindowBuild.svg", -477872521, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("expui/toolwindows/vcs.svg", "toolwindows/toolWindowChanges.svg", 644395758, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommander = load("toolwindows/toolWindowCommander.svg", -572791393, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommit = load("expui/toolwindows/commit.svg", "toolwindows/toolWindowCommit.svg", -1809755118, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowComponents = load("expui/toolwindows/toolWindowComponents.svg", "toolwindows/toolWindowComponents.svg", -886250892, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCoverage = load("expui/toolwindows/coverage.svg", "toolwindows/toolWindowCoverage.svg", -43772594, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowDataView = load("expui/toolwindows/toolWindowDataView.svg", "toolwindows/toolWindowDataView.svg", 929762492, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowDebugger = load("expui/toolwindows/debug.svg", "toolwindows/toolWindowDebugger.svg", 332521029, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowDevMode = load("expui/toolwindows/toolWindowDevMode.svg", "toolwindows/toolWindowDevMode.svg", 1168318923, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowDuplicates = load("expui/toolwindows/toolWindowDuplicates.svg", 282855334, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowFavorites = load("toolwindows/toolWindowFavorites.svg", -940563083, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowFind = load("expui/toolwindows/find.svg", "toolwindows/toolWindowFind.svg", -2111567640, 2);
@@ -1392,6 +1395,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowJsonPath = load("expui/toolwindows/toolWindowJsonPath.svg", "toolwindows/toolWindowJsonPath.svg", -156327706, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowMessages = load("expui/toolwindows/messages.svg", "toolwindows/toolWindowMessages.svg", -1474002272, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowModuleDependencies = load("toolwindows/toolWindowModuleDependencies.svg", -1086444002, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowOverflow = load("expui/toolwindows/toolWindowOverflow.svg", "toolwindows/toolWindowOverflow.svg", 2128111837, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowPalette = load("expui/toolwindows/palette.svg", "toolwindows/toolWindowPalette.svg", -1095449744, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("expui/toolwindows/problems.svg", "toolwindows/toolWindowProblems.svg", 1795380210, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("expui/toolwindows/problems.svg", "toolwindows/toolWindowProblemsEmpty.svg", -1113987786, 2);

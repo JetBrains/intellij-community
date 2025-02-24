@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
+import com.intellij.terminal.session.StyleRange
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.emulator.JediEmulator
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
 

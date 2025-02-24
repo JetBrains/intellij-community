@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.project-model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
@@ -45,7 +46,7 @@
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index" scope="TEST" />

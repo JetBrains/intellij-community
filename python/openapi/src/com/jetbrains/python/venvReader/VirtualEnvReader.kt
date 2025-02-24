@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonHomePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -99,7 +100,7 @@ class VirtualEnvReader(
    * [dir] is root directory of python installation or virtualenv
    */
   @RequiresBackgroundThread
-  fun findPythonInPythonRoot(dir: Directory): PythonBinary? {
+  fun findPythonInPythonRoot(dir: PythonHomePath): PythonBinary? {
     if (!dir.isDirectory()) {
       return null
     }

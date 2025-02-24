@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -33,6 +33,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -331,9 +332,10 @@ public final class FoldingUpdate {
     editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, null);
   }
 
-  static final class RegionInfo {
-    final @NotNull FoldingDescriptor descriptor;
-    final PsiElement element;
+  @ApiStatus.Internal
+  public static final class RegionInfo {
+    public final @NotNull FoldingDescriptor descriptor;
+    public final PsiElement element;
     final String signature;
     final boolean collapsedByDefault;
 

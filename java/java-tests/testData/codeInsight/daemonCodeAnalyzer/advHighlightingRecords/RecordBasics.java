@@ -8,8 +8,8 @@ record NoComponents() {}
 class ClassWithComponents<error descr="Record header declared for non-record">(int x)</error> {}
 class ClassWithComponents2<error descr="Record header declared for non-record">(int x, int y)</error> {}
 <error descr="Modifier 'abstract' not allowed here">abstract</error> record AbstractRecord() {}
-record ExtendsObject() <error descr="'extends' not allowed on record">extends</error> Object {}
-record PermitsObject() <error descr="'permits' not allowed on record">permits</error> Object {}
+record ExtendsObject() <error descr="'extends' not allowed on records">extends</error> Object {}
+record PermitsObject() <error descr="'permits' not allowed on records">permits</error> Object {}
 class ExtendsRecord extends <error descr="Cannot inherit from record 'NoComponents'">NoComponents</error> {}
 abstract class ExtendsJLR extends <error descr="Classes cannot directly extend 'java.lang.Record'">Record</error> {}
 class AnonymousExtendsJLR {
@@ -22,8 +22,8 @@ class AnonymousExtendsJLR {
 <error descr="Class 'SuperInterface' must implement abstract method 'run()' in 'Runnable'">record SuperInterface() implements Runnable</error> {}
 interface I1 { default void run() {}}
 interface I2 { void run();}
-record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults</error>() implements I1, I2 {}
-enum <error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults2</error> implements I1, I2 {}
+<error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">record UnrelatedDefaults() implements I1, I2</error> {}
+<error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">enum UnrelatedDefaults2 implements I1, I2</error> {}
 
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 
@@ -61,9 +61,9 @@ class Outer {
 }
 
 record ProhibitedMembers() {
-  <error descr="Instance field is not allowed in record">int x = 5;</error>
+  <error descr="Instance field is not allowed in records">int x = 5;</error>
   
-  <error descr="Instance initializer is not allowed in record">{
+  <error descr="Instance initializer is not allowed in records">{
     System.out.println("initializer");
   }</error>
   <error descr="Modifier 'native' not allowed here">native</error> void test();
@@ -76,7 +76,7 @@ record CStyle(int a<error descr="C-style array declaration not allowed in record
 record CStyle2(int[] a<error descr="C-style array declaration not allowed in record component">[] []</error> ) {}
 record JavaStyle(int[] [] a) {}
 record SafeVarargComponent(<error descr="@SafeVarargs is not allowed on a record component">@SafeVarargs</error> int... component) {}
-record ExtendsRecordExplicitly() <error descr="'extends' not allowed on record">extends</error> java.lang.Record {}
+record ExtendsRecordExplicitly() <error descr="'extends' not allowed on records">extends</error> java.lang.Record {}
 
 record AbstractMethod() {
   <error descr="Abstract method in non-abstract class">abstract</error> void f();

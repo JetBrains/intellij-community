@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
@@ -134,7 +134,7 @@ class MavenConfigImportingTest : MavenDomTestCase() {
     var mavenProject = projectsManager.findProject(getModule("project"))
     assertEquals("1", mavenProject!!.mavenId.version)
 
-    writeAction {
+    edtWriteAction {
       val content = "-Dver=2".toByteArray(StandardCharsets.UTF_8)
       configFile.setBinaryContent(content, -1, configFile.getTimeStamp() + 1)
     }

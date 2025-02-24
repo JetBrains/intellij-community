@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -120,7 +120,7 @@ internal class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineSc
     val roots = readAction { ideaJdk.rootProvider.getFiles(rootType) }
     val attachedUrls = roots.mapNotNull { if (getAnnotationsBuildNumber(it) != null) it.url else null }
 
-    writeAction {
+    edtWriteAction {
       val sdkModificator = ideaJdk.sdkModificator
       if (annotationsUrl !in attachedUrls) {
         sdkModificator.addRoot(annotationsUrl, rootType)

@@ -13,6 +13,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
+    "//platform/kernel/pasta",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.kernel` end

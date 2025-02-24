@@ -23,7 +23,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.StepRequest
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject

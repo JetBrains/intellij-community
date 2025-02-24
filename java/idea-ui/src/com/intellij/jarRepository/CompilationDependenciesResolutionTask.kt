@@ -7,12 +7,14 @@ import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
@@ -31,6 +33,11 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
   }
 
   override fun execute(context: CompileContext): Boolean {
+    if (DisableCompilationDependenciesResolutionTask.EP_NAME.extensionList.any { it.shouldDisable(context.project) }) {
+      log.info("Compilation dependencies resolution task is disabled for the project ${context.project.name}")
+      return true
+    }
+
     val queue = LibraryIdSynchronizationQueue.getInstance(context.project)
     val missingLibrariesResolutionTasks = mutableMapOf<LibraryEx, ResolutionTask>()
     val application = ApplicationManager.getApplication()
@@ -76,4 +83,24 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
     }
     return true
   }
+
+  companion object {
+    private val log = thisLogger()
+  }
+}
+
+/**
+ * Provides a way to opt out of this pre-compile task when it does not provide any values,
+ * e.g., in Bazel plugin where Bazel resolves all the external dependencies.
+ *
+ * [related issue](https://youtrack.jetbrains.com/issue/IDEA-367562/CompilationDependenciesResolutionTask-takes-40s-in-a-project-with-no-maven-libraries-registered)
+ */
+@ApiStatus.Experimental
+interface DisableCompilationDependenciesResolutionTask {
+  companion object {
+    val EP_NAME: ExtensionPointName<DisableCompilationDependenciesResolutionTask> =
+      ExtensionPointName.create("com.intellij.disableCompilationDependenciesResolutionTask")
+  }
+
+  fun shouldDisable(project: Project): Boolean
 }

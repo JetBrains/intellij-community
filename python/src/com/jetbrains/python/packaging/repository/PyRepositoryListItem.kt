@@ -16,8 +16,8 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@ApiStatus.Experimental
-class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigurable<PyPackageRepository>(true, null) {
+@ApiStatus.Internal
+internal class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigurable<PyPackageRepository>(true, null) {
   @NlsSafe
   private var currentName = repository.name!!
   private var password = repository.getPassword()

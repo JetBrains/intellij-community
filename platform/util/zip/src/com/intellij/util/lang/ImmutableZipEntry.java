@@ -14,6 +14,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import java.util.zip.ZipException;
 
+@SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
 public final class ImmutableZipEntry {
   static final byte STORED = 0;

@@ -11,14 +11,14 @@ import com.intellij.platform.eel.provider.ResultOkImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import java.io.Flushable
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import java.io.*
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
+import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 
 internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel) : EelReceiveChannel<IOException> {
@@ -44,7 +44,7 @@ internal class NioWriteToEelAdapter(
   private val flushable: Flushable? = null,
 ) : EelSendChannel<IOException> {
 
-  override val closed: Boolean get() = ! writableByteChannel.isOpen
+  override val closed: Boolean get() = !writableByteChannel.isOpen
 
   override suspend fun send(src: ByteBuffer): EelResult<Unit, IOException> =
     withContext(Dispatchers.IO) {
@@ -196,3 +196,31 @@ internal fun Socket.consumeAsEelChannelImpl(): EelReceiveChannel<IOException> =
 
 internal fun Socket.asEelChannelImpl(): EelSendChannel<IOException> =
   channel?.asEelChannel() ?: outputStream.asEelChannel()
+
+
+internal fun <E : Any> EelReceiveChannel<E>.linesImpl(charset: Charset): Flow<EelResult<String, E>> = flow {
+  val tmpBuffer = ByteBuffer.allocate(1)
+  var result = ByteArrayOutputStream()
+  while (true) {
+    tmpBuffer.rewind()
+    suspend fun emitBuffer() {
+      emit(ResultOkImpl(charset.decode(ByteBuffer.wrap(result.toByteArray())).toString()))
+    }
+
+    when (val r = receive(tmpBuffer)) {
+      is EelResult.Error -> emit(ResultErrImpl(r.error))
+      is EelResult.Ok -> {
+        if (r.value == ReadResult.EOF) {
+          emitBuffer()
+          return@flow
+        }
+        val b = tmpBuffer.flip().get().toInt()
+        result.write(b)
+        if (b == 10) {
+          emitBuffer()
+          result = ByteArrayOutputStream()
+        }
+      }
+    }
+  }
+}

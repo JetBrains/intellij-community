@@ -180,7 +180,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
+  fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
     blockTerminalSwitchedEvent.log(project, enabled, place)
   }
 
@@ -212,7 +212,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 }
 
-internal enum class BlockTerminalSwitchPlace {
+@ApiStatus.Internal
+enum class BlockTerminalSwitchPlace {
   SETTINGS, TOOLWINDOW_OPTIONS
 }
 

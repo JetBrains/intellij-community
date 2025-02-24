@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
@@ -16,18 +17,25 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.DelegateMethodImportQuickFixFactory
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.UnresolvedNameReferenceImportQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
-import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.ImportPath
 import javax.swing.Icon
 
-object ImportQuickFixProvider {
+/**
+ * N.B. Declared as [KotlinQuickFixFactory.IntentionBased] factory so that it can be easily used as aт all-in-one factory
+ * combined from existing [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.AbstractImportQuickFixFactory].
+ */
+object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
+    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> = getFixes(diagnostic)
+
     context(KaSession)
     fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
         return getFixes(setOf(diagnostic))
@@ -36,8 +44,9 @@ object ImportQuickFixProvider {
     context(KaSession)
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         val factories = listOf(
-            UnresolvedNameReferenceImportQuickFixFactory(),
-            DelegateMethodImportQuickFixFactory(),
+            UnresolvedNameReferenceImportQuickFixFactory,
+            MismatchedArgumentsImportQuickFixFactory,
+            DelegateMethodImportQuickFixFactory,
         )
 
         return factories.flatMap { it.run { createQuickFixes(diagnostics) } }

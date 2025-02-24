@@ -49,6 +49,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -922,7 +923,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   }
 
   private fun runConfigurationFirstLoaded() {
-    if (project.isDefault) {
+    // Do not load run configurations for JetBrains Client, they are loaded from the backend
+    if (project.isDefault || PlatformUtils.isJetBrainsClient()) {
       return
     }
 

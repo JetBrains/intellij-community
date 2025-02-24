@@ -44,7 +44,7 @@ internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
     val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
     val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
     val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
-    if (!debugProcess.isEvaluationPossible(suspendContext)) return null
+    if (!debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
     val state = evaluationContext.computeAndKeep {
       DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE, emptyList()) as? ObjectReference
     } ?: return null
@@ -283,7 +283,7 @@ private suspend fun selectLockFrame(
   var targetXFrame: XStackFrame = javaFrames.getOrNull(targetXFrameIndex + 1) ?: return
   if (!framesList.model.contains(targetXFrame)) {
     val collapsedFrames = framesList.model.items.filterIsInstance<XFramesView.HiddenStackFramesItem>()
-    targetXFrame = collapsedFrames.firstOrNull { it.hiddenFrames.contains(targetXFrame) } ?: return
+    targetXFrame = collapsedFrames.firstOrNull { it.getHiddenFrames().contains(targetXFrame) } ?: return
     if (!framesList.model.contains(targetXFrame)) return
   }
   withContext(Dispatchers.EDT) {
@@ -297,7 +297,7 @@ private fun List<XStackFrame>.flattenJavaFrames(toIndex: Int = size) =
   subList(0, toIndex).flatMap { frame ->
     when (frame) {
       is JavaStackFrame -> listOf(frame)
-      is XFramesView.HiddenStackFramesItem -> frame.hiddenFrames.filterIsInstance<JavaStackFrame>()
+      is XFramesView.HiddenStackFramesItem -> frame.getHiddenFrames().filterIsInstance<JavaStackFrame>()
       else -> emptyList()
     }
   }

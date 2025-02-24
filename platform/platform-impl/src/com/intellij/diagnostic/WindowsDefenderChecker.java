@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
@@ -107,17 +106,10 @@ public class WindowsDefenderChecker {
   }
 
   private static @Nullable Path getProjectPath(Project project) {
-    Path projectPath = null;
-    if (project instanceof ProjectImpl) {
-      try {
-        projectPath = ((ProjectImpl)project).getComponentStore().getProjectBasePath();
-      }
-      catch (Exception ignored) {
-        var projectDir = ProjectUtil.guessProjectDir(project);
-        projectPath = projectDir != null && projectDir.isInLocalFileSystem() ? projectDir.toNioPath() : null;
-      }
-    }
-    return projectPath;
+    var basePath = project.getBasePath();
+    if (basePath != null) return Path.of(basePath);
+    var projectDir = ProjectUtil.guessProjectDir(project);
+    return projectDir != null && projectDir.isInLocalFileSystem() ? projectDir.toNioPath() : null;
   }
 
   /**

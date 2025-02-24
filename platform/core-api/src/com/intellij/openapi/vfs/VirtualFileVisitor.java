@@ -77,7 +77,7 @@ public abstract class VirtualFileVisitor<T> {
     return new Result(true, parentToSkipTo);
   }
 
-  protected static class VisitorException extends RuntimeException {
+  public static class VisitorException extends RuntimeException {
     public VisitorException(@NotNull Throwable cause) {
       super(cause);
     }

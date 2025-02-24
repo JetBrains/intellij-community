@@ -377,6 +377,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
             }
 
+            @TestMetadata("expectedTypeRequired2.test")
+            public void testExpectedTypeRequired2() throws Exception {
+                runTest("testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired2.test");
+            }
+
             @TestMetadata("extensionExplicitReceiver.test")
             public void testExtensionExplicitReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
@@ -504,6 +509,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("constructorParameterAnnotation.test")
             public void testConstructorParameterAnnotation() throws Exception {
                 runTest("testData/quickfix/autoImports/constructorParameterAnnotation.test");
+            }
+
+            @TestMetadata("containsOperator.test")
+            public void testContainsOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/containsOperator.test");
+            }
+
+            @TestMetadata("containsOperator_withStdlib.test")
+            public void testContainsOperator_withStdlib() throws Exception {
+                runTest("testData/quickfix/autoImports/containsOperator_withStdlib.test");
             }
 
             @TestMetadata("delegateExtensionBoth.test")

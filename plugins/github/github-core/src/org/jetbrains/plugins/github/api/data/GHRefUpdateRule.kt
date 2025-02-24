@@ -14,7 +14,7 @@ data class GHRefUpdateRule(
   //Number of approving reviews required to update matching branches.
   val requiredApprovingReviewCount: Int?,
   //List of required status check contexts that must pass for commits to be accepted to matching branches.
-  val requiredStatusCheckContexts: List<String?>,
+  val requiredStatusCheckContexts: List<String?> = listOf(),
   //Are merge commits prohibited from being pushed to this branch.
   val requiresLinearHistory: Boolean,
   //Are commits required to be signed.

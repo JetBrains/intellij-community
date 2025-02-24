@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor

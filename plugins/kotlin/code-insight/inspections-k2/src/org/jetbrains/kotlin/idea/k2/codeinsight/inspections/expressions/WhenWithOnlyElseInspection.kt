@@ -101,10 +101,10 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtWhenExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtWhenExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtWhenExpression>() {
+    ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.when.with.only.else.action.name")
@@ -123,7 +123,7 @@ internal class WhenWithOnlyElseInspection
 
             updater.moveCaretTo(newCaretPosition)
         }
-    })
+    }
 
     /**
      * STEP 3.1:

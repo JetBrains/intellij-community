@@ -177,6 +177,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
       ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.BLOCK_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.FORM_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT,
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
@@ -191,6 +192,10 @@ open class JBHtmlPane : JEditorPane, Disposable {
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)
 
+    // The value might have changed already since the flow was created,
+    // so we need to update it manually just before we register the listener.
+    // For example, the background is changed when we set isEditable above.
+    mutableBackgroundFlow.value = background
     addPropertyChangeListener { evt: PropertyChangeEvent ->
       val propertyName = evt.propertyName
       if ("background" == propertyName || "UI" == propertyName) {
@@ -206,6 +211,12 @@ open class JBHtmlPane : JEditorPane, Disposable {
   override fun dispose() {
     caret.isVisible = false // Caret, if blinking, has to be deactivated.
   }
+
+  override fun getSelectedText(): String? =
+    // We need to replace zero-width space char used to represent <wbr>
+    // in JBHtmlEditorKit.JBHtmlDocument.JBHtmlReader.addSpecialElement().
+    // Swing HTML control does not accept elements with no text.
+    super.getSelectedText()?.replace("\u200B", "")
 
   override fun getText(): @Nls String {
     return myText
@@ -260,7 +271,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
     val baseFontSize = (font.size / contentsScaleFactor).roundToInt()
 
     newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, baseFontSize, myStyleConfiguration))
-    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
+    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorSchemeProvider()))
     myPaneConfiguration.customStyleSheetProviders.forEach {
       newStyleSheet.addStyleSheet(it(this))
     }
@@ -282,6 +293,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
   override fun paintComponent(g: Graphics) {
     GraphicsUtil.setupAntialiasing(g)
     super.paintComponent(g)
+    service.ensureEditableViewsAreNotFocusable(this)
   }
 
   override fun setDocument(doc: Document) {
@@ -307,6 +319,8 @@ open class JBHtmlPane : JEditorPane, Disposable {
     fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image>
 
     fun applyCssToView(pane: JBHtmlPane)
+
+    fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane)
   }
 
 }

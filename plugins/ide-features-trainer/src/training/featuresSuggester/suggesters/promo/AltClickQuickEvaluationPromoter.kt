@@ -229,7 +229,10 @@ private class AltClickPromoContent(val project: Project) {
       p.alignmentX = Component.LEFT_ALIGNMENT
       p.layout = BoxLayout(p, BoxLayout.X_AXIS)
       p.add(Box.createRigidArea(JBDimension(shortcutOffset, 0)))
-      val jBHtmlPane = JBHtmlPane(QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.colorsScheme, true), JBHtmlPaneConfiguration.builder().build()).also {
+      val jBHtmlPane = JBHtmlPane(
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions({ editor.colorsScheme }, true),
+        JBHtmlPaneConfiguration.builder().build()
+      ).also {
         it.background = editor.backgroundColor
         it.text = shortcutText
         it.font = it.font.deriveFont(JBUIScale.scale(10.0f))

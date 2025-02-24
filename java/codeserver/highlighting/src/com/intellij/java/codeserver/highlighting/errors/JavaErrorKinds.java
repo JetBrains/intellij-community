@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
@@ -38,7 +39,19 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 /**
- * All possible Java error kinds
+ * All possible Java error kinds.
+ * <p>
+ * The constants generally should be named as the corresponding properties from {@link JavaCompilationErrorBundle}, 
+ * uppercased and having dots replaced with underscores.
+ * <p>
+ * While not all the names follow the convention described below, it's preferred to follow. In general, they
+ * should not read like an English sentence. Instead, the first part should denote a group of errors (like statement,
+ * or construct the error relates to), optionally followed by a more specific subgroup, 
+ * and the rest should describe the situation shortly (no prepositions, etc.). 
+ * Avoid abbreviating words (e.g., IMPL instead of IMPLEMENTATION, etc.)
+ * <p>
+ * An example of a good name: ANNOTATION_ATTRIBUTE_NAME_MISSING. Here, ANNOTATION is a group, ATTRIBUTE is a subgroup,
+ * and NAME_MISSING is the description.
  */
 public final class JavaErrorKinds {
   private JavaErrorKinds() {}
@@ -89,8 +102,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_STATIC = error("annotation.not.allowed.static");
   public static final Simple<PsiJavaCodeReferenceElement> ANNOTATION_TYPE_EXPECTED = error("annotation.type.expected");
   public static final Simple<PsiReferenceExpression> ANNOTATION_REPEATED_TARGET = error("annotation.repeated.target");
-  public static final Simple<PsiNameValuePair> ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING =
-    error("annotation.attribute.annotation.name.is.missing");
+  public static final Simple<PsiNameValuePair> ANNOTATION_ATTRIBUTE_NAME_MISSING =
+    error("annotation.attribute.name.missing");
   public static final Simple<PsiAnnotationMemberValue> ANNOTATION_ATTRIBUTE_NON_CLASS_LITERAL =
     error("annotation.attribute.non.class.literal");
   public static final Simple<PsiExpression> ANNOTATION_ATTRIBUTE_NON_ENUM_CONSTANT = error("annotation.attribute.non.enum.constant");
@@ -295,6 +308,24 @@ public final class JavaErrorKinds {
         }
         return message(messageKey, referenceName, formatMethod(abstractMethod),
                        formatClass(requireNonNull(abstractMethod.getContainingClass()), false));
+      });
+  public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_ABSTRACT_AND_DEFAULT =
+    parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.abstract.and.default")
+      .withAnchor(PsiClass::getNameIdentifier)
+      .withRawDescription((cls, ctx) -> {
+        return message("class.inherits.abstract.and.default", formatClass(cls),
+                formatMethod(ctx.method()),
+                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                formatClass(requireNonNull(ctx.superMethod().getContainingClass())));
+      });
+  public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_UNRELATED_DEFAULTS =
+    parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.unrelated.defaults")
+      .withAnchor(PsiClass::getNameIdentifier)
+      .withRawDescription((cls, ctx) -> {
+        return message("class.inherits.unrelated.defaults", formatClass(cls),
+                formatMethod(ctx.method()),
+                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                formatClass(requireNonNull(ctx.superMethod().getContainingClass())));
       });
   public static final Simple<PsiClass> CLASS_ALREADY_IMPORTED =
     error(PsiClass.class, "class.already.imported").withAnchor(PsiClass::getNameIdentifier)
@@ -873,6 +904,8 @@ public final class JavaErrorKinds {
     parameterized(PsiTypeTestPattern.class, PsiType.class, "pattern.instanceof.equals")
       .withAnchor(PsiTypeTestPattern::getCheckType)
       .withRawDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
+  public static final Simple<PsiPattern> PATTERN_EXPECTED_CLASS_OR_ARRAY_TYPE =
+    error(PsiPattern.class, "pattern.expected.class.or.array.type");
   
   public static final Simple<PsiTypeElement> INSTANCEOF_TYPE_PARAMETER = error("instanceof.type.parameter");
   public static final Simple<PsiTypeElement> INSTANCEOF_ILLEGAL_GENERIC_TYPE = error("instanceof.illegal.generic.type");
@@ -905,6 +938,62 @@ public final class JavaErrorKinds {
   public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_SHOULD_PRODUCE_RESULT = 
     error(PsiSwitchExpression.class, "switch.expression.should.produce.result")
       .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
+  public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_CANNOT_BE_VOID = 
+    error(PsiSwitchExpression.class, "switch.expression.cannot.be.void")
+      .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
+  public static final Parameterized<PsiExpression, JavaIncompatibleTypeErrorContext> SWITCH_EXPRESSION_INCOMPATIBLE_TYPE = 
+    parameterized(PsiExpression.class, JavaIncompatibleTypeErrorContext.class, "switch.expression.incompatible.type")
+      .withRawDescription((expr, context) -> message("switch.expression.incompatible.type", formatType(context.rType()), formatType(context.lType())));
+  public static final Simple<PsiElement> SWITCH_LABEL_EXPECTED = error(PsiElement.class, "switch.label.expected");
+  public static final Simple<PsiStatement> SWITCH_DIFFERENT_CASE_KINDS = error(PsiStatement.class, "switch.different.case.kinds")
+    .withRange(statement -> {
+      if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
+        PsiCaseLabelElementList list = rule.getCaseLabelElementList();
+        if (list != null) {
+          return TextRange.create(0, list.getTextRangeInParent().getEndOffset());
+        }
+      }
+      return null;
+    });
+  public static final Parameterized<PsiExpression, JavaPsiSwitchUtil.SelectorKind> SWITCH_SELECTOR_TYPE_INVALID =
+    parameterized(PsiExpression.class, JavaPsiSwitchUtil.SelectorKind.class, "switch.selector.type.invalid")
+      .withRawDescription((expr, kind) -> kind.getFeature() == null ?
+                                          message("switch.selector.type.invalid", formatType(expr.getType())) :
+                                          message("switch.selector.type.invalid.level", formatType(expr.getType()), 
+                                                  PsiUtil.getLanguageLevel(expr).getShortText()));
+  public static final Parameterized<PsiCaseLabelElement, PsiType> SWITCH_NULL_TYPE_INCOMPATIBLE =
+    parameterized(PsiCaseLabelElement.class, PsiType.class, "switch.null.type.incompatible")
+      .withRawDescription((label, selectorType) -> message("switch.null.type.incompatible", formatType(selectorType)));
+  public static final Simple<PsiReferenceExpression> SWITCH_LABEL_QUALIFIED_ENUM = 
+    error(PsiReferenceExpression.class, "switch.label.qualified.enum");
+  public static final Simple<PsiExpression> SWITCH_LABEL_CONSTANT_EXPECTED = 
+    error(PsiExpression.class, "switch.label.constant.expected");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_UNEXPECTED = error("switch.label.unexpected");
+  public static final Parameterized<PsiDefaultCaseLabelElement, PsiCaseLabelElementList> SWITCH_DEFAULT_LABEL_CONTAINS_CASE =
+    parameterized("switch.default.label.contains.case");
+  public static final Parameterized<PsiExpression, PsiType> SWITCH_LABEL_PATTERN_EXPECTED = 
+    parameterized(PsiExpression.class, PsiType.class, "switch.label.pattern.expected")
+      .withRawDescription((expr, type) -> message("switch.label.pattern.expected", formatType(type)));
+  public static final Parameterized<PsiElement, Object> SWITCH_LABEL_DUPLICATE =
+    parameterized(PsiElement.class, Object.class, "switch.label.duplicate")
+      .withRawDescription((label, value) -> {
+        if (value instanceof JavaPsiSwitchUtil.SwitchSpecialValue specialValue) {
+          return switch (specialValue) {
+            case UNCONDITIONAL_PATTERN -> message("switch.label.duplicate.unconditional.pattern");
+            case DEFAULT_VALUE -> message("switch.label.duplicate.default");
+            case NULL_VALUE -> message("switch.label.duplicate", PsiKeyword.NULL);
+          };
+        }
+        else if (value instanceof PsiEnumConstant constant) {
+          return message("switch.label.duplicate", constant.getName());
+        }
+        else if (label instanceof PsiLiteralExpression literalExpression) {
+          return message("switch.label.duplicate", literalExpression.getValue());
+        }
+        else {
+          return message("switch.label.duplicate", value);
+        }
+      });
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
@@ -1045,9 +1134,14 @@ public final class JavaErrorKinds {
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .<List<JavaResolveResult>>parameterized()
-      .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
-                                                    format(requireNonNull(results.get(0).getElement())),
-                                                    format(requireNonNull(results.get(1).getElement()))));
+      .withRawDescription((ref, results) -> {
+        String element1 = format(requireNonNull(results.get(0).getElement()));
+        String element2 = format(requireNonNull(results.get(1).getElement()));
+        boolean comparison = element1.compareTo(element2) < 0;
+        return message("reference.ambiguous", ref.getReferenceName(),
+                       comparison ? element1 : element2,
+                       comparison ? element2 : element1);
+      });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
@@ -1233,8 +1327,8 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
-  public static final Simple<PsiImportModuleStatement> MODULE_IMPORT_STATEMENT_NOT_ALLOWED = error(PsiImportModuleStatement.class, "import.module.not.allowed")
-    .withRawDescription(ref -> message("import.module.not.allowed"));
+  public static final Simple<PsiImportModuleStatement> IMPORT_MODULE_NOT_ALLOWED =
+    error(PsiImportModuleStatement.class, "import.module.not.allowed");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
       .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
@@ -1393,6 +1487,9 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.enum")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, cls) -> message("module.service.enum", cls.getName()));
+  public static final Simple<PsiJavaCodeReferenceElement> MODULE_SERVICE_ALIEN =
+    error(PsiJavaCodeReferenceElement.class, "module.service.alien")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_FOUND =
     error(PsiJavaModuleReferenceElement.class, "module.not.found")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
@@ -1406,6 +1503,29 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (ref, modules) -> message("module.cyclic.dependence", modules.stream().map(PsiJavaModule::getName)
           .sorted().collect(Collectors.joining(", "))));
+  public static final Simple<PsiJavaCodeReferenceElement> MODULE_DUPLICATE_IMPLEMENTATION =
+    error(PsiJavaCodeReferenceElement.class, "module.duplicate.implementation")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription(ref -> message("module.duplicate.implementation", ref.getQualifiedName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_PROVIDER_TYPE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.provider.type")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.provider.type", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_NO_CONSTRUCTOR =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.no.constructor")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.no.constructor", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_ABSTRACT =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.abstract")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.abstract", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_INNER =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.inner")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.inner", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> MODULE_SERVICE_IMPLEMENTATION_TYPE =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "module.service.implementation.type")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
 
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_EXPORTS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.exports.target")
@@ -1413,7 +1533,47 @@ public final class JavaErrorKinds {
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_OPENS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.opens.target")
       .withRawDescription(ref -> message("module.duplicate.opens.target", ref.getReferenceText()));
+  public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_NOT_FOUND =
+    error(PsiPackageAccessibilityStatement.class, "module.reference.package.not.found")
+      .withAnchor(st -> st.getPackageReference())
+      .withRawDescription(st -> message("module.reference.package.not.found", st.getPackageName()));
+  public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_EMPTY =
+    error(PsiPackageAccessibilityStatement.class, "module.reference.package.empty")
+      .withAnchor(st -> st.getPackageReference())
+      .withRawDescription(st -> message("module.reference.package.empty", st.getPackageName()));
 
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_NAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.named")
+      .withRawDescription((psi, info) -> message(
+        "module.access.from.named", info.getTarget().getPackageName(), info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.unnamed")
+      .withRawDescription((psi, info) -> message("module.access.from.unnamed", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_TO_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.to.unnamed")
+      .withRawDescription((psi, info) -> message("module.access.to.unnamed", info.getTarget().getPackageName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.bad.name")
+      .withRawDescription((psi, info) -> message("module.access.package.bad.name", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.bad.name")
+      .withRawDescription((psi, info) -> message("module.access.bad.name", info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.not.in.graph")
+      .withRawDescription((psi, info) -> message("module.access.package.not.in.graph", info.getTarget().getPackageName(), info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.not.in.graph")
+      .withRawDescription((psi, info) -> message("module.access.not.in.graph", info.getTarget().getModule().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.does.not.read")
+      .withRawDescription((psi, info) -> message("module.access.package.does.not.read", info.getTarget().getPackageName(), info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.does.not.read")
+      .withRawDescription((psi, info) -> message("module.access.does.not.read", info.getTarget().getModule().getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_JPS_DEPENDENCY_PROBLEM =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.jps.dependency.problem")
+      .withRawDescription((psi, info) -> message("module.access.jps.dependency.problem", info.getTarget().getModule().getName()));
+  
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Simple<>(key);

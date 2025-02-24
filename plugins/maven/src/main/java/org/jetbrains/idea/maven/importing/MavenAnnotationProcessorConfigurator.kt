@@ -182,9 +182,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
     val annotationProcessorDirectory: String
     val testAnnotationProcessorDirectory: String
 
-    val project = module.project
-    val moduleName = module.name
-    if (MavenImportUtil.isMainOrTestModule(project, moduleName)) {
+    if (MavenImportUtil.isMainOrTestModule(module)) {
       outputRelativeToContentRoot = false
       annotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, false, mavenProject.outputDirectory)
       testAnnotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, true, mavenProject.testOutputDirectory)
@@ -219,7 +217,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
       isDefault = true
     }
     else {
-      moduleProfileName = MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName(moduleName)
+      moduleProfileName = MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName(module.name)
       isDefault = false
     }
 

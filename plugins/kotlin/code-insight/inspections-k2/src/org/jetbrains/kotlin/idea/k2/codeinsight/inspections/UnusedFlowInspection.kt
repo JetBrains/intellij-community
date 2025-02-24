@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
@@ -58,6 +59,10 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
      * This way we only analyze a call chain once and only the full call chain.
      */
     override fun isApplicableByPsi(element: KtExpression): Boolean {
+        // Operators should not trigger a warning
+        if (element is KtOperationReferenceExpression) return false
+        // Assignment operations do use the value, so we can skip this case
+        if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ) return false
         if (element.isInImportDirective() || element.parentOfType<KtPackageDirective>() != null) return false
         // If the flow is being provided to a call, the flow is used, and we do not even have to continue.
         if (element.isBeingProvidedToCall()) return false
@@ -99,6 +104,6 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         val returnType = (element.resolveExpression() as? KaCallableSymbol)?.returnType as? KaClassType ?: return null
         if (returnType.classId != FLOW_CLASS_ID) return null
         if (element.isUsedAsExpression) return null
-        return Unit.takeIf { element.isTopMostExpression() }
+        return Unit
     }
 }

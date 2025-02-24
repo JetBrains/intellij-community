@@ -2,13 +2,19 @@
 package com.intellij.psi.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Pattern;
 
 /**
  * Utility methods to support Multi-Release JARs (MR-JARs, <a href="https://openjdk.org/jeps/238">JEP 238</a>)
@@ -23,6 +29,47 @@ public final class JavaMultiReleaseUtil {
    * Minimal JDK version which supports multi-release Jars
    */
   public static final LanguageLevel MIN_MULTI_RELEASE_VERSION = LanguageLevel.JDK_1_9;
+  private static final String MAIN = "main";
+  private static final Pattern javaVersionPattern = Pattern.compile("java\\d+");
+
+  /**
+   * @param mainModule main module candidate (where common code for different releases resides)
+   * @param additionalModule additional module candidate (where release-specific code resides)
+   * @return true if the supplied modules are indeed main module and additional module
+   */
+  @Contract("null, _ -> false; !null, null -> false")
+  @ApiStatus.Internal
+  public static boolean areMainAndAdditionalMultiReleaseModules(@Nullable Module mainModule, @Nullable Module additionalModule) {
+    if (mainModule == null || additionalModule == null) return false;
+    if (getMainMultiReleaseModule(additionalModule) == mainModule) {
+      return true;
+    }
+
+    // Fallback: Gradle and JPS
+    String mainModuleName = mainModule.getName();
+    if (mainModuleName.endsWith("." + MAIN)) {
+      String baseModuleName = StringUtil.substringBeforeLast(mainModuleName, MAIN);
+      String moduleName = additionalModule.getName();
+      return javaVersionPattern.matcher(ObjectUtils.coalesce(StringUtil.substringAfter(moduleName, baseModuleName), moduleName)).matches();
+    }
+    return false;
+  }
+
+  /**
+   * @param additionalModule additional module (where release-specific code resides)
+   * @return main module (where common code for different releases resides); null if the supplied module is not recognized as
+   * an additional module
+   */
+  @ApiStatus.Internal
+  public static @Nullable Module getMainMultiReleaseModule(@NotNull Module additionalModule) {
+    for (JavaMultiReleaseModuleSupport support : JavaMultiReleaseModuleSupport.EP_NAME.getExtensionList()) {
+      Module result = support.getMainMultiReleaseModule(additionalModule);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
 
   private static class VersionRootInfo {
     final @NotNull LanguageLevel level;
