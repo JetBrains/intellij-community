@@ -85,7 +85,7 @@ public final class LombokHighlightErrorFilter implements JavaErrorFilter {
            classType.getCanonicalText().startsWith("lombok.");
   }
 
-  private static PsiNameValuePair findContainingNameValuePair(PsiElement highlightedElement) {
+  private static @Nullable PsiNameValuePair findContainingNameValuePair(PsiElement highlightedElement) {
     PsiElement nameValuePair = highlightedElement;
     while (!(nameValuePair == null || nameValuePair instanceof PsiNameValuePair)) {
       nameValuePair = nameValuePair.getContext();
