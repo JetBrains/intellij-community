@@ -19634,6 +19634,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertStringInitializerToCharLiteral.kt");
             }
 
+            @TestMetadata("disabledOnLibraryCall.kt")
+            public void testDisabledOnLibraryCall() throws Exception {
+                runTest("testData/quickfix/typeMismatch/disabledOnLibraryCall.kt");
+            }
+
             @TestMetadata("dontChangeOverriddenPropertyTypeToErrorType.kt")
             public void testDontChangeOverriddenPropertyTypeToErrorType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/dontChangeOverriddenPropertyTypeToErrorType.kt");
