@@ -10,5 +10,5 @@ class C {
 
 context(c: C)
 fun String.test() {
-    "foo".let { with(c) { it.fn(this@test) } }
+    with(c) { "foo".fn(this@test) }
 }

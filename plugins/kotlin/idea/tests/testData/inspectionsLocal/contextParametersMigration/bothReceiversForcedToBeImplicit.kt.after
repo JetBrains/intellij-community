@@ -4,20 +4,10 @@
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
 
-class C1 {
-    fun C2.f1() {}
-}
-
-class C2 {
-    fun C1.f2() {}
-}
+class C1 { fun C2.fn1(): C1 = this@C1 }
+class C2 { fun C1.fn2(): C2 = this@C2 }
 
 context(c1: C1, c2: C2)
-fun f() {
-    with(c1) {
-        with(c2) {
-            f1()
-            f2()
-        }
-    }
+fun test() {
+    with(c1) { with(c2) { fn1().fn2() // fn1 can reuse the implicit C2 that is required for fn2, instead of providing it explicitly } }
 }

@@ -3,11 +3,14 @@
 // LANGUAGE_VERSION: 2.2
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
 
-class C1 {
-    fun C1.f1() {}
+class PropContext {
+    var v = 0
+    fun Int.fn() = this + v
 }
 
-context(c1: C1)
-fun f() {
-    with(c1) { f1() }
-}
+context(<caret>PropContext)
+var prop1: Int
+    get(): Int {
+        return 3.fn()
+    }
+    set(value) = println(v)
