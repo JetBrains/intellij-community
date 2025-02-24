@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashSet;
 
 public class Maven3ServerImpl extends MavenServerBase {
   @Override
@@ -53,19 +50,6 @@ public class Maven3ServerImpl extends MavenServerBase {
     }
   }
 
-  @Override
-  public ProfileApplicationResult applyProfiles(MavenModel model,
-                                                File basedir,
-                                                MavenExplicitProfiles explicitProfiles,
-                                                HashSet<String> alwaysOnProfiles, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
   @Override
   public MavenServerStatus getDebugStatus(boolean clean) {
     return new MavenServerStatus();

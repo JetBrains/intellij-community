@@ -2,15 +2,11 @@
 package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.Maven40ModelInheritanceAssembler;
-import com.intellij.maven.server.m40.utils.Maven40ProfileUtil;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.io.File;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashSet;
 
 public class Maven40ServerImpl extends MavenServerBase {
   @Override
@@ -40,20 +36,6 @@ public class Maven40ServerImpl extends MavenServerBase {
     MavenServerUtil.checkToken(token);
     try {
       return Maven40ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public ProfileApplicationResult applyProfiles(MavenModel model,
-                                                File basedir,
-                                                MavenExplicitProfiles explicitProfiles,
-                                                HashSet<String> alwaysOnProfiles, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven40ProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);

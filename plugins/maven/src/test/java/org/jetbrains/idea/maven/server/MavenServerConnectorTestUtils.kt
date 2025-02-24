@@ -7,9 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenModel
-import java.nio.file.Path
 import java.rmi.ConnectException
 
 suspend fun <R> withStoppedConnector(action: suspend () -> R): R {
@@ -105,13 +103,6 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     throw RuntimeException("not implemented")
   }
 
-    override suspend fun applyProfiles(model: MavenModel,
-                                       basedir: Path,
-                                       explicitProfiles: MavenExplicitProfiles,
-                                       alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
-    throw RuntimeException("not implemented")
-  }
-
   override fun pingBlocking(): Boolean {
     return true
   }
@@ -184,13 +175,6 @@ private class StoppedMavenServerConnector : MavenServerConnector {
 
   override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw RuntimeException("not implemented")
-  }
-
-  override suspend fun applyProfiles(model: MavenModel,
-                                     basedir: Path,
-                                     explicitProfiles: MavenExplicitProfiles,
-                                     alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
-    throw ConnectException("Cannot reconnect")
   }
 
   override fun pingBlocking(): Boolean {

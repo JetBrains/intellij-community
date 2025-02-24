@@ -3,15 +3,12 @@ package org.jetbrains.idea.maven.server.indexer;
 
 import org.codehaus.plexus.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashSet;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -96,15 +93,6 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
 
   @Override
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException {
-    throw new UnsupportedOperationException("indexing server");
-  }
-
-  @Override
-  public ProfileApplicationResult applyProfiles(MavenModel model,
-                                                File basedir,
-                                                MavenExplicitProfiles explicitProfiles,
-                                                HashSet<String> alwaysOnProfiles,
-                                                MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 

@@ -387,6 +387,16 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().interpolateAndAlignModel(model, targetPomDir, ourToken)
   }
 
+  internal suspend fun applyProfiles(
+    model: MavenModel,
+    baseDir: File,
+    explicitProfiles: MavenExplicitProfiles,
+    alwaysOnProfiles: HashSet<String>,
+    ourToken: MavenToken,
+  ): ProfileApplicationResult {
+    return getOrCreateWrappee().applyProfiles(model, baseDir, explicitProfiles, alwaysOnProfiles, ourToken)
+  }
+
   protected fun interface LongRunningEmbedderTask<R : Serializable> {
     fun run(embedder: MavenServerEmbedder, longRunningTaskInput: LongRunningTaskInput): MavenServerResponse<R>
   }

@@ -17,7 +17,8 @@ import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
@@ -28,6 +29,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 
@@ -109,9 +111,12 @@ class MavenProjectReader(private val myProject: Project) {
 
     addSettingsProfiles(file, generalSettings, modelWithInheritance, alwaysOnProfiles, problems)
 
-    val basedir = MavenUtil.getBaseDir(file)
-
-    val profileApplicationResult = MavenServerConnector.applyProfiles(myProject, modelWithInheritance, basedir, explicitProfiles, alwaysOnProfiles)
+    val baseDirString = MavenUtil.getBaseDir(file).toString()
+    val transformer = RemotePathTransformerFactory.createForProject(myProject)
+    val baseDir = File(transformer.toRemotePathOrSelf(baseDirString))
+    val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
+    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDirString)
+    val profileApplicationResult = embedder.applyProfiles(modelWithInheritance, baseDir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
 
     val modelWithProfiles = profileApplicationResult.model
 
