@@ -11,8 +11,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
-private val emptyByteArray = ByteArray(0)
-
 abstract class DummyEmbedder : MavenServerEmbedder {
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: ArrayList<String>,
