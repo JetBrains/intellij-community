@@ -460,12 +460,6 @@ class PluginDescriptorTest {
       .hasSize(enabledIds.size)
     assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactlyInAnyOrderElementsOf(enabledIds)
   }
-  
-  companion object {
-    internal fun assumeNotUnderTeamcity() {
-      assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
-    }
-  }
 }
 
 private val testDataPath: String

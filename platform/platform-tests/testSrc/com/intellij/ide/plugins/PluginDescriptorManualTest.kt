@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.PluginDescriptorTest.Companion.assumeNotUnderTeamcity
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue
@@ -50,5 +50,11 @@ class PluginDescriptorManualTest {
     val descriptors = testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
     Assertions.assertThat(descriptors).hasSize(1)
+  }
+
+  companion object {
+    private fun assumeNotUnderTeamcity() {
+      assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
+    }
   }
 }
