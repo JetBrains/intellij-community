@@ -118,6 +118,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       centerPanel.border = CommitInputBorder(editor, this)
     }
 
+    Disposer.register(this, commitMessage)
+
     setupResizing(commitMessage)
     setupDocumentLengthTracker(commitMessage)
   }
@@ -271,6 +273,7 @@ private class CommitChunkWorkFlowHandler(
     setupCommitHandlersTracking()
     setupCommitChecksResultTracking()
     vcsesChanged()
+    Disposer.register(this, ui)
   }
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
