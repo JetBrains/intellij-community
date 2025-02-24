@@ -67,6 +67,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
+import kotlin.reflect.KFunction1
 
 private val LOG: Logger
   get() = logger<EditorColorsManagerImpl>()
@@ -111,7 +112,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       schemeManager.addScheme(defaultScheme)
     }
     if (!isHeadlessMode) {
-      schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
+      schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes, checkId = false, schemeManager::findSchemeByName))
     }
     schemeManager.loadSchemes()
     loadRemainAdditionalTextAttributes(additionalTextAttributes)
@@ -227,7 +228,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun resolveSchemeParent(scheme: EditorColorsScheme) {
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly) {
-      scheme.resolveParent(schemeManager::findSchemeByName)
+      val kFunction1: KFunction1<String, EditorColorsScheme?> = schemeManager::findSchemeByName
+      scheme.resolveParent(kFunction1)
     }
   }
 
@@ -610,7 +612,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
     override fun reloaded(schemeManager: SchemeManager<EditorColorsScheme>, schemes: Collection<EditorColorsScheme>) {
       if (!isHeadlessMode) {
-        schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
+        schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes, checkId = false, schemeManager::findSchemeByName))
       }
       initEditableDefaultSchemesCopies()
       initEditableBundledSchemesCopies()
@@ -765,6 +767,7 @@ private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.
 fun createLoadBundledSchemeRequests(
   additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
   checkId: Boolean = false,
+  nameResolver: ((String) -> EditorColorsScheme?)?
 ) : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
@@ -779,7 +782,7 @@ fun createLoadBundledSchemeRequests(
           get() {
             val idFromExtension = item.id
             if (idFromExtension == null) {
-              LOG.error("id is not specified for extension ${bean.path}")
+              LOG.warn("id is not specified for extension ${bean.path}")
             }
             else if (!checkId) {
               return idFromExtension
@@ -789,7 +792,7 @@ fun createLoadBundledSchemeRequests(
             try {
               val idFromFile = readEditorSchemeNameFromXml(reader)!!
               if (checkId && idFromFile != idFromExtension) {
-                LOG.error("id specified for extension $item is not equal to id from file $resourcePath")
+                LOG.warn("id specified for extension $item is not equal to id from file $resourcePath")
               }
               return idFromFile
             }
@@ -802,7 +805,7 @@ fun createLoadBundledSchemeRequests(
           ResourceUtil.getResourceAsBytes(resourcePath, pluginDescriptor.classLoader)!!
 
         override fun createScheme(): EditorColorsScheme =
-          createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId)
+          createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId, nameResolver)
       })
     }
 
@@ -844,7 +847,7 @@ fun createLoadBundledSchemeRequests(
         override val schemeKey: String = colorSchemeId
         override fun loadBytes(): ByteArray = data
         override fun createScheme(): EditorColorsScheme =
-          createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId)
+          createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId, nameResolver)
       })
     }
   }
@@ -855,10 +858,13 @@ private fun createBundledEditorColorScheme(
   additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
   data: ByteArray,
   pluginId: PluginId,
+  nameResolver: ((String) -> EditorColorsScheme?)?
 ): BundledEditorColorScheme {
   val scheme = BundledEditorColorScheme(resourcePath)
   // todo be lazy
   scheme.readExternal(JDOMUtil.load(data))
+  if (nameResolver != null)
+    scheme.resolveParent(nameResolver)
   // We don't need to update digest for a bundled scheme because:
   // 1) it can be computed on demand later (because a bundled scheme is not mutable)
   // 2) in the future, user copies of bundled schemes will use a bundled scheme as parent (not as full copy)
