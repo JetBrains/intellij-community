@@ -231,6 +231,8 @@
     <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.gradle-java.k2"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.scripting.k2"/>
 
     <module name="kotlin.onboarding"/>
     <module name="kotlin.onboarding.gradle"/>

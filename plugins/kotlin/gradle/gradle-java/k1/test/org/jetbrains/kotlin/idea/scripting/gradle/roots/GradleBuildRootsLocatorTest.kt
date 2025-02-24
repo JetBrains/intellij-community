@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle.roots
 
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator.NotificationKind.dontCare
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator.NotificationKind.wasNotImportedAfterCreation
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.dontCare
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.wasNotImportedAfterCreation
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

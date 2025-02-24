@@ -164,6 +164,9 @@
   - name: kotlin.gradle.gradle-java
   - name: kotlin.gradle.gradle-java.k1
   - name: kotlin.gradle.gradle-java.k2
+  - name: kotlin.gradle.scripting.k1
+  - name: kotlin.gradle.scripting.k2
+  - name: kotlin.gradle.scripting.shared
   - name: kotlin.gradle.code-insight-groovy
   - name: kotlin.gradle.code-insight-toml
   - name: kotlin.native

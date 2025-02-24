@@ -17,10 +17,10 @@ import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.gradle.scripting.shared.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
