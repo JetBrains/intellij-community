@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaHomeFinderEel")
 
 package com.intellij.openapi.projectRoots.impl
@@ -54,7 +54,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 
   private val isCaseSensitive = service<ScopeService>().suspendingLazy {
     val testDir = eel.fs.user.home
-    val type = when (val stat = eel.fs.stat(testDir, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)) {
+    val type = when (val stat = eel.fs.stat(testDir).resolveAndFollow().eelIt()) {
       is EelResult.Ok -> stat.value.type
       is EelResult.Error -> error(stat)
     }
