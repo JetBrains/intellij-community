@@ -27,7 +27,6 @@ import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-// run with intellij.idea.ultimate.tests.main classpath
 class PluginDescriptorTest {
   @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
   private class TestDataRef // for easy navigation

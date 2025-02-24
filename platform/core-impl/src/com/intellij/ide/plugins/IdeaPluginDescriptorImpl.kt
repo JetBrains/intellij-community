@@ -671,9 +671,25 @@ private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
 }
 
 private fun isCommunity(): Boolean {
-  val ideCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-  return ideCode == "IC" || ideCode == "PC"
+  try {
+    val ideCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+    return ideCode == "IC" || ideCode == "PC"
+  } catch (e: RuntimeException) {
+    // do not fail unit tests when there is no app >_<
+    val msg = e.message ?: throw e
+    if (msg.contains("Resource not found") && msg.contains("idea/ApplicationInfo.xml")) {
+      if (!unitTestIsCommunityDespammer) {
+        LOG.warn("failed to read application info, are we in unit tests?", e)
+        unitTestIsCommunityDespammer = true
+      }
+      return false
+    } else {
+      throw e
+    }
+  }
 }
+
+private var unitTestIsCommunityDespammer = false
 
 private data class PluginCardInfo(val title: String, val description: String)
 

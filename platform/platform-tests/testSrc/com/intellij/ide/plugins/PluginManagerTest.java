@@ -283,7 +283,7 @@ public class PluginManagerTest {
   private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
     var file = Path.of(getTestDataPath(), testDataName);
     var buildNumber = BuildNumber.fromString("2042.42");
-    var parentContext = new DescriptorListLoadingContext(Set.of(), Set.of(), Map.of(), () -> buildNumber, false, false, false, false);
+    var parentContext = new DescriptorListLoadingContext(Set.of(), Set.of(), Map.of(), List.of(), () -> buildNumber, false, false, false, false);
 
     var root = XmlDomReader.readXmlAsModel(Files.newInputStream(file));
     var autoGenerateModuleDescriptor = new Ref<>(false);

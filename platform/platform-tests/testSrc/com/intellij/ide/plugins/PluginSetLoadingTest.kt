@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
@@ -11,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.util.function.Function
 
-// run with intellij.idea.ultimate.tests.main classpath
 class PluginSetLoadingTest {
   @Rule
   @JvmField
@@ -197,11 +195,11 @@ class PluginSetLoadingTest {
     assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
     assertEnabledPluginsSetEquals(listOf("p251")) {
       buildNumber = "251.200"
-      withBrokenPlugin(PluginId.getId("p243"), "1.0")
+      withBrokenPlugin("p243", "1.0")
     }
     assertEnabledPluginsSetEquals(listOf("p243")) {
       buildNumber = "251.200"
-      withBrokenPlugin(PluginId.getId("p251"), "1.0")
+      withBrokenPlugin("p251", "1.0")
     }
   }
 

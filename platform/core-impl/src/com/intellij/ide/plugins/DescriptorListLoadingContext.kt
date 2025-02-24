@@ -4,6 +4,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.xml.dom.XmlInterner
@@ -22,14 +23,16 @@ class DescriptorListLoadingContext(
   private val customDisabledPlugins: Set<PluginId>? = null,
   private val customExpiredPlugins: Set<PluginId>? = null,
   private val customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
+  private val customEssentialPlugins: List<PluginId>? = null,
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  val disabledPlugins by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
-  val expiredPlugins by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
+  val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
   
   @JvmField

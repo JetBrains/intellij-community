@@ -14,6 +14,7 @@ class PluginSetTestBuilder(private val path: Path) {
   private var expiredPluginIds = mutableSetOf<String>()
   private var productBuildNumber = PluginManagerCore.buildNumber
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
+  private var essentialPlugins = mutableListOf<PluginId>()
 
   private var context: DescriptorListLoadingContext? = null
   private var result: PluginLoadingResult? = null
@@ -26,6 +27,14 @@ class PluginSetTestBuilder(private val path: Path) {
     this.expiredPluginIds += expiredPluginIds
   }
 
+  fun withBrokenPlugin(pluginId: String, vararg versions: String?) = apply {
+    brokenPlugins.computeIfAbsent(PluginId.getId(pluginId), { mutableSetOf() }).addAll(versions)
+  }
+
+  fun withEssentialPlugins(vararg ids: String) = apply {
+    essentialPlugins.addAll(ids.map(PluginId::getId))
+  }
+
   fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
     this.productBuildNumber = productBuildNumber
   }
@@ -36,17 +45,13 @@ class PluginSetTestBuilder(private val path: Path) {
       productBuildNumber = BuildNumber.fromString(value)!!
     }
 
-  fun withBrokenPlugin(pluginId: PluginId, vararg versions: String?) = apply {
-    brokenPlugins.putIfAbsent(pluginId, mutableSetOf())
-    brokenPlugins[pluginId]!!.addAll(versions)
-  }
-
   fun withLoadingContext(): PluginSetTestBuilder {
     return apply {
       context = DescriptorListLoadingContext(
         customDisabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
         customExpiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
         customBrokenPluginVersions = brokenPlugins,
+        customEssentialPlugins = essentialPlugins,
         productBuildNumber = { productBuildNumber },
       )
     }
