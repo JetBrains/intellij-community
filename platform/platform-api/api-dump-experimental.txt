@@ -1006,6 +1006,14 @@ f:com.intellij.ui.treeStructure.TreeViewModelKt
 com.intellij.util.net.JdkProxyCustomizer
 - *a:getOriginalAuthenticator():java.net.Authenticator
 - *a:getOriginalProxySelector():java.net.ProxySelector
+*f:com.intellij.util.net.PlatformHttpClient
+- <init>():V
+- s:checkResponse(java.net.http.HttpResponse):java.net.http.HttpResponse
+- s:client():java.net.http.HttpClient
+- s:clientBuilder():java.net.http.HttpClient$Builder
+- s:request(java.net.URI):java.net.http.HttpRequest
+- s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
+- s:userAgent():java.lang.String
 com.intellij.util.net.ProxySettings
 - *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V
 *:com.intellij.util.ui.table.EditableTable
