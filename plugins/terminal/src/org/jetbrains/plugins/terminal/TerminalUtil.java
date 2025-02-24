@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSshProcess;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -24,6 +25,7 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import com.pty4j.windows.winpty.WinPtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
@@ -227,5 +229,13 @@ public final class TerminalUtil {
         }, ModalityState.nonModal());
       }
     }
+  }
+
+  /**
+   * @return whether the New Terminal (Gen1) option should be visible to user. In the settings, menus and other places.
+   */
+  @ApiStatus.Internal
+  public static boolean isGenOneTerminalOptionVisible() {
+    return ExperimentalUI.isNewUI();
   }
 }
