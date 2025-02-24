@@ -391,12 +391,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  boolean isEventSystemEnabled(@NotNull Document document) {
+  @ApiStatus.Internal
+  public boolean isEventSystemEnabled(@NotNull Document document) {
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     return FileViewProviderUtil.isEventSystemEnabled(viewProviders);
   }
 
-  boolean finishCommit(@NotNull Document document,
+  @ApiStatus.Internal
+  public boolean finishCommit(@NotNull Document document,
                        @NotNull List<? extends BooleanRunnable> finishProcessors,
                        @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                        boolean synchronously,
@@ -502,7 +504,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return true;
   }
 
-  void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<FileViewProvider> viewProviders) {
+  @ApiStatus.Internal
+  public void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<FileViewProvider> viewProviders) {
     if (!viewProviders.isEmpty()) {
       DebugUtil.performPsiModification("psi.forceReload", () -> {
         for (FileViewProvider viewProvider : viewProviders) {
@@ -901,7 +904,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return Collections.unmodifiableMap(myUncommittedDocumentTraces);
   }
 
-  boolean isInUncommittedSet(@NotNull Document document) {
+  @ApiStatus.Internal
+  public boolean isInUncommittedSet(@NotNull Document document) {
     return myUncommittedDocuments.contains(getTopLevelDocument(document));
   }
 
@@ -1071,7 +1075,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  void handleCommitWithoutPsi(@NotNull Document document) {
+  @ApiStatus.Internal
+  public void handleCommitWithoutPsi(@NotNull Document document) {
     UncommittedInfo prevInfo = clearUncommittedInfo(document);
     if (prevInfo == null) {
       return;

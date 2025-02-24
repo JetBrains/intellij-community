@@ -67,7 +67,8 @@ public class FileChooserDescriptor implements Cloneable {
     this(chooseFiles || (chooseJars && !chooseJarContents) || chooseJarsAsFiles, chooseFolders, chooseJarContents, chooseMultiple);
   }
 
-  FileChooserDescriptor(boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple) {
+  @ApiStatus.Internal
+  public FileChooserDescriptor(boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple) {
     this(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple, null);
   }
 

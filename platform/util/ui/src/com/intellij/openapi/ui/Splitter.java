@@ -315,7 +315,7 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   private static boolean isComponentVisible(JComponent component) {
-    return !isNull(component) && component.isVisible() && !component.getBounds().isEmpty();
+    return !NullableComponent.Check.isNull(component) && component.isVisible() && !component.getBounds().isEmpty();
   }
 
   private static float getDistributeSizeChange(int size1, int mSize1, int pSize1, int mxSize1,
@@ -422,7 +422,7 @@ public class Splitter extends JPanel implements Splittable {
     int total = isVertical() ? height : width;
     if (total <= 0) return;
 
-    if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
+    if (!NullableComponent.Check.isNull(myFirstComponent) && myFirstComponent.isVisible() && !NullableComponent.Check.isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
       Rectangle firstRect = new Rectangle();
       Rectangle dividerRect = new Rectangle();
@@ -459,13 +459,13 @@ public class Splitter extends JPanel implements Splittable {
       //myFirstComponent.revalidate();
       //mySecondComponent.revalidate();
     }
-    else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
+    else if (!NullableComponent.Check.isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
       myFirstComponent.setBounds(insets.left, insets.top, width, height);
       //myFirstComponent.revalidate();
     }
-    else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
+    else if (!NullableComponent.Check.isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
       mySecondComponent.setBounds(insets.left, insets.top, width, height);
@@ -531,11 +531,8 @@ public class Splitter extends JPanel implements Splittable {
     return isVertical() ? size.getHeight() : size.getWidth();
   }
 
-  static boolean isNull(Component component) {
-    return NullableComponent.Check.isNull(component);
-  }
-
-  static void hideNull(Component component) {
+  @ApiStatus.Internal
+  public static void hideNull(Component component) {
     if (component instanceof NullableComponent) {
       if (!component.getBounds().equals(myNullBounds)) {
         component.setBounds(myNullBounds);
