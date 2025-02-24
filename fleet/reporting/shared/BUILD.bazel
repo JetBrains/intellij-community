@@ -1,0 +1,26 @@
+### auto-generated section `build fleet.reporting.shared` start
+load("@community//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.coroutines.ExperimentalCoroutinesApi"]
+)
+
+jvm_library(
+  name = "fleet-reporting-shared",
+  module_name = "fleet.reporting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@community//fleet/preferences",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+  ]
+)
+### auto-generated section `build fleet.reporting.shared` end
