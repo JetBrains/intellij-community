@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
+    "//platform/kernel/pasta",
   ],
   runtime_deps = [":backend_resources"]
 )

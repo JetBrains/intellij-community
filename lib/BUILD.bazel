@@ -3685,8 +3685,8 @@ java_library(
 
 java_import(
   name = "kotlinc-kotlin-dist",
-  jars = ["@kotlin-dist-for-ide-2_0_21-release-482_http//file"],
-  srcjar = "@kotlin-dist-for-ide-2_0_21-release-482-sources_http//file",
+  jars = ["@kotlin-dist-for-ide-2_1_10-release-473_http//file"],
+  srcjar = "@kotlin-dist-for-ide-2_1_10-release-473-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3727,8 +3727,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath",
-  jar = "@kotlin-jps-plugin-classpath-2_0_21-release-482_http//file",
-  srcjar = "@kotlin-jps-plugin-classpath-2_0_21-release-482-sources_http//file",
+  jar = "@kotlin-jps-plugin-classpath-2_1_10-release-473_http//file",
+  srcjar = "@kotlin-jps-plugin-classpath-2_1_10-release-473-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3748,8 +3748,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-plugin-tests",
-  jar = "@kotlin-jps-plugin-tests-for-ide-2_0_21-release-482_http//file",
-  srcjar = "@kotlin-jps-plugin-tests-for-ide-2_0_21-release-482-sources_http//file",
+  jar = "@kotlin-jps-plugin-tests-for-ide-2_1_10-release-473_http//file",
+  srcjar = "@kotlin-jps-plugin-tests-for-ide-2_1_10-release-473-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

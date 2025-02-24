@@ -29,7 +29,6 @@ jvm_library(
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/fir",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//platform/lang-impl",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
