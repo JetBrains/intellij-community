@@ -44,13 +44,20 @@ internal class JediTermHyperlinkFilterAdapter(
 
   private val filterWrapper = CompositeFilterWrapper(project, console, widget)
 
-  private val requestFlow: MutableSharedFlow<Request> =
-    MutableSharedFlow(0, MAX_BUFFERED_REQUESTS, BufferOverflow.DROP_OLDEST)
+  private val requestFlow: MutableSharedFlow<Request> = MutableSharedFlow(
+    // don't lose initial requests due to adding a subscriber asynchronously
+    replay = MAX_BUFFERED_REQUESTS,
+    extraBufferCapacity = 0,
+    BufferOverflow.DROP_OLDEST
+  )
 
   init {
     @OptIn(ExperimentalCoroutinesApi::class)
     val coroutineScope = project.service<CoroutineScopeService>().coroutineScope.childScope(
       "JediTerminal Filters",
+      // Hyperlinks are an additional feature, so their computation should not consume significant CPU resources.
+      // Even though the current implementation guarantees this implicitly, let's limit CPU
+      // usage explicitly as a precaution for future changes in the implementation.
       Dispatchers.Default.limitedParallelism(1)
     )
     Disposer.register(widget) {
