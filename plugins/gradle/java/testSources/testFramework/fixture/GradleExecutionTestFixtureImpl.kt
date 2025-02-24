@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixture
 
 import com.intellij.execution.ExecutorRegistry
@@ -18,7 +18,6 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.*
@@ -32,7 +31,6 @@ class GradleExecutionTestFixtureImpl(
 ) : GradleExecutionTestFixture {
 
   private lateinit var executionOutputFixture: GradleExecutionOutputFixture
-  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
   private lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
   private lateinit var executionConsoleFixture: GradleExecutionViewFixture
   private lateinit var buildViewFixture: BuildViewTestFixture
@@ -41,16 +39,9 @@ class GradleExecutionTestFixtureImpl(
     return executionEnvironmentFixture.getExecutionEnvironment()
   }
 
-  override fun getTestExecutionConsole(): GradleTestsExecutionConsole {
-    return executionConsoleFixture.getTestExecutionConsole()
-  }
-
   override fun setUp() {
     executionOutputFixture = GradleExecutionOutputFixture(project)
     executionOutputFixture.setUp()
-
-    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
-    testExecutionEventFixture.setUp()
 
     executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
     executionEnvironmentFixture.setUp()
@@ -67,7 +58,6 @@ class GradleExecutionTestFixtureImpl(
       { buildViewFixture.tearDown() },
       { executionConsoleFixture.tearDown() },
       { executionEnvironmentFixture.tearDown() },
-      { testExecutionEventFixture.tearDown() },
       { executionOutputFixture.tearDown() }
     )
   }
@@ -77,7 +67,7 @@ class GradleExecutionTestFixtureImpl(
     isRunAsTest: Boolean
   ): RunnerAndConfigurationSettings {
     val runManager = RunManager.getInstance(project)
-    val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
+    val runConfigurationName = "GradleExecutionTestFixture (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
     val runConfiguration = runnerSettings.configuration as GradleRunConfiguration
     runConfiguration.settings.externalProjectPath = projectRoot.path
@@ -174,36 +164,6 @@ class GradleExecutionTestFixtureImpl(
     executionConsoleFixture.assertRunTreeViewIsEmpty()
   }
 
-  override fun assertTestViewTree(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionConsoleFixture.assertTestTreeView(assert)
-  }
-
-  override fun assertTestViewTreeIsEmpty() {
-    executionConsoleFixture.assertTestTreeViewIsEmpty()
-  }
-
-  override fun assertTestConsoleContains(expectedTextSample: String) {
-    executionConsoleFixture.assertTestConsoleContains(expectedTextSample)
-  }
-
-  override fun assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
-    executionConsoleFixture.assertTestConsoleDoesNotContain(unexpectedTextSample)
-  }
-
-  override fun assertTestConsoleContains(
-    testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
-    expectedTextSample: String
-  ) {
-    executionConsoleFixture.assertTestConsoleContains(testAssertion, expectedTextSample)
-  }
-
-  override fun assertTestConsoleDoesNotContain(
-    testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
-    unexpectedTextSample: String
-  ) {
-    executionConsoleFixture.assertTestConsoleDoesNotContain(testAssertion, unexpectedTextSample)
-  }
-
   override fun assertPsiLocation(
     testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
     className: String, methodName: String?, parameterName: String?
@@ -221,13 +181,5 @@ class GradleExecutionTestFixtureImpl(
 
   override fun assertTestEventsWereNotReceived() {
     executionOutputFixture.assertTestEventsWasNotReceived()
-  }
-
-  override fun assertTestEventCount(
-    name: String,
-    suiteStart: Int, suiteFinish: Int,
-    testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
-  ) {
-    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

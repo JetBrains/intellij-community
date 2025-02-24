@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.test.events.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleExecutionTestCase
+import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
+class KotlinGradleTestNavigationTest : KotlinGradleTestExecutionTestCase() {
 
     @ParameterizedTest
     @AllGradleVersionsSource

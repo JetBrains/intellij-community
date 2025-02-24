@@ -1,15 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.fixture.*
+import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.junit.jupiter.api.AfterEach
@@ -18,18 +17,10 @@ import org.junit.jupiter.api.AfterEach
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   private var _executionFixture: GradleExecutionTestFixture? = null
-  private val executionFixture: GradleExecutionTestFixture
+  val executionFixture: GradleExecutionTestFixture
     get() = requireNotNull(_executionFixture) {
       "Gradle execution fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
-
-  fun getExecutionEnvironment(): ExecutionEnvironment {
-    return executionFixture.getExecutionEnvironment()
-  }
-
-  fun getTestExecutionConsole(): GradleTestsExecutionConsole {
-    return executionFixture.getTestExecutionConsole()
-  }
 
   override fun setUp() {
     super.setUp()
@@ -99,30 +90,6 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     executionFixture.assertRunViewTreeIsEmpty()
   }
 
-  fun assertTestViewTree(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionFixture.assertTestViewTree(assert)
-  }
-
-  fun assertTestViewTreeIsEmpty() {
-    executionFixture.assertTestViewTreeIsEmpty()
-  }
-
-  fun assertTestConsoleContains(expected: String) {
-    executionFixture.assertTestConsoleContains(expected)
-  }
-
-  fun assertTestConsoleDoesNotContain(expected: String) {
-    executionFixture.assertTestConsoleDoesNotContain(expected)
-  }
-
-  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
-    executionFixture.assertTestConsoleContains(this, expectedTextSample)
-  }
-
-  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
-    executionFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
-  }
-
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
     className: String, methodName: String? = null, parameterName: String? = null
   ) {
@@ -139,13 +106,5 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   fun assertTestEventsWasNotReceived() {
     executionFixture.assertTestEventsWereNotReceived()
-  }
-
-  fun assertTestEventCount(
-    name: String,
-    suiteStart: Int, suiteFinish: Int,
-    testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
-  ) {
-    executionFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

@@ -6,14 +6,14 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase.Companion.KOTLIN_PROJECT
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
-abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
+abstract class KotlinGradleTestExecutionTestCase : GradleTestExecutionTestCase() {
 
     override fun tearDown() {
         runAll(

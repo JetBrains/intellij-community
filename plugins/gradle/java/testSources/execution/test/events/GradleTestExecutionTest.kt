@@ -11,7 +11,7 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderTh
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestExecutionTest : GradleExecutionTestCase() {
+class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
