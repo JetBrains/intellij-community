@@ -56,6 +56,23 @@ internal class PluginDependenciesTest {
   }
 
   @Test
+  fun `plugin is loaded when plugin dependency is resolved`() {
+    bar()
+    `foo plugin-dependency bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    assertThat(foo).hasClassloaderParents(bar)
+  }
+
+  @Test
+  fun `plugin is not loaded when plugin dependency is not resolved`() {
+    `foo plugin-dependency bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+  }
+
+  @Test
   fun `v1 plugin gets v2 content module in classloader parents even without direct dependency if depends dependency is used`() {
     `foo depends bar`()
     `bar with optional module`()
