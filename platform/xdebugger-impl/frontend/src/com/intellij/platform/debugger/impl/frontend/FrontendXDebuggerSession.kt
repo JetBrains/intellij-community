@@ -38,7 +38,7 @@ internal class FrontendXDebuggerSession(
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
-  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider ?: FrontendXDebuggerEditorsProvider()
+  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider ?: FrontendXDebuggerEditorsProvider(sessionId)
 
   val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 }

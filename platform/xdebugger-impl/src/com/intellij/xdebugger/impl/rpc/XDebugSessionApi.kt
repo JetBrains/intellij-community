@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.ide.rpc.BackendDocumentId
+import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -16,6 +19,8 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?>
+
+  suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
 
   companion object {
     @JvmStatic
