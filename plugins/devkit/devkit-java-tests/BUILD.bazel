@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.devkit.java.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 java_library(
   name = "java-tests",
@@ -51,7 +57,10 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
   ],
-  runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
+  runtime_deps = [
+    ":java-tests_test_resources",
+    "//plugins/devkit/intellij.devkit:devkit",
+  ]
 )
 
 jvm_test(

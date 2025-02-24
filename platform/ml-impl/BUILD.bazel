@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "ml-impl_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "ml-impl",
   module_name = "intellij.platform.ml.impl",
@@ -74,7 +80,10 @@ jvm_library(
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
     "//platform/statistics/testFramework",
   ],
-  runtime_deps = [":ml-impl_resources"]
+  runtime_deps = [
+    ":ml-impl_resources",
+    ":ml-impl_test_resources",
+  ]
 )
 
 jvm_test(

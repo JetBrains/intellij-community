@@ -19,6 +19,12 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "ui_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "ui",
   module_name = "intellij.platform.jewel.ui",
@@ -79,7 +85,10 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":ui_resources"],
+  runtime_deps = [
+    ":ui_resources",
+    ":ui_test_resources",
+  ],
   plugins = ["@lib//:compose-plugin"]
 )
 

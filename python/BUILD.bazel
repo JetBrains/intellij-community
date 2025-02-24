@@ -160,6 +160,12 @@ jvm_resources(
   strip_prefix = "pluginResources"
 )
 
+jvm_resources(
+  name = "python-community-impl_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "python-community-impl",
   module_name = "intellij.python.community.impl",
@@ -310,7 +316,13 @@ java_library(
 
 ### auto-generated section `build intellij.python.community.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-community-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "python-community-tests",
@@ -388,6 +400,7 @@ jvm_library(
     "//python/setup-test-environment/conda:python-community-testFramework-testEnv-conda",
   ],
   runtime_deps = [
+    ":python-community-tests_test_resources",
     "//python/pluginCore/impl:python-community-plugin-impl",
     "//python:pycharm-community",
     "//plugins/IntelliLang/xml-support:xml-langInjection",
@@ -440,7 +453,13 @@ java_library(
 
 ### auto-generated section `build intellij.python.helpers.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-helpers-tests_test_resources",
+  files = glob(["helpers/testResources/**/*"]),
+  strip_prefix = "helpers/testResources"
+)
 
 jvm_test(
   name = "python-helpers-tests_test",
@@ -452,7 +471,8 @@ jvm_test(
   deps = [
     "//python:python-helpers",
     "@lib//ant/lib:ant-antlr",
-  ]
+  ],
+  runtime_deps = [":python-helpers-tests_test_resources"]
 )
 ### auto-generated section `build intellij.python.helpers.tests` end
 

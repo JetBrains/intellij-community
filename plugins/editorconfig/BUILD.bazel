@@ -13,6 +13,12 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "editorconfig_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "editorconfig",
   module_name = "intellij.editorconfig",
@@ -81,6 +87,7 @@ jvm_library(
   runtime_deps = [
     ":editorconfig_resources",
     ":editorconfig_resources_1",
+    ":editorconfig_test_resources",
   ]
 )
 

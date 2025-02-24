@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "i18n_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "i18n",
   module_name = "intellij.devkit.i18n",
@@ -57,7 +63,10 @@ jvm_library(
     "//spellchecker:spellchecker_test_lib",
     "//platform/core-ui",
   ],
-  runtime_deps = [":i18n_resources"]
+  runtime_deps = [
+    ":i18n_resources",
+    ":i18n_test_resources",
+  ]
 )
 
 jvm_test(

@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.platform.workspace.jps.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "workspace-jps-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "workspace-jps-tests",
@@ -40,7 +46,8 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
-  ]
+  ],
+  runtime_deps = [":workspace-jps-tests_test_resources"]
 )
 
 jvm_test(

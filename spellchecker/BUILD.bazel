@@ -13,6 +13,12 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "spellchecker_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
@@ -86,6 +92,7 @@ jvm_library(
   runtime_deps = [
     ":spellchecker_resources",
     ":spellchecker_resources_1",
+    ":spellchecker_test_resources",
   ]
 )
 

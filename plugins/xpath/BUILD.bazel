@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "xpath-lang/resources"
 )
 
+jvm_resources(
+  name = "xpath_test_resources",
+  files = glob(["xpath-lang/testData/**/*"]),
+  strip_prefix = "xpath-lang/testData"
+)
+
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
@@ -72,7 +78,10 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":xpath_resources"]
+  runtime_deps = [
+    ":xpath_resources",
+    ":xpath_test_resources",
+  ]
 )
 
 jvm_test(

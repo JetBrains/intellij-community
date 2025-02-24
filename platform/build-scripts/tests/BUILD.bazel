@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.platform.buildScripts.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "buildScripts-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "buildScripts-tests",
@@ -34,7 +40,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util-ex",
     "@rules_jvm//zip:build-zip",
-  ]
+  ],
+  runtime_deps = [":buildScripts-tests_test_resources"]
 )
 
 jvm_test(

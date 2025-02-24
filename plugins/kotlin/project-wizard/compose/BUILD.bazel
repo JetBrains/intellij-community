@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "kotlin-project-wizard-compose_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "kotlin-project-wizard-compose",
   module_name = "kotlin.project-wizard.compose",
@@ -52,7 +58,10 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
     "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core_test_lib",
   ],
-  runtime_deps = [":kotlin-project-wizard-compose_resources"]
+  runtime_deps = [
+    ":kotlin-project-wizard-compose_resources",
+    ":kotlin-project-wizard-compose_test_resources",
+  ]
 )
 
 jvm_test(

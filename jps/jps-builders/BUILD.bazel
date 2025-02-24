@@ -54,7 +54,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "build-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "build-tests",
@@ -87,7 +93,8 @@ jvm_library(
     "@lib//:mvstore",
     "@lib//:memoryfilesystem",
     "//jps/model-test-framework:model-testFramework",
-  ]
+  ],
+  runtime_deps = [":build-tests_test_resources"]
 )
 
 jvm_test(

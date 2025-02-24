@@ -51,7 +51,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.externalSystem.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "externalSystem-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "externalSystem-tests",
@@ -95,7 +101,8 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//plugins/gradle",
-  ]
+  ],
+  runtime_deps = [":externalSystem-tests_test_resources"]
 )
 
 jvm_test(

@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.platform.diff.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "diff-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 java_library(
   name = "diff-tests",
@@ -32,7 +38,8 @@ jvm_library(
     "//platform/core-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-  ]
+  ],
+  runtime_deps = [":diff-tests_test_resources"]
 )
 
 jvm_test(

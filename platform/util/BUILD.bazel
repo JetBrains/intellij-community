@@ -55,7 +55,19 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.util.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "util-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_resources(
+  name = "util-tests_test_resources_1",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "util-tests",
@@ -104,6 +116,10 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
+  ],
+  runtime_deps = [
+    ":util-tests_test_resources",
+    ":util-tests_test_resources_1",
   ]
 )
 

@@ -27,7 +27,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "model-serialization-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "model-serialization-tests",
@@ -51,7 +57,10 @@ jvm_library(
     "//platform/projectModel-impl",
     "//jps/model-test-framework:model-testFramework",
   ],
-  runtime_deps = ["//platform/workspace/jps"]
+  runtime_deps = [
+    ":model-serialization-tests_test_resources",
+    "//platform/workspace/jps",
+  ]
 )
 
 jvm_test(

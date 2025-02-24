@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "junit5_test_resources",
+  files = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
 jvm_library(
   name = "junit5",
   module_name = "intellij.platform.testFramework.junit5",
@@ -67,7 +73,10 @@ jvm_library(
     "//platform/testFramework/core",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":junit5_resources"]
+  runtime_deps = [
+    ":junit5_resources",
+    ":junit5_test_resources",
+  ]
 )
 
 jvm_test(

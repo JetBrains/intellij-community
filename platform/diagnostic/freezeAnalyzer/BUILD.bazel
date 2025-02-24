@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "freezeAnalyzer_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "freezeAnalyzer",
   module_name = "intellij.platform.diagnostic.freezeAnalyzer",
@@ -33,7 +39,10 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":freezeAnalyzer_resources"]
+  runtime_deps = [
+    ":freezeAnalyzer_resources",
+    ":freezeAnalyzer_test_resources",
+  ]
 )
 
 jvm_test(

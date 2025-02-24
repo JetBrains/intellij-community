@@ -72,7 +72,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.gradle.java.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 java_library(
   name = "java-tests",
@@ -129,7 +135,8 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
-  ]
+  ],
+  runtime_deps = [":java-tests_test_resources"]
 )
 
 jvm_test(

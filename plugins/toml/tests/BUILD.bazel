@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.toml.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
 
 java_library(
   name = "tests",
@@ -19,7 +25,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//plugins/grazie/src/test:grazie-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(

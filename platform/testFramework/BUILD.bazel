@@ -7,6 +7,18 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "testFramework_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_resources(
+  name = "testFramework_test_resources_1",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.testFramework",
@@ -131,7 +143,11 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/todo",
   ],
-  runtime_deps = [":testFramework_resources"]
+  runtime_deps = [
+    ":testFramework_resources",
+    ":testFramework_test_resources",
+    ":testFramework_test_resources_1",
+  ]
 )
 
 jvm_test(

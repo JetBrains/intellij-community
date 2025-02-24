@@ -13,6 +13,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "vcs-github_test_resources",
+  files = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
 jvm_library(
   name = "vcs-github",
   module_name = "intellij.vcs.github",
@@ -146,6 +152,7 @@ jvm_library(
   runtime_deps = [
     ":vcs-github_resources",
     ":vcs-github_resources_1",
+    ":vcs-github_test_resources",
   ]
 )
 

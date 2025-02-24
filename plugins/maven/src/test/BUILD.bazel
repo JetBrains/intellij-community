@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.maven.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "maven-tests_test_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 java_library(
   name = "maven-tests",
@@ -51,7 +57,8 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "//platform/statistics/testFramework",
-  ]
+  ],
+  runtime_deps = [":maven-tests_test_resources"]
 )
 
 jvm_test(

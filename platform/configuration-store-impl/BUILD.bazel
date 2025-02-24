@@ -49,7 +49,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "configurationStore-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "configurationStore-tests",
@@ -86,7 +92,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//java/java-impl:impl",
-  ]
+  ],
+  runtime_deps = [":configurationStore-tests_test_resources"]
 )
 
 jvm_test(

@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.services.systemPython` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-community-services-systemPython_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 jvm_library(
   name = "python-community-services-systemPython",
@@ -59,7 +65,8 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":python-community-services-systemPython_test_resources"]
 )
 
 jvm_test(

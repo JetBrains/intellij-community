@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.markdown.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["data/**/*"]),
+  strip_prefix = "data"
+)
 
 java_library(
   name = "tests",
@@ -49,7 +55,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//xml/testFramework",
-  ]
+  ],
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(

@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "vcs-gitlab_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "vcs-gitlab",
   module_name = "intellij.vcs.gitlab",
@@ -106,7 +112,10 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
   ],
-  runtime_deps = [":vcs-gitlab_resources"]
+  runtime_deps = [
+    ":vcs-gitlab_resources",
+    ":vcs-gitlab_test_resources",
+  ]
 )
 
 jvm_test(

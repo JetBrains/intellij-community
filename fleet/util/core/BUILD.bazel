@@ -16,8 +16,6 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/multiplatform.shims:multiplatform-shims",
-    "//fleet/preferences",
-    "//fleet/util/os:fleet-util-os",
     "//fleet/fastutil",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-datetime-jvm",

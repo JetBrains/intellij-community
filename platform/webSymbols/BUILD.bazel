@@ -71,7 +71,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.webSymbols.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "webSymbols-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 jvm_test(
   name = "webSymbols-tests_test",
@@ -102,6 +108,7 @@ jvm_test(
     "//platform/webSymbols",
     "//platform/webSymbols:webSymbols-testFramework",
     "//java/java-runtime:rt",
-  ]
+  ],
+  runtime_deps = [":webSymbols-tests_test_resources"]
 )
 ### auto-generated section `build intellij.platform.webSymbols.tests` end

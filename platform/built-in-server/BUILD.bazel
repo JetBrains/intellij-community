@@ -44,7 +44,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.builtInServer.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "builtInServer-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "builtInServer-tests",
@@ -79,7 +85,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-  ]
+  ],
+  runtime_deps = [":builtInServer-tests_test_resources"]
 )
 
 jvm_test(

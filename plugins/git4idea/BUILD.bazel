@@ -19,6 +19,12 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "vcs-git_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "vcs-git",
   module_name = "intellij.vcs.git",
@@ -183,6 +189,7 @@ jvm_library(
   runtime_deps = [
     ":vcs-git_resources",
     ":vcs-git_resources_1",
+    ":vcs-git_test_resources",
   ]
 )
 

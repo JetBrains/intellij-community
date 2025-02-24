@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "filePrediction_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "filePrediction",
   module_name = "intellij.filePrediction",
@@ -67,6 +73,9 @@ jvm_test(
     "//platform/lang-impl",
     "//platform/statistics/testFramework",
   ],
-  runtime_deps = [":filePrediction_resources"]
+  runtime_deps = [
+    ":filePrediction_resources",
+    ":filePrediction_test_resources",
+  ]
 )
 ### auto-generated section `build intellij.filePrediction` end

@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.grazie.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "grazie-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "grazie-tests",
@@ -41,7 +47,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//images/backend.svg:backend-svg",
-  ]
+  ],
+  runtime_deps = [":grazie-tests_test_resources"]
 )
 
 jvm_test(

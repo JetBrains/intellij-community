@@ -1,6 +1,12 @@
 ### auto-generated section `build kotlin.gradle.gradle.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "kotlin-gradle-gradle-tests_test_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 java_library(
   name = "kotlin-gradle-gradle-tests",
@@ -77,7 +83,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-gradle-gradle-tests_test_resources"]
 )
 
 jvm_test(

@@ -13,6 +13,12 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "testng_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "testng",
   module_name = "intellij.testng",
@@ -89,6 +95,7 @@ jvm_library(
   runtime_deps = [
     ":testng_resources",
     ":testng_resources_1",
+    ":testng_test_resources",
   ]
 )
 
