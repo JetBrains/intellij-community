@@ -97,6 +97,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
 
     panel {
       row {
+        @Suppress("DialogTitleCapitalization")
         label(RegExpBundle.message("regexp.dialog.search.template"))
           .resizableColumn()
           .align(AlignX.FILL)
@@ -243,7 +244,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         shortcutSet = CustomShortcutSet(it)
       }
       myGroup = DefaultActionGroup().apply {
-        FindModel.SearchContext.values().forEach { add(MyToggleAction(it, this@MyFilterAction)) }
+        FindModel.SearchContext.entries.forEach { add(MyToggleAction(it, this@MyFilterAction)) }
         isPopup = true
       }
     }
