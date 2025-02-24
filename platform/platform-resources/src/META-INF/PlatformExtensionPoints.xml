@@ -609,6 +609,9 @@
     <extensionPoint name="frontendDocumentIdRegistry" interface="com.intellij.ide.rpc.FrontendDocumentIdRegistry"
                     dynamic="true"/>
 
+    <extensionPoint name="frontendEditorBinder" interface="com.intellij.ide.rpc.FrontendEditorBinder"
+                    dynamic="true"/>
+
     <extensionPoint name="backendDocumentBinder" interface="com.intellij.ide.rpc.BackendDocumentBinder"
                     dynamic="true"/>
 
