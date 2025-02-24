@@ -269,7 +269,7 @@ object LessonUtil {
 
   fun rawShift() = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
 
-  val breakpointXRange: (width: Int) -> IntRange = { IntRange(14, it - 30) }
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(5, it - 38) }
 
   fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
                                               logicalPosition: () -> LogicalPosition
