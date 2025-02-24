@@ -201,7 +201,7 @@ public final class RegionUrlMapper {
 
   /**
    * Mapper for a given region.
-   * Represents the contents of the JSON configuration loaded for a particular region,
+   * Represents the contents of the JSON configuration loaded for a particular region
    * and provides the methods for applying the mapping rules found in that configuration.
    */
   public static final class RegionMapping {
