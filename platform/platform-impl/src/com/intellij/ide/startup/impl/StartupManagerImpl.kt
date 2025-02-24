@@ -3,6 +3,7 @@
 
 package com.intellij.ide.startup.impl
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.diagnostic.*
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -384,7 +385,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     if (!freezePostStartupActivities) {
       synchronized(lock) {
         if (!freezePostStartupActivities) {
-          postStartupActivities.add(runnable)
+          postStartupActivities.add(captureThreadContext(runnable))
           return
         }
       }
