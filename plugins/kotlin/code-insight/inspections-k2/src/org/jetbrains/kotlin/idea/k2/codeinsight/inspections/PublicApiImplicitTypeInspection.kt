@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
@@ -52,11 +52,10 @@ class PublicApiImplicitTypeInspection(
 
                 analyze(declaration) {
                     if (shouldReportDeclarationVisibility(declaration)) {
-                        val fix = IntentionWrapper(
+                        val fix = LocalQuickFix.from(
                             SpecifyExplicitTypeQuickFix(declaration, CallableReturnTypeUpdaterUtils.getTypeInfo(declaration))
-                                .asIntention()
                         )
-                        holder.registerProblem(nameIdentifier, problemText, fix)
+                        holder.registerProblem(nameIdentifier, problemText, fix!!)
                     }
                 }
             }
