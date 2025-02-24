@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.ui.AbstractTitledSeparatorWithIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.MouseEventHandler;
@@ -21,13 +21,8 @@ import java.util.Objects;
 import static com.intellij.icons.AllIcons.General.ArrowDown;
 import static com.intellij.icons.AllIcons.General.ArrowRight;
 
-/**
- * @deprecated This component confuses users, because it's not obvious that it allows to change size like by a splitter.
- * Commit form (the only place it's used) is going to be revised/removed in the future. After that this component will be removed
- */
-@Deprecated(forRemoval = true) // Remove PseudoSplitter together with it.
 @ApiStatus.Internal
-public abstract class SplitterWithSecondHideable {
+abstract class SplitterWithSecondHideable {
   public interface OnOffListener {
     void on(int hideableHeight);
     void off(int hideableHeight);
@@ -39,10 +34,10 @@ public abstract class SplitterWithSecondHideable {
   private final @NotNull JPanel myFictivePanel;
   private float myPreviousProportion;
 
-  public SplitterWithSecondHideable(boolean vertical,
-                                    @NotNull @NlsContexts.Separator String separatorText,
-                                    @NotNull JComponent firstComponent,
-                                    @NotNull OnOffListener listener) {
+  SplitterWithSecondHideable(boolean vertical,
+                             @NotNull @NlsContexts.Separator String separatorText,
+                             @NotNull JComponent firstComponent,
+                             @NotNull OnOffListener listener) {
     myListener = listener;
     myFictivePanel = Panels.simplePanel();
     myTitledSeparator = new MyTitledSeparator(separatorText, vertical);
@@ -75,12 +70,20 @@ public abstract class SplitterWithSecondHideable {
   }
 
   public boolean isOn() {
-    return myTitledSeparator.myOn;
+    return myTitledSeparator.isOn();
   }
 
   private final class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull @NlsContexts.Separator String separatorText, boolean vertical) {
       super(ArrowRight, vertical ? ArrowDown : Objects.requireNonNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
+    }
+
+    public boolean isOn() {
+      return myOn;
+    }
+
+    public JSeparator getSeparator() {
+      return mySeparator;
     }
 
     @Override
@@ -133,13 +136,13 @@ public abstract class SplitterWithSecondHideable {
     private final @NotNull MouseEventHandler myMouseListener = new MouseEventHandler() {
       @Override
       public void mouseEntered(MouseEvent event) {
-        myTitledSeparator.mySeparator.setCursor(new Cursor(isOn() ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
+        myTitledSeparator.getSeparator().setCursor(new Cursor(isOn() ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
         super.mouseEntered(event);
       }
 
       @Override
       public void mouseExited(MouseEvent event) {
-        myTitledSeparator.mySeparator.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        myTitledSeparator.getSeparator().setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         super.mouseExited(event);
       }
 
@@ -156,8 +159,8 @@ public abstract class SplitterWithSecondHideable {
 
     MySplitter(boolean vertical) {
       super(vertical);
-      myTitledSeparator.mySeparator.addMouseListener(myMouseListener);
-      myTitledSeparator.mySeparator.addMouseMotionListener(myMouseListener);
+      myTitledSeparator.getSeparator().addMouseListener(myMouseListener);
+      myTitledSeparator.getSeparator().addMouseMotionListener(myMouseListener);
     }
 
     @Override
