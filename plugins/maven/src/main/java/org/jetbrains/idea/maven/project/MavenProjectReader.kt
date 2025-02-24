@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -10,13 +9,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -39,17 +36,6 @@ class MavenProjectReader(private val myProject: Project) {
   private val myCache = MavenReadProjectCache()
   private val myReadHelper: MavenProjectModelReadHelper = MavenUtil.createModelReadHelper(myProject)
   private var mySettingsProfilesCache: SettingsProfilesCache? = null
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use async method", ReplaceWith("readProjectAsync(generalSettings, file, explicitProfiles, locator) }"))
-  fun readProject(
-    generalSettings: MavenGeneralSettings,
-    file: VirtualFile,
-    explicitProfiles: MavenExplicitProfiles,
-    locator: MavenProjectReaderProjectLocator,
-  ): MavenProjectReaderResult {
-    return runBlockingMaybeCancellable { readProjectAsync(generalSettings, file, explicitProfiles, locator) }
-  }
 
   suspend fun readProjectAsync(
     generalSettings: MavenGeneralSettings,
@@ -138,14 +124,14 @@ class MavenProjectReader(private val myProject: Project) {
       val settingsAlwaysOnProfiles: MutableSet<String> = HashSet()
 
       for (each in generalSettings.effectiveSettingsFiles) {
-        collectProfilesFromSettingsXmlOrProfilesXml(each,
-                                                    projectFile,
-                                                    "settings",
-                                                    false,
-                                                    MavenConstants.PROFILE_FROM_SETTINGS_XML,
-                                                    settingsProfiles,
-                                                    settingsAlwaysOnProfiles,
-                                                    settingsProblems)
+        collectProfilesFromSettingsXml(each,
+                                       projectFile,
+                                       "settings",
+                                       false,
+                                       MavenConstants.PROFILE_FROM_SETTINGS_XML,
+                                       settingsProfiles,
+                                       settingsAlwaysOnProfiles,
+                                       settingsProblems)
       }
       mySettingsProfilesCache = SettingsProfilesCache(settingsProfiles, settingsAlwaysOnProfiles, settingsProblems)
     }
@@ -180,19 +166,18 @@ class MavenProjectReader(private val myProject: Project) {
     recursionGuard.add(file)
 
     try {
-      val parentDesc = arrayOfNulls<MavenParentDesc>(1)
+      var parentDesc: MavenParentDesc? = null
       val parent = model.parent
       if (parent != null) {
         if (model.mavenId == parent.mavenId) {
-          problems
-            .add(MavenProjectProblem.createProblem(
+          problems.add(MavenProjectProblem.createProblem(
               file.path,
               MavenProjectBundle.message("maven.project.problem.selfInheritance"),
               MavenProjectProblem.ProblemType.PARENT,
               true))
           return model
         }
-        parentDesc[0] = MavenParentDesc(parent.mavenId, parent.relativePath)
+        parentDesc = MavenParentDesc(parent.mavenId, parent.relativePath)
       }
 
       val parentModelWithProblems =
@@ -203,7 +188,7 @@ class MavenProjectReader(private val myProject: Project) {
 
           override suspend fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
             val parentModel = doReadProjectModel(myProject, parentFile, true).model
-            val parentId = parentDesc[0]!!.parentId
+            val parentId = parentDesc!!.parentId
             if (parentId != parentModel.mavenId) return null
 
             return super.processRelativeParent(parentFile)
@@ -217,7 +202,7 @@ class MavenProjectReader(private val myProject: Project) {
             val result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first
             return Pair.create(parentFile, result)
           }
-        }.process(generalSettings, file, parentDesc[0])
+        }.process(generalSettings, file, parentDesc)
 
       if (parentModelWithProblems == null) return model // no parent or parent not found;
 
@@ -287,7 +272,7 @@ class MavenProjectReader(private val myProject: Project) {
     try {
       result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }
     }
-    catch (ignore: MavenProcessCanceledException) {
+    catch (_: MavenProcessCanceledException) {
     }
     finally {
       manager.release(embedder)
@@ -342,7 +327,7 @@ class MavenProjectReader(private val myProject: Project) {
 
     readModelBody(result, result.build, xmlProject, file)
 
-    result.profiles = collectProfiles(file, xmlProject, problems, alwaysOnProfiles)
+    result.profiles = collectProfiles(file, xmlProject)
     return RawModelReadResult(result, problems, alwaysOnProfiles)
   }
 
@@ -447,7 +432,7 @@ class MavenProjectReader(private val myProject: Project) {
     }
 
     for (each in resources) {
-      if (each.directory.isNullOrBlank()) continue
+      if (each.directory.isBlank()) continue
       result.add(each)
     }
     return result
@@ -457,31 +442,13 @@ class MavenProjectReader(private val myProject: Project) {
     return MavenResource(directory, false, null, emptyList(), emptyList())
   }
 
-  private suspend fun collectProfiles(
-    projectFile: VirtualFile,
-    xmlProject: Element,
-    problems: MutableCollection<MavenProjectProblem>,
-    alwaysOnProfiles: MutableSet<String>,
-  ): List<MavenProfile> {
+  private fun collectProfiles(projectFile: VirtualFile, xmlProject: Element): List<MavenProfile> {
     val result: MutableList<MavenProfile> = ArrayList()
     collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM, projectFile)
-
-    val profilesFile = MavenUtil.findProfilesXmlFile(projectFile)
-    if (profilesFile != null) {
-      collectProfilesFromSettingsXmlOrProfilesXml(profilesFile,
-                                                  projectFile,
-                                                  "profilesXml",
-                                                  true,
-                                                  MavenConstants.PROFILE_FROM_PROFILES_XML,
-                                                  result,
-                                                  alwaysOnProfiles,
-                                                  problems)
-    }
-
     return result
   }
 
-  private suspend fun collectProfilesFromSettingsXmlOrProfilesXml(
+  private suspend fun collectProfilesFromSettingsXml(
     profilesFile: VirtualFile,
     projectsFile: VirtualFile,
     rootElementName: String,
@@ -563,7 +530,7 @@ class MavenProjectReader(private val myProject: Project) {
     return this.isDirectory && this.children.any { it.name == MavenConstants.POM_XML }
   }
 
-  private fun findModules_4_0_0(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
+  private fun findModules(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
 
   private fun Element.getModelVersion() = this.getChild("modelVersion")?.value
 
@@ -574,7 +541,7 @@ class MavenProjectReader(private val myProject: Project) {
       val subprojects = findChildrenValuesByPath(xmlModel, "subprojects", "subproject")
       if (!subprojects.isEmpty()) return subprojects
 
-      val modules = findModules_4_0_0(xmlModel)
+      val modules = findModules(xmlModel)
       if (!modules.isEmpty()) return modules
 
       if (MavenConstants.TYPE_POM != xmlModel.getChild("packaging")?.value) return emptyList()
@@ -584,7 +551,7 @@ class MavenProjectReader(private val myProject: Project) {
       return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
     }
 
-    return findModules_4_0_0(xmlModel)
+    return findModules(xmlModel)
   }
 
   private fun readModelBody(mavenModelBase: MavenModelBase, mavenBuildBase: MavenBuildBase, xmlModel: Element, projectFile: VirtualFile) {
@@ -661,28 +628,5 @@ class MavenProjectReader(private val myProject: Project) {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.path, type))
       }
     })
-  }
-
-
-  // used in third-party plugins
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link MavenProjectResolver}")
-  @Throws(MavenProcessCanceledException::class)
-  fun resolveProject(
-    generalSettings: MavenGeneralSettings,
-    embedder: MavenEmbedderWrapper,
-    files: Collection<VirtualFile>,
-    explicitProfiles: MavenExplicitProfiles,
-    locator: MavenProjectReaderProjectLocator,
-  ): Collection<MavenProjectReaderResult> {
-    val resolverResult = MavenProjectResolver(myProject).resolveProjectSync(embedder, files, explicitProfiles)
-    return resolverResult.map {
-      MavenProjectReaderResult(
-        it.mavenModel,
-        it.nativeModelMap,
-        it.activatedProfiles,
-        it.readingProblems,
-      )
-    }
   }
 }
