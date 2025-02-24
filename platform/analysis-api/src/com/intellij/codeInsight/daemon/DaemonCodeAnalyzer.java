@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.lang.annotation.Annotation;
@@ -119,8 +119,7 @@ public abstract class DaemonCodeAnalyzer {
      * Internal class for reporting annotator-related statistics
      */
     @ApiStatus.Internal
-    final
-    class AnnotatorStatistics {
+    final class AnnotatorStatistics {
       /** the annotator this statistics is generated for */
       public final Annotator annotator;
       /** timestamp (in {@link System#nanoTime} sense) of the {@link #annotator} creation */
@@ -136,7 +135,7 @@ public abstract class DaemonCodeAnalyzer {
       /** timestamp (in {@link System#nanoTime} sense) of the moment when all the {@link Annotator#annotate(PsiElement, AnnotationHolder)} methods are called */
       public long annotatorFinishStamp;
 
-      AnnotatorStatistics(@NotNull Annotator annotator) {
+      public AnnotatorStatistics(@NotNull Annotator annotator) {
         this.annotator = annotator;
       }
 

@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +33,8 @@ public abstract class InspectionElementsMerger {
     return additionalMerger;
   }
 
-  static void addMerger(@NotNull String shortName, @NotNull InspectionElementsMerger merger) {
+  @ApiStatus.Internal
+  public static void addMerger(@NotNull String shortName, @NotNull InspectionElementsMerger merger) {
     ourAdditionalMergers.put(shortName, merger);
   }
 

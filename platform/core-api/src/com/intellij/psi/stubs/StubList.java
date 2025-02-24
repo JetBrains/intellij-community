@@ -37,13 +37,13 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
 
   private @Nullable TempState myTempState = new TempState();
 
-  StubList(int initialCapacity) {
+  public StubList(int initialCapacity) {
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
     myJoinedChildrenList = new MostlyUShortIntList(initialCapacity);
     myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
-  @NotNull IElementType getStubElementType(int id) {
+  public @NotNull IElementType getStubElementType(int id) {
     return IElementType.find(getStubTypeIndex(id));
   }
 
@@ -63,11 +63,11 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     return myStubData.get(childrenStartIndex(id));
   }
 
-  int getChildrenCount(int id) {
+  public int getChildrenCount(int id) {
     return myStubData.get(childrenCountIndex(id));
   }
 
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     int stubId = size();
     stub.id = stubId;
 
@@ -83,7 +83,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     return parentId >= 0 && childId != parentId + 1 && getChildrenCount(parentId) == 0;
   }
 
-  void addStub(int childId, int parentId, short elementTypeIndex) {
+  public void addStub(int childId, int parentId, short elementTypeIndex) {
     assert myTempState != null;
 
     myStubData.add(elementTypeIndex); myStubData.add(0); myStubData.add(0);
@@ -130,7 +130,8 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  void prepareForChildren(int parentId, int childrenCount) {
+  @ApiStatus.Internal
+  public void prepareForChildren(int parentId, int childrenCount) {
     assert myTempState != null;
     myTempState.prepareForChildren(parentId, childrenCount);
   }
@@ -217,11 +218,12 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     return (List)this;
   }
 
-  boolean isChildrenLayoutOptimal() {
+  @ApiStatus.Internal
+  public boolean isChildrenLayoutOptimal() {
     return myTempState == null || myTempState.myTempJoinedChildrenMap == null;
   }
 
-  boolean areChildrenNonAdjacent(int childId, int parentId) {
+  public boolean areChildrenNonAdjacent(int childId, int parentId) {
     return getParentIndex(childId - 1) != parentId;
   }
 
@@ -323,7 +325,7 @@ final class MaterialStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     super.addStub(stub, parent, type);
     myPlainList.add(stub);
   }

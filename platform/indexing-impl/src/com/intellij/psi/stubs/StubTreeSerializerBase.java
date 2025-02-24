@@ -28,8 +28,7 @@ public abstract class StubTreeSerializerBase<SerializationState> {
     stubStringInterner = useStubStringInterner ? StubStringInterner.getInstance() : UnaryOperator.identity();
   }
 
-  @NotNull
-  public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
+  public @NotNull Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
 

@@ -199,7 +199,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   /**
    * makes range marker without creating the document (which could be expensive)
    */
-  static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
+  @ApiStatus.Internal
+  public static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
                                                      int offset,
                                                      int startLine,
                                                      int startCol,
@@ -224,8 +225,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     tree.addInterval(marker, offset, offset, false, false, false, 0);
 
     return marker;
-
   }
+
   public boolean setAcceptSlashR(boolean accept) {
     try {
       return myAcceptSlashR;

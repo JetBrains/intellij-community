@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -585,7 +585,8 @@ public final class LoadTextUtil {
     }
   }
 
-  static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
+  @ApiStatus.Internal
+  public static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();

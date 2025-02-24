@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public abstract class InjectedEditorWindowTracker {
-  static InjectedEditorWindowTracker getInstance() {
+  public static InjectedEditorWindowTracker getInstance() {
     return ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class);
   }
 

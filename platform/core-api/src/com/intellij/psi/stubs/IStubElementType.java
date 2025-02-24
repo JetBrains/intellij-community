@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +61,13 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
     }
   }
 
-  static void dropRegisteredTypes() {
+  @ApiStatus.Internal
+  public static void dropRegisteredTypes() {
     lazyExternalIds = NOT_INITIALIZED_SET;
   }
 
-  static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
+  @ApiStatus.Internal
+  public static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
 
     Logger logger = Logger.getInstance(IStubElementType.class);
