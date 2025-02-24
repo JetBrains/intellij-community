@@ -22,6 +22,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyPackageInstallUtils {
+  fun checkIsInstalled(project: Project, sdk: Sdk, vararg packageNames: String): Boolean {
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    return packageManager.installedPackages.any { it.name in packageNames }
+  }
+
   fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
     if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
       return false
