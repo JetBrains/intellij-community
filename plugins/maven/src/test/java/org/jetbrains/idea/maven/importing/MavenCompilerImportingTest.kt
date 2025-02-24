@@ -1131,4 +1131,57 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   }
 
+  @Test
+  fun testCompilerArgumentsShouldBeSetForMainAndAdditionalSources() = runBlocking {
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/java17")
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <executions>
+              <execution>
+                        <id>default-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>11</release>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>java17-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>17</release>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${"$"}{project.basedir}/src/main/java17</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                            <compilerArgs>
+                                <arg>--blablabla</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+             </executions>
+             
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test", "project.java17-compile")
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")))
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.java17-compile")),
+                                    "--blablabla")
+  }
+
 }
