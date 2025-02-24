@@ -9,8 +9,8 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 
@@ -356,14 +356,14 @@ object KotlinPluginBuilder {
         when (kind) {
           KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection
-            replace(
+            checkedReplace(
               oldText = text,
               regex = "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
               newText = "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>",
             )
           KotlinPluginKind.AS ->
             //noinspection SpellCheckingInspection
-            replace(
+            checkedReplace(
               oldText = text,
               regex = "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
               newText = """<plugin id="com.intellij.modules.androidstudio"/>""",
@@ -444,19 +444,6 @@ object KotlinPluginBuilder {
       addition?.invoke(spec)
     }
   }
-}
-
-private fun replace(oldText: String, regex: String, newText: String): String {
-  val result = oldText.replaceFirst(Regex(regex), newText)
-  if (result == oldText) {
-    if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
-      // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
-      return result
-    }
-
-    throw IllegalStateException("Cannot find '$regex' in '$oldText'")
-  }
-  return result
 }
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
