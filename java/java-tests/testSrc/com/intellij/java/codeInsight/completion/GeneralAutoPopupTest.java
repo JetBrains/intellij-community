@@ -145,6 +145,8 @@ public class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   public static class CountingContributor extends CompletionContributor {
     @Override
     public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+      RuntimeException exception = new RuntimeException();
+      LOG.warn("Call to fillCompletionVariants", exception);
       ourCount.incrementAndGet();
     }
 
