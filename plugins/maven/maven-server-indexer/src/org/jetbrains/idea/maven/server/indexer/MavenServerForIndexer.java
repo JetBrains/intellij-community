@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server.indexer;
 
 import org.codehaus.plexus.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
@@ -89,11 +88,6 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
       myPlexusContainer = new DefaultPlexusContainer(config);
     }
     return myPlexusContainer;
-  }
-
-  @Override
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException {
-    throw new UnsupportedOperationException("indexing server");
   }
 
   @Override

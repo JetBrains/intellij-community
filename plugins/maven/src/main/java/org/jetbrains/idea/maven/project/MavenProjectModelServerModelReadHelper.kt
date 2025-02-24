@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
-import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerResultTransformer
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import java.io.File
@@ -25,8 +24,10 @@ open class MavenProjectModelServerModelReadHelper(protected val myProject: Proje
     return m
   }
 
-  override suspend fun assembleInheritance(projectPomDir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel {
-    return MavenServerConnector.assembleInheritance(myProject, projectPomDir, model, parent)
+  override suspend fun assembleInheritance(basedir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel {
+    val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
+    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.toString())
+    return embedder.assembleInheritance(model, parent, MavenRemoteObjectWrapper.ourToken)
   }
 
   override fun filterModules(modules: List<String>, mavenModuleFile: VirtualFile): List<String> {

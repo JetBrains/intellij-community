@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.rmi.RemoteException;
@@ -35,17 +34,6 @@ public class Maven3ServerImpl extends MavenServerBase {
       return result;
     }
     catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
   }

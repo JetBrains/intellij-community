@@ -106,4 +106,8 @@ public interface MavenServerEmbedder extends Remote {
                                          @NotNull MavenExplicitProfiles explicitProfiles,
                                          @NotNull HashSet<@NotNull String> alwaysOnProfiles,
                                          @NotNull  MavenToken token) throws RemoteException;
+
+  @NotNull
+  MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token)
+    throws RemoteException;
 }

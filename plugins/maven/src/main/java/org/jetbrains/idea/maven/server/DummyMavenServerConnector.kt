@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenIndexId
-import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
 import org.jetbrains.idea.maven.server.security.MavenToken
@@ -83,10 +82,6 @@ class DummyMavenServer(val project: Project) : MavenServer {
 
   override fun createIndexer(token: MavenToken?): MavenServerIndexer {
     return DummyIndexer()
-  }
-
-  override fun assembleInheritance(model: MavenModel, parentModel: MavenModel?, token: MavenToken?): MavenModel {
-    return model
   }
 
   override fun createPullLogger(token: MavenToken?): MavenPullServerLogger? {
