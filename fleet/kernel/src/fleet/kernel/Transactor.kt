@@ -7,6 +7,7 @@ import fleet.kernel.rebase.OfferContributorEntity
 import fleet.kernel.rebase.RemoteKernelConnectionEntity
 import fleet.kernel.rebase.WorkspaceClockEntity
 import fleet.reporting.shared.runtime.currentSpan
+import fleet.reporting.shared.tracing.completeWithResult
 import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.tracing.*
 import fleet.tracing.runtime.Span

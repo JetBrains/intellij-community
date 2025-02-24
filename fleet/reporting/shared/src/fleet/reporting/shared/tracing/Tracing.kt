@@ -15,7 +15,7 @@ import kotlin.coroutines.coroutineContext
 private inline fun <T> withSpan(span: CompletableSpan, body: (Span) -> T): T =
   runCatching { body(span) }.also { span.completeWithResult(it) }.getOrThrow()
 
-private fun CompletableSpan.completeWithResult(result: Result<*>) {
+fun CompletableSpan.completeWithResult(result: Result<*>) {
   result
     .onSuccess {
       complete(SpanStatus.Success, null)
