@@ -78,6 +78,11 @@ class IdeaPluginDescriptorImpl(
   @JvmField
   internal val url: String? = raw.url
 
+  /**
+   * aka `<depends>` elements from the plugin.xml
+   *
+   * Note that it's different from [dependencies]
+   */
   @JvmField
   val pluginDependencies: List<PluginDependency>
 
@@ -159,6 +164,11 @@ class IdeaPluginDescriptorImpl(
     raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(it) }
     ?: PluginContentDescriptor.EMPTY
 
+  /**
+   * aka `<dependencies>` element from plugin.xml
+   * 
+   * Note that it's different from [pluginDependencies]
+   */
   @JvmField
   val dependencies: ModuleDependenciesDescriptor = raw.dependencies
 
