@@ -216,8 +216,8 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
                         // TODO: KTIJ-33073 the result of `getKotlinRunConfiguration` is cached and reused in `getKotlinRunConfigurationInDumbMode`,
                         // so effectively this check is useless. To properly check the dumb mode the test should either drop caches between such invocations
                         // or check them separately and only in the dumb mode
-                        val actualClassInDumbMode = getKotlinRunConfigurationInDumbMode(declaration, platform)?.runClass
-                        actualClassesInDumb.addIfNotNull(actualClassInDumbMode)
+                        //val actualClassInDumbMode = getKotlinRunConfigurationInDumbMode(declaration, platform)?.runClass
+                        //actualClassesInDumb.addIfNotNull(actualClassInDumbMode)
                     }
                     text.startsWith(NO_CONFIGURATION_ATTRIBUTE) -> {
                         check(declaration != null)
@@ -236,7 +236,7 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
 
         testFile.accept(visitor)
         assertEquals(expectedClasses, actualClasses)
-        assertEquals(expectedClasses, actualClassesInDumb)
+        //assertEquals(expectedClasses, actualClassesInDumb)
         expectedFileRun?.let {
             val actualFileRun = getKotlinRunConfiguration(testFile)?.runClass
 
