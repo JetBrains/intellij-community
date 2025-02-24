@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryContent
@@ -31,6 +32,9 @@ import kotlin.test.assertFalse
 
 // run with intellij.idea.ultimate.tests.main classpath
 class PluginDescriptorTest {
+  @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
+  private class TestDataRef // for easy navigation
+
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
@@ -39,7 +43,7 @@ class PluginDescriptorTest {
   private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun descriptorLoading() {
+  fun `asp descriptor loads`() {
     val descriptor = loadDescriptorFromTestDataDir("asp.jar")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo("com.jetbrains.plugins.asp")
@@ -47,18 +51,21 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun testOptionalDescriptors() {
-    val descriptor = loadDescriptorFromTestDataDir("family")
+  fun `descriptor with depends-optional loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("dependsOptional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies.size).isEqualTo(1)
+    assertThat(descriptor.pluginDependencies)
+      .singleElement()
+      .extracting { it.isOptional }.isEqualTo(true)
   }
 
   @Test
-  fun testMultipleOptionalDescriptors() {
-    val descriptor = loadDescriptorFromTestDataDir("multipleOptionalDescriptors")
+  fun `descriptor with multiple depends-optional loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("dependsOptionalMultiple")
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.pluginDependencies
     assertThat(pluginDependencies).hasSize(2)
+    assertThat(pluginDependencies.map { it.isOptional }).allMatch { it == true }
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
   }
   
