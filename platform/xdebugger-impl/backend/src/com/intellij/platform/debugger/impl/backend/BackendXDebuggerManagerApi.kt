@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionInfoDto
@@ -33,7 +34,9 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         return@mapLatest null
       }
       val entity = currentSession.entity.await()
-      XDebugSessionDto(entity.sessionId, currentSession.debugProcess.editorsProvider)
+      val editorsProvider = currentSession.debugProcess.editorsProvider
+      val fileTypeId = editorsProvider.fileType.name
+      XDebugSessionDto(entity.sessionId, XDebuggerEditorsProviderDto(fileTypeId, editorsProvider))
     }
   }
 

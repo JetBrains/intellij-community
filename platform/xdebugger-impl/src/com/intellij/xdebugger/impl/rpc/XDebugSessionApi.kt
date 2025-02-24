@@ -38,6 +38,13 @@ data class XDebugSessionId(val id: UID)
 @Serializable
 data class XDebugSessionDto(
   val id: XDebugSessionId,
+  val editorsProviderDto: XDebuggerEditorsProviderDto,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerEditorsProviderDto(
+  val fileTypeId: String,
   // TODO[IJPL-160146]: support [XDebuggerEditorsProvider] for local case in the same way as for remote
   @Transient val editorsProvider: XDebuggerEditorsProvider? = null,
 )

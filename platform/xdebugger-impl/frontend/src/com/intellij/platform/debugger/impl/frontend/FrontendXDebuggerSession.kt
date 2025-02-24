@@ -20,7 +20,7 @@ internal class FrontendXDebuggerSession(
   private val cs: CoroutineScope,
   sessionDto: XDebugSessionDto,
 ) {
-  private val localEditorsProvider = sessionDto.editorsProvider
+  private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   private val sessionId = sessionDto.id
 
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
@@ -38,7 +38,8 @@ internal class FrontendXDebuggerSession(
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
-  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider ?: FrontendXDebuggerEditorsProvider(sessionId)
+  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
+                                                  ?: FrontendXDebuggerEditorsProvider(sessionId, sessionDto.editorsProviderDto.fileTypeId)
 
   val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 }
