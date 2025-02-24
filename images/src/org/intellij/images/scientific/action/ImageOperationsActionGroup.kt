@@ -1,0 +1,79 @@
+package org.intellij.images.scientific.action
+
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import org.intellij.images.ImagesBundle
+import org.intellij.images.scientific.ScientificUtils
+import java.awt.BorderLayout
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
+
+  private var selectedMode: String = RGB
+  private val availableModes = listOf(RGB, BGR, GRAYSCALE)
+
+  init {
+    templatePresentation.apply {
+      isPerformGroup = true
+      isPopup = true
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val component = e.inputEvent?.source as? JComponent ?: return
+    JBPopupFactory.getInstance().createActionGroupPopup(
+      null,
+      createPopupActionGroup(),
+      e.dataContext,
+      null,
+      true,
+      null
+    ).showUnderneathOf(component)
+  }
+
+  override fun update(e: AnActionEvent) {
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val comboBox = ComboBox(DefaultComboBoxModel(availableModes.toTypedArray())).apply {
+      selectedItem = selectedMode
+      isOpaque = false
+      addActionListener {
+        selectedMode = selectedItem as String
+      }
+    }
+    return JPanel(BorderLayout()).apply {
+      isOpaque = false
+      border = null
+      add(comboBox, BorderLayout.CENTER)
+    }
+  }
+
+  private fun createPopupActionGroup(): DefaultActionGroup {
+    val actionGroup = DefaultActionGroup()
+    availableModes.forEach { mode ->
+      actionGroup.add(
+        DumbAwareAction.create(mode) {
+          selectedMode = mode
+        }
+      )
+    }
+    return actionGroup
+  }
+
+  companion object {
+    private val RGB: String = ImagesBundle.message("image.color.mode.rgb")
+    private val BGR: String = ImagesBundle.message("image.color.mode.bgr")
+    private val GRAYSCALE: String = ImagesBundle.message("image.color.mode.grayscale")
+  }
+}

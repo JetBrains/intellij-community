@@ -157,6 +157,8 @@
               id="Images.CopyImageAction"
               icon="AllIcons.Actions.Copy">
       </action>
+      <group id="Images.ImageOperationsGroup"
+             class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
     </group>
     <group id="Images.EditorToolbar">
       <reference ref="Images.ToggleTransparencyChessboard"/>
