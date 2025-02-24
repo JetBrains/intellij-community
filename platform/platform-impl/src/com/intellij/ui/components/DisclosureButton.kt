@@ -12,7 +12,20 @@ import javax.swing.JButton
 private const val disclosureButtonID = "DisclosureButtonUI"
 
 @ApiStatus.Internal
+enum class DisclosureButtonKind {
+  Default, Klein
+}
+
+@ApiStatus.Internal
 class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text) {
+  var kind: DisclosureButtonKind = DisclosureButtonKind.Default
+    set(value) {
+      if (field !== value) {
+        field = value
+        revalidate()
+        repaint()
+      }
+    }
 
   var rightIcon: Icon? = null
     set(value) {
@@ -43,8 +56,16 @@ class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text)
 
   init {
     horizontalAlignment = LEFT
-    iconTextGap = JBUIScale.scale(12)
     isRolloverEnabled = true
+  }
+
+  override fun getIconTextGap(): Int {
+    return if (kind == DisclosureButtonKind.Klein) {
+      JBUIScale.scale(7)
+    }
+    else {
+      JBUIScale.scale(12)
+    }
   }
 
   override fun getUIClassID(): String {
