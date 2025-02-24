@@ -4,7 +4,18 @@ package git4idea
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import git4idea.repo.GitRemote
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 
+@Serializable(with = GitStandardRemoteBranchSerializer::class)
 class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :
   GitRemoteBranch("${remote.name}/${GitRefUtil.stripRefsPrefix(nameAtRemote)}", remote) {
   override val fullName: @NlsSafe String
@@ -40,5 +51,36 @@ class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :
       return REFS_NAMES_COMPARATOR.compare(name, o.name)
     }
     return super.compareTo(o)
+  }
+}
+
+
+private object GitStandardRemoteBranchSerializer : KSerializer<GitStandardRemoteBranch> {
+  override val descriptor: SerialDescriptor = buildClassSerialDescriptor("git4idea.GitStandardRemoteBranch") {
+    element("nameForRemoteOperations", String.serializer().descriptor)
+    element("remote", GitRemote.serializer().descriptor)
+  }
+
+  override fun serialize(encoder: Encoder, value: GitStandardRemoteBranch) {
+    encoder.encodeStructure(descriptor) {
+      encodeStringElement(descriptor, 0, value.nameForRemoteOperations)
+      encodeSerializableElement(descriptor, 1, GitRemote.serializer(), value.remote)
+    }
+  }
+
+  override fun deserialize(decoder: Decoder): GitStandardRemoteBranch {
+    var nameAtRemote = ""
+    lateinit var remote: GitRemote
+    decoder.decodeStructure(descriptor) {
+      while (true) {
+        when (val index = decodeElementIndex(descriptor)) {
+          0 -> nameAtRemote = decodeStringElement(descriptor, 0)
+          1 -> remote = decodeSerializableElement(descriptor, 1, GitRemote.serializer())
+          CompositeDecoder.DECODE_DONE -> break
+          else -> error("Unexpected index: $index")
+        }
+      }
+    }
+    return GitStandardRemoteBranch(remote, nameAtRemote)
   }
 }

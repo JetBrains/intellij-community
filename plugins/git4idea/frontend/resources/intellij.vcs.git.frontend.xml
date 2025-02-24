@@ -19,7 +19,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.vcs.git.frontend.widget.GitWidgetStateHolder$Activator"/>
+    <postStartupActivity implementation="com.intellij.vcs.git.frontend.GitFrontendListenersActivator"/>
 
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.UpdatePushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>

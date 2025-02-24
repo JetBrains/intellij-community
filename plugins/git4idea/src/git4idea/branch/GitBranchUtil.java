@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -110,16 +110,7 @@ public final class GitBranchUtil {
   }
 
   public static @NlsSafe @NotNull String stripRefsPrefix(@NotNull @NonNls String branchName) {
-    if (branchName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-      return branchName.substring(GitBranch.REFS_HEADS_PREFIX.length());
-    }
-    else if (branchName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
-      return branchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
-    }
-    else if (branchName.startsWith(GitTag.REFS_TAGS_PREFIX)) {
-      return branchName.substring(GitTag.REFS_TAGS_PREFIX.length());
-    }
-    return branchName;
+    return com.intellij.vcs.git.shared.ref.GitRefUtil.stripRefsPrefix(branchName);
   }
 
   /**

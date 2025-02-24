@@ -2,9 +2,12 @@
 package git4idea
 
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encoding.Decoder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
+@Serializable(with = GitStandardLocalBranchSerializer::class)
 open class GitStandardLocalBranch(name: String) : GitBranch(name) {
   override val isRemote: Boolean = false
 
@@ -18,4 +21,8 @@ open class GitStandardLocalBranch(name: String) : GitBranch(name) {
     }
     return super.compareTo(o)
   }
+}
+
+private object GitStandardLocalBranchSerializer : GitReferenceSimpleSerializer<GitStandardLocalBranch>("git4idea.GitStandardLocalBranch") {
+  override fun deserialize(decoder: Decoder): GitStandardLocalBranch = GitStandardLocalBranch(decodeName(decoder))
 }

@@ -2,8 +2,11 @@
 package git4idea
 
 import com.intellij.vcs.git.shared.ref.GitRefUtil
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encoding.Decoder
 import org.jetbrains.annotations.NonNls
 
+@Serializable(with = GitTagSerializer::class)
 class GitTag(name: String) : GitReference(GitRefUtil.stripRefsPrefix(name)) {
   override val fullName: String
     get() = REFS_TAGS_PREFIX + name
@@ -19,4 +22,8 @@ class GitTag(name: String) : GitReference(GitRefUtil.stripRefsPrefix(name)) {
   companion object {
     const val REFS_TAGS_PREFIX: @NonNls String = "refs/tags/"
   }
+}
+
+private object GitTagSerializer: GitReferenceSimpleSerializer<GitTag>("git4idea.GitTag") {
+  override fun deserialize(decoder: Decoder): GitTag = GitTag(decodeName(decoder))
 }

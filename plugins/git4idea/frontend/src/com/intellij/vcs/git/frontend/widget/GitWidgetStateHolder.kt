@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
@@ -36,7 +35,7 @@ internal class GitWidgetStateHolder(private val project: Project, private val cs
     }
   }
 
-  private fun initStateUpdate(selectedFile: VirtualFile?) {
+  internal fun initStateUpdate(selectedFile: VirtualFile?) {
     synchronized(this) {
       stateUpdateJob?.cancel()
       stateUpdateJob = cs.launch {
@@ -49,13 +48,5 @@ internal class GitWidgetStateHolder(private val project: Project, private val cs
 
   companion object {
     fun getInstance(project: Project): GitWidgetStateHolder = project.service()
-  }
-
-  internal class Activator: ProjectActivity {
-    override suspend fun execute(project: Project) {
-      if (Registry.Companion.`is`("git.branches.widget.rd", false)) {
-        project.service<GitWidgetStateHolder>().initStateUpdate(selectedFile = null)
-      }
-    }
   }
 }

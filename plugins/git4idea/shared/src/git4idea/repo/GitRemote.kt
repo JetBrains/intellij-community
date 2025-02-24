@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NonNls
  *
  * Remotes are compared (via equals, hashcode and compareTo) only by names.
  */
+@Serializable
 class GitRemote(
   val name: String,
   /**
