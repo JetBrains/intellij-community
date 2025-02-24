@@ -8,6 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -35,7 +36,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return Holder.INSTANCE;
   }
 
-  AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
+  @VisibleForTesting
+  public AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
     super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
@@ -83,7 +85,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     notAllowedMethodCall();
   }
 
-  static List<Runnable> notAllowedMethodCall() {
+  @ApiStatus.Internal
+  public static @NotNull List<Runnable> notAllowedMethodCall() {
     throw new IncorrectOperationException("You must not call this method on the global app pool");
   }
 
@@ -92,13 +95,14 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superShutdown();
   }
 
-  void shutdownAppScheduledExecutorService() {
+  @ApiStatus.Internal
+  public void shutdownAppScheduledExecutorService() {
     // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
     myLowMemoryWatcherManager.shutdown();
     doShutdown();
     delayQueue.shutdown(new SchedulingWrapper.MyScheduledFutureTask<Void>(()->{}, null, 0) {
         @Override
-        boolean executeMeInBackendExecutor() {
+        public boolean executeMeInBackendExecutor() {
           set(null);
           return false;
         }
@@ -131,7 +135,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   @TestOnly
-  void setBackendPoolCorePoolSize(int size) {
+  @ApiStatus.Internal
+  public void setBackendPoolCorePoolSize(int size) {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 

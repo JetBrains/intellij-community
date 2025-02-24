@@ -2889,7 +2889,12 @@ public class StringUtil {
 
   @Contract(pure = true)
   public static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
-    return StringUtilRt.parseEnum(string, defaultValue, clazz);
+    try {
+      return Enum.valueOf(clazz, string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
   }
 
   @Contract(pure = true)

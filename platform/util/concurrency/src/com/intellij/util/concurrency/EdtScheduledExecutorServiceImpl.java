@@ -30,7 +30,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       null,
       triggerTime(delay, unit)) {
       @Override
-      boolean executeMeInBackendExecutor() {
+      public boolean executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
           ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {

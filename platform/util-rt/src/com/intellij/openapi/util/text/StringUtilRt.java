@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -200,16 +200,6 @@ public final class StringUtilRt {
       catch (NumberFormatException ignored) { }
     }
     return defaultValue;
-  }
-
-  @Contract(pure = true)
-  static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
-    try {
-      return Enum.valueOf(clazz, string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
   }
 
   @NotNull

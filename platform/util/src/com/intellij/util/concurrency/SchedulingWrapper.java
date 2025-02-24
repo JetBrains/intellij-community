@@ -35,7 +35,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
   // make sure transferrerThread doesn't retain a task on its stack
   private final MyScheduledFutureTask<Void> myLaxativePill = new MyScheduledFutureTask<Void>(()->{}, null, 0) {
     @Override
-    boolean executeMeInBackendExecutor() {
+    public boolean executeMeInBackendExecutor() {
       // only after transferrerThread handled this (and all previous) task we can call backendExecutorService.shutdown()
       onDelayQueuePurgedOnShutdown();
       set(null);
@@ -48,7 +48,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
     }
   };
 
-  SchedulingWrapper(@NotNull ExecutorService backendExecutorService, @NotNull AppDelayQueue delayQueue) {
+  public SchedulingWrapper(@NotNull ExecutorService backendExecutorService, @NotNull AppDelayQueue delayQueue) {
     this.delayQueue = delayQueue;
     if (backendExecutorService instanceof ScheduledExecutorService) {
       throw new IllegalArgumentException("backendExecutorService: "+backendExecutorService+" is already ScheduledExecutorService");
@@ -179,7 +179,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a one-shot action with given nanoTime-based trigger time.
      */
-    MyScheduledFutureTask(@NotNull Runnable r, V result, long ns) {
+    public MyScheduledFutureTask(@NotNull Runnable r, V result, long ns) {
       super(r, result);
       time = ns;
       period = 0;
@@ -305,7 +305,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
     }
 
     // return false if this is the last task in the queue
-    boolean executeMeInBackendExecutor() {
+    public boolean executeMeInBackendExecutor() {
       // optimization: can be canceled already
       if (!isDone()) {
         backendExecutorService.execute(this);
@@ -374,7 +374,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   @NotNull
-  <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
+  public <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
     checkAlreadyShutdown();
     delayQueue.offer(t);
     if (t.getDelay(TimeUnit.DAYS) > 31 && !t.isPeriodic()) {

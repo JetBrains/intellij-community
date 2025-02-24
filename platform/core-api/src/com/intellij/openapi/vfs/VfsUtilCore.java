@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -743,7 +743,8 @@ public class VfsUtilCore {
    * @param file the file
    * @return virtual files that represents paths from root to the passed file
    */
-  static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
