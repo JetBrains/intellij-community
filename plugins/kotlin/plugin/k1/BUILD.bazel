@@ -169,6 +169,8 @@ java_library(
     "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k1` end

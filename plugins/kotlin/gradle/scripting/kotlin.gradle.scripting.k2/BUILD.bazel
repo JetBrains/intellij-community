@@ -1,0 +1,40 @@
+### auto-generated section `build kotlin.gradle.scripting.k2` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-gradle-scripting-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-scripting-k2",
+  module_name = "kotlin.gradle.scripting.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//platform/analysis-api:analysis",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/execution",
+    "//platform/workspace/jps",
+    "//plugins/gradle",
+    "//platform/backend/observation",
+    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//java/idea-ui:ui",
+    "//platform/util:util-ui",
+  ],
+  runtime_deps = [":kotlin-gradle-scripting-k2_resources"]
+)
+### auto-generated section `build kotlin.gradle.scripting.k2` end

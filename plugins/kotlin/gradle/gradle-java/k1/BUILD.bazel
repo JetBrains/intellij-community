@@ -140,6 +140,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
   ],
   runtime_deps = [":kotlin-gradle-gradle-java-k1_resources"]
 )

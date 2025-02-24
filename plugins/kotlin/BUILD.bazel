@@ -209,6 +209,9 @@ java_library(
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
     "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-k2",
   ],
   runtime_deps = [
     "//platform/bootstrap",
@@ -425,6 +428,9 @@ java_library(
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
     "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-k2",
   ]
 )
 ### auto-generated section `build intellij.kotlin.plugin.community.main` end

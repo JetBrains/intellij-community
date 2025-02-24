@@ -68,6 +68,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k1:kotlin-plugin-k1"]
 )
