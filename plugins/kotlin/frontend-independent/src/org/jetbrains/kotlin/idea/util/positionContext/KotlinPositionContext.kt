@@ -152,8 +152,9 @@ class KotlinInfixCallPositionContext(
  * [nameExpression] does not represent any name in this case - it references
  * an operator reference, like `+`, `+=` or unary `-`.
  * 
- * [explicitReceiver] points to the main expression in the operator call - 
- * either the LHS of the binary call, or the underlying expression in the unary call.
+ * [explicitReceiver] points to the main expression in the operator call:
+ * - the LHS in the binary call (except for the `contains` operator, where the receiver is on the RHS)
+ * - the underlying expression in the unary call
  */
 class KotlinOperatorCallPositionContext(
     override val position: PsiElement,
