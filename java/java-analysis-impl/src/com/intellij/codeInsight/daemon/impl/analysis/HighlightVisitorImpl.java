@@ -153,9 +153,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     HtmlChunk tooltip = error.tooltip();
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
     if (tooltip.isEmpty()) {
-      info.descriptionAndTooltip(error.description().toString());
+      info.descriptionAndTooltip(error.description());
     } else {
-      info.description(error.description().toString()).escapedToolTip(
+      info.description(error.description()).escapedToolTip(
         tooltip.applyStyles(myTooltipStyles).toString());
     }
     if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {

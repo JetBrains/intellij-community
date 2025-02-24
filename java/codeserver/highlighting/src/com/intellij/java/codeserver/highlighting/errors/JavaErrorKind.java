@@ -25,9 +25,9 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
   /**
    * @param psi PSI element associated with an error
    * @param context a context in which the error should be rendered
-   * @return rendered localized error description
+   * @return user-readable localized error description (plain text)
    */
-  @NotNull HtmlChunk description(@NotNull Psi psi, Context context);
+  @NotNull @Nls String description(@NotNull Psi psi, Context context);
 
   /**
    * @param psi PSI element associated with an error
@@ -70,14 +70,14 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
    */
   final class Simple<Psi extends PsiElement> implements JavaErrorKind<Psi, Void> {
     private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
-    private final @NotNull Function<? super Psi, ? extends HtmlChunk> myDescription;
+    private final @NotNull Function<? super Psi, @Nls String> myDescription;
     private final @NotNull Function<? super Psi, ? extends HtmlChunk> myTooltip;
     private final @NotNull Function<? super Psi, ? extends PsiElement> myAnchor;
     private final @NotNull Function<? super Psi, ? extends TextRange> myRange;
     private final @NotNull Function<? super Psi, JavaErrorHighlightType> myHighlightType;
 
     private Simple(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key,
-                   @NotNull Function<? super Psi, ? extends HtmlChunk> description,
+                   @NotNull Function<? super Psi, @Nls String> description,
                    @NotNull Function<? super Psi, ? extends HtmlChunk> tooltip,
                    @NotNull Function<? super Psi, ? extends PsiElement> anchor,
                    @NotNull Function<? super Psi, ? extends TextRange> range,
@@ -92,7 +92,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
     Simple(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
       this(key,
-           psi -> HtmlChunk.raw(JavaCompilationErrorBundle.message(key)),
+           psi -> JavaCompilationErrorBundle.message(key),
            psi -> HtmlChunk.empty(),
            Function.identity(),
            psi -> null,
@@ -113,7 +113,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     @Override
-    public @NotNull HtmlChunk description(@NotNull Psi psi, Void unused) {
+    public @NotNull String description(@NotNull Psi psi, Void unused) {
       return checkNotNull(myDescription.apply(psi), "description");
     }
 
@@ -180,24 +180,13 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
-     * Creates a new instance of Simple with the specified description function.
-     *
-     * @param description a Function that generates a description as an HtmlChunk 
-     *                    based on the provided Psi object.
-     * @return a new Simple instance with the updated description function.
-     */
-    Simple<Psi> withDescription(@NotNull Function<? super Psi, ? extends HtmlChunk> description) {
-      return new Simple<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
-    }
-
-    /**
      * Creates a new instance of Simple with a specified description function.
      *
      * @param description a Function that computes a description based on the given Psi and Context.
      * @return a new Simple instance with the specified description function.
      */
-    Simple<Psi> withRawDescription(@NotNull Function<? super Psi, @Nls String> description) {
-      return withDescription(psi -> HtmlChunk.raw(description.apply(psi)));
+    Simple<Psi> withDescription(@NotNull Function<? super Psi, @Nls String> description) {
+      return new Simple<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
     }
 
     <Context> Parameterized<Psi, Context> parameterized() {
@@ -230,14 +219,14 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
    */
   final class Parameterized<Psi extends PsiElement, Context> implements JavaErrorKind<Psi, Context> {
     private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
-    private final @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> myDescription;
+    private final @NotNull BiFunction<? super Psi, ? super Context, @Nls String> myDescription;
     private final @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> myTooltip;
     private final @NotNull Function<? super Psi, ? extends PsiElement> myAnchor;
     private final @NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> myRange;
     private final @NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> myHighlightType;
 
     private Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key,
-                          @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description,
+                          @NotNull BiFunction<? super Psi, ? super Context, @Nls String> description,
                           @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> tooltip,
                           @NotNull Function<? super Psi, ? extends PsiElement> anchor,
                           @NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range,
@@ -259,7 +248,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     
     Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
       this(key,
-           (psi, ctx) -> HtmlChunk.raw(JavaCompilationErrorBundle.message(key)),
+           (psi, ctx) -> JavaCompilationErrorBundle.message(key),
            (psi, ctx) -> HtmlChunk.empty(),
            Function.identity(),
            (psi, ctx) -> null,
@@ -272,7 +261,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     @Override
-    public @NotNull HtmlChunk description(@NotNull Psi psi, Context context) {
+    public @NotNull String description(@NotNull Psi psi, Context context) {
       return checkNotNull(myDescription.apply(psi, context), "description");
     }
 
@@ -348,16 +337,6 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
-     * Creates a new instance of Parameterized with a specified description function.
-     *
-     * @param description a BiFunction that computes a description based on the given Psi and Context.
-     * @return a new Parameterized instance with the specified description function.
-     */
-    Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description) {
-      return new Parameterized<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
-    }
-
-    /**
      * Creates a new instance of Parameterized with a specified tooltip function.
      *
      * @param tooltip a BiFunction that computes a tooltip based on the given Psi and Context.
@@ -374,8 +353,8 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                    based on the given Psi and Context.
      * @return a new Parameterized instance with the specified raw description function.
      */
-    Parameterized<Psi, Context> withRawDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
-      return withDescription((psi, context) -> HtmlChunk.raw(description.apply(psi, context)));
+    Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
+      return new Parameterized<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
     }
 
     @Override

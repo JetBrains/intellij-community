@@ -30,20 +30,19 @@ import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleT
 public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
                                         @NotNull MethodCandidateInfo candidate,
                                         @NotNull List<PsiExpression> mismatchedExpressions) {
-  @NotNull HtmlChunk createDescription() {
+  @NotNull @Nls String createDescription() {
     PsiMethod resolvedMethod = candidate.getElement();
     PsiExpression[] expressions = list.getExpressions();
     PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
     if (argCountMismatch(parameters, expressions)) {
-      return HtmlChunk.raw(
-        JavaCompilationErrorBundle.message("call.wrong.arguments.count.mismatch", parameters.length, expressions.length));
+      return JavaCompilationErrorBundle.message("call.wrong.arguments.count.mismatch", parameters.length, expressions.length);
     }
     PsiClass parent = resolvedMethod.getContainingClass();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
     String argTypes = JavaErrorFormatUtil.formatArgumentTypes(list, false);
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
-    return HtmlChunk.raw(JavaCompilationErrorBundle.message("call.wrong.arguments", methodName, containerName, argTypes));
+    return JavaCompilationErrorBundle.message("call.wrong.arguments", methodName, containerName, argTypes);
   }
 
   @NotNull HtmlChunk createTooltip() {

@@ -1318,7 +1318,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       JavaCompilationError<?, ?> error = JavaErrorCollector.findSingleError(expression);
       if (error != null && error.kind() != JavaErrorKinds.UNSUPPORTED_FEATURE) {
-        throw evaluateException(error.description().toString());
+        throw evaluateException(error.description());
       }
 
       final PsiType type = expression.getType();
