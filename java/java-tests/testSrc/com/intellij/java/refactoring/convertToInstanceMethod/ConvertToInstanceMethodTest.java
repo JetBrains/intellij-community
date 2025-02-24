@@ -3,6 +3,7 @@ package com.intellij.java.refactoring.convertToInstanceMethod;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -97,6 +98,7 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
       list.setSelectedIndex(myTargetParameter);
       dialog.setVisibility(myVisibility == null ? VisibilityUtil.ESCALATE_VISIBILITY : myVisibility);
       dialog.performOKAction();
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
 
     private static String toString(ListModel<Object> model) {
