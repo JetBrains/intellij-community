@@ -46,6 +46,20 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
+   * @return range of this error within the file
+   */
+  public @NotNull TextRange rangeInFile() {
+    PsiElement anchor = anchor();
+    TextRange range = range();
+    if (range == null) {
+      return anchor.getTextRange();
+    }
+    else {
+      return range.shiftRight(anchor.getTextRange().getStartOffset());
+    }
+  }
+
+  /**
    * @return a desired highlighting type to display the error
    */
   public @NotNull JavaErrorHighlightType highlightType() {

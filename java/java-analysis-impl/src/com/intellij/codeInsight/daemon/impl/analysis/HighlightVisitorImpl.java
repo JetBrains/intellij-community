@@ -150,7 +150,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       case WRONG_REF -> HighlightInfoType.WRONG_REF;
       case PENDING_REF -> HighlightInfoType.PENDING_REFERENCE;
     };
-    TextRange range = error.range();
     HtmlChunk tooltip = error.tooltip();
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
     if (tooltip.isEmpty()) {
@@ -162,18 +161,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
       info.fileLevelAnnotation();
     }
-    PsiElement anchor = error.anchor();
-    if (range != null) {
-      info.range(anchor, range);
-      if (range.getLength() == 0) {
-        int offset = range.getStartOffset() + anchor.getTextRange().getStartOffset();
-        CharSequence sequence = myFile.getFileDocument().getCharsSequence();
-        if (offset >= sequence.length() || sequence.charAt(offset) == '\n') {
-          info.endOfLine();
-        }
+    TextRange range = error.rangeInFile();
+    info.range(range);
+    if (range.getLength() == 0) {
+      int offset = range.getStartOffset();
+      CharSequence sequence = myFile.getFileDocument().getCharsSequence();
+      if (offset >= sequence.length() || sequence.charAt(offset) == '\n') {
+        info.endOfLine();
       }
-    } else {
-      info.range(anchor);
     }
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
     errorFixProvider.processFixes(error, consumer);
