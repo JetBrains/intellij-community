@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryContent
@@ -17,7 +16,6 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -31,6 +29,7 @@ import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
+// run with intellij.idea.ultimate.tests.main classpath
 class PluginDescriptorTest {
   @Rule
   @JvmField
@@ -41,7 +40,7 @@ class PluginDescriptorTest {
 
   @Test
   fun descriptorLoading() {
-    val descriptor = loadDescriptorInTest("asp.jar")
+    val descriptor = loadDescriptorFromTestDataDir("asp.jar")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo("com.jetbrains.plugins.asp")
     assertThat(descriptor.name).isEqualTo("ASP")
@@ -49,14 +48,14 @@ class PluginDescriptorTest {
 
   @Test
   fun testOptionalDescriptors() {
-    val descriptor = loadDescriptorInTest("family")
+    val descriptor = loadDescriptorFromTestDataDir("family")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginDependencies.size).isEqualTo(1)
   }
 
   @Test
   fun testMultipleOptionalDescriptors() {
-    val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
+    val descriptor = loadDescriptorFromTestDataDir("multipleOptionalDescriptors")
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.pluginDependencies
     assertThat(pluginDependencies).hasSize(2)
@@ -65,7 +64,7 @@ class PluginDescriptorTest {
   
   @Test
   fun testMultipleDependenciesTags() {
-    val descriptor = loadDescriptorInTest("multipleDependenciesTags")
+    val descriptor = loadDescriptorFromTestDataDir("multipleDependenciesTags")
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.dependencies.plugins
     assertThat(pluginDependencies).hasSize(2)
@@ -74,7 +73,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testMalformedDescriptor() {
-    assertThatThrownBy { loadDescriptorInTest("malformed") }
+    assertThatThrownBy { loadDescriptorFromTestDataDir("malformed") }
       .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
 
@@ -87,7 +86,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testCyclicOptionalDeps() {
-    assertThatThrownBy { loadDescriptorInTest("cyclicOptionalDeps") }
+    assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps") }
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
@@ -102,7 +101,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testDuplicateDependency() {
-    val descriptor = loadDescriptorInTest("duplicateDependency")
+    val descriptor = loadDescriptorFromTestDataDir("duplicateDependency")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginDependencies.filter { it.isOptional }).isEmpty()
     assertThat(descriptor.pluginDependencies.map { it.pluginId }).containsExactly(PluginId.getId("foo"))
@@ -110,7 +109,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testPluginNameAsId() {
-    val descriptor = loadDescriptorInTest("noId")
+    val descriptor = loadDescriptorFromTestDataDir("noId")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
   }
@@ -328,7 +327,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testPluginIdAsName() {
-    val descriptor = loadDescriptorInTest("noName")
+    val descriptor = loadDescriptorFromTestDataDir("noName")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.name).isEqualTo(descriptor.pluginId.idString)
   }
@@ -391,7 +390,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testLoadDisabledPlugin() {
-    val descriptor = loadDescriptorInTest(
+    val descriptor = loadDescriptorFromTestDataDir(
       dirName = "disabled",
       disabledPlugins = setOf("com.intellij.disabled"),
     )
@@ -460,19 +459,21 @@ class PluginDescriptorTest {
       .hasSize(enabledIds.size)
     assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactlyInAnyOrderElementsOf(enabledIds)
   }
-}
 
-private val testDataPath: String
-  get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
+  companion object {
+    private val testDataPath: String
+      get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
-private fun loadDescriptorInTest(
-  dirName: String,
-  disabledPlugins: Set<String> = emptySet(),
-): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(
-    dir = Path.of(testDataPath, dirName),
-    disabledPlugins = disabledPlugins,
-  )
+    private fun loadDescriptorFromTestDataDir(
+      dirName: String,
+      disabledPlugins: Set<String> = emptySet(),
+    ): IdeaPluginDescriptorImpl {
+      return loadDescriptorInTest(
+        dir = Path.of(testDataPath, dirName),
+        disabledPlugins = disabledPlugins,
+      )
+    }
+  }
 }
 
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
