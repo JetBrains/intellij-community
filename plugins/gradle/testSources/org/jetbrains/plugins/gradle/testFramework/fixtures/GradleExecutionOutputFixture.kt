@@ -5,10 +5,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 
 interface GradleExecutionOutputFixture : IdeaTestFixture {
 
-  fun <R> assertExecutionOutputIsReady(action: () -> R): R
-
-  suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R
-
   fun assertTestEventContain(className: String, methodName: String?)
 
   fun assertTestEventDoesNotContain(className: String, methodName: String?)

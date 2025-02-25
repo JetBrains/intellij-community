@@ -8,10 +8,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.util.getExecutionOperation
 import org.junit.jupiter.api.Assertions
 
 class GradleExecutionEnvironmentFixtureImpl(
@@ -20,8 +17,6 @@ class GradleExecutionEnvironmentFixtureImpl(
 
   private lateinit var testDisposable: Disposable
 
-  private lateinit var executionLeakTracker: OperationLeakTracker
-
   private var executionEnvironment: ExecutionEnvironment? = null
 
   override fun setUp() {
@@ -29,17 +24,11 @@ class GradleExecutionEnvironmentFixtureImpl(
 
     testDisposable = Disposer.newDisposable()
 
-    executionLeakTracker = OperationLeakTracker { getExecutionOperation(project, it) }
-    executionLeakTracker.setUp()
-
     installExecutionListener()
   }
 
   override fun tearDown() {
-    runAll(
-      { executionLeakTracker.tearDown() },
-      { Disposer.dispose(testDisposable) }
-    )
+    Disposer.dispose(testDisposable)
   }
 
   private fun installExecutionListener() {
@@ -62,13 +51,5 @@ class GradleExecutionEnvironmentFixtureImpl(
       "Gradle execution isn't started."
     }
     return executionEnvironment!!
-  }
-
-  override fun <R> assertExecutionEnvironmentIsReady(action: () -> R): R {
-    return executionLeakTracker.withAllowedOperation(1, action)
-  }
-
-  override suspend fun <R> assertExecutionEnvironmentIsReadyAsync(action: suspend () -> R): R {
-    return executionLeakTracker.withAllowedOperationAsync(1, action)
   }
 }

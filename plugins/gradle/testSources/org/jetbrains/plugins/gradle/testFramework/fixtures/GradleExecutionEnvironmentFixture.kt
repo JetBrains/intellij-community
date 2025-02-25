@@ -7,8 +7,4 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 interface GradleExecutionEnvironmentFixture : IdeaTestFixture {
 
   fun getExecutionEnvironment(): ExecutionEnvironment
-
-  fun <R> assertExecutionEnvironmentIsReady(action: () -> R): R
-
-  suspend fun <R> assertExecutionEnvironmentIsReadyAsync(action: suspend () -> R): R
 }

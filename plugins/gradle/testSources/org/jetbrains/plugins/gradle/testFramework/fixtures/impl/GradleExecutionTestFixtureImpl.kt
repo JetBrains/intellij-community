@@ -24,17 +24,23 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnviro
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleEventDispatcherClosing
+import org.jetbrains.plugins.gradle.testFramework.util.getExecutionOperation
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import org.junit.jupiter.api.Assertions
 
 class GradleExecutionTestFixtureImpl(
   private val project: Project,
   private val projectRoot: VirtualFile
 ) : GradleExecutionTestFixture {
+
+  private lateinit var taskExecutionLeakTracker: OperationLeakTracker
+  private lateinit var executionLeakTracker: OperationLeakTracker
 
   private lateinit var executionOutputFixture: GradleExecutionOutputFixture
   private lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
@@ -46,7 +52,13 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override fun setUp() {
-    executionOutputFixture = GradleExecutionOutputFixtureImpl(project)
+    taskExecutionLeakTracker = OperationLeakTracker { getGradleTaskExecutionOperation(project, it) }
+    taskExecutionLeakTracker.setUp()
+
+    executionLeakTracker = OperationLeakTracker { getExecutionOperation(project, it) }
+    executionLeakTracker.setUp()
+
+    executionOutputFixture = GradleExecutionOutputFixtureImpl()
     executionOutputFixture.setUp()
 
     executionEnvironmentFixture = GradleExecutionEnvironmentFixtureImpl(project)
@@ -64,7 +76,9 @@ class GradleExecutionTestFixtureImpl(
       { buildViewFixture.tearDown() },
       { executionConsoleFixture.tearDown() },
       { executionEnvironmentFixture.tearDown() },
-      { executionOutputFixture.tearDown() }
+      { executionOutputFixture.tearDown() },
+      { executionLeakTracker.tearDown() },
+      { taskExecutionLeakTracker.tearDown() }
     )
   }
 
@@ -127,8 +141,8 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override fun <R> waitForAnyGradleTaskExecution(action: () -> R): R {
-    return executionOutputFixture.assertExecutionOutputIsReady {
-      executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
+    return taskExecutionLeakTracker.withAllowedOperation(1) {
+      executionLeakTracker.withAllowedOperation(1) {
         waitForGradleEventDispatcherClosing {
           waitForAnyExecution(project) {
             org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
@@ -141,8 +155,8 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
-    return executionOutputFixture.assertExecutionOutputIsReadyAsync {
-      executionEnvironmentFixture.assertExecutionEnvironmentIsReadyAsync {
+    return taskExecutionLeakTracker.withAllowedOperationAsync(1) {
+      executionLeakTracker.withAllowedOperationAsync(1) {
         awaitGradleEventDispatcherClosing {
           awaitAnyExecution(project) {
             org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleTaskExecution {

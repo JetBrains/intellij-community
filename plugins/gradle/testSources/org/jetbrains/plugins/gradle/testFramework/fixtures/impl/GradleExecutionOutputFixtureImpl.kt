@@ -8,50 +8,28 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.common.runAll
 import com.intellij.util.containers.addIfNotNull
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.ListAssert
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.function.Function
 
-class GradleExecutionOutputFixtureImpl(
-  private val project: Project,
-) : GradleExecutionOutputFixture {
+class GradleExecutionOutputFixtureImpl : GradleExecutionOutputFixture {
 
   private lateinit var fixtureDisposable: Disposable
-
-  private lateinit var taskExecutionLeakTracker: OperationLeakTracker
 
   private lateinit var output: Output
 
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
 
-    taskExecutionLeakTracker = OperationLeakTracker { getGradleTaskExecutionOperation(project, it) }
-    taskExecutionLeakTracker.setUp()
-
     installGradleEventsListener()
   }
 
   override fun tearDown() {
-    runAll(
-      { taskExecutionLeakTracker.tearDown() },
-      { Disposer.dispose(fixtureDisposable) }
-    )
-  }
-
-  override fun <R> assertExecutionOutputIsReady(action: () -> R): R {
-    return taskExecutionLeakTracker.withAllowedOperation(1, action)
-  }
-
-  override suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R {
-    return taskExecutionLeakTracker.withAllowedOperationAsync(1, action)
+    Disposer.dispose(fixtureDisposable)
   }
 
   override fun assertTestEventContain(className: String, methodName: String?) {
