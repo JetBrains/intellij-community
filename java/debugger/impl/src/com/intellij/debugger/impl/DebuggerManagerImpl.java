@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -28,11 +27,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -44,14 +42,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 @State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
-  private static final int WAIT_KILL_TIMEOUT = 10000;
 
   private final Project myProject;
   private final Map<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -207,31 +203,20 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
           ProcessHandler processHandler = event.getProcessHandler();
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
-            // if current thread is a "debugger manager thread", stop will execute synchronously
-            // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed &&
-                              !(processHandler instanceof KillableColoredProcessHandler &&
-                                ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
-
-            // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
-            // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
-            if (!DebuggerManagerThreadImpl.isManagerThread()) {
-              if (SwingUtilities.isEventDispatchThread()) {
-                ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-                  ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                  indicator.setIndeterminate(false);
-                  int wait = 0;
-                  while (wait < WAIT_KILL_TIMEOUT && !indicator.isCanceled()) {
-                    indicator.setFraction((double)wait / WAIT_KILL_TIMEOUT);
-                    debugProcess.waitFor(200);
-                    wait += 200;
-                  }
-                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), true, debugProcess.getProject());
-              }
-              else {
-                debugProcess.waitFor(WAIT_KILL_TIMEOUT);
-              }
+            if (Registry.is("debugger.stop.on.graceful.exit")) {
+              // it is KillableColoredProcessHandler responsibility to terminate VM
+              debugProcess.stop(willBeDestroyed &&
+                                !(processHandler instanceof KillableColoredProcessHandler &&
+                                  ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
             }
+          }
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+          if (debugProcess != null) {
+            debugProcess.stop(false);
           }
         }
       });
