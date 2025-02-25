@@ -1645,7 +1645,7 @@ $value</value>
                        </profiles>
                        """.trimIndent())
 
-    assertActiveProfiles("project", "settings")
+    assertActiveProfiles("settings")
   }
 
   fun `test custom source directories`() = runBlocking {
