@@ -1,7 +1,8 @@
-// "Change parameter 'transformer' of function 'map' to 'Int'" "false"
+// "Change parameter 'transformer' of function 'map' to 'String'" "false"
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but 'Function1<Int, R (of fun <T, R> Iterable<T>.map)>' was expected.
 // K2_AFTER_ERROR: Cannot infer type for this parameter. Specify it explicitly.
-// ERROR: Unresolved reference: listOf
+// ERROR: Type mismatch: inferred type is String but (TypeVariable(T)) -> TypeVariable(R) was expected
+// WITH_STDLIB
 
 fun foo(transformer: String) {
     listOf(1, 2, 3).map(tra<caret>nsformer)
