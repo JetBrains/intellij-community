@@ -83,12 +83,13 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
   
-  constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage) {
+  constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
     this.project = project
     this.cs = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+    this.virtualFileManager = virtualFileUrlManager
     entityStorage = VersionedEntityStorageImpl(storage)
     unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
+    this.loadedFromCache = true
   }
 
   constructor(project: Project, cs: CoroutineScope) {
