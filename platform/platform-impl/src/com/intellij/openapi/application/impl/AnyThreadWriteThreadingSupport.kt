@@ -214,9 +214,19 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  // @Throws(E::class)
+  override fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+    return runWriteIntentReadAction(computation, true)
+  }
+
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
-    handleLockAccess("write-intent lock")
+    return runWriteIntentReadAction(computation, false)
+  }
+
+  // @Throws(E::class)
+  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>, isPreventive: Boolean): T {
+    if (!isPreventive) {
+      handleLockAccess("write-intent lock")
+    }
 
     val listener = myWriteIntentActionListener
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
