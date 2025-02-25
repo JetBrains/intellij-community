@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-impl-base-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-tests-for-ide:2.1.20-ij243-56">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-tests-for-ide:2.1.20-ij243-60">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-56/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-56.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-60/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-60.jar">
           <sha256sum>bb3877ad7f8b439e29f83c2273c2e164313e595a5ff74b7e7a56de1e45abefad</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-56/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-56.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-60/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-60.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-56/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-56-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.20-ij243-60/analysis-api-impl-base-tests-for-ide-2.1.20-ij243-60-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
