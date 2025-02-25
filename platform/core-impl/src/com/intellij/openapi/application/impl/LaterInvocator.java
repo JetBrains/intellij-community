@@ -279,12 +279,12 @@ public final class LaterInvocator {
    */
   @RequiresEdt
   @ApiStatus.Internal
-  public static void forceLeaveAllModals() {
+  public static void forceLeaveAllModals(@NonNls String reason) {
     ModalityStateEx currentState = getCurrentModalityState();
     if (currentState != ModalityState.nonModal()) {
-      currentState.cancelAllEntities();
+      currentState.cancelAllEntities(reason);
       // let event queue pump once before trying to cancel next modal
-      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals());
+      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals(reason));
     }
   }
 
