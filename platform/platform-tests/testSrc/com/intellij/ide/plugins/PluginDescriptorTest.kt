@@ -157,7 +157,7 @@ class PluginDescriptorTest {
         file("plugin.xml",
              """<idea-plugin>
                |  <id>foo.bar</id>
-               |</idea-plugin>""")
+               |</idea-plugin>""".trimMargin())
       }
     }.generateInTempDir()
     val descriptor = loadDescriptorInTest(tempDir)
