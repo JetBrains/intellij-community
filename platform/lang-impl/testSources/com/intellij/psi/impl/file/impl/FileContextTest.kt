@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.*
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -124,11 +124,6 @@ private fun CodeInsightContext.asText() = when (this) {
   anyContext() -> "AnyContext"
   is ModuleContext -> "ModuleContext(${this.getModule()!!.name})"
   else -> this.toString()
-}
-
-fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testFixture("shared-source-enabling-fixture") {
-  MultiverseTestEnabler.enableSharedSourcesForTheNextProject()
-  initialized(this@withSharedSourceEnabled.init()) {}
 }
 
 fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFixture<PsiDirectory> = testFixture("shared-source-root-fixture") {
