@@ -298,8 +298,10 @@ abstract class ComponentManagerImpl(
     }
 
     val messageBus = messageBus
-    if (messageBus == null || !isMessageBusSupported) {
+    if (!isMessageBusSupported) {
       LOG.error("Do not use module level message bus")
+    }
+    if (messageBus == null) {
       return getOrCreateMessageBusUnderLock()
     }
     return messageBus
