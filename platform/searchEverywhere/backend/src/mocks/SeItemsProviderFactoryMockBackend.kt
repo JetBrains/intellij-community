@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
-import com.intellij.platform.searchEverywhere.providers.SeItemsProviderMock
+import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderMock
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
