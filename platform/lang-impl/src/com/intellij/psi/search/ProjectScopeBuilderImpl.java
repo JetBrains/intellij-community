@@ -34,10 +34,9 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       final FileBasedIndexImpl myFileBasedIndex;
 
       {
-        boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         // handle case of EmptyFileBasedIndex
-        myFileBasedIndex = unitTestMode && !(fileBasedIndex instanceof FileBasedIndexImpl)
+        myFileBasedIndex = !(fileBasedIndex instanceof FileBasedIndexImpl)
                            ? null
                            : (FileBasedIndexImpl)fileBasedIndex;
       }
