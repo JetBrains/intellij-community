@@ -12781,6 +12781,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/sameContextForTwoReceivers.kt");
         }
 
+        @TestMetadata("shadowedThisClass.kt")
+        public void testShadowedThisClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/shadowedThisClass.kt");
+        }
+
+        @TestMetadata("shadowedThisExtensionReceiver.kt")
+        public void testShadowedThisExtensionReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/shadowedThisExtensionReceiver.kt");
+        }
+
+        @TestMetadata("shadowedThisInapplicableClass.kt")
+        public void testShadowedThisInapplicableClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/shadowedThisInapplicableClass.kt");
+        }
+
+        @TestMetadata("shadowedThisInapplicableExtensionReceiver.kt")
+        public void testShadowedThisInapplicableExtensionReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/shadowedThisInapplicableExtensionReceiver.kt");
+        }
+
         @TestMetadata("singleDispatchReceiver.kt")
         public void testSingleDispatchReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/singleDispatchReceiver.kt");

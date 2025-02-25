@@ -24,6 +24,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
@@ -32,7 +35,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLabelToBeReferencedByThis
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
@@ -44,6 +49,7 @@ internal class InspectionContext(
     val contextReceiversWithNames: Map<SmartPsiElementPointer<KtContextReceiver>, String>,
     val implicitContextUsages: List<ImplicitContextReceiverUsage>,
     val labeledThisContextReceiverUsages: List<LabeledThisContextReceiverUsage>,
+    val shadowedThisUsages: List<ShadowedThisUsage>,
     val contextReceiversForTopLevelWith: List<SmartPsiElementPointer<KtContextReceiver>>,
 )
 
@@ -94,13 +100,15 @@ internal class ContextParametersMigrationInspection :
         diagnostic: KaFirDiagnostic.ContextParameterWithoutName
     ): InspectionContext? {
         if (element !is KtContextReceiver) return null
-        val containingFunction = element.parentOfTypes(KtNamedFunction::class, KtProperty::class) ?: return null
+        val containingDeclaration = element.parentOfTypes(KtNamedFunction::class, KtProperty::class) ?: return null
         val receivers = element.parentOfType<KtContextReceiverList>()?.contextReceivers() ?: return null
         val ktContextReceiverSet = receivers.toSet()
+        val containingDeclarationSymbol = containingDeclaration.symbol
 
         val implicitContextReceiverUsages = mutableListOf<ImplicitContextReceiverUsage>()
         val labeledThisContextReceiverUsages = mutableListOf<LabeledThisContextReceiverUsage>()
-        containingFunction.accept(
+        val shadowedThisUsages = mutableListOf<ShadowedThisUsage>()
+        containingDeclaration.accept(
             object : KtTreeVisitorVoid() {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     implicitContextReceiverUsages.addIfNotNull(
@@ -109,9 +117,11 @@ internal class ContextParametersMigrationInspection :
                 }
 
                 override fun visitThisExpression(expression: KtThisExpression) {
-                    if (expression.labelQualifier == null) return
                     labeledThisContextReceiverUsages.addIfNotNull(
                         buildLabeledThisUsageInfo(expression, ktContextReceiverSet)
+                    )
+                    shadowedThisUsages.addIfNotNull(
+                        buildShadowedThisUsageInfo(expression, containingDeclarationSymbol)
                     )
                 }
             }
@@ -121,12 +131,14 @@ internal class ContextParametersMigrationInspection :
         val implicitContextUsagesWithLocalReplacement = implicitContextReceiverUsages.filterNot { contextReceiverUsage ->
             implicitOnlyContextReceivers.containsAll(contextReceiverUsage.getAllContextReceivers())
         }
-        val contextNames = findSuggestedContextNames(receivers, containingFunction) ?: createFallbackNames(receivers)
+        val contextNames = findSuggestedContextNames(receivers, containingDeclaration) ?: createFallbackNames(receivers)
+        val reviewedShadowedThisUsages = shadowedThisUsages.takeIf { implicitOnlyContextReceivers.isNotEmpty() }.orEmpty()
 
         return InspectionContext(
             contextNames,
             implicitContextUsagesWithLocalReplacement,
             labeledThisContextReceiverUsages,
+            reviewedShadowedThisUsages,
             implicitOnlyContextReceivers.map { it.createSmartPointer() },
         )
     }
@@ -247,6 +259,7 @@ internal class ContextParametersMigrationInspection :
         thisExpression: KtThisExpression,
         contextReceiverSet: Set<KtContextReceiver>,
     ): LabeledThisContextReceiverUsage? {
+        if (thisExpression.labelQualifier == null) return null
         val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return null
         val maybeContextReceiver = thisExpressionSymbol.psi ?: return null
 
@@ -258,6 +271,28 @@ internal class ContextParametersMigrationInspection :
         }
         return null
     }
+
+    private fun KaSession.buildShadowedThisUsageInfo(
+        thisExpression: KtThisExpression,
+        contextOwnerSymbol: KaDeclarationSymbol,
+    ): ShadowedThisUsage? {
+        // detection of outer `this@with`shadowing is not supported, can only happen with local classes
+        if (thisExpression.labelQualifier != null) return null
+        val symbolReferencedByThis = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return null
+        val implicitReceiversAtThisRef = thisExpression.containingKtFile.scopeContext(thisExpression).implicitReceivers
+        // either the context owner or the containing class-like (if any) can be a provider of the default implicit `this`
+        // proper context owner cannot be a local callable, so we are not checking the whole chain of containing declarations
+        val interestingThisProviders = listOfNotNull(contextOwnerSymbol, contextOwnerSymbol.containingDeclaration)
+        val shadowedThisOwner = implicitReceiversAtThisRef.firstOrNull { implicitReceiver ->
+            implicitReceiver.ownerSymbol in interestingThisProviders
+        }?.ownerSymbol ?: return null
+        if (symbolReferencedByThis.owningCallableSymbolIfReceiverOrSelf() != shadowedThisOwner) return null
+        val label = getLabelToBeReferencedByThis(shadowedThisOwner)?.receiverLabel ?: return null
+        return ShadowedThisUsage(thisExpression.createSmartPointer(), label)
+    }
+
+    private fun KaSymbol.owningCallableSymbolIfReceiverOrSelf(): KaSymbol =
+        if (this is KaReceiverParameterSymbol) this.owningCallableSymbol else this
 }
 
 /**
@@ -327,7 +362,7 @@ internal class ContextParametersMigrationQuickFix(
         val writableElementsForContextUsages = prepareWritableElementsForContextUsages(updater) ?: return
         // replace affected elements from inner to outer for correct composite results
         val sortedElementsToReplace = sortedElementsFromInnerToOuter(
-            context.implicitContextUsages + context.labeledThisContextReceiverUsages,
+            context.implicitContextUsages + context.labeledThisContextReceiverUsages + context.shadowedThisUsages,
             writableElementsForContextUsages,
         )
         for (elementToReplace in sortedElementsToReplace) {
@@ -366,7 +401,10 @@ internal class ContextParametersMigrationQuickFix(
         val writableLabeledThisUsages = context.labeledThisContextReceiverUsages.associateWith { usage ->
             usage.callReference.element?.let { updater.getWritable(it) } ?: return null
         }
-        return writableImplicitContextUsages + writableLabeledThisUsages
+        val writableShadowedThisUsages = context.shadowedThisUsages.associateWith { usage ->
+            usage.thisReference.element?.let { updater.getWritable(it) } ?: return null
+        }
+        return writableImplicitContextUsages + writableLabeledThisUsages + writableShadowedThisUsages
     }
 
     private fun sortedElementsFromInnerToOuter(
@@ -530,6 +568,17 @@ internal class LabeledThisContextReceiverUsage(
             ktPsiFactory.createExpression(newName)
         }
     }
+}
+
+internal class ShadowedThisUsage(
+    val thisReference: SmartPsiElementPointer<KtThisExpression>,
+    val qualifierToAdd: Name,
+): ReplaceableContextUsage {
+    override fun provideReplacement(
+        oldElement: KtElement,
+        ktPsiFactory: KtPsiFactory,
+        contextReceiversWithNewNames: Map<KtContextReceiver, String>
+    ): KtElement? = ktPsiFactory.createThisExpression(qualifierToAdd.asString())
 }
 
 private fun KtContextReceiver.createNamedParameter(name: String): KtParameter {
