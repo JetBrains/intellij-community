@@ -27,8 +27,12 @@ class Git(private val dir: Path) {
     return executeWithNullSeparatedOutput("git", "ls-files", "-z")
   }
 
-  fun mv(source: Path, destination: Path) {
-    execute("git", "mv", source.pathString, destination.pathString)
+  fun rm(files: List<Path>) {
+    execute("git", "rm", *files.map { it.pathString }.toTypedArray())
+  }
+
+  fun add(files: List<Path>) {
+    execute("git", "add", *files.map { it.pathString }.toTypedArray())
   }
 
   fun currentCommitShortHash(): String {
