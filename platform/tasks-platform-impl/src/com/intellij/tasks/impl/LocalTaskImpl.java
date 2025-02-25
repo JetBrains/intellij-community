@@ -40,6 +40,7 @@ public class LocalTaskImpl extends LocalTask {
   private TaskType myType = TaskType.OTHER;
   private @NlsContexts.Label String myPresentableName;
   private String myCustomIcon = null;
+  private Icon myCachedIcon = null;
 
   private String myProject = null;
   private String myNumber = "";
@@ -148,6 +149,7 @@ public class LocalTaskImpl extends LocalTask {
     myCustomIcon = issue.getCustomIcon();
     myIssueUrl = issue.getIssueUrl();
     myRepository = issue.getRepository();
+    myCachedIcon = issue.getIcon();
 
     myProject = issue.getProject();
     myNumber = issue.getNumber();
@@ -277,6 +279,9 @@ public class LocalTaskImpl extends LocalTask {
       // Load icon in the classloader of the corresponding repository implementation.
       // Fallback to the platform icons if the repository wasn't found.
       return IconLoader.getIcon(customIcon, myRepository.getClass().getClassLoader());
+    }
+    if (myCachedIcon != null) {
+      return myCachedIcon;
     }
     return getIconFromType(myType, isIssue());
   }
