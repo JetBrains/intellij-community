@@ -34,10 +34,11 @@ import java.nio.file.Path
 private val LIBRARIES_STATE_UPDATER_KEY = GlobalContextKey.create<LibraryDependenciesUpdater>("_libraries_state_updater_")
 private val ALL_AFFECTED_NODE_SOURCES_KEY = Key.create<MutableSet<NodeSource>>("_all_compiled_node_sources_")
 
-private fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer): NodeSource {
+internal fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer): NodeSource {
   return PathSource(relativizer.toRelative(file, RelativePathType.SOURCE))
 }
 
+@Suppress("InconsistentCommentForJavaParameter")
 internal suspend fun markDirtyDependenciesForInitialRound(
   dataProvider: BazelBuildDataProvider,
   target: BazelModuleBuildTarget,
@@ -46,6 +47,8 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   chunk: ModuleChunk,
   tracer: Tracer,
 ) {
+  val relativizer = dataProvider.relativizer
+
   tracer.span("check lib deps") { span ->
     var libUpdater = context.getUserData(LIBRARIES_STATE_UPDATER_KEY)
     if (libUpdater == null) {
@@ -53,14 +56,13 @@ internal suspend fun markDirtyDependenciesForInitialRound(
       context.putUserData(LIBRARIES_STATE_UPDATER_KEY, libUpdater)
     }
 
-    val incremental = libUpdater.update(context, chunk, target, span)
+    val incremental = libUpdater.update(context, chunk, target, relativizer, span)
     if (!incremental) {
       throw RebuildRequestedException(RuntimeException("incremental lib deps update failed"))
     }
   }
 
   val toCompile = hashSet<NodeSource>()
-  val relativizer = dataProvider.relativizer
   dirtyFilesHolder.processFilesToRecompile {
     toCompile.add(fileToNodeSource(it, relativizer))
     true
@@ -72,7 +74,7 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   }
 
   tracer.span("update dependency graph") { span ->
-    val delta = context.projectDescriptor.dataManager.dependencyGraph!!.graph.createDelta(
+    val delta = context.projectDescriptor.dataManager.getDependencyGraph()!!.graph.createDelta(
       /* sourcesToProcess = */ toCompile,
       /* deletedSources = */ deletedSources,
       /* isSourceOnly = */ true,
@@ -127,11 +129,11 @@ private fun updateDependencyGraph(
   val performIntegrate = !errorsDetected
   var additionalPassRequired = false
   val dataManager = context.projectDescriptor.dataManager
-  val graphConfig = dataManager.dependencyGraph!!
+  val graphConfig = dataManager.getDependencyGraph()!!
   val dependencyGraph = graphConfig.graph
 
   val isRebuild = context.scope.isRebuild
-  val params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
+  val params = DifferentiateParametersBuilder.create(chunk.presentableShortName)
     .compiledWithErrors(errorsDetected)
     .calculateAffected(!isRebuild && context.shouldDifferentiate(chunk))
     .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally)

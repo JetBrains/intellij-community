@@ -4,9 +4,9 @@ package org.jetbrains.bazel.jvm.jps.impl
 
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
 import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.storage.BuildDataProvider
 import org.jetbrains.jps.incremental.storage.OneToManyPathMapping
@@ -24,7 +24,7 @@ internal class BazelBuildDataProvider(
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
   @JvmField val isCleanBuild: Boolean,
-  @JvmField val libRootManager: BazelLibraryRoots,
+  @JvmField val libRootManager: DependencyStateStorage,
 ) : BuildDataProvider {
   @JvmField
   val stampStorage = BazelStampStorage(sourceToDescriptor)
@@ -58,15 +58,13 @@ internal class BazelBuildDataProvider(
   override fun clearCache() {
   }
 
-  override fun removeStaleTarget(targetId: String, targetType: BuildTargetType<*>) {
+  override fun commit() {
   }
 
-  override fun flushStorage(memoryCachesOnly: Boolean) {
+  override fun removeAllMaps() {
   }
 
-  override fun getLibraryRoots() = libRootManager
-
-  override fun wipeStorage() {
+  override fun removeStaleTarget(targetId: String, targetTypeId: String) {
   }
 
   override fun getFileStampStorage(target: BuildTarget<*>): BazelStampStorage = stampStorage

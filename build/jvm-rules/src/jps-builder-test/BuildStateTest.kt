@@ -3,11 +3,10 @@
 package org.jetbrains.bazel.jvm.jps.test
 
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.bazel.jvm.jps.state.PathRelativizer
+import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
-import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -22,19 +21,15 @@ internal object BuildStateTest {
   }
 }
 
-private val relativizer = object : PathTypeAwareRelativizer {
-  override fun toRelative(path: String, type: RelativePathType): String = path
+private val relativizer = object : PathRelativizer {
+  override fun toRelative(path: Path): String = path.invariantSeparatorsPathString
 
-  override fun toRelative(path: Path, type: RelativePathType): String = path.invariantSeparatorsPathString
-
-  override fun toAbsolute(path: String, type: RelativePathType): String = path
-
-  override fun toAbsoluteFile(path: String, type: RelativePathType): Path = Path.of(path)
+  override fun toAbsoluteFile(path: String): Path = Path.of(path)
 }
 
 internal fun testSerialization() {
   val random = Random(42)
-  val sourceDescriptors = Array<SourceDescriptor>(random.nextInt(100, 20_000)) {
+  val sourceDescriptors = Array(random.nextInt(100, 20_000)) {
     SourceDescriptor(
       sourceFile = Path.of("a/b/c/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.kt"),
       digest = random.nextBytes(32),

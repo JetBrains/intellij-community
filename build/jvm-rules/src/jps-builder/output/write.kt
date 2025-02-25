@@ -2,7 +2,7 @@
 package org.jetbrains.bazel.jvm.jps.output
 
 import io.opentelemetry.api.trace.Tracer
-import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.bazel.jvm.span
 import java.nio.file.Path
 

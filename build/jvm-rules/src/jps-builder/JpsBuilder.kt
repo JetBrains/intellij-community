@@ -23,7 +23,6 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
-import org.jetbrains.bazel.jvm.jps.impl.BazelLibraryRoots
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelPathTypeAwareRelativizer
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
@@ -31,18 +30,20 @@ import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
 import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
-import org.jetbrains.bazel.jvm.jps.impl.loadLibRootState
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.output.createOutputSink
 import org.jetbrains.bazel.jvm.jps.output.writeJarAndAbi
-import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.state.DependencyStateResult
+import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
+import org.jetbrains.bazel.jvm.jps.state.LoadSourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
+import org.jetbrains.bazel.jvm.jps.state.loadDependencyState
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
@@ -134,7 +135,7 @@ suspend fun buildUsingJps(
   args: ArgMap<JvmBuilderFlags>,
   out: Writer,
   sources: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>?,
+  dependencyFileToDigest: Map<Path, ByteArray>,
   sourceFileToDigest: Map<Path, ByteArray>,
   isDebugEnabled: Boolean,
   allocator: RootAllocator,
@@ -206,8 +207,9 @@ suspend fun buildUsingJps(
   }
 
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
-
-  fun computeBuildState(parentSpan: Span): LoadStateResult? {
+  val depStateStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
+  val classPath = moduleTarget.module.container.getChild(BazelConfigurationHolder.KIND).classPath
+  suspend fun computeBuildState(parentSpan: Span): Pair<LoadSourceFileStateResult, DependencyStateResult>? {
     val buildState = loadBuildState(
       buildStateFile = buildStateFile,
       relativizer = typeAwareRelativizer.sourceRelativizer,
@@ -217,7 +219,7 @@ suspend fun buildUsingJps(
       parentSpan = parentSpan,
     )
 
-    val forceFullRebuild = buildState != null && checkIsFullRebuildRequired(
+    val forceFullRebuild = buildState == null || checkIsFullRebuildRequired(
       buildState = buildState,
       log = log,
       sourceFileCount = sourceFileToDigest.size,
@@ -226,31 +228,34 @@ suspend fun buildUsingJps(
     )
     if (forceFullRebuild) {
       FileUtilRt.deleteRecursively(dataDir)
-
       isRebuild = true
       return null
     }
-    else {
-      return buildState
-    }
-  }
 
-  val libRootStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
-  val buildState = if (isRebuild) null else tracer.span("load and check state") { computeBuildState(it) }
-  val libRootState = if (isRebuild) {
-    hashMap<Path, ByteArray>()
-  }
-  else {
-    tracer.span("load and check state") {
-      loadLibRootState(
-        storageFile = libRootStorageFile,
+    val depState = tracer.span("load and check state") { span ->
+      val result = loadDependencyState(
+        storageFile = depStateStorageFile,
         allocator = allocator,
-        relativizer = typeAwareRelativizer,
-        span = it,
+        relativizer = typeAwareRelativizer.sourceRelativizer,
+        span = span,
       )
+      if (result != null && classPath.size != result.size) {
+        span.addEvent("class path size (${classPath.size}) and dependency file size (${result.size}) must be equal")
+        isRebuild = true
+      }
+      result
     }
+
+    if (isRebuild) {
+      FileUtilRt.deleteRecursively(dataDir)
+      return null
+    }
+    return buildState to DependencyStateResult(depState ?: hashMap(classPath.size))
   }
 
+  val sourceAndDepState = if (isRebuild) null else tracer.span("load and check state") { computeBuildState(it) }
+  val buildState = sourceAndDepState?.first
+  val depState = sourceAndDepState?.second
   var exitCode = initAndBuild(
     compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
     requestLog = log,
@@ -267,10 +272,10 @@ suspend fun buildUsingJps(
       storeFile = buildStateFile,
       allocator = allocator,
       isCleanBuild = isRebuild,
-      libRootManager = BazelLibraryRoots(
-        actualDependencyFileToDigest = dependencyFileToDigest!!,
-        storageFile = libRootStorageFile,
-        fileToDigest = libRootState,
+      libRootManager = DependencyStateStorage(
+        actualDependencyFileToDigest = dependencyFileToDigest,
+        storageFile = depStateStorageFile,
+        fileToDigest = depState?.map ?: hashMap(classPath.size),
       ),
     ),
     buildState = buildState,
@@ -296,10 +301,10 @@ suspend fun buildUsingJps(
         storeFile = buildStateFile,
         allocator = allocator,
         isCleanBuild = true,
-        libRootManager = BazelLibraryRoots(
+        libRootManager = DependencyStateStorage(
           actualDependencyFileToDigest = dependencyFileToDigest,
-          storageFile = libRootStorageFile,
-          fileToDigest = hashMap(),
+          storageFile = depStateStorageFile,
+          fileToDigest = hashMap(classPath.size),
         ),
       ),
       buildState = null,
@@ -401,7 +406,7 @@ private fun createJavaBuilder(
 }
 
 private fun checkIsFullRebuildRequired(
-  buildState: LoadStateResult,
+  buildState: LoadSourceFileStateResult,
   log: RequestLog,
   sourceFileCount: Int,
   parentSpan: Span,
@@ -443,7 +448,7 @@ private suspend fun initAndBuild(
   relativizer: PathRelativizerService,
   jpsModel: JpsModel,
   buildDataProvider: BazelBuildDataProvider,
-  buildState: LoadStateResult?,
+  buildState: LoadSourceFileStateResult?,
   parentSpan: Span,
   isDebugEnabled: Boolean,
 ): Int {
@@ -464,6 +469,7 @@ private suspend fun initAndBuild(
       moduleTarget = moduleTarget,
       relativizer = relativizer,
       buildDataProvider = buildDataProvider,
+      requestLog = requestLog,
       span = parentSpan,
     )
     try {
@@ -605,7 +611,7 @@ private fun CoroutineScope.postBuild(
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
-    buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer)
+    buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer.sourceRelativizer)
   }
 
   if (outputSink.isChanged || context.scope.isRebuild) {

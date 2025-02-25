@@ -25,7 +25,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.LANG_IMPL
+    val testModule = TestModules.XML_DOM
     val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
     val testParams = testModule.getParams(baseDir)
 

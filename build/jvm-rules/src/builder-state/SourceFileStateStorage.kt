@@ -58,7 +58,7 @@ fun loadBuildState(
   relativizer: PathRelativizer,
   allocator: RootAllocator,
   sourceFileToDigest: Map<Path, ByteArray>,
-): LoadStateResult? {
+): LoadSourceFileStateResult? {
   return loadBuildState(
     buildStateFile = buildStateFile,
     relativizer = relativizer,
@@ -76,7 +76,7 @@ fun loadBuildState(
   sourceFileToDigest: Map<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer?,
   parentSpan: Span?,
-): LoadStateResult? {
+): LoadSourceFileStateResult? {
   readArrowFile(buildStateFile, allocator, parentSpan) { fileReader ->
     if (targetDigests != null) {
       val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
@@ -85,7 +85,7 @@ fun loadBuildState(
           throw IOException(rebuildRequested)
         }
         else {
-          return LoadStateResult(
+          return LoadSourceFileStateResult(
             rebuildRequested = rebuildRequested,
             map = createInitialSourceMap(sourceFileToDigest),
             changedOrAddedFiles = emptyList(),
@@ -166,7 +166,7 @@ fun saveBuildState(
   }
 }
 
-data class LoadStateResult(
+data class LoadSourceFileStateResult(
   @JvmField val rebuildRequested: String?,
 
   @JvmField val map: Map<Path, SourceDescriptor>,
@@ -185,7 +185,7 @@ private fun doLoad(
   actualDigestMap: Map<Path, ByteArray>,
   relativizer: PathRelativizer,
   parentSpan: Span?,
-): LoadStateResult {
+): LoadSourceFileStateResult {
   val sourceFileVector = root.getVector(sourceFileField) as VarCharVector
   val digestVector = root.getVector(digestField) as VarBinaryVector
   val isChangedVector = root.getVector(isChangedField) as BitVector
@@ -258,5 +258,5 @@ private fun doLoad(
     changedFiles.addAll(newFiles.keys)
   }
 
-  return LoadStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
+  return LoadSourceFileStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package org.jetbrains.bazel.jvm.jps.impl
+package org.jetbrains.bazel.jvm.jps.state
 
 import io.opentelemetry.api.trace.Span
 import org.apache.arrow.memory.RootAllocator
@@ -12,15 +12,6 @@ import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
-import org.jetbrains.bazel.jvm.jps.state.notNullUtfStringFieldType
-import org.jetbrains.bazel.jvm.jps.state.readArrowFile
-import org.jetbrains.bazel.jvm.jps.state.writeVectorToFile
-import org.jetbrains.bazel.jvm.linkedSet
-import org.jetbrains.jps.incremental.dependencies.BAZEl_LIB_CONTAINER_NS
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
-import org.jetbrains.jps.incremental.storage.RelativePathType
-import org.jetbrains.jps.incremental.storage.dataTypes.LibRootUpdateResult
-import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -29,12 +20,16 @@ private val digestField = Field("digest", FieldType.notNullable(ArrowType.Binary
 
 private val depDescriptorSchema = Schema(java.util.List.of(depFileField, digestField))
 
-internal fun loadLibRootState(
+data class DependencyStateResult(
+  @JvmField val map: MutableMap<Path, ByteArray>,
+)
+
+fun loadDependencyState(
   storageFile: Path,
   allocator: RootAllocator,
-  relativizer: PathTypeAwareRelativizer,
+  relativizer: PathRelativizer,
   span: Span,
-): MutableMap<Path, ByteArray> {
+): MutableMap<Path, ByteArray>? {
   readArrowFile(storageFile, allocator, span) { fileReader ->
     val root = fileReader.vectorSchemaRoot
 
@@ -43,17 +38,17 @@ internal fun loadLibRootState(
 
     val result = LinkedHashMap<Path, ByteArray>(root.rowCount)
     for (rowIndex in 0 until root.rowCount) {
-      val file = relativizer.toAbsoluteFile(depFileVector.get(rowIndex).decodeToString(), RelativePathType.SOURCE)
+      val file = relativizer.toAbsoluteFile(depFileVector.get(rowIndex).decodeToString())
       val digest = digestVector.get(rowIndex)
 
       result.put(file, digest)
     }
     return result
   }
-  return LinkedHashMap()
+  return null
 }
 
-internal class BazelLibraryRoots(
+class DependencyStateStorage(
   private val actualDependencyFileToDigest: Map<Path, ByteArray>,
   private val storageFile: Path,
   private val fileToDigest: MutableMap<Path, ByteArray>,
@@ -61,56 +56,23 @@ internal class BazelLibraryRoots(
   private var isChanged = false
 
   @Synchronized
-  override fun updateIfExists(root: Path, namespace: String): LibRootUpdateResult {
-    throw UnsupportedOperationException("updateIfExists is not supported for BazelLibraryRoots")
-  }
-
-  @Synchronized
-  fun checkState(updated: MutableSet<Path>, classpath: Array<Path>): Set<Path> {
-    val deleted = linkedSet(fileToDigest.keys)
+  fun checkState(classpath: Array<Path>): List<Path> {
+    val changedOrAdded = ArrayList<Path>()
     for (file in classpath) {
-      val isKnown = deleted.remove(file)
+      val currentDigest = requireNotNull(actualDependencyFileToDigest.get(file)) { "cannot find actual digest for $file" }
 
-      val currentDigest = actualDependencyFileToDigest.get(file)!!
-
-      val oldDigest = if (isKnown) fileToDigest.get(file) else null
-      if (oldDigest == null) {
-        // added?
+      val oldDigest = fileToDigest.get(file)
+      if (oldDigest == null || !oldDigest.contentEquals(currentDigest)) {
         fileToDigest.put(file, currentDigest)
         isChanged = true
-        continue
+        changedOrAdded.add(file)
       }
-
-      if (oldDigest.contentEquals(currentDigest)) {
-        // unchanged
-        continue
-      }
-
-      // changed
-      fileToDigest.put(file, currentDigest)
-      isChanged = true
-      updated.add(file)
     }
-    if (deleted.isNotEmpty()) {
-      fileToDigest.keys.removeAll(deleted)
-    }
-    return deleted
+    return changedOrAdded
   }
 
   @Synchronized
-  override fun removeRoots(toRemove: Iterable<Path>) {
-    for (deletedRoot in toRemove) {
-      if (fileToDigest.remove(deletedRoot) != null) {
-        isChanged = true
-      }
-    }
-  }
-
-  @Synchronized
-  override fun getNamespace(root: Path): String? = BAZEl_LIB_CONTAINER_NS
-
-  @Synchronized
-  fun saveState(allocator: RootAllocator, relativizer: PathTypeAwareRelativizer) {
+  fun saveState(allocator: RootAllocator, relativizer: PathRelativizer) {
     if (!isChanged) {
       return
     }
@@ -134,7 +96,7 @@ internal class BazelLibraryRoots(
         for (key in sortedKeys) {
           val digest = fileToDigest.get(key)!!
 
-          depFileVector.setSafe(rowIndex, relativizer.toRelative(key, RelativePathType.SOURCE).toByteArray())
+          depFileVector.setSafe(rowIndex, relativizer.toRelative(key).toByteArray())
           digestVector.setSafe(rowIndex, digest)
 
           rowIndex++

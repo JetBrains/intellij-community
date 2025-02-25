@@ -71,7 +71,12 @@ private inline fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: In
   }
 }
 
-internal inline fun readCentralDirectory(buffer: ByteBuffer, centralDirPosition: Int, centralDirSize: Int, entryProcessor: EntryProcessor) {
+internal inline fun readCentralDirectory(
+  buffer: ByteBuffer,
+  centralDirPosition: Int,
+  centralDirSize: Int,
+  entryProcessor: EntryProcessor,
+) {
   var offset = centralDirPosition
 
   // assume that file name is not greater than ~2 KiB

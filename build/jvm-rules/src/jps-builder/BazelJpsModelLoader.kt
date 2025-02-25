@@ -66,14 +66,14 @@ internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>?,
+  dependencyFileToDigest: Map<Path, ByteArray>,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
   digests.set(TargetConfigurationDigestProperty.JPS_TRACK_LIB_DEPS, if (isLibTracked) 1 else 0)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 2)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 5)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)
@@ -110,7 +110,7 @@ internal fun loadJpsModel(
     dependencyList = dependencyList,
     args = args,
     baseDir = classPathRootDir,
-    dependencyFileToDigest = dependencyFileToDigest.takeIf { !isLibTracked },
+    dependencyFileToDigest = dependencyFileToDigest,
     digests = digests,
   )
 
@@ -232,7 +232,7 @@ private fun configureClasspath(
   dependencyList: JpsDependenciesList,
   args: ArgMap<JvmBuilderFlags>,
   baseDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>?,
+  dependencyFileToDigest: Map<Path, ByteArray>,
   digests: TargetConfigurationDigestContainer,
 ): Array<Path> {
   // no classpath if no source file (jvm_test without own sources)
@@ -245,22 +245,27 @@ private fun configureClasspath(
   dependencyList.addLibraryDependency(lib)
 
   val hash = Hashing.xxh3_64().hashStream()
-  hash.putOrderedIterable(classPathRaw, HashFunnel.forString())
+  for (path in classPathRaw) {
+    hash.putByteArray(path.toByteArray())
+  }
+  hash.putInt(classPathRaw.size)
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_PATH_LIST, hash.asLong)
   hash.reset()
 
-  if (dependencyFileToDigest != null) {
+  if (isLibTracked) {
+    digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, -1)
+  }
+  else {
     for (file in files) {
       val digest = requireNotNull(dependencyFileToDigest.get(file)) {
         "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
       }
-      hash.putBytes(digest)
+      hash.putByteArray(digest)
     }
+    hash.putInt(files.size)
+    digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, hash.asLong)
+    hash.reset()
   }
-  hash.putInt(files.size)
-
-  digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, hash.asLong)
-  hash.reset()
 
   return files
 }

@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.state.LoadSourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
 import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.bazel.jvm.span
@@ -87,7 +87,7 @@ internal class JpsTargetBuilder(
     context: BazelCompileContext,
     moduleTarget: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
-    buildState: LoadStateResult?,
+    buildState: LoadSourceFileStateResult?,
     outputSink: OutputSink,
     parentSpan: Span,
   ): Int {
@@ -304,7 +304,7 @@ internal class JpsTargetBuilder(
     context: BazelCompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
-    buildState: LoadStateResult?,
+    buildState: LoadSourceFileStateResult?,
     outputSink: OutputSink,
   ) {
     val targets = java.util.Set.of<BuildTarget<*>>(target)

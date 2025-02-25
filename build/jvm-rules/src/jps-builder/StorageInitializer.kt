@@ -12,6 +12,7 @@ import kotlinx.coroutines.ensureActive
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
@@ -101,6 +102,7 @@ internal class StorageInitializer(private val dataDir: Path, private val outJar:
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
     buildDataProvider: BazelBuildDataProvider,
+    requestLog: RequestLog,
     span: Span,
   ): ProjectDescriptor {
     try {
@@ -114,6 +116,7 @@ internal class StorageInitializer(private val dataDir: Path, private val outJar:
         relativizer = relativizer,
         storageManager = storageManager!!,
         buildDataProvider = buildDataProvider,
+        requestLog = requestLog,
       )
     }
     catch (e: Throwable) {
@@ -122,9 +125,7 @@ internal class StorageInitializer(private val dataDir: Path, private val outJar:
         throw e
       }
 
-      span.recordException(e, Attributes.of(
-        AttributeKey.stringKey("message"), "cannot open cache storage",
-      ))
+      span.recordException(e, Attributes.of(AttributeKey.stringKey("message"), "cannot open cache storage"))
     }
 
     return createProjectDescriptor(
@@ -132,6 +133,7 @@ internal class StorageInitializer(private val dataDir: Path, private val outJar:
       moduleTarget = moduleTarget,
       relativizer = relativizer,
       buildDataProvider = buildDataProvider,
+      requestLog = requestLog,
       span = span,
     )
   }

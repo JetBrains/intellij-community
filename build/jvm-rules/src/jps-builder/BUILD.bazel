@@ -28,6 +28,7 @@ kt_jvm_library(
         "//:arrow-memory-core",
         "//:arrow-algorithm",
         "@lib//:jps-javac-extension",
+        "@lib//:caffeine",
     ],
     runtime_deps = [
         # arrow wants slf4j
@@ -41,7 +42,6 @@ kt_jvm_library(
         # jps needs these libs
         "@lib//:asm",
         "@lib//:aalto-xml",
-        "@lib//:caffeine",
         "@lib//:platform-jps-build-qdox-java-parser",
         "//:kotlin-build-tools-api",
         "//:kotlin-metadata",
