@@ -80,11 +80,11 @@ internal class ParsingTreeBuilder(
     }
 
   internal fun precede(marker: ProductionMarker): SyntaxTreeBuilder.Marker {
-    assert(marker.getStartIndex() >= 0) { "Preceding disposed marker" }
+    assert(marker.getStartTokenIndex() >= 0) { "Preceding disposed marker" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
-    val pre = createMarker(marker.getStartIndex())
+    val pre = createMarker(marker.getStartTokenIndex())
     myProduction.addBefore(pre, marker)
     return pre
   }
@@ -253,7 +253,7 @@ internal class ParsingTreeBuilder(
 
   private fun createMarker(lexemeIndex: Int): CompositeMarker {
     val marker = pool.allocateCompositeMarker()
-    marker._startIndex = lexemeIndex
+    marker.startIndex = lexemeIndex
     if (myDebugMode) {
       myOptionalData.notifyAllocated(marker.markerId)
     }
@@ -273,12 +273,12 @@ internal class ParsingTreeBuilder(
   }
 
   internal fun rollbackTo(marker: CompositeMarker) {
-    assert(marker.getStartIndex() >= 0) { "The marker is already disposed" }
+    assert(marker.getStartTokenIndex() >= 0) { "The marker is already disposed" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
-    DIAGNOSTICS?.registerRollback(myCurrentLexeme - marker.getStartIndex())
-    myCurrentLexeme = marker.getStartIndex()
+    DIAGNOSTICS?.registerRollback(myCurrentLexeme - marker.getStartTokenIndex())
+    myCurrentLexeme = marker.getStartTokenIndex()
     myTokenTypeChecked = true
     myProduction.rollbackTo(marker)
     clearCachedTokenType()
@@ -298,8 +298,8 @@ internal class ParsingTreeBuilder(
       myOptionalData.setErrorMessage(marker.markerId, errorMessage)
     }
 
-    val doneLexeme = before?.getStartIndex() ?: myCurrentLexeme
-    if (whitespaceOrCommentBindingPolicy.isLeftBound(marker.getTokenType()) && isEmpty(marker.getStartIndex(), doneLexeme)) {
+    val doneLexeme = before?.getStartTokenIndex() ?: myCurrentLexeme
+    if (whitespaceOrCommentBindingPolicy.isLeftBound(marker.getTokenType()) && isEmpty(marker.getStartTokenIndex(), doneLexeme)) {
       marker.setCustomEdgeTokenBinders(WhitespacesBinders.defaultRightBinder(), null)
     }
     marker.endIndex = doneLexeme
@@ -324,12 +324,12 @@ internal class ParsingTreeBuilder(
 
   override fun error(messageText: String) {
     val lastMarker = myProduction.getStartMarkerAt(myProduction.size - 1)
-    if (lastMarker is ErrorMarker && lastMarker.getStartIndex() == myCurrentLexeme) {
+    if (lastMarker is ErrorMarker && lastMarker.getStartTokenIndex() == myCurrentLexeme) {
       return
     }
     val marker = pool.allocateErrorNode()
     marker.setErrorMessage(messageText)
-    marker._startIndex = myCurrentLexeme
+    marker.startIndex = myCurrentLexeme
     myProduction.addMarker(marker)
   }
 
@@ -351,9 +351,9 @@ internal class ParsingTreeBuilder(
     }
 
     val rootMarker = result.productionMarkers.getMarker(0)
-    if (rootMarker.getEndIndex() < lexemeCount) {
-      val missed = arrayOfNulls<SyntaxElementType>(this.lexemeCount - rootMarker.getEndIndex())
-      result.copyTokenTypesToArray(missed, rootMarker.getEndIndex(), 0, missed.size)
+    if (rootMarker.getEndTokenIndex() < lexemeCount) {
+      val missed = arrayOfNulls<SyntaxElementType>(this.lexemeCount - rootMarker.getEndTokenIndex())
+      result.copyTokenTypesToArray(missed, rootMarker.getEndTokenIndex(), 0, missed.size)
       logger.error("Tokens ${missed.contentToString()} are outside of root element \"${rootMarker.getTokenType()}\".",
                    Attachment("outsideTokensFragment.txt", text.toString()))
     }
@@ -448,7 +448,7 @@ internal class ParsingTreeBuilder(
   }
 
   private fun prepareUnbalancedMarkerMessage(marker: ProductionMarker?): String {
-    val index = if (marker != null) marker.getStartIndex() + 1 else myLexStarts.size
+    val index = if (marker != null) marker.getStartTokenIndex() + 1 else myLexStarts.size
 
     val context = if (index < myLexStarts.size)
       text.subSequence(max(0, (myLexStarts[index] - 1000)), myLexStarts[index])

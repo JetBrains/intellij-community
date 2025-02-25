@@ -154,8 +154,8 @@ internal class PsiSyntaxBuilderImpl(
     return CompositeNode(
       markerId = markedId,
       myType = tokenConverter.convertNotNull(productionMarker.getTokenType()),
-      startIndex = productionMarker.getStartIndex(),
-      myEndIndex = productionMarker.getEndIndex(),
+      startIndex = productionMarker.getStartTokenIndex(),
+      myEndIndex = productionMarker.getEndTokenIndex(),
       data = nodeData,
       parent = parent
     )
@@ -169,7 +169,7 @@ internal class PsiSyntaxBuilderImpl(
     markedId++
     val error = ErrorNode(
       markerId = markedId,
-      index = item.getStartIndex(),
+      index = item.getStartTokenIndex(),
       data = nodeData,
       parent = parent,
       message = item.getErrorMessage()!!
@@ -243,7 +243,7 @@ internal class PsiSyntaxBuilderImpl(
         if (item.isErrorMarker()) {
           // todo myData.myErrorInterner.intern(message)
           val error = createErrorNode(item, curNode, nodeData)
-          val curToken = item.getStartIndex()
+          val curToken = item.getStartTokenIndex()
           if (curToken != lastErrorIndex) { // adding only the first (deepest) error from the same lexeme offset
             lastErrorIndex = curToken
             curNode.addChild(error)

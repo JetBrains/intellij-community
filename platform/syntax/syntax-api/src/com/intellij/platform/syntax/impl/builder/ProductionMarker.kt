@@ -8,16 +8,16 @@ internal abstract class ProductionMarker(
   val builder: ParsingTreeBuilder,
 ) : SyntaxTreeBuilder.Production {
 
-  var _startIndex: Int = -1
+  var startIndex: Int = -1
 
-  final override fun getStartIndex(): Int = _startIndex
+  final override fun getStartTokenIndex(): Int = startIndex
 
   open fun dispose() {
-    _startIndex = -1
+    startIndex = -1
   }
 
   final override fun getStartOffset(): Int =
-    builder.myLexStarts[getStartIndex()] + builder.startOffset
+    builder.myLexStarts[getStartTokenIndex()] + builder.startOffset
 
   final override fun isCollapsed(): Boolean =
     builder.myOptionalData.isCollapsed(markerId)

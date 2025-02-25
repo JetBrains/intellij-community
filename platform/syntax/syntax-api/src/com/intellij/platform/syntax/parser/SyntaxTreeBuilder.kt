@@ -198,12 +198,12 @@ interface SyntaxTreeBuilder {
     /**
      * The index of the first production's token in the token sequence
      */
-    fun getStartIndex(): Int
+    fun getStartTokenIndex(): Int
 
     /**
      * The index of the last production's token in the token sequence
      */
-    fun getEndIndex(): Int
+    fun getEndTokenIndex(): Int
 
     /**
      * The error message attached to the production, if any

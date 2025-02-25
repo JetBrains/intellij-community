@@ -91,11 +91,11 @@
 - a:rollbackTo():V
 - a:setCustomEdgeTokenBinders(com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder,com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder):V
 *:com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Production
-- a:getEndIndex():I
 - a:getEndOffset():I
+- a:getEndTokenIndex():I
 - a:getErrorMessage():java.lang.String
-- a:getStartIndex():I
 - a:getStartOffset():I
+- a:getStartTokenIndex():I
 - a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
 - a:isCollapsed():Z
 - a:isErrorMarker():Z

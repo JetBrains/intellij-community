@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.util.Logger
 import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.fastutil.ints.IntList
 import com.intellij.platform.syntax.impl.fastutil.ints.lastIndexOf
+import com.intellij.platform.syntax.util.Logger
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -22,7 +22,7 @@ internal class MarkerProduction(
   private fun indexOf(marker: ProductionMarker): Int {
     var idx = findLinearly(marker.markerId)
     if (idx < 0) {
-      for (i in findMarkerAtLexeme(marker.getStartIndex())..<production.size) {
+      for (i in findMarkerAtLexeme(marker.getStartTokenIndex())..<production.size) {
         if (production[i] == marker.markerId) {
           idx = i
           break
@@ -167,7 +167,7 @@ internal class MarkerProduction(
     val pivotIndex = indexOf(pivot)
     for (i in pivotIndex + 1..<production.size) {
       val m = getDoneMarkerAt(i)
-      if (m != null && m.getStartIndex() <= pivot.getStartIndex() && indexOf(m) < pivotIndex) {
+      if (m != null && m.getStartTokenIndex() <= pivot.getStartTokenIndex() && indexOf(m) < pivotIndex) {
         throw AssertionError(
           "There's a marker of type '${m.getTokenType()}' that starts before and finishes after the current marker. See cause for its allocation trace.",
           myOptionalData.getAllocationTrace(m)
