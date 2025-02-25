@@ -29,6 +29,10 @@ data class IntellijIconClassGeneratorModuleConfig(
    * The directory where icons are located relative to resource root.
    */
   val iconDirectory: String? = null,
+  /**
+   * Enables generation of icon keys for Jewel.
+   */
+  val generateJewelIcons: Boolean = false
 )
 
 abstract class IconClasses {

@@ -152,6 +152,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.android.tools.idea.studiobot.icons",
         iconDirectory = "icons"
       )
+
+      "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true)
+
       else -> super.getConfigForModule(moduleName)
     }
   }
