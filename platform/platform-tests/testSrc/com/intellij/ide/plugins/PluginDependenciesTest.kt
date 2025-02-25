@@ -394,6 +394,25 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
 
+  @Test
+  fun `plugin is not loaded if it is incompatible with another plugin and they both contain the same module`() {
+    val requiredModule = PluginBuilder.withModulesLang().packagePrefix("com.intellij.java.debugger.frontend")
+
+    PluginBuilder.empty()
+      .id("com.intellij.java")
+      .module("com.intellij.java.debugger.frontend", requiredModule, loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath.resolve("intellij.java"))
+
+    PluginBuilder.empty()
+      .id("com.intellij.java.frontend")
+      .module("com.intellij.java.debugger.frontend", requiredModule)
+      .incompatibleWith("com.intellij.java")
+      .build(pluginDirPath.resolve("intellij.java.frontend"))
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+  }
+
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
   private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")

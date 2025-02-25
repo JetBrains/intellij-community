@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -70,6 +70,7 @@ class PluginBuilder private constructor() {
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
   private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
   private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
+  private val incompatibleWith = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
 
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder, val separateJar: Boolean)
   private val subDescriptors = ArrayList<SubDescriptor>()
@@ -139,6 +140,11 @@ class PluginBuilder private constructor() {
 
   fun pluginDependency(pluginId: String): PluginBuilder {
     pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    return this
+  }
+
+  fun incompatibleWith(pluginId: String): PluginBuilder {
+    incompatibleWith.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
@@ -229,6 +235,12 @@ class PluginBuilder private constructor() {
           """<module name="${moduleItem.name}" $loadingAttribute/>""" 
         }
         append("\n</content>")
+      }
+
+      if (incompatibleWith.isNotEmpty()) {
+        incompatibleWith.joinTo(this, separator = "\n  ") {
+          """<incompatible-with>${it.id}</incompatible-with>"""
+        }
       }
 
       if (dependencies.isNotEmpty() || pluginDependencies.isNotEmpty()) {
