@@ -25,6 +25,7 @@ internal class DecompilerInEditorListener : EditorFactoryListener {
     val editor = event.editor as? EditorImpl ?: return
     val file = editor.virtualFile ?: return
     if (file.fileType != JavaClassFileType.INSTANCE) return
+    if (file.name == "module-info.class") return
     setupModeToggles(editor)
   }
 
