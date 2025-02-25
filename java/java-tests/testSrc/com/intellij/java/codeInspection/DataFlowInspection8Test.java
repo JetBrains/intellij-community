@@ -381,4 +381,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testFieldWriteInLambda() { doTest(); }
+  public void testNewMethodReferenceMustBeNonNull() {
+    doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true); 
+  }
 }
