@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
 import java.io.File
 import java.io.IOException
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 private const val UNKNOWN = MavenId.UNKNOWN_VALUE
@@ -44,7 +43,7 @@ class MavenProjectReader(private val myProject: Project) {
     explicitProfiles: MavenExplicitProfiles,
     locator: MavenProjectReaderProjectLocator,
   ): MavenProjectReaderResult {
-    return MavenProjectReadHelper(myProject, myCache, myReadHelper, mySettingsProfilesCache, generalSettings, file, explicitProfiles, locator).readProjectAsync(generalSettings, file, explicitProfiles, locator)
+    return MavenProjectReadHelper(myProject, myCache, myReadHelper, mySettingsProfilesCache, generalSettings, file, explicitProfiles, locator).readProjectAsync()
   }
 
   private class MavenProjectReadHelper(
@@ -57,15 +56,11 @@ class MavenProjectReader(private val myProject: Project) {
     private val explicitProfiles: MavenExplicitProfiles,
     private val locator: MavenProjectReaderProjectLocator,
   ) {
-    suspend fun readProjectAsync(
-      generalSettings: MavenGeneralSettings,
-      file: VirtualFile,
-      explicitProfiles: MavenExplicitProfiles,
-      locator: MavenProjectReaderProjectLocator,
-    ): MavenProjectReaderResult {
-      val baseDir = MavenUtil.getBaseDir(file)
+    private val recursionGuard: MutableSet<VirtualFile> = HashSet()
+    private val baseDir = MavenUtil.getBaseDir(file)
 
-      val readResult = readProjectModel(generalSettings, baseDir, file, explicitProfiles, HashSet(), locator)
+    suspend fun readProjectAsync(): MavenProjectReaderResult {
+      val readResult = readProjectModel(file)
 
       val model = myReadHelper.interpolate(baseDir, file, readResult.first.model)
 
@@ -86,14 +81,7 @@ class MavenProjectReader(private val myProject: Project) {
                                       readResult.first.problems)
     }
 
-    private suspend fun readProjectModel(
-      generalSettings: MavenGeneralSettings,
-      baseDir: Path,
-      file: VirtualFile,
-      explicitProfiles: MavenExplicitProfiles,
-      recursionGuard: MutableSet<VirtualFile>,
-      locator: MavenProjectReaderProjectLocator,
-    ): Pair<RawModelReadResult, MavenExplicitProfiles> {
+    private suspend fun readProjectModel(file: VirtualFile): Pair<RawModelReadResult, MavenExplicitProfiles> {
       var cachedModelReadResult = myCache[file]
       if (cachedModelReadResult == null) {
         cachedModelReadResult = doReadProjectModel(myProject, file, false)
@@ -106,18 +94,13 @@ class MavenProjectReader(private val myProject: Project) {
       val problems = cachedModelReadResult.problems
 
       val modelWithInheritance = resolveInheritance(
-        generalSettings,
         modelFromCache,
-        baseDir,
         file,
-        explicitProfiles,
-        recursionGuard,
-        locator,
         problems)
 
-      addSettingsProfiles(file, generalSettings, modelWithInheritance, alwaysOnProfiles, problems)
+      addSettingsProfiles(file, modelWithInheritance, alwaysOnProfiles, problems)
 
-      val baseDirString = MavenUtil.getBaseDir(file).toString()
+      val baseDirString = baseDir.toString()
       val transformer = RemotePathTransformerFactory.createForProject(myProject)
       val baseDirFile = File(transformer.toRemotePathOrSelf(baseDirString))
       val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
@@ -150,9 +133,8 @@ class MavenProjectReader(private val myProject: Project) {
       alwaysOnProfiles: MutableSet<String>,
     ): RawModelReadResult {
       var result: MavenModel? = null
-      val basedir = MavenUtil.getBaseDir(file).toString()
       val manager = MavenProjectsManager.getInstance(project).embeddersManager
-      val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir)
+      val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDir.toString())
       try {
         result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }
       }
@@ -297,13 +279,8 @@ class MavenProjectReader(private val myProject: Project) {
     private fun findModules(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
 
     private suspend fun resolveInheritance(
-      generalSettings: MavenGeneralSettings,
       model: MavenModel,
-      baseDir: Path,
       file: VirtualFile,
-      explicitProfiles: MavenExplicitProfiles,
-      recursionGuard: MutableSet<VirtualFile>,
-      locator: MavenProjectReaderProjectLocator,
       problems: MutableCollection<MavenProjectProblem>,
     ): MavenModel {
       if (recursionGuard.contains(file)) {
@@ -330,68 +307,7 @@ class MavenProjectReader(private val myProject: Project) {
           parentDesc = MavenParentDesc(parent.mavenId, parent.relativePath)
         }
 
-        class Processor(private val myProject: Project) {
-          suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult> {
-            val result = readProjectModel(generalSettings, baseDir, parentFile, explicitProfiles, recursionGuard, locator).first
-            return Pair.create(parentFile, result)
-          }
-
-          suspend fun findInLocalRepository(generalSettings: MavenGeneralSettings, parentDesc: MavenParentDesc): Pair<VirtualFile, RawModelReadResult>? {
-            val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
-            val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
-            if (parentFile != null) {
-              return doProcessParent(parentFile)
-            }
-            return null
-          }
-
-          suspend fun process(
-            generalSettings: MavenGeneralSettings,
-            projectFile: VirtualFile,
-            parentDesc: MavenParentDesc?,
-          ): Pair<VirtualFile, RawModelReadResult>? {
-            if (parentDesc == null) {
-              return null
-            }
-
-            val superPom = MavenUtil.resolveSuperPomFile(myProject, projectFile)
-            if (superPom == null || projectFile == superPom) return null
-
-            val locatedParentFile = locator.findProjectFile(parentDesc.parentId)
-            if (locatedParentFile != null) {
-              return doProcessParent(locatedParentFile)
-            }
-
-            if (Strings.isEmpty(parentDesc.parentRelativePath)) {
-              val localRepoResult = findInLocalRepository(generalSettings, parentDesc)
-              if (localRepoResult != null) {
-                return localRepoResult
-              }
-            }
-
-            if (projectFile.parent != null) {
-              val parentFileCandidate = projectFile.parent.findFileByRelativePath(MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
-
-              val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
-                parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
-              else parentFileCandidate
-
-              if (parentFile != null) {
-                val parentModel = doReadProjectModel(myProject, parentFile, true).model
-                val parentId = parentDesc.parentId
-                val parentResult = if (parentId != parentModel.mavenId) null else doProcessParent(parentFile)
-                if (null != parentResult){
-                  return parentResult
-                }
-              }
-            }
-
-            val defaultParentDesc = MavenParentDesc(parentDesc.parentId, MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
-            return findInLocalRepository(generalSettings, defaultParentDesc)
-          }
-        }
-
-        val parentModelWithProblems = Processor(myProject).process(generalSettings, file, parentDesc)
+        val parentModelWithProblems = readRawResult(file, parentDesc)
 
         if (parentModelWithProblems == null) return model // no parent or parent not found;
 
@@ -424,9 +340,66 @@ class MavenProjectReader(private val myProject: Project) {
       }
     }
 
+    private suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult> {
+      val result = readProjectModel(parentFile).first
+      return Pair.create(parentFile, result)
+    }
+
+    private suspend fun findInLocalRepository(parentDesc: MavenParentDesc): Pair<VirtualFile, RawModelReadResult>? {
+      val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
+      val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
+      if (parentFile != null) {
+        return doProcessParent(parentFile)
+      }
+      return null
+    }
+
+    private suspend fun readRawResult(
+      projectFile: VirtualFile,
+      parentDesc: MavenParentDesc?,
+    ): Pair<VirtualFile, RawModelReadResult>? {
+      if (parentDesc == null) {
+        return null
+      }
+
+      val superPom = MavenUtil.resolveSuperPomFile(myProject, projectFile)
+      if (superPom == null || projectFile == superPom) return null
+
+      val locatedParentFile = locator.findProjectFile(parentDesc.parentId)
+      if (locatedParentFile != null) {
+        return doProcessParent(locatedParentFile)
+      }
+
+      if (Strings.isEmpty(parentDesc.parentRelativePath)) {
+        val localRepoResult = findInLocalRepository(parentDesc)
+        if (localRepoResult != null) {
+          return localRepoResult
+        }
+      }
+
+      if (projectFile.parent != null) {
+        val parentFileCandidate = projectFile.parent.findFileByRelativePath(MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+
+        val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
+          parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
+        else parentFileCandidate
+
+        if (parentFile != null) {
+          val parentModel = doReadProjectModel(myProject, parentFile, true).model
+          val parentId = parentDesc.parentId
+          val parentResult = if (parentId != parentModel.mavenId) null else doProcessParent(parentFile)
+          if (null != parentResult) {
+            return parentResult
+          }
+        }
+      }
+
+      val defaultParentDesc = MavenParentDesc(parentDesc.parentId, MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+      return findInLocalRepository(defaultParentDesc)
+    }
+
     private suspend fun addSettingsProfiles(
       projectFile: VirtualFile,
-      generalSettings: MavenGeneralSettings,
       model: MavenModel,
       alwaysOnProfiles: MutableSet<String>,
       problems: MutableCollection<MavenProjectProblem>,
