@@ -9,8 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.ad.AD_DISPATCHER
+import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.ThreadLocalRhizomeDB
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -34,36 +33,33 @@ internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope
   }
 
   init {
-    // TODO
+    // TODO: PrioritizedDocumentListener Int.MIN_VALUE + 1
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(
       object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          if (EDT.isCurrentThreadEdt()) {
-            val document = event.document
-            val file = FileDocumentManager.getInstance().getFile(document)
-            if (file is VirtualFileWithId && (document is DocumentImpl) && document.isWriteThreadOnly) {
-              val entityChange = coroutineScope.async(AD_DISPATCHER) {
-                val entity = DocumentEntityManager.getInstance().getDocEntity(document)
-                if (entity != null) {
-                  val operation = operation(event)
-                  change {
-                    shared { // shared to mutate shared document components (e.g., AdMarkupModel)
-                      entity.mutate(this, OpenMap.empty()) {
-                        edit(operation)
-                      }
+          val document = event.document
+          if (FileDocumentManager.getInstance().getFile(document) is VirtualFileWithId) { // TODO: more reliable condition
+            val entityChange = coroutineScope.async(AdTheManager.AD_DISPATCHER) {
+              val entity = DocumentEntityManager.getInstance().getDocEntity(document)
+              if (entity != null) {
+                val operation = operation(event)
+                change {
+                  shared { // shared to mutate shared document components (e.g., AdMarkupModel)
+                    entity.mutate(this, OpenMap.empty()) {
+                      edit(operation)
                     }
                   }
-                  awaitCommitted()
-                  true
-                } else {
-                  false
                 }
+                awaitCommitted()
+                true
+              } else {
+                false
               }
-              // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
-              val changed = runBlocking { entityChange.await() }
-              if (changed) {
-                ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-              }
+            }
+            // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
+            val changed = runBlocking { entityChange.await() }
+            if (EDT.isCurrentThreadEdt() && changed) {
+              ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
             }
           }
         }

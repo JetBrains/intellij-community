@@ -7,17 +7,18 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.ad.AD_DISPATCHER
+import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.pasta.common.DocumentEntity
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.withLock
@@ -35,40 +36,29 @@ internal class DocumentEntityManager(private val coroutineScope: CoroutineScope)
   private val lock = java.util.concurrent.locks.ReentrantLock()
 
   suspend fun getDocEntity(document: Document): DocumentEntity? {
-    if (isEnabled() && document is DocumentEx) {
-      val handle = lock.withLock {
-        document.getUserData(DOC_ENTITY_HANDLE_KEY)
-      }
-      return handle?.entity()
-    }
-    return null
+    return getDocHandle(document)?.entity()
   }
 
   fun getDocEntityRunBlocking(document: Document): DocumentEntity? {
-    if (isEnabled() && document is DocumentEx) {
-      val handle = lock.withLock {
-        document.getUserData(DOC_ENTITY_HANDLE_KEY)
-      }
-      return runBlocking { handle?.entity() }
-    }
-    return null
+    return getDocHandle(document)?.entityRunBlocking()
   }
 
-  internal fun bindDocEntity(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+  fun bindDocEntity(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
     if (isEnabled() &&
         document is DocumentEx &&
-        (document is DocumentImpl) && document.isWriteThreadOnly &&
         oldFile == null && file != null /* TODO: listen not only this case */) {
       val provider = DocumentEntityProvider.getInstance()
       if (provider.canCreateEntity(file, document)) {
         lock.withLock { // ensure createEntity is called only once
           if (document.getUserData(DOC_ENTITY_HANDLE_KEY) == null) {
-            println("binding doc<->entity $document $oldFile $file")
-
             val entityRef = AtomicReference<DocumentEntity>()
             val deferredRef = AtomicReference<Deferred<DocumentEntity>>(ENTITY_IS_NOT_READY)
+            val debugName = document.toString()
 
-            val entityDeferred = coroutineScope.async(AD_DISPATCHER) {
+            val entityDeferred = coroutineScope.async(AdTheManager.AD_DISPATCHER) { // TODO: can be lazy
+              AdTheManager.LOG.debug {
+                "binding doc entity $debugName with provider ${provider.javaClass.simpleName}"
+              }
               val entity = provider.createEntity(file, document)
               entityRef.set(entity)
               deferredRef.set(ENTITY_IS_READY) // release document hard reference captured by this lambda
@@ -78,16 +68,25 @@ internal class DocumentEntityManager(private val coroutineScope: CoroutineScope)
             // entityDeferred may finish before this cas
             deferredRef.compareAndSet(ENTITY_IS_NOT_READY, entityDeferred)
 
-            EntityCleanService.getInstance().registerEntity(document, document.toString()) {
+            EntityCleanService.getInstance().registerEntity(document, debugName) {
               val entity = entityDeferred.await()
               provider.deleteEntity(entity)
             }
 
-            document.putUserData(DOC_ENTITY_HANDLE_KEY, DocEntityHandle(entityRef, deferredRef))
+            document.putUserData(DOC_ENTITY_HANDLE_KEY, DocEntityHandle(entityRef, deferredRef, debugName))
           }
         }
       }
     }
+  }
+
+  private fun getDocHandle(document: Document): DocEntityHandle? {
+    if (isEnabled() && document is DocumentEx) {
+      return lock.withLock {
+        document.getUserData(DOC_ENTITY_HANDLE_KEY)
+      }
+    }
+    return null
   }
 
   private fun isEnabled(): Boolean {
@@ -108,19 +107,43 @@ private val ENTITY_IS_NOT_READY: Deferred<DocumentEntity>? = null
 private data class DocEntityHandle(
   private val entityRef: AtomicReference<DocumentEntity>,
   private val entityDeferredRef: AtomicReference<Deferred<DocumentEntity>>,
+  private val debugName: String,
 ) {
+
   suspend fun entity(): DocumentEntity {
-    val deferredRef = entityDeferredRef.get()
-    val entity = entityRef.get()
-    if (entity != null) { // fast path
+    val (deferred, entity) = entityPair()
+    if (entity != null) {
       return entity
     }
-    assert(deferredRef != ENTITY_IS_READY)
-    return deferredRef.await()
+    return deferred!!.await()
+  }
+
+  fun entityRunBlocking(): DocumentEntity {
+    ThreadingAssertions.assertEventDispatchThread()
+    val (deferred, entity) = entityPair()
+    if (entity != null) {
+      return entity
+    }
+    return runWithModalProgressBlocking(
+      ModalTaskOwner.guess(),
+      "Shared document entity creation $debugName",
+    ) { deferred!!.await() }
+  }
+
+  private fun entityPair(): Pair<Deferred<DocumentEntity>?, DocumentEntity?> {
+    val deferred = entityDeferredRef.get()
+    val entity = entityRef.get()
+    if (entity != null) { // fast path
+      return (null to entity)
+    }
+    assert(deferred != ENTITY_IS_READY)
+    assert(deferred != ENTITY_IS_NOT_READY)
+    AdTheManager.LOG.debug { "slow path entity creation $debugName" }
+    return (deferred to null)
   }
 
   override fun toString(): String {
     val entity = entityRef.get()
-    return "DocEntityHandle(isReady=${entity != null}, ref=$entityRef, deferredRef=$entityDeferredRef)"
+    return "DocEntityHandle($debugName, isReady=${entity != null}, ref=$entityRef, deferredRef=$entityDeferredRef)"
   }
 }

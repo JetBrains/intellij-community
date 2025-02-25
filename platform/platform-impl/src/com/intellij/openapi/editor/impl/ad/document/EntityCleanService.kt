@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl.ad.document
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.impl.ad.AD_DISPATCHER
+import com.intellij.openapi.editor.impl.ad.AdTheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -30,10 +30,11 @@ internal class EntityCleanService(private val coroutineScope: CoroutineScope) {
 
   // do not capture the monitor!
   private fun deleteUnreachableEntity(debugName: String, deleteEntity: suspend () -> Unit) {
-    coroutineScope.launch(AD_DISPATCHER) {
-      println("monitor $debugName is unreachable, removing corresponding entity")
-      // TODO: not invoked for editor's document
-      deleteEntity.invoke()
+    coroutineScope.launch(AdTheManager.AD_DISPATCHER) {
+      AdTheManager.LOG.debug {
+        "$debugName is unreachable, removing corresponding entity"
+      }
+      deleteEntity.invoke() // TODO: why not invoked for editor's document?
     }
   }
 }

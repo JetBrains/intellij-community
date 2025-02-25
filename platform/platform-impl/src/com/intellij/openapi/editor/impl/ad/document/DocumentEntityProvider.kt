@@ -18,7 +18,7 @@ import java.util.*
 interface DocumentEntityProvider {
   fun canCreateEntity(file: VirtualFile, document: DocumentEx): Boolean
   suspend fun createEntity(file: VirtualFile, document: DocumentEx): DocumentEntity
-  suspend fun deleteEntity(entity: DocumentEntity) // TODO: use cleaner to detect unreachable
+  suspend fun deleteEntity(entity: DocumentEntity)
 
   companion object {
     private val EP_NAME: ExtensionPointName<DocumentEntityProvider> = ExtensionPointName.create("com.intellij.documentEntityProvider")
@@ -58,7 +58,6 @@ private class DefaultDocumentEntityProvider() : DocumentEntityProvider {
 
   override suspend fun createEntity(file: VirtualFile, document: DocumentEx): DocumentEntity {
     val uid = DocumentEntityProvider.fileUID(file as VirtualFileWithId)
-    println("creating entity with ${(file as VirtualFileWithId).id} $uid for $document")
     AdDocumentSynchronizer.getInstance()
     // TODO: data race?
     return change {

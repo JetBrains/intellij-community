@@ -31,14 +31,10 @@ import com.jetbrains.rhizomedb.entities
 import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.kernel.transactor
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 
-internal val AD_DISPATCHER by lazy {
-  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
-}
-
-private val MARKUP_SYNC_KEY: Key<AdMarkupSynchronizer> = Key.create("AD_MARKUP_SYNC_KEY")
 
 @Experimental
 @Service(Level.APP)
@@ -47,6 +43,12 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(): AdTheManager = service()
+
+    private val MARKUP_SYNC_KEY: Key<AdMarkupSynchronizer> = Key.create("AD_MARKUP_SYNC_KEY")
+    internal val LOG = logger<AdTheManager>()
+    internal val AD_DISPATCHER by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
+    }
   }
 
   // TODO: Only monolith mode so far. EditorId needed for split mode
@@ -83,8 +85,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
   fun getEditorModel(editor: EditorImpl): EditorModel? {
     if (isEnabled()) {
-      val document = editor.document
-      val docEntity =  DocumentEntityManager.getInstance().getDocEntityRunBlocking(document)
+      val docEntity = docEntity(editor)
       if (docEntity != null) {
         ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
         val adMarkupModel = adMarkupModel(docEntity)
@@ -127,6 +128,16 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
   private fun releaseEditor() {
     // TODO
+  }
+
+  private fun docEntity(editor: Editor): DocumentEntity? {
+    val document = editor.document
+    val debugName = document.toString()
+    return runCatching {
+      DocumentEntityManager.getInstance().getDocEntityRunBlocking(document)
+    }.onFailure {
+      LOG.error(it) { "Failed to get doc entity $debugName" }
+    }.getOrNull()
   }
 
   private fun adMarkupModel(docEntity: DocumentEntity): AdMarkupModel? {
