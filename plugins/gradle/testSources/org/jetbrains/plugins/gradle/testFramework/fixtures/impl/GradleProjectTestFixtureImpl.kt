@@ -77,7 +77,6 @@ internal class GradleProjectTestFixtureImpl(
         openProjectAsync(fileFixture.root)
       }
     }
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   override fun tearDown() {
