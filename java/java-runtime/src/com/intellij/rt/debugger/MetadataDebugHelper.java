@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class MetadataDebugHelper {
+  public static final String METADATA_SEPARATOR = "\n";
+
   private static final String METADATA_CLASS_NAME = "kotlin.Metadata";
 
   private static final String KIND = "kind";
@@ -36,8 +38,14 @@ public class MetadataDebugHelper {
    * the debugger side. Any JDWP communication can be very expensive when debugging remotely,
    * especially when debugging Android applications on a phone.
    */
-  @SuppressWarnings("unchecked")
   public static String getDebugMetadataAsJson(Class<?> cls) {
+    StringBuilder sb = new StringBuilder();
+    appendDebugMetadataAsJson(sb, cls);
+    return sb.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void appendDebugMetadataAsJson(StringBuilder sb, Class<?> cls) {
     try {
       Class<?> metadataClass = Class.forName(METADATA_CLASS_NAME, false, cls.getClassLoader());
       Method kindMethod = metadataClass.getDeclaredMethod(KIND_METHOD_NAME);
@@ -50,7 +58,6 @@ public class MetadataDebugHelper {
 
       Object metadata = cls.getAnnotation((Class<Annotation>)metadataClass);
 
-      StringBuilder sb = new StringBuilder();
       sb.append("{");
 
       int kind = (int)kindMethod.invoke(metadata);
@@ -75,11 +82,26 @@ public class MetadataDebugHelper {
       appendAsJsonValueNoComma(sb, EXTRA_INT, extraInt);
 
       sb.append("}");
-
-      return sb.toString();
-    } catch (Exception ex) {
-      return null;
+    } catch (Exception ignored) {
     }
+  }
+
+  /*
+   * This function is used similarly to `getDebugMetadataAsJson`, when there is a need to
+   * fetch metadata for multiple classes.
+   *
+   * The return value is a concatenation of metadata JSON representations of given classes
+   * separated by MetadataDebugHelper.METADATA_SEPARATOR.
+   */
+  public static String getDebugMetadataListAsJson(Class<?>... classes) {
+    StringBuilder sb = new StringBuilder();
+    for (Class<?> cls : classes) {
+      if (sb.length() != 0) {
+        sb.append(METADATA_SEPARATOR);
+      }
+      appendDebugMetadataAsJson(sb, cls);
+    }
+    return sb.toString();
   }
 
   private static void appendAsJsonValue(StringBuilder sb, String name, Object value) {
