@@ -33,6 +33,10 @@ data class IntellijIconClassGeneratorModuleConfig(
    * Exclude specified packages from icon processing
    */
   val excludePackages: List<String> = emptyList(),
+  /**
+   * Enables generation of icon keys for Jewel.
+   */
+  val generateJewelIcons: Boolean = false
 )
 
 abstract class IconClasses {
