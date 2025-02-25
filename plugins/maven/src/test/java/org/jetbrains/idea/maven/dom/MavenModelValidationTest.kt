@@ -201,33 +201,6 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddingProfilesXmlReadingProblemsToProjectTag() = runBlocking {
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                         </project>
-                         """.trimIndent())
-    createProfilesXml("<<<")
-
-    importProjectAsync()
-
-    fixture.saveText(projectPom,
-                     """
-                         <<error descr="'profiles.xml' has syntax errors">project</error>>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
-  }
-
-  @Test
   fun testAddingStructureReadingProblemsToParentTag() = runBlocking {
     fixture.saveText(projectPom,
                      """

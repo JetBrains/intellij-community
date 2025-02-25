@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -771,35 +770,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     assertUnresolved(projectPom)
-  }
-
-  @Test
-  fun testResolvingPropertiesInOldStyleProfilesXml() = runBlocking {
-    val profiles = createProfilesXmlOldStyle("""
-                                                       <profile>
-                                                         <id>one</id>
-                                                         <properties>
-                                                           <foo>value</foo>
-                                                         </properties>
-                                                       </profile>
-                                                       <profile>
-                                                         <id>two</id>
-                                                         <properties>
-                                                           <foo>value</foo>
-                                                         </properties>
-                                                       </profile>
-                                                       """.trimIndent())
-
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <name>${'$'}{<caret>foo}</name>
-                       """.trimIndent())
-
-    readWithProfiles("two")
-
-    assertResolved(projectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles::class.java))
   }
 
   @Test

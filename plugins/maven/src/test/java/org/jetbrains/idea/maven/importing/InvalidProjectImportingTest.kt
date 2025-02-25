@@ -912,21 +912,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertProblems(root, "'settings.xml' has syntax errors")
   }
 
-  @Test
-  fun testInvalidProfilesXml() = runBlocking {
-    createProfilesXml("<prof<<")
-
-    importProjectAsync("""
-                              <groupId>test</groupId>
-                              <artifactId>project</artifactId>
-                              <version>1</version>
-                              """.trimIndent())
-    assertModules("project")
-
-    val root = rootProjects[0]
-    assertProblems(root, "'profiles.xml' has syntax errors")
-  }
-
   private val rootProjects: List<MavenProject>
     get() = projectsTree.rootProjects
 
