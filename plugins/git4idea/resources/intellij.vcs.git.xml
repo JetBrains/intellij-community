@@ -863,6 +863,8 @@
                     serviceImplementation="git4idea.log.GitCommitLinkProvider"/>
 
     <vcs.diffRevisionMetadataProvider implementation="git4idea.diff.GitDiffRevisionMetadataProvider"/>
+
+    <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
