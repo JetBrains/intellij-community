@@ -41,7 +41,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.vcs.github.community",
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
-      "intellij.c.clangd.plugin",
+      "intellij.c.clangd",
       "intellij.c.clangdBridge.plugin",
       "intellij.c.plugin",
       "intellij.cidr.debugger.plugin",
@@ -203,8 +203,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.c.testing", spec.mainJarName)
         spec.withModule("intellij.cidr.modulemap.language", spec.mainJarName)
       },
-      plugin("intellij.c.clangd.plugin") { spec ->
-        spec.withModule("intellij.c.clangd")
+      plugin("intellij.c.clangd") { spec ->
         spec.withModule("intellij.c.dfa", spec.mainJarName)
       },
       plugin("intellij.c.clangdBridge.plugin") { spec ->
@@ -243,7 +242,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     // Copy CIDR license to CIDR plugins.
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
-      .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/lib/LICENSE.txt"))
+      .copyToDir(targetDir.resolve("plugins/c-clangd/lib/LICENSE.txt"))
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(targetDir.resolve("plugins/c-plugin/lib/LICENSE.txt"))
@@ -278,7 +277,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/win/x64/bin"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/win/x64/bin"))
 
         GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDir.resolve("bin"))
       }
@@ -298,7 +297,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
-          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/linux/x64/bin"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/linux/x64/bin"))
 
         GameTools(context, OsFamily.LINUX, arch).copyAdditionalFiles(targetDir.resolve("bin"))
       }
@@ -329,7 +328,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       }
       FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac/$archDir"))
         .includeAll()
-        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac/$archDir/bin"))
+        .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/mac/$archDir/bin"))
     }
   }
 
