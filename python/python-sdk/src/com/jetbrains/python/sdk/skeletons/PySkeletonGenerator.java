@@ -230,7 +230,6 @@ public abstract class PySkeletonGenerator {
             final String level = controlMessage.get("level").getAsString();
             final String message = controlMessage.get("message").getAsString();
             switch (level) {
-              case "info" -> Run.LOG.info(message);
               case "debug" -> Run.LOG.debug(message);
               case "trace" -> Run.LOG.trace(message);
             }
