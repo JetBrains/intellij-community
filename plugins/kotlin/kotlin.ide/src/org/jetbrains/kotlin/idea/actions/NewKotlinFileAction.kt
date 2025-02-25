@@ -260,8 +260,8 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
         "Kotlin File" -> FILE_SEPARATORS
         "Kotlin Worksheet" -> FILE_SEPARATORS
         "Kotlin Script" -> FILE_SEPARATORS
-        "Kotlin Gradle Build Kts.gradle" -> FILE_SEPARATORS
-        "Kotlin Main Kts.main" -> FILE_SEPARATORS
+        "Kotlin Script Gradle" -> FILE_SEPARATORS
+        "Kotlin Script MainKts" -> FILE_SEPARATORS
         else -> FQNAME_SEPARATORS
     }
 

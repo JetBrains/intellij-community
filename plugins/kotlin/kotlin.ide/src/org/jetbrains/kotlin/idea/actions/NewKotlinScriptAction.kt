@@ -14,7 +14,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import javax.swing.Icon
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 
 internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
@@ -33,10 +38,20 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         with(builder) {
             setTitle(KotlinBundle.message("action.new.script.dialog.title"))
-            builder
-                .addKind(KotlinScriptFileTemplate.GradleKts)
-                .addKind(KotlinScriptFileTemplate.MainKts)
-                .addKind(KotlinScriptFileTemplate.CustomKts)
+
+            val scriptDefinitionProvider = ScriptDefinitionProvider.getInstance(project) as? K2ScriptDefinitionProvider
+            if (scriptDefinitionProvider != null) {
+                K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().mapNotNull {
+                    it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo]
+                }.distinct().forEach {
+                    builder.addKind(it.title, it.icon, it.templateName)
+                }
+            } else {
+                builder
+                    .addKind(KotlinScriptFileTemplate.GradleKts)
+                    .addKind(KotlinScriptFileTemplate.MainKts)
+                    .addKind(KotlinScriptFileTemplate.Kts)
+            }
 
             setValidator(NewKotlinFileNameValidator)
         }
@@ -47,7 +62,7 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
 }
 
 internal enum class KotlinScriptFileTemplate(@NlsContexts.ListItem override val title: String, override val icon: Icon, override val fileName: String): KotlinTemplate {
-    GradleKts(KotlinBundle.message("action.new.gradle.script.name"), KotlinIcons.GRADLE_SCRIPT, "Kotlin Gradle Build Kts.gradle"),
-    MainKts(KotlinBundle.message("action.new.main.script.name"), KotlinIcons.SCRIPT, "Kotlin Main Kts.main"),
-    CustomKts(KotlinBundle.message("action.new.custom.script.name"), KotlinIcons.SCRIPT, "Kotlin Script"),
+    GradleKts(".gradle.kts", KotlinIcons.GRADLE_SCRIPT, "Kotlin Script Gradle"),
+    MainKts(".main.kts", KotlinIcons.SCRIPT, "Kotlin Script MainKts"),
+    Kts(".kts", KotlinIcons.SCRIPT, "Kotlin Script"),
 }
