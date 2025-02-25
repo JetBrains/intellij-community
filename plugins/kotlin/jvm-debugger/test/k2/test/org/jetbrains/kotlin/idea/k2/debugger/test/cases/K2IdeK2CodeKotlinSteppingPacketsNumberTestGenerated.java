@@ -35,6 +35,11 @@ public class K2IdeK2CodeKotlinSteppingPacketsNumberTestGenerated extends Abstrac
         runTest("../testData/stepping/packets/coroutineStepping.kt");
     }
 
+    @TestMetadata("evaluatableGetters.kt")
+    public void testEvaluatableGetters() throws Exception {
+        runTest("../testData/stepping/packets/evaluatableGetters.kt");
+    }
+
     @TestMetadata("veryLongCoroutineStack.kt")
     public void testVeryLongCoroutineStack() throws Exception {
         runTest("../testData/stepping/packets/veryLongCoroutineStack.kt");
