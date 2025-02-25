@@ -288,7 +288,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             if (throwErrorIfModal) {
               LOG.error("Unexpected modality: " + ModalityState.current())
             }
-            LaterInvocator.forceLeaveAllModals()
+            LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
                 return@withContext
