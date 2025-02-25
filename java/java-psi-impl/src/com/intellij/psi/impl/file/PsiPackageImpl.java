@@ -244,8 +244,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
-        // todo IJPL-339 support shared source scenario.
-        //               right now, PsiDirectory#getFiles does not care about the context in the scope
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(scope), file -> file.getName().contains(name));
         PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
         for (PsiClass aClass : classes) {
