@@ -5,12 +5,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenModel
-import java.nio.file.Path
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 
 interface MavenProjectModelReadHelper {
-  suspend fun interpolate(baseDir: Path, mavenModuleFile: VirtualFile, model: MavenModel): MavenModel
+  suspend fun interpolate(embedder: MavenEmbedderWrapper, mavenModuleFile: VirtualFile, model: MavenModel): MavenModel
 
-  suspend fun assembleInheritance(baseDir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel
+  suspend fun assembleInheritance(embedder: MavenEmbedderWrapper, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel
 
   fun filterModules(modules: List<String>, mavenModuleFile: VirtualFile): List<String>
 
