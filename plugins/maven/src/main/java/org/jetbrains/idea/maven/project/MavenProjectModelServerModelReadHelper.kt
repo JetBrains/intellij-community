@@ -11,11 +11,11 @@ import java.io.File
 import java.nio.file.Path
 
 open class MavenProjectModelServerModelReadHelper(protected val myProject: Project) : MavenProjectModelReadHelper {
-  override suspend fun interpolate(basedir: Path,
+  override suspend fun interpolate(baseDir: Path,
                                    mavenModuleFile: VirtualFile,
                                    model: MavenModel): MavenModel {
     val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
-    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.toString())
+    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDir.toString())
     val pomDir = mavenModuleFile.parent.toNioPath()
     val transformer = RemotePathTransformerFactory.createForProject(myProject)
     val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
@@ -24,9 +24,9 @@ open class MavenProjectModelServerModelReadHelper(protected val myProject: Proje
     return m
   }
 
-  override suspend fun assembleInheritance(basedir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel {
+  override suspend fun assembleInheritance(baseDir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel {
     val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
-    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.toString())
+    val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDir.toString())
     return embedder.assembleInheritance(model, parent, MavenRemoteObjectWrapper.ourToken)
   }
 
