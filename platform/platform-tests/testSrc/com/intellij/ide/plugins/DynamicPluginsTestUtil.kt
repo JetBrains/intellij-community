@@ -30,6 +30,8 @@ internal fun loadDescriptorInTest(
         customBrokenPluginVersions = emptyMap(),
         productBuildNumber = { buildNumber },
         customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
+        customEssentialPlugins = emptyList(),
+        customExpiredPlugins = emptySet()
       ),
       isBundled = isBundled,
     )

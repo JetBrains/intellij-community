@@ -82,9 +82,18 @@ class PluginDescriptorTest {
 
   @Test
   fun `name is used as a substitute for id if id is missing`() {
-    val descriptor = loadDescriptorFromTestDataDir("nameAsId")
-    assertThat(descriptor.pluginId.idString).isEqualTo("test")
-    assertThat(descriptor.name).isEqualTo("test")
+    val descriptor = loadDescriptorFromTestDataDir("noId")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.name).isEqualTo("Name")
+    assertThat(descriptor.pluginId.idString).isEqualTo("Name")
+  }
+
+  @Test
+  fun `id is used as a substitute for name if name is missing`() {
+    val descriptor = loadDescriptorFromTestDataDir("noName")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.pluginId.idString).isEqualTo("plugin.id")
+    assertThat(descriptor.name).isEqualTo("plugin.id")
   }
 
   @Test
@@ -93,21 +102,12 @@ class PluginDescriptorTest {
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
-  @Test
-  fun `only one instance of a plugin is loaded if it's duplicated`() {
-    val urls = arrayOf(
-      Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
-      Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
-    )
-    assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
-  }
-  
   // todo revisit
   @Test
   fun `strict depends makes only one another optional depends on the same plugin strict too and is removed`() {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
     assertThat(descriptor).isNotNull()
-    // fixme what is that
+    // fixme what is that result o_O
     assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
     assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
     //assertThat(descriptor.pluginDependencies.map { it.pluginId }).isEqualTo(listOf("foo", "foo", "foo"))
@@ -123,14 +123,7 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun testPluginNameAsId() {
-    val descriptor = loadDescriptorFromTestDataDir("noId")
-    assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
-  }
-
-  @Test
-  fun testMetaInfInClasses() {
+  fun `directory with a plugin xml in (classes - META-INF) subdirectory is a plugin`() {
     val tempDir = directoryContent {
       dir("lib") {
         zip("empty.jar") {}
@@ -140,21 +133,19 @@ class PluginDescriptorTest {
           file("plugin.xml",
                """<idea-plugin>
                |  <id>foo.bar</id>
-               |</idea-plugin>""")
+               |</idea-plugin>""".trimMargin())
         }
       }
-    }.generateInTempDir()
-
+    }.generateInTempDir() // todo maybe make generateIn(path) to use rootPath here instead
     val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
-
     assertThat(descriptor.jarFiles).isNotNull()
     assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
-  fun testStandaloneMetaInf() {
+  fun `directory with a plugin xml in (META-INF) subdirectory is a plugin`() {
     val tempDir = directoryContent {
       dir("classes") {
         classFile("Empty") {}
@@ -169,17 +160,15 @@ class PluginDescriptorTest {
                |</idea-plugin>""")
       }
     }.generateInTempDir()
-
     val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
-
     assertThat(descriptor.jarFiles).isNotNull()
     assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
-  fun releaseDate() {
+  fun `descriptor with vendor and release date loads`() {
     val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
     val descriptor = readDescriptorForTest(pluginFile, false, """
     <idea-plugin>
@@ -190,6 +179,7 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.vendor).isEqualTo("JetBrains")
     assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
+    assertThat(descriptor.releaseVersion).isEqualTo(42)
     assertThat(descriptor.isLicenseOptional).isTrue()
   }
 
@@ -202,47 +192,36 @@ class PluginDescriptorTest {
     assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
 
+  // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
-  fun testPluginIdAsName() {
-    val descriptor = loadDescriptorFromTestDataDir("noName")
-    assertThat(descriptor).isNotNull()
-    assertThat(descriptor.name).isEqualTo(descriptor.pluginId.idString)
+  fun `only one instance of a plugin is loaded if it's duplicated`() {
+    val urls = arrayOf(
+      Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
+      Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
+    )
+    assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
 
+  // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun testUrlTolerance() {
-    class SingleUrlEnumeration(private val myUrl: URL) : Enumeration<URL> {
-      private var hasMoreElements = true
-      override fun hasMoreElements(): Boolean {
-        return hasMoreElements
-      }
-
-      override fun nextElement(): URL {
-        if (!hasMoreElements) throw NoSuchElementException()
-        hasMoreElements = false
-        return myUrl
-      }
-
+    class EnumerationAdapter<T>(elements: List<T>) : Enumeration<T> {
+      val it = elements.iterator()
+      override fun hasMoreElements(): Boolean = it.hasNext()
+      override fun nextElement(): T = it.next()
     }
-
     class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build(), false) {
       private val url = URL(prefix + File(testDataPath).toURI().toURL().toString() + suffix + "META-INF/plugin.xml")
-
       override fun getResource(name: String) = null
-
-      override fun getResources(name: String) = SingleUrlEnumeration(url)
+      override fun getResources(name: String) = EnumerationAdapter(listOf(url))
     }
-
-    val loader1 = TestLoader("", "/spaces%20spaces/")
-    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader1).size)
-    val loader2 = TestLoader("", "/spaces spaces/")
-    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader2).size)
-    val loader3 = TestLoader("jar:", "/jar%20spaces.jar!/")
-    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader3).size)
-    val loader4 = TestLoader("jar:", "/jar spaces.jar!/")
-    assertThat(testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(TestLoader("", "/spaces%20spaces/"))).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(TestLoader("", "/spaces spaces/"))).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(TestLoader("jar:", "/jar%20spaces.jar!/"))).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(TestLoader("jar:", "/jar spaces.jar!/"))).hasSize(1)
   }
 
+  // todo equals of IdeaPluginDescriptorImpl is also dependent on subdescriptor location (depends optional)
   @Test
   fun testEqualityById() {
     val tempFile = rootPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
@@ -265,6 +244,7 @@ class PluginDescriptorTest {
     TestCase.assertNotSame(impl1.name, impl2.name)
   }
 
+  // todo why does it needs to know disabled plugins?
   @Test
   fun testLoadDisabledPlugin() {
     val descriptor = loadDescriptorFromTestDataDir(
