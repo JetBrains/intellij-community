@@ -6,7 +6,7 @@ enum class ExecutionMode(val displayName: String) {
 
   companion object {
     fun resolve(displayName: String?): ExecutionMode {
-      return entries.find { it.displayName == displayName } ?: LOCAL
+      return entries.find { it.displayName == displayName } ?: throw IllegalArgumentException("Unknown execution mode: $displayName")
     }
   }
 }

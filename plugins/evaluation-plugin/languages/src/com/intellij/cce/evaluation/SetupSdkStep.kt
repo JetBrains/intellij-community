@@ -10,7 +10,6 @@ abstract class SetupSdkStep : ForegroundEvaluationStep {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SetupSdkStep>("com.intellij.cce.setupSdkStep")
     fun forLanguage(project: Project, language: Language, executionMode: ExecutionMode): SetupSdkStep? {
-      // LOCAL execution mode is default
       return EP_NAME.getExtensionList(project).firstOrNull {
         it.isApplicable(language) &&
         it.isDockerBased == (executionMode == ExecutionMode.DOCKER)
