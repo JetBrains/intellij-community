@@ -7,7 +7,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -259,11 +259,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     protected void show(@NotNull ListPopup popup) {
       @Nullable Component showUnderneathComponent = null;
       var inputEvent = event.getInputEvent();
-      if (inputEvent != null) {
-        var inputComponent = inputEvent.getComponent();
-        if (inputComponent instanceof ActionButton) {
-          showUnderneathComponent = inputComponent;
-        }
+      if (inputEvent instanceof MouseEvent) {
+        showUnderneathComponent = inputEvent.getComponent();
       }
       if (showUnderneathComponent != null) {
         popup.showUnderneathOf(showUnderneathComponent);
