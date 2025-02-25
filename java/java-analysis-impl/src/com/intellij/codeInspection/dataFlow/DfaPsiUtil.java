@@ -273,7 +273,16 @@ public final class DfaPsiUtil {
     if (eachType instanceof PsiClassType classType && !local) {
       PsiElement context = classType.getPsiContext();
       if (context != null) {
-        return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
+        NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
+        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
+        if (typeUseNullability != null) {
+          return typeUseNullability;
+        }
+        PsiClass declaration = PsiUtil.resolveClassInClassTypeOnly(classType);
+        if (declaration instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsList().getReferenceElements().length == 0) {
+          // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
+          return manager.findDefaultTypeUseNullability(declaration);
+        }
       }
     }
     return null;
