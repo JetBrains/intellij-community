@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.sdk.PythonSdkType
 
-open class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() {
+class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() {
   companion object {
     private const val pythonPluginId = "PythonCore"
     private const val pythonPluginProId = "Pythonid"
