@@ -12,6 +12,7 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
@@ -33,7 +34,7 @@ class ComputingDiffRequestProcessor(project: Project, cs: CoroutineScope, privat
 
   init {
     cs.launchNow {
-      withContext(Dispatchers.Main) {
+      withContext(Dispatchers.EDT) {
         vm.diffVm.collectScoped {
           val result = it.result
           if (result == null) {
