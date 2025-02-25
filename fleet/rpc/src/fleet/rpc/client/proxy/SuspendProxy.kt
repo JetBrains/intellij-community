@@ -147,7 +147,7 @@ fun <A : RemoteApi<*>> delegatingHandler(target: A): SuspendInvocationHandler =
     }
   }
 
-fun SuspendInvocationHandler.poisoned(poison: () -> CancellationException?): SuspendInvocationHandler =
+fun SuspendInvocationHandler.poisoned(poison: () -> Throwable?): SuspendInvocationHandler =
   object : SuspendInvocationHandler {
     override suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>,
                               method: String,
@@ -155,7 +155,7 @@ fun SuspendInvocationHandler.poisoned(poison: () -> CancellationException?): Sus
                               publish: (SuspendInvocationHandler.CallResult) -> Unit) {
       when (val cause = poison()) {
         null -> this@poisoned.call(remoteApiDescriptor, method, args, publish)
-        else -> throw RuntimeException("RequestQueue is terminated", cause)
+        else -> throw cause
       }
     }
   }

@@ -79,4 +79,8 @@ sealed class RpcMessage {
   @SerialName("stream_closed")
   data class StreamClosed(val streamId: UID,
                           val error: FailureInfo? = null) : RpcMessage()
+
+  @Serializable
+  @SerialName("resource_consumed")
+  data class ResourceConsumed(val resourcePath: InstanceId) : RpcMessage()
 }

@@ -32,7 +32,7 @@ class FleetClient internal constructor(
   val invocationHandlerFactory: InvocationHandlerFactory<ProxyClosure> =
     reconnectingRpcClient(connectionStatus)
       .asHandlerFactory()
-      .poisoned { poison }
+      .poisoned { poison?.let { RuntimeException("RequestQueue is terminated", it) } }
       .tracing()
 
   private val serviceProxy: ServiceProxy =

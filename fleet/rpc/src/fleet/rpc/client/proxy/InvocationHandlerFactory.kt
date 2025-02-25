@@ -31,7 +31,7 @@ fun <T> InvocationHandlerFactory<T>.tracing(): InvocationHandlerFactory<T> {
   }
 }
 
-fun <T> InvocationHandlerFactory<T>.poisoned(poison: () -> CancellationException?): InvocationHandlerFactory<T> {
+fun <T> InvocationHandlerFactory<T>.poisoned(poison: () -> Throwable?): InvocationHandlerFactory<T> {
   val delegate = this
   return object : InvocationHandlerFactory<T> {
     override fun handler(arg: T): SuspendInvocationHandler {

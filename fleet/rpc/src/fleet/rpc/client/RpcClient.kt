@@ -9,12 +9,14 @@ import fleet.rpc.core.*
 import fleet.rpc.serializer
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
+import fleet.util.async.resource
 import fleet.util.async.use
 import fleet.util.async.withSupervisor
 import fleet.util.causeOfType
 import fleet.util.channels.consumeAll
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -76,6 +78,8 @@ class RpcClient internal constructor(
   private val outgoingRpc = ConcurrentHashMap<UID, OngoingRequest>()
   private val completedRpc = ConcurrentHashMap<UID, TransferredResource>()
   private val streams = ConcurrentHashMap<UID, InternalStreamDescriptor>()
+  private val remoteResources = ConcurrentHashMap<InstanceId, Set<Pair<InstanceId, RemoteResource>>>()
+  private val resourceParents = ConcurrentHashMap<InstanceId, InstanceId>()
 
   private val remoteObjectFactory = this.asHandlerFactory().tracing()
 
@@ -84,6 +88,27 @@ class RpcClient internal constructor(
       route = route,
       instanceId = InstanceId(path)
     )))
+
+  private fun <T : RemoteResource> remoteResource(remoteApiDescriptor: RemoteApiDescriptor<T>, instanceId: InstanceId, route: UID, parentService: InstanceId): T {
+    val resource = suspendProxy(
+      remoteApiDescriptor,
+      remoteObjectFactory
+        .poisoned {
+          // Resource should still be registered
+          if (resourceParents.containsKey(instanceId)) null
+          else RemoteResourceConsumedException()
+        }
+        .handler(ProxyClosure(
+          route = route,
+          instanceId = instanceId
+        ))
+    )
+
+    remoteResources.compute(parentService) { k, s -> s.orEmpty().toPersistentSet().add(instanceId to resource) }
+    resourceParents.put(instanceId, parentService)
+
+    return resource
+  }
 
   companion object {
     internal val logger = KLoggers.logger(RpcClient::class)
@@ -252,6 +277,20 @@ class RpcClient internal constructor(
     }
   }
 
+  private fun disposeLocalResource(instanceId: InstanceId, resource: RemoteResource) {
+    remoteResources.remove(instanceId)?.forEach { (childId, childResource) ->
+      resourceParents.remove(childId)
+      disposeLocalResource(childId, childResource)
+    }
+
+    // Remove the current resource from parent, if not done already
+    resourceParents.remove(instanceId)?.let { parentId ->
+      remoteResources.compute(parentId) { _, set ->
+        if (set != null) (set - (instanceId to resource)).ifEmpty { null } else null
+      }
+    }
+  }
+
   private fun CoroutineScope.acceptMessage(message: RpcMessage, senderRoute: UID) {
     when (message) {
       is RpcMessage.CallResult -> {
@@ -262,8 +301,26 @@ class RpcClient internal constructor(
             val (returnResult, streams) = run {
               if (rpc.returnType is RemoteKind.RemoteObject) {
                 val path = Json.decodeFromJsonElement(String.serializer(), message.result)
-                val remoteApiDescriptor = (rpc.returnType).descriptor as RemoteApiDescriptor<RemoteObject>
+                val remoteApiDescriptor = rpc.returnType.descriptor as RemoteApiDescriptor<RemoteObject>
                 return@run remoteObject(remoteApiDescriptor, path, rpc.route) to emptyList()
+              }
+              else if (rpc.returnType is RemoteKind.Resource) {
+                val path = Json.decodeFromJsonElement(InstanceId.serializer(), message.result)
+                val remoteApiDescriptor = rpc.returnType.descriptor as RemoteApiDescriptor<RemoteResource>
+                val resource = resource {
+                  val resource = remoteResource(remoteApiDescriptor, path, rpc.route, parentService = rpc.call.service)
+
+                  try {
+                    it(resource)
+                  }
+                  finally {
+                    disposeLocalResource(path, resource)
+
+                    // Dispose on the server side when done being used
+                    sendAsync(RpcMessage.ResourceConsumed(path).seal(rpc.route, origin))
+                  }
+                }
+                return@run resource to emptyList()
               }
               val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, this) {
                 val kser = rpc.returnType.serializer(rpc.call.classMethodDisplayName())
@@ -543,6 +600,14 @@ class RpcClient internal constructor(
             val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request))
             check(previous == null) { "Request with id $requestId is already present in the queue" }
             val streamDescriptors = registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy)
+
+            // Also dispose local resource issued from remote objects
+            if (call.signature.methodName == "clientDispose") {
+              remoteResources.remove(call.service)?.forEach { (instanceId, resource) ->
+                disposeLocalResource(instanceId, resource)
+              }
+            }
+
             sendAsync(callRequest.seal(destination = request.route, origin = origin)) { cause ->
               if (cause == null) {
                 logger.trace { "Request sent ${request.call}" }
@@ -588,6 +653,7 @@ class RpcClient internal constructor(
         }
         publish(disposable)
         logger.trace { "Result published for request $requestId" }
+
       }
     } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}ms", cause = null)
   }

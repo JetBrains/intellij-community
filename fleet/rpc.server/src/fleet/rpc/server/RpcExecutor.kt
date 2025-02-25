@@ -9,12 +9,15 @@ import fleet.rpc.serializer
 import fleet.tracing.asContextElement
 import fleet.tracing.tracer
 import fleet.util.UID
+import fleet.util.async.Resource
 import fleet.util.async.coroutineNameAppended
+import fleet.util.async.useOn
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -36,6 +39,9 @@ class RpcExecutor private constructor(
 ) {
 
   private val remoteObjects = ConcurrentHashMap<InstanceId, ServiceImplementation>()
+  private val resources = ConcurrentHashMap<InstanceId, Job>()
+  private val children: ConcurrentHashMap<InstanceId, Set<InstanceId>> = ConcurrentHashMap()
+  private val parents: ConcurrentHashMap<InstanceId, InstanceId> = ConcurrentHashMap()
 
   companion object {
     internal val logger = KLoggers.logger(RpcExecutor::class)
@@ -170,12 +176,15 @@ class RpcExecutor private constructor(
               val result = (impl.remoteApiDescriptor as RemoteApiDescriptor<RemoteApi<*>>).call(impl.instance, message.method, args.toTypedArray())
               logger.trace { "Got result for request  ${message.requestId}" }
               val remoteObjectId = InstanceId(UID.random().toString())
+              val returnType = signature.returnType
+
               if (result is RemoteObject) {
                 registerRemoteObject(
                   path = remoteObjectId,
-                  remoteApiDescriptor = (signature.returnType as RemoteKind.RemoteObject).descriptor,
+                  remoteApiDescriptor = (returnType as RemoteKind.RemoteObject).descriptor,
                   inst = result,
                   serviceScope = serviceScope,
+                  parent = message.service
                 )
               }
 
@@ -183,18 +192,40 @@ class RpcExecutor private constructor(
                 unregisterRemoteObject(message.service)
               }
 
-              val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, serviceScope) {
-                if (result is RemoteObject) {
-                  Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
+              val resultSerialized = if (result is RemoteObject) {
+                Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
+              }
+              else if (returnType is RemoteKind.Resource) {
+                val ready = CompletableDeferred<RemoteResource>()
+
+                val job = serviceScope.launch {
+                  val resource = (result as Resource<RemoteResource>).useOn(this).await()
+                  ready.complete(resource)
                 }
-                else {
-                  val kserializer = signature.returnType.serializer(message.classMethodDisplayName())
+
+                job.invokeOnCompletion { throwable ->
+                  if (throwable != null) ready.completeExceptionally(throwable)
+                }
+
+                registerResource(
+                  remoteObjectId, returnType.descriptor, ready.await(), job,
+                  parent = message.service,
+                  serviceScope = serviceScope,
+                )
+
+                Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
+              }
+              else {
+                val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, serviceScope) {
+                  val kserializer = returnType.serializer(message.classMethodDisplayName())
                   json.encodeToJsonElement(kserializer, result)
                 }
-              }
 
-              streamDescriptors.forEach {
-                registeredStreams.add(registerStream(serviceScope, it, clientId))
+                streamDescriptors.forEach {
+                  registeredStreams.add(registerStream(serviceScope, it, clientId))
+                }
+
+                resultSerialized
               }
 
               logger.trace { "Sending result: requestId=${request.requestId}, result=$result" }
@@ -262,6 +293,9 @@ class RpcExecutor private constructor(
           logger.trace("received StreamInit for unregistered stream ${message.streamId}, will respond with StreamClosed")
           sendAsync(RpcMessage.StreamClosed(message.streamId).seal(clientId, route))
         }
+      }
+      is RpcMessage.ResourceConsumed -> {
+        unregisterResource(message.resourcePath)
       }
       else -> error("Unexpected message $message")
     }
@@ -347,6 +381,7 @@ class RpcExecutor private constructor(
     path: InstanceId,
     remoteApiDescriptor: RemoteApiDescriptor<*>,
     inst: RemoteApi<*>,
+    parent: InstanceId,
     serviceScope: CoroutineScope,
   ) {
     val impl = ServiceImplementation(remoteApiDescriptor, inst, serviceScope)
@@ -356,10 +391,39 @@ class RpcExecutor private constructor(
           "Path must be unique. Previously registered object: '${old.instance}' has same path '$path' as currently being registered '$inst'")
       }
     }
+
+    // Add dependency to the created remote object
+    children.compute(parent) { k, v -> v.orEmpty().toPersistentSet().add(path) }
+    parents[path] = parent
   }
 
-  private fun unregisterRemoteObject(path: InstanceId) {
+  private fun registerResource(
+    path: InstanceId,
+    remoteApiDescriptor: RemoteApiDescriptor<*>,
+    inst: RemoteApi<*>,
+    job: Job,
+    parent: InstanceId,
+    serviceScope: CoroutineScope,
+  ) {
+    registerRemoteObject(path, remoteApiDescriptor, inst, parent, serviceScope)
+    resources.putIfAbsent(path, job)?.let { error("cannot register two resource with the same path") }
+  }
+
+  private fun unregisterRemoteObject(path: InstanceId, additionalStep: ((InstanceId) -> Unit)? = null) {
     remoteObjects.remove(path)
+    additionalStep?.invoke(path)
+
+    // Remove from parent deps, and unregister children
+    parents.remove(path)?.let { parent -> children.computeIfPresent(parent) { _, deps -> deps.toPersistentSet().remove(path) } }
+    children.remove(path)?.forEach {
+      unregisterRemoteObject(it, additionalStep)
+    }
+  }
+
+  private fun unregisterResource(path: InstanceId) {
+    unregisterRemoteObject(path) {
+      resources.remove(path)?.cancel()
+    }
   }
 
   private fun proxyDesc(serviceId: InstanceId): ServiceImplementation? {
