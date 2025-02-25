@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,10 @@ public interface ProjectEx extends Project {
   @ApiStatus.Internal
   default boolean isComponentCreated() {
     return true;
+  }
+
+  default ComponentManager getComponentManagerImpl() {
+    return this;
   }
 
   /**
