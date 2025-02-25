@@ -50,7 +50,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync == null) return
+        if (sync == null || sync.models.isEmpty()) return
 
         val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
         GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
