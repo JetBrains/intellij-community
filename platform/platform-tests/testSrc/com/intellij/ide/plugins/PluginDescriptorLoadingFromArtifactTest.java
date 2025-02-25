@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl;
 import com.intellij.util.io.Compressor;
-import com.intellij.util.lang.ZipFilePool;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -16,21 +12,6 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PluginDescriptorLoadingFromArtifactTest {
-  private static boolean ourResetPool = false;
-
-  @BeforeAll static void setUp() {
-    if (ZipFilePool.POOL == null) {
-      ZipFilePool.POOL = new ZipFilePoolImpl();
-      ourResetPool = true;
-    }
-  }
-
-  @AfterAll static void tearDown() {
-    if (ourResetPool) {
-      ZipFilePool.POOL = null;
-    }
-  }
-
   @Test void descriptorLoadingFromJarArtifact(@TempDir Path tempDir) throws IOException {
     var jarFile = tempDir.resolve("test.plugin.jar");
     try (var jar = new Compressor.Jar(jarFile)) {
