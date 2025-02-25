@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixture
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
@@ -9,8 +9,8 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,10 +20,16 @@ import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyExecution
+import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleEventDispatcherClosing
+import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
+import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions
-
 
 class GradleExecutionTestFixtureImpl(
   private val project: Project,
@@ -40,13 +46,13 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override fun setUp() {
-    executionOutputFixture = GradleExecutionOutputFixture(project)
+    executionOutputFixture = GradleExecutionOutputFixtureImpl(project)
     executionOutputFixture.setUp()
 
-    executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
+    executionEnvironmentFixture = GradleExecutionEnvironmentFixtureImpl(project)
     executionEnvironmentFixture.setUp()
 
-    executionConsoleFixture = GradleExecutionViewFixture(project, executionEnvironmentFixture)
+    executionConsoleFixture = GradleExecutionViewFixtureImpl(project, executionEnvironmentFixture)
     executionConsoleFixture.setUp()
 
     buildViewFixture = BuildViewTestFixture(project)
@@ -54,7 +60,7 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override fun tearDown() {
-    RunAll.runAll(
+    RunAll.Companion.runAll(
       { buildViewFixture.tearDown() },
       { executionConsoleFixture.tearDown() },
       { executionEnvironmentFixture.tearDown() },
@@ -66,7 +72,7 @@ class GradleExecutionTestFixtureImpl(
     commandLine: String,
     isRunAsTest: Boolean
   ): RunnerAndConfigurationSettings {
-    val runManager = RunManager.getInstance(project)
+    val runManager = RunManager.Companion.getInstance(project)
     val runConfigurationName = "GradleExecutionTestFixture (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
     val runConfiguration = runnerSettings.configuration as GradleRunConfiguration

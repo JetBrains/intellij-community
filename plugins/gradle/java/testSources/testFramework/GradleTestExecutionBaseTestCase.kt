@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleTestExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.impl.GradleTestExecutionTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestExecutionTestFixtureImpl
 
 abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
 

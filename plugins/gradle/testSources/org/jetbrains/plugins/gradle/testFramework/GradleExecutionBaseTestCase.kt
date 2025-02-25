@@ -7,8 +7,8 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.junit.jupiter.api.AfterEach

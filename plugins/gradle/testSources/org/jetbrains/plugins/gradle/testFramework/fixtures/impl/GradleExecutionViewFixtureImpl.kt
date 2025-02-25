@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixture
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.BuildView
@@ -15,13 +15,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.IdeaTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionViewFixture
 import org.junit.jupiter.api.Assertions
 
-class GradleExecutionViewFixture(
+class GradleExecutionViewFixtureImpl(
   private val project: Project,
-  private val executionEnvironmentFixture: GradleExecutionEnvironmentFixture
-) : IdeaTestFixture {
+  private val executionEnvironmentFixture: GradleExecutionEnvironmentFixture,
+) : GradleExecutionViewFixture {
 
   override fun setUp() = Unit
 
@@ -51,19 +52,19 @@ class GradleExecutionViewFixture(
     return buildTree(treeString)
   }
 
-  fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+  override fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     SimpleTreeAssertion.assertTree(getSimplifiedRunTreeView()) {
       assertNode("", assert = assert)
     }
   }
 
-  fun assertRunTreeViewIsEmpty() {
+  override fun assertRunTreeViewIsEmpty() {
     assertRunTreeView {}
   }
 
-  fun assertPsiLocation(
+  override fun assertPsiLocation(
     testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
-    className: String, methodName: String?, parameterName: String?
+    className: String, methodName: String?, parameterName: String?,
   ) {
     testAssertion.assertValue { testProxy ->
       val location = testProxy.getLocation()

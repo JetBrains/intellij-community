@@ -10,8 +10,8 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl

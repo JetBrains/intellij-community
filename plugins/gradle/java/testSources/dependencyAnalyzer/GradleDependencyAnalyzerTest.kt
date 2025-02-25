@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionOutputFixture.Companion.transform
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionOutputFixtureImpl.Companion.transform
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.junit.jupiter.params.ParameterizedTest
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixture.impl
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.build.BuildView
 import com.intellij.execution.testframework.AbstractTestProxy
@@ -12,8 +12,8 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleTestExecutionViewTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionViewTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 

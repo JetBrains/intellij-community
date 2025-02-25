@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixture
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -12,17 +12,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.util.containers.addIfNotNull
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.ListAssert
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.function.Function
 
-class GradleExecutionOutputFixture(
-  private val project: Project
-) : IdeaTestFixture {
+class GradleExecutionOutputFixtureImpl(
+  private val project: Project,
+) : GradleExecutionOutputFixture {
 
   private lateinit var fixtureDisposable: Disposable
 
@@ -46,27 +46,27 @@ class GradleExecutionOutputFixture(
     )
   }
 
-  fun <R> assertExecutionOutputIsReady(action: () -> R): R {
+  override fun <R> assertExecutionOutputIsReady(action: () -> R): R {
     return taskExecutionLeakTracker.withAllowedOperation(1, action)
   }
 
-  suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R {
+  override suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R {
     return taskExecutionLeakTracker.withAllowedOperationAsync(1, action)
   }
 
-  fun assertTestEventContain(className: String, methodName: String?) {
+  override fun assertTestEventContain(className: String, methodName: String?) {
     Assertions.assertThat(output.testDescriptors)
       .transform { it.className to it.methodName }
       .contains(className to methodName)
   }
 
-  fun assertTestEventDoesNotContain(className: String, methodName: String?) {
+  override fun assertTestEventDoesNotContain(className: String, methodName: String?) {
     Assertions.assertThat(output.testDescriptors)
       .transform { it.className to it.methodName }
       .doesNotContain(className to methodName)
   }
 
-  fun assertTestEventsWasNotReceived() {
+  override fun assertTestEventsWasNotReceived() {
     Assertions.assertThat(output.testDescriptors)
       .transform { it.className to it.methodName }
       .isEmpty()
@@ -133,6 +133,7 @@ class GradleExecutionOutputFixture(
 
   companion object {
 
+    @Suppress("UNCHECKED_CAST")
     fun <T, R> ListAssert<T>.transform(transform: (T) -> R): ListAssert<R> {
       return extracting(Function(transform)) as ListAssert<R>
     }
