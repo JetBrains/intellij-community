@@ -3,7 +3,7 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.python.hatch.HatchRuntime
+import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReason
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError.ExecException
