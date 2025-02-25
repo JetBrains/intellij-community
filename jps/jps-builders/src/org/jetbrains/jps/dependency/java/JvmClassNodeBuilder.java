@@ -1009,7 +1009,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       return wrap(new ContentHashBuilder() {
         @Override
         public void update(Object data) {
-          if (data.getClass().isArray()) {
+          if (data != null && data.getClass().isArray()) {
             for (int idx = 0, length = Array.getLength(data); idx < length; idx++) {
               update(Array.get(data, idx));
             }
