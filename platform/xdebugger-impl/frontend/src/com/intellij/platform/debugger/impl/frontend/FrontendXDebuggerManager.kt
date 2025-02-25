@@ -6,32 +6,45 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.util.messages.Topic
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import kotlinx.coroutines.*
+import fleet.multiplatform.shims.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.util.*
 
 @Service(Service.Level.PROJECT)
 internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
+  private val sessions = Collections.synchronizedMap(LinkedHashMap<XDebugSessionId, FrontendXDebuggerSession>())
+
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
-    channelFlow<FrontendXDebuggerSession?> {
-      XDebuggerManagerApi.getInstance().currentSession(project.projectId()).collectLatest { sessionDto ->
-        if (sessionDto == null) {
-          send(null)
-          return@collectLatest
-        }
-        supervisorScope {
-          val session = FrontendXDebuggerSession(project, this, sessionDto)
-          send(session)
-          awaitCancellation()
-        }
+    channelFlow {
+      XDebuggerManagerApi.getInstance().currentSession(project.projectId()).collectLatest { sessionId ->
+        send(sessions[sessionId])
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   init {
     cs.launch {
-      XDebuggerManagerApi.getInstance().sessionEvents(project.projectId()).collect { event ->
+      val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      for (sessionDto in sessionsList) {
+        createDebuggerSession(sessionDto)
+      }
+      project.messageBus.connect(cs).subscribe(TOPIC, object : FrontendXDebuggerManagerListener {
+        override fun processStarted(sessionId: XDebugSessionId, sessionDto: XDebugSessionDto) {
+          createDebuggerSession(sessionDto)
+        }
+
+        override fun processStopped(sessionId: XDebugSessionId) {
+          sessions.remove(sessionId)?.closeScope()
+        }
+      })
+      eventFlow.toFlow().collect { event ->
         when (event) {
           is XDebuggerSessionEvent.ProcessStarted -> {
             project.messageBus.syncPublisher(TOPIC).processStarted(event.sessionId, event.sessionDto)
@@ -45,6 +58,12 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
         }
       }
     }
+  }
+
+  private fun createDebuggerSession(sessionDto: XDebugSessionDto) {
+    val frontendSession = FrontendXDebuggerSession(project, cs, sessionDto)
+    val previousSession = sessions.put(sessionDto.id, frontendSession)
+    previousSession?.closeScope()
   }
 
   companion object {

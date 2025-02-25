@@ -14,12 +14,8 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionInfoDto
+import com.intellij.xdebugger.impl.rpc.*
+import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -33,25 +29,34 @@ import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionDto?> {
+  override suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?> {
     val project = projectId.findProject()
 
     return (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSessionFlow.mapLatest { currentSession ->
-      if (currentSession == null) {
-        return@mapLatest null
-      }
+      if (currentSession == null) return@mapLatest null
       val entity = currentSession.entity.await()
-      val editorsProvider = currentSession.debugProcess.editorsProvider
-      val fileTypeId = editorsProvider.fileType.name
-      val initialSessionState = XDebugSessionState(
-        currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported
-      )
-      XDebugSessionDto(entity.sessionId, XDebuggerEditorsProviderDto(fileTypeId, editorsProvider), initialSessionState)
+      entity.sessionId
     }
   }
 
+  override suspend fun sessions(projectId: ProjectId): XDebugSessionsList {
+    val project = projectId.findProject()
+    val sessions = XDebuggerManager.getInstance(project).debugSessions.map { createSessionDto(it as XDebugSessionImpl, it.debugProcess) }
+    return XDebugSessionsList(sessions, sessionEvents(projectId).toRpc())
+  }
+
+  private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
+    val entity = currentSession.entity.await()
+    val editorsProvider = debugProcess.editorsProvider
+    val fileTypeId = editorsProvider.fileType.name
+    val initialSessionState = XDebugSessionState(
+      currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported
+    )
+    return XDebugSessionDto(entity.sessionId, XDebuggerEditorsProviderDto(fileTypeId, editorsProvider), initialSessionState)
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun sessionEvents(projectId: ProjectId): Flow<XDebuggerSessionEvent> {
+  private fun sessionEvents(projectId: ProjectId): Flow<XDebuggerSessionEvent> {
     val project = projectId.findProject()
     val dispatcher = Dispatchers.Default.limitedParallelism(1)
     return channelFlow {
@@ -59,8 +64,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         override fun processStarted(debugProcess: XDebugProcess) {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
           launch(dispatcher) {
-            val sessionId = session.entity.await().sessionId
-            send(XDebuggerSessionEvent.ProcessStarted(sessionId, XDebuggerSessionInfoDto(session.sessionName)))
+            val sessionDto = createSessionDto(session, debugProcess)
+            send(XDebuggerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
           }
         }
 

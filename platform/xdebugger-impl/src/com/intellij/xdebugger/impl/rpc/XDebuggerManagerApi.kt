@@ -2,11 +2,11 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -15,9 +15,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerManagerApi : RemoteApi<Unit> {
-  suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionDto?>
+  suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?>
 
-  suspend fun sessionEvents(projectId: ProjectId): Flow<XDebuggerSessionEvent>
+  suspend fun sessions(projectId: ProjectId): XDebugSessionsList
 
   suspend fun reshowInlays(projectId: ProjectId, editorId: EditorId?)
 
@@ -33,7 +33,7 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
 @Serializable
 sealed interface XDebuggerSessionEvent {
   @Serializable
-  data class ProcessStarted(val sessionId: XDebugSessionId, val sessionDto: XDebuggerSessionInfoDto) : XDebuggerSessionEvent
+  data class ProcessStarted(val sessionId: XDebugSessionId, val sessionDto: XDebugSessionDto) : XDebuggerSessionEvent
 
   @Serializable
   data class ProcessStopped(val sessionId: XDebugSessionId) : XDebuggerSessionEvent
@@ -44,6 +44,7 @@ sealed interface XDebuggerSessionEvent {
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerSessionInfoDto(
-  val name: @NlsContexts.TabTitle String,
+data class XDebugSessionsList(
+  val list: List<XDebugSessionDto>,
+  val eventFlow: RpcFlow<XDebuggerSessionEvent>,
 )

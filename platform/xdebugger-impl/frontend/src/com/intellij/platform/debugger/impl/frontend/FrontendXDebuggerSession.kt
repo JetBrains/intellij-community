@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.frame.XValueMarkers
@@ -15,14 +16,16 @@ import com.intellij.xdebugger.impl.rpc.XValueMarkerId
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXDebuggerSession(
   private val project: Project,
-  private val cs: CoroutineScope,
+  scope: CoroutineScope,
   sessionDto: XDebugSessionDto,
 ) {
+  private val cs = scope.childScope("Session ${sessionDto.id}")
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   val id = sessionDto.id
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
@@ -77,4 +80,8 @@ internal class FrontendXDebuggerSession(
                                                   ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
 
   val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
+
+  fun closeScope() {
+    cs.cancel()
+  }
 }
