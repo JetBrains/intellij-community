@@ -180,18 +180,39 @@ interface SyntaxTreeBuilder {
   fun hasErrorsAfter(marker: Marker): Boolean
 
   interface Production {
+    /**
+     * The token type of this production
+     */
     fun getTokenType(): SyntaxElementType
 
+    /**
+     * The start offset of the production in the char sequence
+     */
     fun getStartOffset(): Int
 
+    /**
+     * The end offset of the production in the char sequence
+     */
     fun getEndOffset(): Int
 
+    /**
+     * The index of the first production's token in the token sequence
+     */
     fun getStartIndex(): Int
 
+    /**
+     * The index of the last production's token in the token sequence
+     */
     fun getEndIndex(): Int
 
+    /**
+     * The error message attached to the production, if any
+     */
     fun getErrorMessage(): @Nls String?
 
+    /**
+     * true if the production is collapsed, meaning that its subtree should be parsed on demand
+     */
     fun isCollapsed(): Boolean
 
     // TODO invent a better name/way to distinguish CompositeMarker and ErrorLeaf markers.
