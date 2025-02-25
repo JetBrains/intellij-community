@@ -46,7 +46,6 @@ open class ProjectActionsEnvironment(
   val featureInvoker: FeatureInvoker,
 ) : EvaluationEnvironment {
   private val datasetRef = config.sourceFile.run {
-    strategy.filters
     val sf = this ?: ""
     if (sf.isNotBlank()) {
       DatasetRef.parse(sf)
