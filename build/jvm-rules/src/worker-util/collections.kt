@@ -8,6 +8,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 
+val emptyStringArray: Array<String> = emptyArray<String>()
+
 private object SlowEqualsAwareHashStrategy : Hash.Strategy<Any> {
   override fun hashCode(o: Any?): Int = o?.hashCode() ?: 0
 

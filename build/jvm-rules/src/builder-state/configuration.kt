@@ -1,6 +1,14 @@
 package org.jetbrains.bazel.jvm.jps.state
 
-internal enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
+import java.nio.file.Path
+
+interface PathRelativizer {
+  fun toRelative(file: Path): String
+
+  fun toAbsoluteFile(path: String): Path
+}
+
+enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
   KOTLIN_VERSION("kotlinc version"),
   JPS_TRACK_LIB_DEPS("track changes in binary dependencies (libraries)"),
   TOOL_VERSION("bazel builder version or storage version"),
@@ -14,7 +22,7 @@ private fun emptyContainer(): LongArray {
 }
 
 @JvmInline
-internal value class TargetConfigurationDigestContainer(
+value class TargetConfigurationDigestContainer(
   private val list: LongArray = emptyContainer(),
 ) {
   fun get(kind: TargetConfigurationDigestProperty): Long = list[kind.ordinal]

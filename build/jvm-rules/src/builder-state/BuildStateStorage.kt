@@ -18,11 +18,8 @@ import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.emptyList
+import org.jetbrains.bazel.jvm.emptyStringArray
 import org.jetbrains.bazel.jvm.hashMap
-import org.jetbrains.bazel.jvm.jps.SourceDescriptor
-import org.jetbrains.bazel.jvm.jps.emptyStringArray
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
-import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.io.IOException
 import java.nio.file.Path
 
@@ -58,7 +55,7 @@ private fun checkConfiguration(
 @VisibleForTesting
 fun loadBuildState(
   buildStateFile: Path,
-  relativizer: PathTypeAwareRelativizer,
+  relativizer: PathRelativizer,
   allocator: RootAllocator,
   sourceFileToDigest: Map<Path, ByteArray>,
 ): LoadStateResult? {
@@ -72,9 +69,9 @@ fun loadBuildState(
   )
 }
 
-internal fun loadBuildState(
+fun loadBuildState(
   buildStateFile: Path,
-  relativizer: PathTypeAwareRelativizer,
+  relativizer: PathRelativizer,
   allocator: RootAllocator,
   sourceFileToDigest: Map<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer?,
@@ -109,7 +106,7 @@ internal fun loadBuildState(
   return null
 }
 
-internal fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {
+fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {
   val result = hashMap<Path, SourceDescriptor>(actualDigestMap.size)
   for ((path, digest) in actualDigestMap) {
     result.put(path, SourceDescriptor(sourceFile = path, digest = digest, outputs = emptyStringArray, isChanged = true))
@@ -120,7 +117,7 @@ internal fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<
 fun saveBuildState(
   buildStateFile: Path,
   list: Array<SourceDescriptor>,
-  relativizer: PathTypeAwareRelativizer,
+  relativizer: PathRelativizer,
   metadata: Map<String, String>,
   allocator: RootAllocator,
 ) {
@@ -144,7 +141,7 @@ fun saveBuildState(
     var rowIndex = 0
     var outputRowIndex = 0
     for (descriptor in list) {
-      sourceFileVector.setSafe(rowIndex, relativizer.toRelative(descriptor.sourceFile, RelativePathType.SOURCE).toByteArray())
+      sourceFileVector.setSafe(rowIndex, relativizer.toRelative(descriptor.sourceFile).toByteArray())
       digestVector.setSafe(rowIndex, descriptor.digest)
       isChangedField.setSafe(rowIndex, if (descriptor.isChanged) 1 else 0)
 
@@ -186,7 +183,7 @@ class RemovedFileInfo(
 private fun doLoad(
   root: VectorSchemaRoot,
   actualDigestMap: Map<Path, ByteArray>,
-  relativizer: PathTypeAwareRelativizer,
+  relativizer: PathRelativizer,
   parentSpan: Span?,
 ): LoadStateResult {
   val sourceFileVector = root.getVector(sourceFileField) as VarCharVector
@@ -202,7 +199,7 @@ private fun doLoad(
   val changedFiles = ArrayList<Path>()
   val deletedFiles = ArrayList<RemovedFileInfo>()
   for (rowIndex in 0 until root.rowCount) {
-    val sourceFile = relativizer.toAbsoluteFile(sourceFileVector.get(rowIndex).decodeToString(), RelativePathType.SOURCE)
+    val sourceFile = relativizer.toAbsoluteFile(sourceFileVector.get(rowIndex).decodeToString())
     val digest = digestVector.get(rowIndex)
 
     val start = outputListVector.getElementStartIndex(rowIndex)

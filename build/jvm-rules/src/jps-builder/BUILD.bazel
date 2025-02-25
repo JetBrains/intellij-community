@@ -13,6 +13,7 @@ kt_jvm_library(
         "//zip:build-zip",
         "@lib//:opentelemetry",
         "//src/worker-util",
+        "//src/builder-state",
         ":jps-standalone",
         "//src/abi",
         "//src/kotlin-compiler",

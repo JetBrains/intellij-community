@@ -3,8 +3,8 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.jps.SourceDescriptor
-import org.jetbrains.bazel.jvm.jps.emptyStringArray
+import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
@@ -19,7 +19,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 internal class BazelBuildDataProvider(
-  @JvmField val relativizer: PathTypeAwareRelativizer,
+  @JvmField val relativizer: BazelPathTypeAwareRelativizer,
   private val sourceToDescriptor: Map<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,

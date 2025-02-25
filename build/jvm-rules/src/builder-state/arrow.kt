@@ -11,16 +11,16 @@ import org.apache.arrow.vector.ipc.ArrowFileWriter
 import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
-import org.jetbrains.kotlin.utils.addToStdlib.enumSetOf
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.*
 
 internal val notNullUtfStringFieldType = FieldType.notNullable(ArrowType.Utf8.INSTANCE)
 
-private val WRITE_FILE_OPTION = enumSetOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-private val READ_FILE_OPTION = enumSetOf(StandardOpenOption.READ)
+private val WRITE_FILE_OPTION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+private val READ_FILE_OPTION = EnumSet.of(StandardOpenOption.READ)
 
 internal fun writeVectorToFile(file: Path, root: VectorSchemaRoot, metadata: Map<String, String>) {
   writeFileUsingTempFile(file) { tempFile ->

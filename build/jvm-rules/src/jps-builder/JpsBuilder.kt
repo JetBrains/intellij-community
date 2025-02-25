@@ -25,6 +25,7 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
 import org.jetbrains.bazel.jvm.jps.impl.BazelLibraryRoots
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.jps.impl.BazelPathTypeAwareRelativizer
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
 import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
 import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
@@ -143,7 +144,7 @@ suspend fun buildUsingJps(
   forceIncremental: Boolean = false,
 ): Int {
   val relativizer = createPathRelativizer(baseDir)
-  val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
+  val typeAwareRelativizer = relativizer.typeAwareRelativizer as BazelPathTypeAwareRelativizer
   val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer, relativizer = typeAwareRelativizer)
 
   val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
@@ -209,7 +210,7 @@ suspend fun buildUsingJps(
   fun computeBuildState(parentSpan: Span): LoadStateResult? {
     val buildState = loadBuildState(
       buildStateFile = buildStateFile,
-      relativizer = typeAwareRelativizer,
+      relativizer = typeAwareRelativizer.sourceRelativizer,
       allocator = allocator,
       sourceFileToDigest = sourceFileToDigest,
       targetDigests = targetDigests,
@@ -406,8 +407,8 @@ private fun checkIsFullRebuildRequired(
   parentSpan: Span,
   forceIncremental: Boolean
 ): Boolean {
-  if (buildState.rebuildRequested != null) {
-    parentSpan.setAttribute("rebuildRequested", buildState.rebuildRequested)
+  buildState.rebuildRequested?.let {
+    parentSpan.setAttribute("rebuildRequested", it)
     return true
   }
   if (forceIncremental) {
@@ -600,7 +601,7 @@ private fun CoroutineScope.postBuild(
     saveBuildState(
       buildStateFile = buildDataProvider.storeFile,
       list = sourceDescriptors,
-      relativizer = buildDataProvider.relativizer,
+      relativizer = buildDataProvider.relativizer.sourceRelativizer,
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )

@@ -57,14 +57,8 @@ internal class BazelLibraryRoots(
   private val actualDependencyFileToDigest: Map<Path, ByteArray>,
   private val storageFile: Path,
   private val fileToDigest: MutableMap<Path, ByteArray>,
-) : LibraryRoots {
+) {
   private var isChanged = false
-
-  @Synchronized
-  override fun getRoots(acc: MutableSet<Path>): Set<Path> {
-    acc.addAll(fileToDigest.keys)
-    return acc
-  }
 
   @Synchronized
   override fun updateIfExists(root: Path, namespace: String): LibRootUpdateResult {
