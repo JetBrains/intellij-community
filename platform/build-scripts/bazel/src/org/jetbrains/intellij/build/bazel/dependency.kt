@@ -283,7 +283,7 @@ private fun addDep(
       JpsJavaDependencyScope.COMPILE -> {
         deps.add(dependencyLabel)
 
-        if (dependencyModuleDescriptor != null && dependencyModuleDescriptor.testSources.isNotEmpty()) {
+        if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
           deps.add(getLabelForTest(dependencyLabel))
         }
       }
@@ -292,17 +292,26 @@ private fun addDep(
           deps.add(dependencyLabel)
         }
         else {
-          val hasTestSource = dependencyModuleDescriptor.testSources.isNotEmpty()
-
-          if (isExported && hasTestSource) {
-            println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+          if (hasOnlyTestResources(dependencyModuleDescriptor)) {
+            // module with only test resources
+            runtimeDeps.add(dependencyLabel + TEST_RESOURCES_TARGET_SUFFIX)
+            if (isExported) {
+              throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+            }
           }
+          else {
+            val hasTestSource = !dependencyModuleDescriptor.testSources.isEmpty()
 
-          if (dependencyModuleDescriptor.sources.isNotEmpty() || !hasTestSource) {
-            deps.add(dependencyLabel)
-          }
-          if (hasTestSource) {
-            deps.add(getLabelForTest(dependencyLabel))
+            if (isExported && hasTestSource) {
+              println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+            }
+
+            if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
+              deps.add(dependencyLabel)
+            }
+            if (hasTestSource) {
+              deps.add(getLabelForTest(dependencyLabel))
+            }
           }
         }
       }
@@ -354,6 +363,13 @@ private fun addDep(
       // we produce separate Bazel targets for production and test source roots
     }
   }
+}
+
+internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {
+  return !moduleDescriptor.testResources.isEmpty() &&
+         moduleDescriptor.sources.isEmpty() &&
+         moduleDescriptor.resources.isEmpty() &&
+         moduleDescriptor.testSources.isEmpty()
 }
 
 internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"

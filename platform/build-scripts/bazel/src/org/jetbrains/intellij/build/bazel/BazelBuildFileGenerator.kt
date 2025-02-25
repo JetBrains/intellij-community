@@ -452,6 +452,9 @@ internal class BazelBuildFileGenerator(
         if (resource.baseDirectory.isNotEmpty()) {
           option("strip_prefix", resource.baseDirectory)
         }
+        if (hasOnlyTestResources(module)) {
+          visibility(arrayOf("//visibility:public"))
+        }
       }
     }
   }
