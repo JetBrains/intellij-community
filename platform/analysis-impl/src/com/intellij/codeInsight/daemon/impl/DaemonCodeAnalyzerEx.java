@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +44,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           int startOffset,
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContextKt.anyContext(), processor);
+    return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
   // todo ijpl-339 mark experimental
@@ -89,7 +89,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           int startOffset,
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContextKt.anyContext(), processor);
+    return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
   static boolean processHighlightsOverlappingOutside(MarkupModelEx model,

@@ -82,10 +82,10 @@ public final class FileManagerImpl implements FileManager {
         processFileTypesChanged(false);
       }
     });
-    myVFileToViewProviderMap = CodeInsightContextKt.isSharedSourceSupportEnabled(manager.getProject())
+    myVFileToViewProviderMap = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
                                ? new MultiverseFileViewProviderCache()
                                : new ClassicFileViewProviderCache();
-    myTempProviders = CodeInsightContextKt.isSharedSourceSupportEnabled(manager.getProject())
+    myTempProviders = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
                       ? new ClassicTemporaryProviderStorage()
                       : new MultiverseTemporaryProviderStorage();
   }
@@ -201,7 +201,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
-    return findViewProvider(vFile, CodeInsightContextKt.anyContext());
+    return findViewProvider(vFile, CodeInsightContexts.anyContext());
   }
 
   @Override
@@ -248,7 +248,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
-    return findCachedViewProvider(vFile, CodeInsightContextKt.anyContext());
+    return findCachedViewProvider(vFile, CodeInsightContexts.anyContext());
   }
 
   @Override
@@ -321,7 +321,7 @@ public final class FileManagerImpl implements FileManager {
                                   @NotNull FileViewProvider viewProvider) {
 
     if (vFile instanceof LightVirtualFile) {
-      FileViewProvider prev = getRawCachedViewProvider(vFile, CodeInsightContextKt.anyContext());
+      FileViewProvider prev = getRawCachedViewProvider(vFile, CodeInsightContexts.anyContext());
       if (prev == viewProvider) return;
 
       if (prev != null) {
@@ -369,7 +369,7 @@ public final class FileManagerImpl implements FileManager {
   @NotNull
   @Override
   public FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
-    return createFileViewProvider(vFile, CodeInsightContextKt.anyContext(), eventSystemEnabled);
+    return createFileViewProvider(vFile, CodeInsightContexts.anyContext(), eventSystemEnabled);
   }
 
   @Override
@@ -392,7 +392,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   private void installContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context) {
-    if (!CodeInsightContextKt.isSharedSourceSupportEnabled(myManager.getProject())) {
+    if (!CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
       return;
     }
 
@@ -492,7 +492,7 @@ public final class FileManagerImpl implements FileManager {
   @Override
   @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
-    CodeInsightContext context = CodeInsightContextKt.anyContext();
+    CodeInsightContext context = CodeInsightContexts.anyContext();
     return findFile(vFile, context);
   }
 
@@ -514,7 +514,7 @@ public final class FileManagerImpl implements FileManager {
   @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    return getCachedPsiFile(vFile, CodeInsightContextKt.anyContext());
+    return getCachedPsiFile(vFile, CodeInsightContexts.anyContext());
   }
 
   @Override
@@ -849,13 +849,13 @@ public final class FileManagerImpl implements FileManager {
   }
 
   private @NotNull CodeInsightContext getRawContext(@NotNull FileViewProvider fileViewProvider) {
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(myManager.getProject())) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
       CodeInsightContextManagerImpl manager =
         (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(myManager.getProject());
       return manager.getCodeInsightContextRaw(fileViewProvider);
     }
     else {
-      return CodeInsightContextKt.defaultContext();
+      return CodeInsightContexts.defaultContext();
     }
   }
 

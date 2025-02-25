@@ -2,7 +2,7 @@
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge;
 import com.intellij.openapi.module.Module;
@@ -64,7 +64,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myModule = module;
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
       // todo ijpl-339
       myRoots = new MultiverseRootContainer(calcRootsMultiverse());
     }
@@ -205,7 +205,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     // in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
 
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
       Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
       return ContainerUtil.exists(roots, root -> myRoots.getRootDescriptor(root) != null);
     }
@@ -218,7 +218,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   @ApiStatus.Internal
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
-    if (!CodeInsightContextKt.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (!CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
       return contains(file);
     }
 

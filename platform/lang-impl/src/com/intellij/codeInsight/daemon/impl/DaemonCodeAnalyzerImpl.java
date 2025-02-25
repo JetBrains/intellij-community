@@ -1020,7 +1020,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
                                                        int offset,
                                                        boolean includeFixRange) {
-    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, CodeInsightContextKt.anyContext());
+    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, CodeInsightContexts.anyContext());
   }
 
   /**
@@ -1050,7 +1050,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         @NotNull HighlightSeverity minSeverity,
                                                         boolean includeFileLevel) {
     return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, includeFileLevel,
-                                  CodeInsightContextKt.anyContext());
+                                  CodeInsightContexts.anyContext());
   }
 
   @ApiStatus.Internal
@@ -1375,7 +1375,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
       CodeInsightContext context = editor != null
                                    ? EditorContextManager.getEditorContext(editor, myProject)
-                                   : CodeInsightContextKt.anyContext();
+                                   : CodeInsightContexts.anyContext();
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
@@ -1390,7 +1390,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               Document renewedDocument = editor == null ? FileDocumentManager.getInstance().getDocument(virtualFile) : editor.getDocument();
               CodeInsightContext renewedContext = editor != null
                                                   ? EditorContextManager.getEditorContext(editor, myProject)
-                                                  : CodeInsightContextKt.anyContext();
+                                                  : CodeInsightContexts.anyContext();
               if (renewedDocument != null) {
                 TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument, renewedContext);
               }

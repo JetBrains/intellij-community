@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
@@ -153,7 +153,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile[] files = myFile.getChildren();
     if (files.length == 0) return PsiFile.EMPTY_ARRAY;
 
-    boolean sharedSourceSupportEnabled = CodeInsightContextKt.isSharedSourceSupportEnabled(getProject());
+    boolean sharedSourceSupportEnabled = CodeInsightContexts.isSharedSourceSupportEnabled(getProject());
 
     ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (VirtualFile file : files) {

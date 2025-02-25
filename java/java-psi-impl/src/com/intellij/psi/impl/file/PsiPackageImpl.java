@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -173,7 +173,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(getProject())) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(getProject())) {
       // todo ijpl-339 this line introduces performance degradation, see IDEA-367535
       return findAllClasses(name, scope);
     }

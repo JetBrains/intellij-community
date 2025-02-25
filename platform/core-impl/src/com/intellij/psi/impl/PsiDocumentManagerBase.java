@@ -2,7 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
@@ -97,7 +97,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
-    return getPsiFile(document, CodeInsightContextKt.anyContext());
+    return getPsiFile(document, CodeInsightContexts.anyContext());
   }
 
   @ApiStatus.Internal
@@ -143,7 +143,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public final @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
-    return getCachedPsiFile(document, CodeInsightContextKt.anyContext());
+    return getCachedPsiFile(document, CodeInsightContexts.anyContext());
   }
 
   @ApiStatus.Internal

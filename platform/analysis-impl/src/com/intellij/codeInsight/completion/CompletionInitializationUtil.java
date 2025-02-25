@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -275,7 +275,7 @@ public final class CompletionInitializationUtil {
     }
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(file.getProject())) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
       CodeInsightContextManagerImpl codeInsightContextManager =
         (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(file.getProject());
       CodeInsightContext context = codeInsightContextManager.getCodeInsightContext(file.getViewProvider());

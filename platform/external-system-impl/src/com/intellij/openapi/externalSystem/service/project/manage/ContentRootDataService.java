@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.notification.Notification;
@@ -406,7 +406,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
 
-    boolean duplicatesAreAllowed = CodeInsightContextKt.isSharedSourceSupportEnabled(project);
+    boolean duplicatesAreAllowed = CodeInsightContexts.isSharedSourceSupportEnabled(project);
 
     Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();
 

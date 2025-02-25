@@ -1,7 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -117,7 +120,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     ProgressIndicatorProvider.checkCanceled();
 
     if (element instanceof PsiDirectory) {
-      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile(), CodeInsightContextKt.anyContext());
+      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile(), CodeInsightContexts.anyContext());
     }
 
     PsiFile containingFile = element.getContainingFile();
@@ -162,7 +165,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
   public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
-    return getResolveScopeFromProviders(vFile, CodeInsightContextKt.anyContext()); //todo ijpl-339???
+    return getResolveScopeFromProviders(vFile, CodeInsightContexts.anyContext()); //todo ijpl-339???
   }
 
 
@@ -219,7 +222,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
   }
 
   private @Nullable Module findModule(@Nullable FileViewProvider fileViewProvider, @NotNull VirtualFile notNullVFile) {
-    if (fileViewProvider != null && CodeInsightContextKt.isSharedSourceSupportEnabled(myProject)) {
+    if (fileViewProvider != null && CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
       CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(fileViewProvider);
       if (context instanceof ModuleContext) {
         return ((ModuleContext)context).getModule();

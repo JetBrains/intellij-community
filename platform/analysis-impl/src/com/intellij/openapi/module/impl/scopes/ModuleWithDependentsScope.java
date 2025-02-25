@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge;
 import com.intellij.openapi.module.Module;
@@ -106,7 +106,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return contains(file, CodeInsightContextKt.anyContext(), false);
+    return contains(file, CodeInsightContexts.anyContext(), false);
   }
 
   @Override
@@ -161,8 +161,8 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
 
   boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context, boolean fromTests) {
     Set<Module> modules;
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
-      if (context == CodeInsightContextKt.anyContext()) {
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+      if (context == CodeInsightContexts.anyContext()) {
         modules = myProjectFileIndex.getModulesForFile(file, true);
         if (modules.isEmpty()) {
           return false;

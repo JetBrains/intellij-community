@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
@@ -179,14 +179,14 @@ public final class MainPassesRunner {
     ProgressManager.getInstance().runProcess(() -> {
       // todo ijpl-339 figure out what is the correct context here
       CodeInsightContext context;
-      if (CodeInsightContextKt.isSharedSourceSupportEnabled(myProject)) {
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
         context = ReadAction.compute(() -> {
           CodeInsightContextManager manager = CodeInsightContextManager.getInstance(psiFile.getProject());
           return manager.getCodeInsightContext(psiFile.getViewProvider());
         });
       }
       else {
-        context = CodeInsightContextKt.defaultContext();
+        context = CodeInsightContexts.defaultContext();
       }
       HighlightingSessionImpl.runInsideHighlightingSession(psiFile, context, null, range, false, session -> {
         ((HighlightingSessionImpl)session).setMinimumSeverity(minimumSeverity);

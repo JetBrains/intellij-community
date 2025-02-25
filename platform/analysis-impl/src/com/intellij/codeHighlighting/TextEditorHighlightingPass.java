@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -167,7 +167,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (myContext == null) {
       // todo ijpl-339 report an error here once all the highlighting passes are ready
       //      LOG.error("context was not set");
-      return CodeInsightContextKt.anyContext();
+      return CodeInsightContexts.anyContext();
     }
     return myContext;
   }

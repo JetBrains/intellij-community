@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +45,7 @@ public final class FileStatusMap implements Disposable {
   @ApiStatus.Internal
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
-    myDocumentToStatusMap = CodeInsightContextKt.isSharedSourceSupportEnabled(project) ? new MultiverseFileStatusMapState(project)
+    myDocumentToStatusMap = CodeInsightContexts.isSharedSourceSupportEnabled(project) ? new MultiverseFileStatusMapState(project)
                                                                                        : new ClassicFileStatusMapState(project);
   }
 
@@ -90,7 +93,7 @@ public final class FileStatusMap implements Disposable {
   /** it's here for compatibility */
   @SuppressWarnings("unused")
   public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
-    setErrorFoundFlag(document, CodeInsightContextKt.anyContext(), errorFound);
+    setErrorFoundFlag(document, CodeInsightContexts.anyContext(), errorFound);
   }
 
   // todo ijpl-339 mark experimental
@@ -132,7 +135,7 @@ public final class FileStatusMap implements Disposable {
   // used in plugins
   @SuppressWarnings("unused")
   public void markFileUpToDate(@NotNull Document document, int passId) {
-    markFileUpToDate(document, CodeInsightContextKt.anyContext(), passId);
+    markFileUpToDate(document, CodeInsightContexts.anyContext(), passId);
   }
 
   // todo ijpl-339 mark experimental
@@ -267,7 +270,7 @@ public final class FileStatusMap implements Disposable {
   // todo remove? it's unused in plugins
   @SuppressWarnings("unused")
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
-    return allDirtyScopesAreNull(document, CodeInsightContextKt.anyContext());
+    return allDirtyScopesAreNull(document, CodeInsightContexts.anyContext());
   }
 
   // todo ijpl-339 do we need context here?
