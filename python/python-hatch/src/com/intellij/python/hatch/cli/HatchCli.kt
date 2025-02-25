@@ -3,9 +3,9 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.hatch.HatchRuntime
+import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.PyHatchBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -110,9 +110,21 @@ class HatchCli(private val runtime: HatchRuntime) {
    * ├── LICENSE.txt
    * ├── README.md
    * └── pyproject.toml
+   *
+   * @param[initExistingProject] Initialize an existing project
    */
-  suspend fun new(projectName: String): Result<String, PyError> {
-    return runtime.executeAndHandleErrors("new", projectName, transformer = ZeroCodeStdoutTransformer)
+  suspend fun new(projectName: String, location: Path? = null, initExistingProject: Boolean = false): Result<String, PyError> {
+    val options = listOf(
+      initExistingProject to "--init",
+      true to projectName,
+      (location != null) to location,
+    ).makeOptions()
+    return runtime.executeInteractive("new", *options) { eelProcess ->
+      if (initExistingProject) {
+        eelProcess.stdin.sendWholeText("$projectName\n")
+      }
+      Result.success("Created")
+    }
   }
 
   /**
@@ -208,12 +220,11 @@ class HatchCli(private val runtime: HatchRuntime) {
 }
 
 
-internal fun List<Pair<Boolean?, String?>>.makeOptions(): Array<String> {
+internal fun List<Pair<Boolean?, *>>.makeOptions(): Array<String> {
   return this.mapNotNull { (flag, option) ->
     when (flag) {
-      true -> option
-      false -> "$option=0"
-      null -> null
+      true -> option.toString()
+      else -> null
     }
   }.toTypedArray()
 }

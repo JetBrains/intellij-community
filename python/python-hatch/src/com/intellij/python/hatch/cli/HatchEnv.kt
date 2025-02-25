@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
-import com.intellij.python.hatch.HatchRuntime
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.hatch.runtime.HatchRuntime
+import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError.ExecException
 import kotlinx.serialization.SerialName
@@ -13,22 +15,22 @@ import java.nio.file.Path
 
 @Suppress("unused")
 @Serializable
-class Environment(
+class HatchEnvironmentDetails(
   /**
    * An environment's type determines which environment plugin will be used for management.
    * The only built-in environment type is virtual, which uses virtual Python environments.
    */
-  val type: String,
+  val type: @NlsSafe String,
 
   /**
    * The python option specifies which version of Python to use, or an absolute path to a Python interpreter:
    */
-  val python: String? = null,
+  val python: @NlsSafe String? = null,
 
   /**
    * The description option is purely informational and is displayed in the output of the env show command:
    */
-  val description: String? = null,
+  val description: @NlsSafe String? = null,
 
   /**
    * A common use case is standalone environments that do not require inheritance nor the installation of the project,
@@ -40,7 +42,7 @@ class Environment(
   /**
    * All environments inherit from the environment defined by its template option, which defaults to default.
    */
-  val template: String? = null,
+  val template: @NlsSafe String? = null,
 
   val installer: String? = null,
 
@@ -101,9 +103,10 @@ class Environment(
   val envExclude: List<String>? = null,
 )
 
-typealias Environments = Map<String, Environment>
+typealias HatchDetailedEnvironments = Map<String, HatchEnvironmentDetails>
 
-private const val DEFAULT_ENV_NAME: String = "default"
+const val DEFAULT_ENV_NAME: String = "default"
+const val ENV_TYPE_VIRTUAL: String = "virtual"
 
 /**
  * Manage project environments
@@ -138,7 +141,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): Result<Path?, ExecException> {
+  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecException> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
@@ -191,29 +194,125 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * Returns details of the specified environments.
    *
    * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
-   * @param internal Optional parameter indicating whether to include internal environments. Defaults to null.
    * @return A [Result] containing:
-   * - [Environments] if operation is successful.
+   * - [HatchDetailedEnvironments] if operation is successful.
    * - An error wrapped in [ExecException] if an execution failure occurs.
    */
-  suspend fun show(vararg envs: String, internal: Boolean? = null): Result<Environments, ExecException> {
-    val options = listOf(internal to "--internal").makeOptions()
-    return executeAndHandleErrors("show", "--json", *options, *envs) { processOutput ->
+  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecException> {
+    return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }
       val jsonOutput = json.parseToJsonElement(output)
-      val environments = if (internal == true) jsonOutput.jsonObject
-      else {
-        // JSON mode always shows internal environments, and there is no flag to distinguish them
-        jsonOutput.jsonObject.filterKeys { !it.startsWith("hatch-") }
-      }
+
+      // JSON mode always shows internal environments, and there is no flag to distinguish them
+      val environments = jsonOutput.jsonObject.filterKeys { !it.startsWith("hatch-") }
 
       val parsedEnvironments = environments.mapValues {
-        json.decodeFromJsonElement<Environment>(it.value)
+        json.decodeFromJsonElement<HatchEnvironmentDetails>(it.value)
       }
       Result.success(parsedEnvironments)
     }
   }
+
+  /**
+   * Returns details of the specified environments.
+   *
+   * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
+   * @param internal Optional parameter indicating whether to include internal environments. Defaults to false.
+   * @return A [Result] containing:
+   * - [HatchDetailedEnvironments] if operation is successful.
+   * - An error wrapped in [ExecException] if an execution failure occurs.
+   */
+  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecException> {
+    val options = listOf(internal to "--internal").makeOptions()
+
+    val expectedOutput = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
+
+    return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = expectedOutput) { matchResult ->
+      val tables = buildMap {
+        val (standaloneTable, matricesTable) = matchResult.destructured
+        put(HatchEnvironmentType.STANDALONE, standaloneTable.parseHatchEnvironments())
+        put(HatchEnvironmentType.MATRICES, matricesTable.parseHatchEnvironments())
+      }
+      Result.success(tables)
+    }
+  }
+}
+
+typealias HatchEnvironments = Map<HatchEnvironmentType, List<HatchEnvironment>>
+
+enum class HatchEnvironmentType {
+  STANDALONE,
+  MATRICES,
+}
+
+data class HatchEnvironment(
+  val name: @NlsSafe String,
+  val type: @NlsSafe String,
+  val envs: String? = null,
+  val features: String? = null,
+  val dependencies: String? = null,
+  val environmentVariables: String? = null,
+  val scripts: String? = null,
+  val description: String? = null,
+) {
+  companion object {
+    val DEFAULT: HatchEnvironment = HatchEnvironment(name = DEFAULT_ENV_NAME, type = ENV_TYPE_VIRTUAL)
+  }
+}
+
+private fun String.parseHatchEnvironments(): List<HatchEnvironment> {
+  val table = parseTable() ?: return emptyList()
+  val nameIdx = table.findColumnIdx("Name") ?: error("Name column not found")
+  val typeIdx = table.findColumnIdx("Type") ?: error("Type column not found")
+  val envIdx = table.findColumnIdx("Env")
+  val featuresIdx = table.findColumnIdx("Features")
+  val dependenciesIdx = table.findColumnIdx("Features")
+  val environmentVariablesIdx = table.findColumnIdx("EnvironmentVariables")
+  val scriptsIdx = table.findColumnIdx("Scripts")
+  val descriptionIdx = table.findColumnIdx("Description")
+
+  return table.rows.map { row ->
+    HatchEnvironment(
+      name = row[nameIdx],
+      type = row[typeIdx],
+      envs = envIdx?.let { row[it] },
+      features = featuresIdx?.let { row[it] },
+      dependencies = dependenciesIdx?.let { row[it] },
+      environmentVariables = environmentVariablesIdx?.let { row[it] },
+      scripts = scriptsIdx?.let { row[it] },
+      description = descriptionIdx?.let { row[it] },
+    )
+  }
+}
+
+
+private data class Table(val headers: List<String>, val rows: List<List<String>>)
+
+private fun Table.findColumnIdx(name: String): Int? = headers.indexOf(name).takeIf { it >= 0 }
+
+
+private fun String.parseTable(): Table? {
+  val lines = this.trim().lines()
+  val columns = lines.first().count { it == '+' } - 1
+  if (columns <= 0) return null
+
+  val data = buildList {
+    val currentRow = Array(columns) { "" }
+    for (line in lines.drop(1)) {
+      if (line.startsWith('+')) {
+        add(currentRow.map { it.trim() })
+        currentRow.fill("")
+        continue
+      }
+
+      val cells = line.splitToSequence('|').map { it.trim() }.toList()
+      for (col in 0..<columns) {
+        currentRow[col] += "\n${cells[col + 1]}"
+      }
+    }
+  }
+  return Table(headers = data.first(), rows = data.drop(1))
 }
