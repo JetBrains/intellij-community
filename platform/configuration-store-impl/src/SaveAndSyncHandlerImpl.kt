@@ -285,16 +285,18 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
         title = getProgressTitle(componentManager),
         cancellation = TaskCancellation.nonCancellable(),
       ) {
-        // ensure that is fully canceled
-        currentJob?.join()
+        withContext(NonCancellable) {
+          // ensure that is fully canceled
+          currentJob?.join()
 
-        isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+          isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
 
-        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-          val stateStore = project.stateStore
-          val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-          // update last modified for all project files modified between project open and close
-          ConversionService.getInstance()?.saveConversionResult(path)
+          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+            val stateStore = project.stateStore
+            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
+            // update last modified for all project files modified between project open and close
+            ConversionService.getInstance()?.saveConversionResult(path)
+          }
         }
       }
     }

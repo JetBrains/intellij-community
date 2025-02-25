@@ -674,8 +674,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       stopServicePreloading();
 
       if (BitUtil.isSet(flags, SAVE)) {
-        TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
-                    __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        try {
+          TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
+                      __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        }
+        catch (Throwable e) {
+          logErrorDuringExit("Failed to save settings", e);
+        }
       }
 
       if (isInstantShutdownPossible()) {
