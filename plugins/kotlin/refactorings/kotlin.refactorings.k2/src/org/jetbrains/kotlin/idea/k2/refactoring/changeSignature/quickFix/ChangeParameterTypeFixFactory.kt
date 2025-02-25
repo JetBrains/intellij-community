@@ -70,8 +70,6 @@ object ChangeParameterTypeFixFactory {
         val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
-        if (functionLikeSymbol.origin != KaSymbolOrigin.SOURCE) return emptyList()
-
         val paramSymbol = memberCall.argumentMapping[argumentKey]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
@@ -122,6 +120,7 @@ object ChangeParameterTypeFixFactory {
         targetType: KaType,
         functionLikeSymbol: KaFunctionSymbol
     ): ChangeParameterTypeFix? {
+        if (functionLikeSymbol.origin != KaSymbolOrigin.SOURCE) return null
         val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
         val functionName = getDeclarationName(functionLikeSymbol) ?: return null
 
