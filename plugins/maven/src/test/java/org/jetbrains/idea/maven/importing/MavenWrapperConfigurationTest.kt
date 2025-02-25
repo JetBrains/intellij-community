@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.io.File
 import java.util.zip.ZipOutputStream
@@ -85,6 +86,11 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     """)
 
     assertOrderedElementsAreEqual(projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile1"))
+
+    // TODO: there should be no need to restart connectors
+    // see IDEA-364666
+    MavenUtil.restartMavenConnectors(project, true)
+
     updateProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/profile2.zip\n")
     refreshFiles(listOf(wrapperProperties))
