@@ -1549,163 +1549,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWhenProfilesXmlChange() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <build>
-                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
-                       </build>
-                       """.trimIndent())
-    createProfilesXmlOldStyle("""
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value1</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    updateAll(projectPom)
-    val roots = tree.rootProjects
-    val project = roots[0]
-    assertUnorderedPathsAreEqual(project.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value1")))
-    createProfilesXmlOldStyle("""
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value2</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    updateAll(projectPom)
-    assertUnorderedPathsAreEqual(project.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value2")))
-  }
-
-  @Test
-  fun testUpdatingModelWhenParentProfilesXmlChange() = runBlocking {
-    val parent = createModulePom("parent",
-                                 """
-                                           <groupId>test</groupId>
-                                           <artifactId>parent</artifactId>
-                                           <version>1</version>
-                                           <packaging>pom</packaging>
-                                           """.trimIndent())
-    createProfilesXmlOldStyle("parent",
-                              """
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value1</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    val child = createModulePom("m",
-                                """
-                                          <groupId>test</groupId>
-                                          <artifactId>m</artifactId>
-                                          <version>1</version>
-                                          <parent>
-                                            <groupId>test</groupId>
-                                            <artifactId>parent</artifactId>
-                                            <version>1</version>
-                                          </parent>
-                                          <build>
-                                            <sourceDirectory>${'$'}{prop}</sourceDirectory>
-                                          </build>
-                                          """.trimIndent())
-    updateAll(parent, child)
-    val roots = tree.rootProjects
-    assertEquals(2, roots.size)
-    val childProject = roots[0]
-    assertUnorderedPathsAreEqual(childProject.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value1")))
-    createProfilesXmlOldStyle("parent",
-                              """
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value2</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    update(parent)
-    assertUnorderedPathsAreEqual(childProject.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value2")))
-  }
-
-  @Test
-  fun testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <modules>
-                         <module>m</module>
-                       </modules>
-                       """.trimIndent())
-    createProfilesXmlOldStyle("""
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value1</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    createModulePom("m",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m</artifactId>
-                      <version>1</version>
-                      <parent>
-                        <groupId>test</groupId>
-                        <artifactId>project</artifactId>
-                        <version>1</version>
-                      </parent>
-                      <build>
-                        <sourceDirectory>${'$'}{prop}</sourceDirectory>
-                      </build>
-                      """.trimIndent())
-    updateAll(projectPom)
-    val childNode = tree.getModules(tree.rootProjects[0])[0]
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value1")))
-    createProfilesXmlOldStyle("""
-                                <profile>
-                                  <id>one</id>
-                                  <activation>
-                                    <activeByDefault>true</activeByDefault>
-                                  </activation>
-                                  <properties>
-                                    <prop>value2</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-    updateAll(projectPom)
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value2")))
-  }
-
-  @Test
   fun testDoNotUpdateModelWhenAggregatorProfilesXmlChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1823,7 +1666,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testCollectingProfilesFromSettingsXmlAndPluginsXml() = runBlocking {
+  fun testCollectingProfilesFromSettingsXml() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1834,11 +1677,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                          </profile>
                        </profiles>
                        """.trimIndent())
-    createProfilesXml("""
-                        <profile>
-                          <id>two</id>
-                        </profile>
-                        """.trimIndent())
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -1847,11 +1685,11 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profiles>
                         """.trimIndent())
     updateAll(projectPom)
-    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "two", "three")
+    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "three")
   }
 
   @Test
-  fun testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() = runBlocking {
+  fun testCollectingProfilesFromSettingsXmlAfterResolve() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1862,11 +1700,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                          </profile>
                        </profiles>
                        """.trimIndent())
-    createProfilesXml("""
-                        <profile>
-                          <id>two</id>
-                        </profile>
-                        """.trimIndent())
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -1885,7 +1718,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     finally {
       embeddersManager.releaseInTests()
     }
-    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "two", "three")
+    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "three")
   }
 
   @Test
@@ -1902,12 +1735,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profile>
                       </profiles>
                       """.trimIndent())
-    createProfilesXml("parent1",
-                      """
-                        <profile>
-                          <id>parent1ProfileXml</id>
-                        </profile>
-                        """.trimIndent())
+
     createModulePom("parent2",
                     """
                       <groupId>test</groupId>
@@ -1926,12 +1754,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profile>
                       </profiles>
                       """.trimIndent())
-    createProfilesXml("parent2",
-                      """
-                        <profile>
-                          <id>parent2ProfileXml</id>
-                        </profile>
-                        """.trimIndent())
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1948,11 +1771,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                          </profile>
                        </profiles>
                        """.trimIndent())
-    createProfilesXml("""
-                        <profile>
-                          <id>projectProfileXml</id>
-                        </profile>
-                        """.trimIndent())
+
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -1960,24 +1779,19 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                           </profile>
                         </profiles>
                         """.trimIndent())
-    updateAll(mutableListOf<String?>("projectProfileXml",
+    updateAll(mutableListOf<String?>(
                                      "projectProfile",
                                      "parent1Profile",
-                                     "parent1ProfileXml",
                                      "parent2Profile",
-                                     "parent2ProfileXml",
                                      "settings",
                                      "xxx"),
               projectPom)
     val mavenProject = tree.findProject(projectPom)!!
     assertUnorderedElementsAreEqual(
       mavenProject.activatedProfilesIds.enabledProfiles,
-      "projectProfileXml",
       "projectProfile",
       "parent1Profile",
-      "parent1ProfileXml",
       "parent2Profile",
-      "parent2ProfileXml",
       "settings")
     val embeddersManager = MavenEmbeddersManager(project)
     try {
@@ -1995,60 +1809,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       "parent1Profile",
       "parent2Profile",
       "settings")
-  }
-
-  @Test
-  fun testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <profiles>
-                         <profile>
-                           <id>one</id>
-                         </profile>
-                       </profiles>
-                       """.trimIndent())
-    createProfilesXml("""
-                        <profile>
-                          <id>two</id>
-                        </profile>
-                        """.trimIndent())
-    updateAll(mutableListOf<String?>("one", "two"), projectPom)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one", "two")
-    deleteProfilesXml()
-    update(projectPom)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one")
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       """.trimIndent())
-    update(projectPom)
-    assertUnorderedElementsAreEqual(tree.explicitProfiles.enabledProfiles)
-    createProfilesXml("""
-                        <profile>
-                          <id>two</id>
-                        </profile>
-                        """.trimIndent())
-    update(projectPom)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "two")
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <profiles>
-                         <profile>
-                           <id>one</id>
-                         </profile>
-                       </profiles>
-                       """.trimIndent())
-    update(projectPom)
-    assertUnorderedElementsAreEqual(
-      tree.explicitProfiles.enabledProfiles, "one", "two")
   }
 
   @Test
