@@ -12,6 +12,11 @@ import java.util.concurrent.locks.StampedLock
 
 private const val STRIPE_COUNT = 64
 
+/**
+ * Concurrent ZipFilePool. Loads at most [STRIPE_COUNT] zip files concurrently.
+ *
+ * Pool must be explicitly cleared by [clear].
+ */
 @ApiStatus.Internal
 class ZipFilePoolImpl : ZipFilePool() {
   private val pool = ConcurrentHashMap<Path, MyEntryResolver>(1024)

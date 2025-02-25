@@ -8,6 +8,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.zip.ZipFile
 
+/**
+ * Always loads the zip file in a new instance, never shares.
+ *
+ * Note: returned EntryResolvers are Closeable and must be closed explicitly.
+ */
 internal class NonShareableJavaZipFilePool : ZipFilePool() {
   override fun load(file: Path): EntryResolver {
     val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
