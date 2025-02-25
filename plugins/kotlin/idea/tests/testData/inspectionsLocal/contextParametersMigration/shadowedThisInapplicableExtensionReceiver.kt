@@ -3,11 +3,17 @@
 // LANGUAGE_VERSION: 2.2
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
 
-class C {
-    fun String.fn(p: String) {}
+class Ctx {
+    fun foo() {}
 }
 
-context(<caret>C)
-fun String.test() {
-    "foo".fn(this)
+fun Ctx.bar() {}
+
+class MyClass {
+    context(<caret>Ctx)
+    fun String.test() {
+        this + "!"
+        foo()
+        bar()
+    }
 }
