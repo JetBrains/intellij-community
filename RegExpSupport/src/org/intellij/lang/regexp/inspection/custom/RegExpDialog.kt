@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileType
@@ -160,6 +161,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
             replaceEditorFocusedLast = true
           }
         }) }
+        .customize(UnscaledGaps(intelliJSpacingConfiguration.verticalComponentGap, 0, 0, 0))
         .component
     }.resizableRow()
   }
@@ -213,6 +215,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       return super.createEditor().apply {
         setHorizontalScrollbarVisible(true)
         setVerticalScrollbarVisible(true)
+        backgroundColor = EditorColorsManager.getInstance().getGlobalScheme().defaultBackground
         val outerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, if (search) 1 else 0, 0)
         scrollPane.border = CompoundBorder(
           outerBorder,
