@@ -25,14 +25,20 @@ internal const val invalidEntityId: EntityId = -1
 
 internal val EntityId.arrayId: Int
   get() {
-    assert(this >= 0) { "arrayId is $this, but it should be >=0" }
-    return (this shr 32).toInt()
+    return (this shr 32).toInt().also {unpackedArrayId ->
+      assert(unpackedArrayId >= 0) {
+        "arrayId is $unpackedArrayId, but it should be >=0. EntityId is $this (0x${this.toULong().toString(16)})"
+      }
+    }
   }
 
 internal val EntityId.clazz: Int
   get() {
-    assert(this >= 0)
-    return this.toInt()
+    return this.toInt().also { unpackedClazz ->
+      assert(unpackedClazz >= 0) {
+        "clazz is $unpackedClazz, but it should be >=0. EntityId is $this (0x${this.toULong().toString(16)})"
+      }
+    }
   }
 
 internal fun EntityId.asString() = if (this >= 0) clazz.findWorkspaceEntity().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
