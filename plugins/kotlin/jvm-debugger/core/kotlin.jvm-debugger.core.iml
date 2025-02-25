@@ -58,7 +58,10 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="library" name="kotlin-metadata" level="project" />
   </component>
 </module>

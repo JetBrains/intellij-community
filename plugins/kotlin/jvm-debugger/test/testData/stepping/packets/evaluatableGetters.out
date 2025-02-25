@@ -18,7 +18,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 58, methods called: 4
+Packets sent: 100, methods called: 7
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X20@hashCode (evaluatableGetters.kt:112)
@@ -43,7 +43,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 55, methods called: 3
+Packets sent: 87, methods called: 5
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X30@hashCode (evaluatableGetters.kt:112)
@@ -78,7 +78,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 61, methods called: 4
+Packets sent: 85, methods called: 5
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X40@hashCode (evaluatableGetters.kt:112)
@@ -123,7 +123,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 57, methods called: 4
+Packets sent: 83, methods called: 4
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X50@hashCode (evaluatableGetters.kt:112)
@@ -178,7 +178,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 54, methods called: 3
+Packets sent: 86, methods called: 5
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X60@hashCode (evaluatableGetters.kt:112)
@@ -243,7 +243,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 58, methods called: 4
+Packets sent: 83, methods called: 4
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X70@hashCode (evaluatableGetters.kt:112)
@@ -318,7 +318,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 55, methods called: 3
+Packets sent: 82, methods called: 4
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X80@hashCode (evaluatableGetters.kt:112)
@@ -403,7 +403,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 54, methods called: 3
+Packets sent: 84, methods called: 5
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X90@hashCode (evaluatableGetters.kt:112)
@@ -498,7 +498,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 55, methods called: 3
+Packets sent: 80, methods called: 4
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X100@hashCode (evaluatableGetters.kt:112)
@@ -603,7 +603,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 55, methods called: 3
+Packets sent: 81, methods called: 4
 evaluatableGetters.kt:114
 KotlinStackFrame (evaluatableGetters.kt:114)
     JavaValue[local] x: evaluatableGetters.X1 = evaluatableGetters.X100@hashCode (evaluatableGetters.kt:112)
@@ -708,7 +708,7 @@ KotlinStackFrame (evaluatableGetters.kt:114)
         JavaValue[getter] x3: int (evaluatableGetters.kt:6)
         JavaValue[getter] x2: int (evaluatableGetters.kt:5)
         JavaValue[getter] x1: int (evaluatableGetters.kt:4)
-Packets sent: 19, methods called: 4
+Packets sent: 22, methods called: 4
 Disconnected from the target VM
 
 Process finished with exit code 0
