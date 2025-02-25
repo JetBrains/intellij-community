@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixtures
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener
@@ -7,14 +7,14 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.fixtures.IdeaTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class TestExecutionConsoleEventFixture(
+class SMTestRunnerOutputTestFixtureImpl(
   private val project: Project
-) : IdeaTestFixture {
+) : SMTestRunnerOutputTestFixture {
 
   private lateinit var fixtureDisposable: Disposable
 
@@ -63,7 +63,7 @@ class TestExecutionConsoleEventFixture(
     counter.incrementAndGet()
   }
 
-  fun assertTestEventCount(
+  override fun assertTestEventCount(
     name: String,
     suiteStart: Int,
     suiteFinish: Int,

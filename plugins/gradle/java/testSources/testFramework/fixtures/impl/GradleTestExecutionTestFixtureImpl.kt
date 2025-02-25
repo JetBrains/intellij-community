@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.fixtures.TestExecutionConsoleEventFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionViewTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
@@ -16,7 +16,7 @@ class GradleTestExecutionTestFixtureImpl(
   private val executionFixture: GradleExecutionTestFixture,
 ) : GradleTestExecutionTestFixture {
 
-  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
+  private lateinit var testRunnerOutputFixture: SMTestRunnerOutputTestFixture
   private lateinit var testExecutionViewFixture: GradleTestExecutionViewTestFixture
 
   override fun getTestExecutionConsole(): GradleTestsExecutionConsole {
@@ -24,8 +24,8 @@ class GradleTestExecutionTestFixtureImpl(
   }
 
   override fun setUp() {
-    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
-    testExecutionEventFixture.setUp()
+    testRunnerOutputFixture = SMTestRunnerOutputTestFixtureImpl(project)
+    testRunnerOutputFixture.setUp()
 
     testExecutionViewFixture = GradleTestExecutionViewTestFixtureImpl(executionFixture)
     testExecutionViewFixture.setUp()
@@ -34,7 +34,7 @@ class GradleTestExecutionTestFixtureImpl(
   override fun tearDown() {
     RunAll.runAll(
       { testExecutionViewFixture.tearDown() },
-      { testExecutionEventFixture.tearDown() },
+      { testRunnerOutputFixture.tearDown() },
     )
   }
 
@@ -73,6 +73,6 @@ class GradleTestExecutionTestFixtureImpl(
     suiteStart: Int, suiteFinish: Int,
     testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int,
   ) {
-    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
+    testRunnerOutputFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }
