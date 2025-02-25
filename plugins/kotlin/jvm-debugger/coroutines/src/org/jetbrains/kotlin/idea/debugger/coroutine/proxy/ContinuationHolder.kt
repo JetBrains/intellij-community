@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.rt.debugger.JsonUtils
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
@@ -19,7 +21,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import java.lang.StackTraceElement
-import com.intellij.debugger.impl.DebuggerUtilsEx
 
 private val LOG by lazy { fileLogger() }
 
@@ -71,9 +72,13 @@ private fun collectCoroutineAndCreationStack(
     continuation: ObjectReference,
     context: DefaultExecutionContext
 ): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
-    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation),
-                                     "com.intellij.rt.debugger.coroutines.JsonUtils")
-        ?: return fallbackToOldFetchContinuationStack(continuation, context)
+    val array = callMethodFromHelper(
+        CoroutinesDebugHelper::class.java,
+        context,
+        "getCoroutineStackTraceDump",
+        listOf(continuation),
+        JsonUtils::class.java.name
+    ) ?: return fallbackToOldFetchContinuationStack(continuation, context)
     return parseResultFromHelper(array)
 }
 
