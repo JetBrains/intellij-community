@@ -294,22 +294,6 @@ abstract class DumbService {
   abstract fun wrapWithSpoiler(dumbAwareContent: JComponent, updateRunnable: Runnable, parentDisposable: Disposable): JComponent
 
   /**
-   * Disables given component temporarily during dumb mode.
-   */
-  fun makeDumbAware(componentToDisable: JComponent, parentDisposable: Disposable) {
-    componentToDisable.isEnabled = !isDumb
-    project.messageBus.connect(parentDisposable).subscribe(DUMB_MODE, object : DumbModeListener {
-      override fun enteredDumbMode() {
-        componentToDisable.isEnabled = false
-      }
-
-      override fun exitDumbMode() {
-        componentToDisable.isEnabled = true
-      }
-    })
-  }
-
-  /**
    * Use [showDumbModeNotificationForAction] or [showDumbModeNotificationForFunctionality] instead
    */
   @Obsolete
