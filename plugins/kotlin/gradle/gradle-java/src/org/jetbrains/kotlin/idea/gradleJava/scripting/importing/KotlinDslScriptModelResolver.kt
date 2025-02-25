@@ -70,7 +70,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync != null && KotlinPluginModeProvider.isK2Mode()) {
+        if (sync != null && sync.models.isNotEmpty() && KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
             GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
