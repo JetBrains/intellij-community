@@ -20,7 +20,7 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
         convertedModels.forEach { result.add(it) }
         convertedAtLeastOne = true
       }
-      else {
+      else if (psiClass.identifyingElement != null) {
         result.add(psiClass)
       }
     }
