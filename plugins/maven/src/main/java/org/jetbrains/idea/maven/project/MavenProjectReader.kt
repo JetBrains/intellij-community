@@ -379,7 +379,7 @@ class MavenProjectReader(private val myProject: Project) {
       }
 
       if (projectFile.parent != null) {
-        val parentFileCandidate = projectFile.parent.findFileByRelativePath(DEFAULT_RELATIVE_PATH)
+        val parentFileCandidate = projectFile.parent.findFileByRelativePath(parentDesc.parentRelativePath)
 
         val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
           parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
