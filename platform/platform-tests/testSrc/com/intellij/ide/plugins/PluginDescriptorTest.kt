@@ -75,7 +75,7 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun `malformed descriptor does not load`() {
+  fun `malformed descriptor fails to load`() {
     assertThatThrownBy { loadDescriptorFromTestDataDir("malformed") }
       .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
@@ -88,26 +88,38 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun testCyclicOptionalDeps() {
+  fun `descriptor with cyclical optional depends config files fails to load`() {
     assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps") }
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
   @Test
-  fun testFilteringDuplicates() {
+  fun `only one instance of a plugin is loaded if it's duplicated`() {
     val urls = arrayOf(
       Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
     assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
+  
+  // todo revisit
+  @Test
+  fun `strict depends makes only one another optional depends on the same plugin strict too and is removed`() {
+    val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
+    assertThat(descriptor).isNotNull()
+    // fixme what is that
+    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
+    //assertThat(descriptor.pluginDependencies.map { it.pluginId }).isEqualTo(listOf("foo", "foo", "foo"))
+    //assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, false, false))
+  }
 
   @Test
-  fun testDuplicateDependency() {
-    val descriptor = loadDescriptorFromTestDataDir("duplicateDependency")
+  fun `multiple optional depends on the same plugin is allowed`() {
+    val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-optional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies.filter { it.isOptional }).isEmpty()
-    assertThat(descriptor.pluginDependencies.map { it.pluginId }).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
   }
 
   @Test
