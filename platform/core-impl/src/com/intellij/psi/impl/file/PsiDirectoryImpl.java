@@ -162,7 +162,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       PsiFile psiFile;
       if (sharedSourceSupportEnabled) {
         if (scope != null) {
-          CodeInsightContextFileInfo contextInfo = CodeInsightContextAwareSearchScopesKt.getFileContextInfo(scope, file);
+          CodeInsightContextFileInfo contextInfo = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, file);
           if (contextInfo instanceof NoContextFileInfo) {
             // file is in scope, but context is not specified
             psiFile = myManager.findFile(file);

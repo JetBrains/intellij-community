@@ -87,7 +87,7 @@ public abstract class StubProcessingHelperBase {
       return CodeInsightContexts.anyContext();
     }
 
-    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopesKt.getFileContextInfo(scope, file);
+    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, file);
     if (fileInfo instanceof ActualContextFileInfo) {
       Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
       if (contexts.size() > 1) {

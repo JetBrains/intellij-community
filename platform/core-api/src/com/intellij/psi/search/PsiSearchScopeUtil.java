@@ -52,9 +52,9 @@ public final class PsiSearchScopeUtil {
         //               And once we request it here, it's assigned to "something".
         //               But we could try assign it to the context which the scope wants to avoid building addition psi
 
-        CodeInsightContext context = CodeInsightContextAwareSearchScopesKt.getAnyCorrespondingContext(globalScope, backed);
+        CodeInsightContext context = CodeInsightContextAwareSearchScopes.getAnyCorrespondingContext(globalScope, backed);
         CodeInsightContext codeInsightContext = CodeInsightContextManager.getInstance(element.getProject()).getOrSetContext(viewProvider, context);
-        if (CodeInsightContextAwareSearchScopesKt.contains(globalScope, backed, codeInsightContext)) {
+        if (CodeInsightContextAwareSearchScopes.contains(globalScope, backed, codeInsightContext)) {
           return true;
         }
       }

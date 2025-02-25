@@ -181,11 +181,11 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
      //in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
       // todo ijpl-339 support bazel in search scopes???
-      return CodeInsightContextAwareSearchScopesKt.NoContextFileInfo();
+      return CodeInsightContextAwareSearchScopes.NoContextFileInfo();
     }
 
     Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
-    if (roots.isEmpty()) return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+    if (roots.isEmpty()) return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
 
     Set<CodeInsightContext> result = new SmartHashSet<>();
     for (RootDescriptor rootDescriptor : roots) {
@@ -197,7 +197,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
         }
       }
     }
-    return CodeInsightContextAwareSearchScopesKt.createContainingContextFileInfo(result);
+    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(result);
   }
 
   @Override

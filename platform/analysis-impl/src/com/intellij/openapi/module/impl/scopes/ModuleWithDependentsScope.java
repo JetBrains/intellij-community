@@ -123,7 +123,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     Set<Module> modulesOfFile = myProjectFileIndex.getModulesForFile(file, true);
     Collection<Module> containingModulesOfScope = ContainerUtil.intersection(myModules, modulesOfFile);
     if (containingModulesOfScope.isEmpty()) {
-      return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+      return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
     }
 
     if (fromTests) {
@@ -131,10 +131,10 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
       if (testModuleIntersection.isEmpty()) {
         Project project = Objects.requireNonNull(getProject()); // project is notnull.
         if (TestSourcesFilter.isTestSources(file, project)) {
-          return CodeInsightContextAwareSearchScopesKt.NoContextFileInfo();
+          return CodeInsightContextAwareSearchScopes.NoContextFileInfo();
         }
         else {
-          return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+          return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
         }
       }
       else {
@@ -150,7 +150,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     Project project = Objects.requireNonNull(getProject()); // project is notnull.
     ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(project);
     List<ModuleContext> contexts = ContainerUtil.mapNotNull(testModuleIntersection, m -> bridge.getContext(m));
-    return CodeInsightContextAwareSearchScopesKt.createContainingContextFileInfo(contexts);
+    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts);
   }
 
   @ApiStatus.Internal

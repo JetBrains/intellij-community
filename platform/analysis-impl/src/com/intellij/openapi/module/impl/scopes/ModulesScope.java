@@ -53,10 +53,10 @@ public class ModulesScope extends GlobalSearchScope implements CodeInsightContex
     if (!intersection.isEmpty()) {
       ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(Objects.requireNonNull(getProject()));
       List<ModuleContext> contexts = ContainerUtil.mapNotNull(intersection, m -> bridge.getContext(m));
-      return CodeInsightContextAwareSearchScopesKt.createContainingContextFileInfo(contexts);
+      return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts);
     }
     else {
-      return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
+      return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
     }
   }
 
