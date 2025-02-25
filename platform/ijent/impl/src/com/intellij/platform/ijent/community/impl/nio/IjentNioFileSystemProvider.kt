@@ -276,7 +276,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val fs = source.nioFs.ijentFs
 
-    val copyOptions = EelFileSystemApi.CopyOptions.Builder(sourcePath, targetPath)
+    val copyOptions = fs.copy(sourcePath, targetPath)
     copyOptions.followLinks(true)
 
     for (option in options) {
@@ -292,7 +292,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     fsBlocking {
-      fs.copy(copyOptions.build()).getOrThrowFileSystemException()
+      copyOptions.getOrThrowFileSystemException()
     }
   }
 
@@ -302,21 +302,18 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
     return fsBlocking {
-      source.nioFs.ijentFs.move(
-        sourcePath,
-        targetPath,
-        replaceExisting = run {
+      source.nioFs.ijentFs.move(sourcePath, targetPath)
+        .replaceExisting(
           // This code may change when implementing Windows support.
           when {
             StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
             StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
             else -> DO_NOT_REPLACE
-          }
-        },
+          })
         // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
         // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
-        followLinks = false,
-      ).getOrThrowFileSystemException()
+        .followLinks(false)
+        .getOrThrowFileSystemException()
     }
   }
 
@@ -349,7 +346,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         is IjentFileSystemPosixApi -> {
           val fileInfo = ijentFs
             // According to the Javadoc, this method must follow symlinks.
-            .stat(path.eelPath, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
+            .stat(path.eelPath)
+            .resolveAndFollow()
             .getOrThrowFileSystemException()
 
           if (ijentFs.user.uid == 0) {
@@ -436,7 +434,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val result = when (val ijentFs = fs.ijentFs) {
       is IjentFileSystemPosixApi ->
         IjentNioPosixFileAttributes(fsBlocking {
-          ijentFs.stat(path.eelPath, linkPolicy).getOrThrowFileSystemException()
+          ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
         })
 
       is IjentFileSystemWindowsApi -> TODO()
@@ -582,7 +580,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val os = fs.ijentFs.pathOs
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
+        is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {
           is Symlink.Resolved.Absolute -> AbsoluteIjentNioPath(type.result, link.nioFs, null)
           is Symlink.Resolved.Relative -> {
             RelativeIjentNioPath(type.result.split(*os.directorySeparators), link.nioFs)
