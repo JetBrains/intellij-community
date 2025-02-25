@@ -255,7 +255,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     }
   }
 
-  private fun assertHyperlinks(linkText: String, expectedCount: Int): List<RangeHighlighter> {
+  private suspend fun assertHyperlinks(linkText: String, expectedCount: Int): List<RangeHighlighter> {
     val text = editor.document.text
     val expectedRanges = text.allOccurrencesOf(linkText).map {
       TextRange(it, it + linkText.length)
@@ -269,13 +269,14 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     return rangeHighlighters
   }
 
-  private fun awaitHyperlinks(timeout: Duration): List<RangeHighlighter> {
+  private suspend fun awaitHyperlinks(timeout: Duration): List<RangeHighlighter> {
+    hyperlinkHighlighter.awaitDelayedHighlightings()
     val hyperlinkSupport = hyperlinkHighlighter.getHyperlinkSupport()
     hyperlinkSupport.waitForPendingFilters(timeout.inWholeMilliseconds)
     return hyperlinkSupport.getAllHyperlinks(0, editor.document.textLength)
   }
 
-  private fun assertInlays(inlayText: String, expectedCount: Int): List<Inlay<*>> {
+  private suspend fun assertInlays(inlayText: String, expectedCount: Int): List<Inlay<*>> {
     val text = editor.document.text
     val expectedOffsets = text.allOccurrencesOf(inlayText).map { it + inlayText.length }.toList()
     val inlays = awaitInlays(AWAIT_FILTER_TIMEOUT)
@@ -288,7 +289,8 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     return inlays
   }
 
-  private fun awaitInlays(timeout: Duration): List<Inlay<*>> {
+  private suspend fun awaitInlays(timeout: Duration): List<Inlay<*>> {
+    hyperlinkHighlighter.awaitDelayedHighlightings()
     val hyperlinkSupport = hyperlinkHighlighter.getHyperlinkSupport()
     hyperlinkSupport.waitForPendingFilters(timeout.inWholeMilliseconds)
     return hyperlinkSupport.collectAllInlays()
