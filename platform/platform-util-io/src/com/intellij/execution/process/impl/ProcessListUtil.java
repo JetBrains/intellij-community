@@ -255,15 +255,6 @@ public final class ProcessListUtil {
     return result;
   }
 
-  /**
-   * @deprecated The method seems to be not used, but it can be hypothetically used in some unpublished third-party plugin.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
-    throw new UnsupportedOperationException("The method is not supported anymore");
-  }
-
   @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly,
                                                                      @NotNull String full,
