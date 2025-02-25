@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -147,7 +147,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
     }
 
     for ((text, action) in myButtons) {
-      add(Link(text, null, action), "alignx center, gapbottom ${UIUtil.DEFAULT_VGAP}")
+      add(ActionLink(text) { action() }, "alignx center, gapbottom ${UIUtil.DEFAULT_VGAP}")
     }
   }
 

@@ -10,10 +10,10 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.Label
-import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -194,7 +194,8 @@ abstract class Cell : BaseBuilder {
   fun link(text: @LinkLabel String,
            style: UIUtil.ComponentStyle? = null,
            action: () -> Unit): CellBuilder<JComponent> {
-    val result = Link(text, style, action)
+    val result = ActionLink(text) { action() }
+    style?.let { UIUtil.applyStyle(it, result) }
     return component(result)
   }
 

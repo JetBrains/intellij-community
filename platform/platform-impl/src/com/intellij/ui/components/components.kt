@@ -80,7 +80,7 @@ fun Label(
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Row.link")
+@Deprecated("Use Kotlin UI DSL, method Row.link", level = DeprecationLevel.ERROR)
 fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
   val result = ActionLink(text) { action() }
   style?.let { UIUtil.applyStyle(it, result) }
