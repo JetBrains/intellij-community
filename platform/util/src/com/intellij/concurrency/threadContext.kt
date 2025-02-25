@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -448,29 +450,6 @@ fun <T> captureThreadContextProcessor(processor: Processor<T>): Processor<T> {
  */
 @Internal
 interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineContext.Key<T>
-
-/**
- * Strips off internal elements from thread contexts.
- * If you need to compare contexts by equality, most likely you need to use this method.
- */
-@ApiStatus.Internal
-fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
-  checkContextInstalled()
-  return context.fold(HashSet()) { acc, element ->
-    when (element.key) {
-      Job -> Unit
-      // It is normal to have multiple `BlockingJob` in the context.
-      // But treating them as separate leads to non-mergeable updates in MergingUpdateQueue
-      // An ideal solution would be to provide a way to merge several thread contexts under one, but there is no real need in it yet.
-      BlockingJob -> Unit
-      CoroutineName -> Unit
-      is InternalCoroutineContextKey<*> -> Unit
-      @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
-      else -> acc.add(element)
-    }
-    acc
-  }
-}
 
 /**
  * Same as [captureCallableThreadContext] but for [Callable].
