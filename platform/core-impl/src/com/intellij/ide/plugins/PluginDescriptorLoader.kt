@@ -269,7 +269,7 @@ fun loadDescriptorFromFileOrDir(
   return when {
     Files.isDirectory(file) -> {
       loadFromPluginDir(
-        file = file,
+        dir = file,
         parentContext = context,
         pool = pool,
         pathResolver = pathResolver,
@@ -294,9 +294,16 @@ fun loadDescriptorFromFileOrDir(
   }
 }
 
-// [META-INF] [classes] lib/*.jar
+/**
+ * Tries to load a plugin descriptor from a given directory.
+ * Lookup order:
+ * * `(./lib/ *.zip or ./lib/ *.jar) / META-INF / plugin.xml`
+ * * `./classes/META-INF/plugin.xml`
+ * * `./META-INF/plugin.xml`
+ * Libraries are sorted by a heuristic
+ */
 private fun loadFromPluginDir(
-  file: Path,
+  dir: Path,
   parentContext: DescriptorListLoadingContext,
   pool: ZipFilePool,
   pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
@@ -305,10 +312,10 @@ private fun loadFromPluginDir(
   useCoreClassLoader: Boolean = false,
   isUnitTestMode: Boolean = false,
 ): IdeaPluginDescriptorImpl? {
-  val pluginJarFiles = resolveArchives(file)
+  val pluginJarFiles = resolveArchives(dir)
   if (!pluginJarFiles.isNullOrEmpty()) {
     if (pluginJarFiles.size > 1) {
-      putMoreLikelyPluginJarsFirst(pluginDirName = file.fileName.toString(), filesInLibUnderPluginDir = pluginJarFiles)
+      putMoreLikelyPluginJarsFirst(pluginDirName = dir.fileName.toString(), filesInLibUnderPluginDir = pluginJarFiles)
     }
     val pluginPathResolver = PluginXmlPathResolver(pluginJarFiles = pluginJarFiles, pool = pool)
     for (jarFile in pluginJarFiles) {
@@ -320,7 +327,7 @@ private fun loadFromPluginDir(
         isBundled = isBundled,
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
-        pluginDir = file,
+        pluginDir = dir,
       )?.let {
         it.jarFiles = pluginJarFiles
         return it
@@ -330,8 +337,8 @@ private fun loadFromPluginDir(
 
   // not found, ok, let's check classes (but only for unbundled plugins)
   if (!isBundled || isUnitTestMode) {
-    val classDir = file.resolve("classes")
-    sequenceOf(classDir, file)
+    val classDir = dir.resolve("classes")
+    sequenceOf(classDir, dir)
       .firstNotNullOfOrNull {
         loadDescriptorFromDir(
           dir = it,
@@ -341,7 +348,7 @@ private fun loadFromPluginDir(
           isBundled = isBundled,
           isEssential = isEssential,
           useCoreClassLoader = useCoreClassLoader,
-          pluginDir = file,
+          pluginDir = dir,
         )
       }?.let {
         if (pluginJarFiles.isNullOrEmpty()) {
@@ -1088,7 +1095,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       if (rootDir != null) {
         @Suppress("SSBasedInspection")
         return runBlocking {
-          loadFromPluginDir(file = rootDir, parentContext = context, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
+          loadFromPluginDir(dir = rootDir, parentContext = context, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
         }
       }
     }
