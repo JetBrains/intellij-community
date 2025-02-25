@@ -105,6 +105,31 @@ interface EelExecApi {
    */
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
+  /**
+   * Finds executable files by name.
+   * Directories for searching are iterated according to `PATH` env variable.
+   * If [binaryName] is an absolute path, check that the file exists and is executable and returns its path without searching within
+   * directories from `PATH`.
+   *
+   * Example:
+   * ```kotlin
+   * val path = eelApi.exec.findExeFilesInPath("git").firstOrNull()
+   * if (path != null) {
+   *     println("Git is located at: $path")
+   * } else {
+   *     println("Git executable not found.")
+   * }
+   * ```
+   *
+   * @param binaryName The name of the executable to search for, or an absolute path to the executable.
+   * If it's not an absolute path, it's not supposed to contain path separators.
+   * @return Full paths to all the executables found. Empty list if the executable is not found or an error occurs.
+   * In most cases, only the first returned path is useful, but if there is more than one executable with the given name,
+   * all of them are returned so that the preferable one can be chosen later.
+   *
+   */
+  suspend fun findExeFilesInPath(binaryName: String): List<EelPath>
+
   interface ExecuteProcessError {
     val errno: Int
     val message: String
