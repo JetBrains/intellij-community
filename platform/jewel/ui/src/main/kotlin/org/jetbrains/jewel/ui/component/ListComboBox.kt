@@ -277,9 +277,7 @@ public fun EditableListComboBox(
         },
         onEnterPress = {
             val indexOfSelected = items.indexOf(textFieldState.text)
-            if (indexOfSelected != -1) {
-                setSelectedItem(indexOfSelected)
-            }
+            setSelectedItem(indexOfSelected)
         },
         popupManager =
             remember {
@@ -516,7 +514,7 @@ public fun EditableListComboBox(
             onSelectedItemChange(index, items[index])
             scope.launch { listState.lazyListState.scrollToIndex(index) }
         } else {
-            JewelLogger.getInstance("EditableListComboBox").trace("Ignoring item index $index as it's invalid")
+            listState.selectedKeys = emptySet()
         }
     }
 
