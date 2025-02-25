@@ -26,7 +26,6 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
 import org.jetbrains.bazel.jvm.jps.impl.BazelLibraryRoots
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
-import org.jetbrains.bazel.jvm.jps.impl.LibRootDescriptor
 import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
 import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
@@ -235,10 +234,10 @@ suspend fun buildUsingJps(
     }
   }
 
-  val libRootStorageFile = dataDir.resolve("$prefix-lib-roots-v1.arrow")
+  val libRootStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
   val buildState = if (isRebuild) null else tracer.span("load and check state") { computeBuildState(it) }
   val libRootState = if (isRebuild) {
-    hashMap<Path, LibRootDescriptor>()
+    hashMap<Path, ByteArray>()
   }
   else {
     tracer.span("load and check state") {
@@ -268,9 +267,9 @@ suspend fun buildUsingJps(
       allocator = allocator,
       isCleanBuild = isRebuild,
       libRootManager = BazelLibraryRoots(
-        dependencyFileToDigest = dependencyFileToDigest!!,
+        actualDependencyFileToDigest = dependencyFileToDigest!!,
         storageFile = libRootStorageFile,
-        roots = libRootState,
+        fileToDigest = libRootState,
       ),
     ),
     buildState = buildState,
@@ -297,9 +296,9 @@ suspend fun buildUsingJps(
         allocator = allocator,
         isCleanBuild = true,
         libRootManager = BazelLibraryRoots(
-          dependencyFileToDigest = dependencyFileToDigest,
+          actualDependencyFileToDigest = dependencyFileToDigest,
           storageFile = libRootStorageFile,
-          roots = hashMap(),
+          fileToDigest = hashMap(),
         ),
       ),
       buildState = null,
