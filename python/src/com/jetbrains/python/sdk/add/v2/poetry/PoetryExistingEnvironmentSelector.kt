@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+package com.jetbrains.python.sdk.add.v2.poetry
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -10,6 +10,9 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
+import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.sdk.poetry.pyProjectToml
@@ -23,7 +26,7 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
     val selectedInterpreter = selectedEnv.get()
     ProjectJdkTable.getInstance().allJdks.find { sdk -> sdk.isPoetry && sdk.homePath == selectedInterpreter?.homePath }?.let { return Result.success(it) }
     val module = when (moduleOrProject) {

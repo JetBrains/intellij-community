@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -25,6 +25,17 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.sdk.add.v2.CondaEnvComboBoxListCellRenderer
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
+import com.jetbrains.python.sdk.add.v2.UNKNOWN_EXECUTABLE
+import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
+import com.jetbrains.python.sdk.add.v2.detectCondaEnvironmentsOrError
+import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
+import com.jetbrains.python.sdk.add.v2.executableSelector
+import com.jetbrains.python.sdk.add.v2.selectCondaEnvironment
+import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest

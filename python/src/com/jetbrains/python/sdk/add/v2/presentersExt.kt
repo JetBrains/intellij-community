@@ -15,6 +15,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.failure
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.conda.isCondaSdk
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
