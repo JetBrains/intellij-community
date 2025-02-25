@@ -27,7 +27,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.*
 import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -36,7 +35,6 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.jar.JarInputStream
-import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import javax.xml.stream.XMLStreamException
 
@@ -502,26 +500,6 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
   val version = descriptor.version
   if (version != null) {
     target.append(" (").append(version).append(')')
-  }
-}
-
-internal class NonShareableJavaZipFilePool : ZipFilePool() {
-  override fun load(file: Path): EntryResolver {
-    val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
-    return object : EntryResolver, Closeable {
-      override fun loadZipEntry(path: String): InputStream? {
-        val entry = zipFile.getEntry(if (path[0] == '/') path.substring(1) else path) ?: return null
-        return zipFile.getInputStream(entry)
-      }
-
-      override fun close() {
-        zipFile.close()
-      }
-    }
-  }
-
-  override fun loadZipFile(file: Path): Any {
-    throw IllegalStateException("Should not be called")
   }
 }
 
