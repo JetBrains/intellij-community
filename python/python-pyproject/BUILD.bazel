@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.python.pyproject` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "pyproject",
+  module_name = "intellij.python.pyproject",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//python/python-sdk:sdk",
+    "//platform/util",
+    "//plugins/toml/core",
+    "@lib//:tuweni-toml",
+  ]
+)
+
+jvm_library(
+  name = "pyproject_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":pyproject"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/util",
+    "//plugins/toml/core",
+    "@lib//:tuweni-toml",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+  ]
+)
+
+jvm_test(
+  name = "pyproject_test",
+  runtime_deps = [":pyproject_test_lib"]
+)
+### auto-generated section `build intellij.python.pyproject` end

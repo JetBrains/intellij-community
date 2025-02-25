@@ -15,6 +15,7 @@ jvm_library(
     "//fleet/util/logging/api:fleet-util-logging-api",
     "@lib//:kotlinx-collections-immutable",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/reporting/shared:fleet-reporting-shared",
     "//fleet/multiplatform.shims:multiplatform-shims",
     "//fleet/fastutil",
     "@lib//:slf4j-api",

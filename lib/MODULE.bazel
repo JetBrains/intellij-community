@@ -3668,17 +3668,17 @@ http_file(
 )
 
 http_file(
-  name = "python-imports-ranking-model-lilac-coua_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar",
-  sha256 = "0516e6383101eb995b8f4d9c7dc217578bbc7467a806895d5c4e2390c27bba7d",
-  downloaded_file_path = "python-imports-ranking-model-lilac-coua.jar"
+  name = "python-imports-ranking-model-coral-panda_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda.jar",
+  sha256 = "3ede7c75d81a2a643bca12c237c814508c70178708923e27a282a0c896cf1c6e",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda.jar"
 )
 
 http_file(
-  name = "python-imports-ranking-model-lilac-coua-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua-sources.jar",
-  sha256 = "1958f80ba06ed9cf62d5967f0613da930e5fdaa8242837bea8d6d5d596c9d23e",
-  downloaded_file_path = "python-imports-ranking-model-lilac-coua-sources.jar"
+  name = "python-imports-ranking-model-coral-panda-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda-sources.jar",
+  sha256 = "8bf803b6f42831003d80445308b42995016941b0c2e239af0681c7a61f231c0b",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda-sources.jar"
 )
 
 http_file(
@@ -12068,34 +12068,6 @@ http_file(
 )
 
 http_file(
-  name = "tuweni-toml-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar",
-  sha256 = "b7331e02e955b6b962a8fa89eb8d7db0960d0b232880bfc60e8602fb3fed36ad",
-  downloaded_file_path = "tuweni-toml-2.0.0.jar"
-)
-
-http_file(
-  name = "antlr4-runtime-4_7_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar",
-  sha256 = "43516d19beae35909e04d06af6c0c58c17bc94e0070c85e8dc9929ca640dc91d",
-  downloaded_file_path = "antlr4-runtime-4.7.1.jar"
-)
-
-http_file(
-  name = "tuweni-toml-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0-sources.jar",
-  sha256 = "19dafa9cc388f74097594cdf2fa221ae568cf86dc3ec33da0ec4d1db18a869a5",
-  downloaded_file_path = "tuweni-toml-2.0.0-sources.jar"
-)
-
-http_file(
-  name = "antlr4-runtime-4_7_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1-sources.jar",
-  sha256 = "a33d52d0d64e68c60d5e3ae2c1098fe7200d57cff59032c19930fd9d487fc7d4",
-  downloaded_file_path = "antlr4-runtime-4.7.1-sources.jar"
-)
-
-http_file(
   name = "rd-core-2025_1_1_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2025.1.1/rd-core-2025.1.1.jar",
   sha256 = "fd55d05786bb6cdef140ae931bde12c53c76fa75ea9cde7e7553c2eea520e251",
@@ -12807,6 +12779,34 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.9/performance-kotlin-0.0.9-sources.jar",
   sha256 = "99bd24325f26788e5679a29bbdaa1d5668c304d5096bca2eb9de691dac26a21c",
   downloaded_file_path = "performance-kotlin-0.0.9-sources.jar"
+)
+
+http_file(
+  name = "tuweni-toml-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar",
+  sha256 = "b7331e02e955b6b962a8fa89eb8d7db0960d0b232880bfc60e8602fb3fed36ad",
+  downloaded_file_path = "tuweni-toml-2.0.0.jar"
+)
+
+http_file(
+  name = "antlr4-runtime-4_7_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar",
+  sha256 = "43516d19beae35909e04d06af6c0c58c17bc94e0070c85e8dc9929ca640dc91d",
+  downloaded_file_path = "antlr4-runtime-4.7.1.jar"
+)
+
+http_file(
+  name = "tuweni-toml-2_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0-sources.jar",
+  sha256 = "19dafa9cc388f74097594cdf2fa221ae568cf86dc3ec33da0ec4d1db18a869a5",
+  downloaded_file_path = "tuweni-toml-2.0.0-sources.jar"
+)
+
+http_file(
+  name = "antlr4-runtime-4_7_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1-sources.jar",
+  sha256 = "a33d52d0d64e68c60d5e3ae2c1098fe7200d57cff59032c19930fd9d487fc7d4",
+  downloaded_file_path = "antlr4-runtime-4.7.1-sources.jar"
 )
 
 http_file(

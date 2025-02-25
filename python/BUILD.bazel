@@ -220,7 +220,7 @@ jvm_library(
     "@lib//:jna",
     "//plugins/toml",
     "//plugins/toml/core",
-    "@lib//:python-community-impl-tuweni-toml",
+    "@lib//:tuweni-toml",
     "@lib//:jsr305",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -263,6 +263,7 @@ jvm_library(
     "//python/services/system-python:python-community-services-systemPython",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "@lib//:io-github-z4kn4fein-semver-jvm",
+    "//python/python-pyproject:pyproject",
   ],
   exports = [
     "//python/openapi:community",

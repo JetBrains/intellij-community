@@ -42,6 +42,7 @@ jvm_library(
     "//python/poetry:community-impl-poetry",
     "//python/python-venv:community-impl-venv",
     "@lib//:jetbrains-annotations",
+    "//python/python-pyproject:pyproject",
   ],
   runtime_deps = [":pycharm-community-ide-impl_resources"]
 )

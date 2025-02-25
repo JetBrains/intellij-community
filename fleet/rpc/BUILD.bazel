@@ -18,6 +18,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/reporting/shared:fleet-reporting-shared",
     "//fleet/preferences",
     "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:kotlin-reflect",

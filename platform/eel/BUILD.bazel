@@ -5,7 +5,7 @@ jvm_library(
   name = "eel",
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -13,6 +13,34 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.platform.eel` end
+
+### auto-generated section `build intellij.platform.eel.codegen` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "eel-codegen_test",
+  srcs = glob(["codegen/**/*.kt", "codegen/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util/jdom",
+    "//platform/workspace/jps",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+  ],
+  runtime_deps = ["//plugins/kotlin/idea/tests:kotlin-idea-tests"]
+)
+### auto-generated section `build intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
 load("@rules_java//java:defs.bzl", "java_library")

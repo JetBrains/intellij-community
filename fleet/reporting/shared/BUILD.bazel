@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
+    "//fleet/reporting/api:fleet-reporting-api",
   ]
 )
 ### auto-generated section `build fleet.reporting.shared` end
