@@ -26,6 +26,7 @@ private val TYPES_WITH_TRAILING_COMMA_ON_DECLARATION_SITE = TokenSet.create(
     KtNodeTypes.WHEN_ENTRY,
     KtNodeTypes.FUNCTION_LITERAL,
     KtNodeTypes.VALUE_PARAMETER_LIST,
+    KtNodeTypes.CONTEXT_RECEIVER_LIST,
 )
 
 private val TYPES_WITH_TRAILING_COMMA_ON_CALL_SITE = TokenSet.create(

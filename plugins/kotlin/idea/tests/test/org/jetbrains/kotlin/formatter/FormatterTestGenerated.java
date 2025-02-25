@@ -381,6 +381,25 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter/trailingComma/contextParameters")
+            public static class ContextParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("ContextParametersList.after.kt")
+                public void testContextParametersList() throws Exception {
+                    runTest("testData/formatter/trailingComma/contextParameters/ContextParametersList.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
             public static class DestructuringDeclarations extends AbstractFormatterTest {
                 @java.lang.Override
@@ -1794,6 +1813,25 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("CollectionLiteralInAnnotation.after.inv.kt")
                 public void testCollectionLiteralInAnnotation() throws Exception {
                     runTest("testData/formatter/trailingComma/collectionLiteralExpression/CollectionLiteralInAnnotation.after.inv.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter/trailingComma/contextParameters")
+            public static class ContextParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+                }
+
+                @TestMetadata("ContextParametersList.after.inv.kt")
+                public void testContextParametersList() throws Exception {
+                    runTest("testData/formatter/trailingComma/contextParameters/ContextParametersList.after.inv.kt");
                 }
             }
 
