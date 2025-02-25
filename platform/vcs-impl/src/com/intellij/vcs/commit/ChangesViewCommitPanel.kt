@@ -34,7 +34,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
   private val changesView get() = changesViewHost.changesView
 
-  private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
+  private val progressPanel = ChangesViewCommitProgressPanel(project, this, commitMessage.editorField)
 
   private var isHideToolWindowOnCommit = false
 
@@ -177,9 +177,10 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 }
 
 private class ChangesViewCommitProgressPanel(
+  project: Project,
   private val commitWorkflowUi: ChangesViewCommitWorkflowUi,
   commitMessage: EditorTextComponent,
-) : CommitProgressPanel() {
+) : CommitProgressPanel(project) {
 
   private var oldInclusion: Set<Any> = emptySet()
 
