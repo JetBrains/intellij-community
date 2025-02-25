@@ -633,7 +633,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="documentEntityProvider"
-                    interface="com.intellij.openapi.editor.impl.ad.document.DocumentEntityProvider"
+                    interface="com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityProvider"
                     dynamic="true"/>
 
   </extensionPoints>

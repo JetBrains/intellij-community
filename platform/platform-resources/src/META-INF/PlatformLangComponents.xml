@@ -186,7 +186,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.application.impl.InternalUICustomization"/>
     <!---->
 
-    <documentEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultDocumentEntityProvider" />
+    <documentEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdDocumentEntityProvider" />
 
   </extensions>
 

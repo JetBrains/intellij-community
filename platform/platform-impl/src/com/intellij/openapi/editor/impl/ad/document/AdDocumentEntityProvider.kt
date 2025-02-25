@@ -19,13 +19,13 @@ import kotlin.collections.set
 
 
 @Experimental
-interface DocumentEntityProvider {
+interface AdDocumentEntityProvider {
   fun canCreateEntity(file: VirtualFile, document: DocumentEx): Boolean
   suspend fun createEntity(file: VirtualFile, document: DocumentEx): DocumentEntity
   suspend fun deleteEntity(entity: DocumentEntity)
 
   companion object {
-    private val EP_NAME: ExtensionPointName<DocumentEntityProvider> = ExtensionPointName.create("com.intellij.documentEntityProvider")
+    private val EP_NAME: ExtensionPointName<AdDocumentEntityProvider> = ExtensionPointName.create("com.intellij.documentEntityProvider")
 
     fun fileUID(file: VirtualFileWithId): UID {
       return fileUID(file.id)
@@ -37,24 +37,24 @@ interface DocumentEntityProvider {
       return UID.fromString(uuidStr)
     }
 
-    internal fun getInstance(): DocumentEntityProvider {
+    internal fun getInstance(): AdDocumentEntityProvider {
       val providers = EP_NAME.extensionList
       return when (providers.size) {
-        0 -> throw IllegalStateException("DefaultDocumentEntityProvider not found")
+        0 -> throw IllegalStateException("DefaultAdDocumentEntityProvider not found")
         1 -> providers[0]
-        2 -> if (providers[0] is DefaultDocumentEntityProvider) {
+        2 -> if (providers[0] is DefaultAdDocumentEntityProvider) {
           providers[1] // prioritise not default
         } else {
           providers[0]
         }
-        else -> throw IllegalStateException("multiple DocumentEntityProvider found: $providers")
+        else -> throw IllegalStateException("multiple AdDocumentEntityProvider found: $providers")
       }
     }
   }
 }
 
 
-private class DefaultDocumentEntityProvider() : DocumentEntityProvider {
+private class DefaultAdDocumentEntityProvider() : AdDocumentEntityProvider {
 
   private val entityToScope= ConcurrentHashMap<DocumentEntity, CoroutineScope>()
 
@@ -63,7 +63,7 @@ private class DefaultDocumentEntityProvider() : DocumentEntityProvider {
   }
 
   override suspend fun createEntity(file: VirtualFile, document: DocumentEx): DocumentEntity {
-    val uid = DocumentEntityProvider.fileUID(file as VirtualFileWithId)
+    val uid = AdDocumentEntityProvider.fileUID(file as VirtualFileWithId)
     val coroutineScope = AdDocumentSynchronizer.getInstance().bindDocumentListener(document)
     val text = document.immutableCharSequence // TODO: data race between creation and synchronizer?
     val entity = change {

@@ -26,10 +26,10 @@ import kotlin.concurrent.withLock
 
 @Experimental
 @Service(Level.APP)
-internal class DocumentEntityManager(private val coroutineScope: CoroutineScope) {
+internal class AdDocumentEntityManager(private val coroutineScope: CoroutineScope) {
 
   companion object {
-    fun getInstance(): DocumentEntityManager = service()
+    fun getInstance(): AdDocumentEntityManager = service()
   }
 
   // guard DOC_ENTITY_HANDLE_KEY
@@ -47,7 +47,7 @@ internal class DocumentEntityManager(private val coroutineScope: CoroutineScope)
     if (isEnabled() &&
         document is DocumentEx &&
         oldFile == null && file != null /* TODO: listen not only this case */) {
-      val provider = DocumentEntityProvider.getInstance()
+      val provider = AdDocumentEntityProvider.getInstance()
       if (provider.canCreateEntity(file, document)) {
         lock.withLock { // ensure createEntity is called only once
           if (document.getUserData(DOC_ENTITY_HANDLE_KEY) == null) {
@@ -96,7 +96,7 @@ internal class DocumentEntityManager(private val coroutineScope: CoroutineScope)
 
 private class MyFileDocumentBindingListener : FileDocumentBindingListener {
   override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-    DocumentEntityManager.getInstance().bindDocEntity(document, oldFile, file)
+    AdDocumentEntityManager.getInstance().bindDocEntity(document, oldFile, file)
   }
 }
 

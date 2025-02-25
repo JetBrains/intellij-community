@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
-import com.intellij.openapi.editor.impl.ad.document.DocumentEntityManager
+import com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityManager
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizer
@@ -58,7 +58,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
       if (documentMarkup.getUserData(MARKUP_SYNC_KEY) == null) {
         val cs = appCoroutineScope.childScope("AdMarkupSynchronizer", AD_DISPATCHER)
         val async = cs.async {
-          val docEntity = DocumentEntityManager.getInstance().getDocEntity(document)
+          val docEntity = AdDocumentEntityManager.getInstance().getDocEntity(document)
           if (docEntity != null) {
             change {
               shared {
@@ -134,7 +134,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     val document = editor.document
     val debugName = document.toString()
     return runCatching {
-      DocumentEntityManager.getInstance().getDocEntityRunBlocking(document)
+      AdDocumentEntityManager.getInstance().getDocEntityRunBlocking(document)
     }.onFailure {
       LOG.error(it) { "Failed to get doc entity $debugName" }
     }.getOrNull()
