@@ -23,6 +23,7 @@ import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -48,7 +49,8 @@ fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool
   return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)
 }
 
-internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
+@ApiStatus.Internal
+fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val parentContext = DescriptorListLoadingContext()
   val relativePath = "${PluginManagerCore.META_INF}${fileName}"
