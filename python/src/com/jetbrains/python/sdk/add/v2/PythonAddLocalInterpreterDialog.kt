@@ -31,6 +31,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
 
   init {
     title = PyBundle.message("python.sdk.add.python.interpreter.title")
+    setSize(640, 320)
     isResizable = true
     init()
   }

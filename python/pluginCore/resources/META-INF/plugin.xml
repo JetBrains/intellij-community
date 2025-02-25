@@ -840,6 +840,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
 
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.hatch.HatchSdkFlavorProvider"/>
+
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
