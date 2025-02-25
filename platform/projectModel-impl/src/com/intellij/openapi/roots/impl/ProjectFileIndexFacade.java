@@ -28,7 +28,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   @ApiStatus.Internal
-  protected ProjectFileIndexFacade(@NotNull Project project) {
+  public ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

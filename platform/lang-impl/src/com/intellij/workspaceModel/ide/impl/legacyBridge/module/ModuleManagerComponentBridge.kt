@@ -41,13 +41,15 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
-internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+@ApiStatus.Internal
+class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 

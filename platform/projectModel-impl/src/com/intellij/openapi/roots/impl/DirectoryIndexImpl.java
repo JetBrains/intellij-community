@@ -44,7 +44,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
-  DirectoryIndexImpl(@NotNull Project project) {
+  public DirectoryIndexImpl(@NotNull Project project) {
     myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
     myProject = project;
     myConnection = project.getMessageBus().connect();

@@ -28,9 +28,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-internal class FacetEntityChangeListener(private val project: Project) {
+@ApiStatus.Internal
+class FacetEntityChangeListener(private val project: Project) {
   private val publisher: FacetEventsPublisher
     get() = FacetEventsPublisher.getInstance(project)
 
