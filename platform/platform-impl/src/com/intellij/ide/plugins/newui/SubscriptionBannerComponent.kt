@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.net.URL
 
@@ -27,31 +28,38 @@ internal object UnavailableWithoutSubscriptionComponent {
 
   fun getBanner(): InlineBannerBase? {
     val ideData = CommercialIdeData.get() ?: return null
-    return PluginAvailableInCommercialIdeBanner(ideData)
+    return PluginBanner(ideData, IdeBundle.message("plugin.available.in.commercial.ide.text", ideData.name))
   }
 }
+
+
+internal object PartiallyAvailableComponent {
+  fun getBanner(): InlineBannerBase? {
+    val ideData = CommercialIdeData.get() ?: return null
+    return PluginBanner(ideData, IdeBundle.message("plugin.has.ultimate.features.text", ideData.name))
+  }
+}
+
 
 private class CommercialIdeData(val name: String, val purchaseLink: String) {
   val purchaseUrl: URL?
     get() = runCatching { URL(purchaseLink) }.getOrNull()
 
   companion object {
-    val ideaUltimate = CommercialIdeData("IDEA Ultimate", "https://www.jetbrains.com/idea/buy/?section=commercial&billing=yearly")
-    val pyCharmProfessional = CommercialIdeData("PyCharm Professional",
+    val pyCharmProfessional = CommercialIdeData("PyCharm Pro",
                                                 "https://www.jetbrains.com/pycharm/buy/?section=commercial&billing=yearly")
 
     fun get(): CommercialIdeData? = when {
-      PlatformUtils.isPyCharm() -> pyCharmProfessional
-      PlatformUtils.isIntelliJ() -> ideaUltimate
+      PlatformUtils.isPyCharmPro() -> pyCharmProfessional
       else -> null
     }
   }
 }
 
-private class PluginAvailableInCommercialIdeBanner(ideData: CommercialIdeData) : InlineBannerBase(
+private class PluginBanner(ideData: CommercialIdeData, val text: @Nls String) : InlineBannerBase(
   EditorNotificationPanel.Status.Info,
   JBUIScale.scale(8),
-  IdeBundle.message("plugin.available.in.commercial.ide.text", ideData.name)
+  text
 ) {
   init {
     layout = ListLayout.horizontal(JBUIScale.scale(10), ListLayout.Alignment.START)

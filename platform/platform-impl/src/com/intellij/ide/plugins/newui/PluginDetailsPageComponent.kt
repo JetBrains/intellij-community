@@ -130,6 +130,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val sentFeedbackPlugins = HashSet<PluginId>()
   private val licensePanel = LicensePanel(false)
   private val unavailableWithoutSubscriptionBanner: InlineBannerBase? = UnavailableWithoutSubscriptionComponent.getBanner()
+  private val partiallyAvailableBanner: InlineBannerBase? = PartiallyAvailableComponent.getBanner()
   private var homePage: LinkPanel? = null
   private var forumUrl: LinkPanel? = null
   private var licenseUrl: LinkPanel? = null
@@ -346,6 +347,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (unavailableWithoutSubscriptionBanner != null) {
       topPanel.add(unavailableWithoutSubscriptionBanner, VerticalLayout.FILL_HORIZONTAL)
       unavailableWithoutSubscriptionBanner.isVisible = false
+    }
+    if (partiallyAvailableBanner != null) {
+      topPanel.add(partiallyAvailableBanner, VerticalLayout.FILL_HORIZONTAL)
+      partiallyAvailableBanner.isVisible = false
     }
 
     createTabs(panel!!)
@@ -1073,6 +1078,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     showLicensePanel()
 
     unavailableWithoutSubscriptionBanner?.isVisible = showComponent?.isNotFreeInFreeMode == true
+    partiallyAvailableBanner?.isVisible = showComponent?.isNotFreeInFreeMode != true  &&
+                                          PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
 
     val homepage = getPluginHomepage(plugin.pluginId)
 
