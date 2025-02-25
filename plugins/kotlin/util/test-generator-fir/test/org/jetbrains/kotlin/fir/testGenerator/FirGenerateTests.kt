@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.Abstrac
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractSealedInheritorsProviderTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractGlobalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractLocalSessionInvalidationTest
-import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractProjectWideSourceKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeContainsTest
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeStructureTest
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -94,7 +94,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2GradleTests()
 
     testGroup("base/fir/analysis-api-platform") {
-        testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
+        testClass<AbstractProjectWideSourceKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }
 

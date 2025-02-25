@@ -153,7 +153,8 @@ internal class ProjectResolutionFacade(
           syntheticFilesByModule,
           delegateResolverForProject,
           with(KotlinModificationTrackerFactory.getInstance(project)) {
-              if (invalidateOnOOCB) createProjectWideOutOfBlockModificationTracker() else createLibrariesWideModificationTracker()
+              if (invalidateOnOOCB) createProjectWideSourceModificationTracker()
+              else createProjectWideLibraryModificationTracker()
           },
           settings
         )

@@ -271,7 +271,7 @@ private fun <T> cachedKaModule(
             arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
                 JavaLibraryModificationTracker.getInstance(project),
-                KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker()
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideSourceModificationTracker()
             )
         }
         CachedValueProvider.Result.create(
