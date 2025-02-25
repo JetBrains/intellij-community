@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -230,7 +230,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
   }
 
-  // todo
   private PsiClass @Nullable [] findClassesHeuristically(final String name, GlobalSearchScope scope) {
     if (findSubPackageByName(name) != null) {
       return PsiClass.EMPTY_ARRAY;
@@ -245,6 +244,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
+        // todo IJPL-339 support shared source scenario.
+        //               right now, PsiDirectory#getFiles does not care about the context in the scope
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(scope), file -> file.getName().contains(name));
         PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
         for (PsiClass aClass : classes) {
