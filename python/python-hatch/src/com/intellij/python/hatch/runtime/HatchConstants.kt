@@ -1,4 +1,4 @@
-package com.intellij.python.hatch
+package com.intellij.python.hatch.runtime
 
 @Suppress("unused")
 object HatchConstants {
