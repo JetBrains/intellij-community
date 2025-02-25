@@ -792,10 +792,10 @@ public class ExpectedHighlightingData {
     assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;
 
     if (start.line == end.line) {
-      return String.format("(%d:%d/%d)", start.line + 1, start.column + 1, end.column - start.column);
+      return String.format("(%d:%d/%d at offset %d)", start.line + 1, start.column + 1, end.column - start.column, startOffset);
     }
     else {
-      return String.format("(%d:%d..%d:%d)", start.line + 1, end.line + 1, start.column + 1, end.column + 1);
+      return String.format("(%d:%d..%d:%d at offset %d)", start.line + 1, end.line + 1, start.column + 1, end.column + 1, startOffset);
     }
   }
 
