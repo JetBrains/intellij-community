@@ -44,10 +44,6 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     children = null;
   }
 
-  protected XDebuggerDataViewSettings getSettings() {
-    return null;
-  }
-
   protected abstract @Nullable DataViewsConfigurableUi createRootUi();
 
   protected abstract @NotNull DebuggerSettingsCategory getCategory();
@@ -118,7 +114,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   @Override
   public final void reset() {
     if (root != null) {
-      root.reset(getSettings());
+      root.getComponent().reset();
     }
 
     if (isChildrenMerged()) {
@@ -130,7 +126,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
 
   @Override
   public final boolean isModified() {
-    if (root != null && root.isModified(getSettings())) {
+    if (root != null && root.getComponent().isModified()) {
       return true;
     }
     else if (isChildrenMerged()) {
@@ -146,7 +142,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   @Override
   public final void apply() throws ConfigurationException {
     if (root != null) {
-      root.apply(getSettings());
+      root.getComponent().apply();
       DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList().forEach(provider -> provider.generalApplied(getCategory()));
     }
 
