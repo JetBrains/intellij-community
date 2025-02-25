@@ -336,9 +336,12 @@ private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<Sta
 }
 
 private fun CoroutineContext.joinElementsToString(): String =
-  this.fold("") { acc, element ->
-    if (acc.isEmpty()) element.toString() else "$acc, $element"
-  }
+  this.fold(StringBuilder()) { acc, element ->
+    if (acc.isNotEmpty()) {
+      acc.append(", ")
+    }
+    acc.append(element.toString())
+  }.toString()
 
 private fun <T, R> MutableSet<T>.withElement(elem: T, body: (added: Boolean) -> R): R {
   val added = add(elem)
