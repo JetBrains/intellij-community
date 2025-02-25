@@ -410,7 +410,7 @@ public class Invoker implements InvokerMBean {
     }
     catch (ClassNotFoundException e) {
       throw new DriverIllegalStateException(
-        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "'", e);
+        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "' in plugin " + call.getPluginId(), e);
     }
     return clazz;
   }
