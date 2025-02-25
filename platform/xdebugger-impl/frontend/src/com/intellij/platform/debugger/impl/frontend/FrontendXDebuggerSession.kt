@@ -5,11 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XValueMarkerId
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
@@ -33,6 +35,20 @@ internal class FrontendXDebuggerSession(
         supervisorScope {
           val evaluator = createFrontendXDebuggerEvaluator(project, this, evaluatorDto)
           send(evaluator)
+          awaitCancellation()
+        }
+      }
+    }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  val sourcePosition: StateFlow<XSourcePosition?> =
+    channelFlow {
+      XDebugSessionApi.getInstance().currentSourcePosition(sessionId).collectLatest { sourcePositionDto ->
+        if (sourcePositionDto == null) {
+          send(null)
+          return@collectLatest
+        }
+        supervisorScope {
+          send(sourcePositionDto.sourcePosition())
           awaitCancellation()
         }
       }

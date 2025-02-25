@@ -37,6 +37,21 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
+  override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    return channelFlow {
+      withEntities(sessionEntity) {
+        query { sessionEntity.currentSourcePosition }.collect { sourcePosition ->
+          if (sourcePosition == null) {
+            send(null)
+            return@collect
+          }
+          send(sourcePosition.toRpc())
+        }
+      }
+    }
+  }
+
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return null
     val project = sessionEntity.projectEntity.asProject()

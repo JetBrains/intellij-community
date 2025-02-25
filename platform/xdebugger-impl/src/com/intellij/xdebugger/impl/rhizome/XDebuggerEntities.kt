@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.rhizome
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
@@ -47,6 +48,8 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
    */
   val evaluator: XDebuggerEvaluatorEntity? by Evaluator
 
+  val currentSourcePosition: XSourcePosition? by CurrentSourcePosition
+
   companion object : EntityType<XDebugSessionEntity>(
     XDebugSessionEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
@@ -57,6 +60,8 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
 
     val Evaluator: Optional<XDebuggerEvaluatorEntity> = optionalRef("evaluator")
+
+    val CurrentSourcePosition: Optional<XSourcePosition> = optionalTransient("currentPosition")
   }
 }
 

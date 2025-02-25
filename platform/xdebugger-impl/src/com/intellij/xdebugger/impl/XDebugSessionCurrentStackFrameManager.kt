@@ -30,9 +30,16 @@ internal class XDebugSessionCurrentStackFrameManager(
     sessionScope.launch {
       val sessionEntity = sessionEntityDeferred.await()
       currentStackFrame.collectLatest { stackFrame ->
-        val currentEvaluator = stackFrame.get()?.evaluator
+        val currentStackFrame = stackFrame.get()
+        val currentEvaluator = currentStackFrame?.evaluator
         withEntities(sessionEntity) {
           change {
+            // update current source position
+            sessionEntity.update {
+              it[XDebugSessionEntity.CurrentSourcePosition] = currentStackFrame?.sourcePosition
+            }
+
+            // update current evaluator
             sessionEntity.evaluator?.delete()
             if (currentEvaluator != null) {
               val evaluatorEntity = XDebuggerEvaluatorEntity.new {

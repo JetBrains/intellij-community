@@ -69,8 +69,8 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         val frontendEvaluator = currentSession.evaluator.value ?: return@async null
         val valueMarkers = currentSession.valueMarkers
         val editorsProvider = currentSession.editorsProvider
-        // TODO[IJPL-160146]: support passing currentPosition
-        XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, null, false)
+        val sourcePosition = currentSession.sourcePosition.value
+        XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, sourcePosition, false)
       }
       else if (frontendType is FrontendType.RemoteDev) {
         RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo, fromPlugins = false)
