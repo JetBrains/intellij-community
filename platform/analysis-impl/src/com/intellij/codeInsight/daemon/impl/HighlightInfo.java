@@ -34,12 +34,14 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -124,6 +126,8 @@ public class HighlightInfo implements Segment {
   private @NotNull @Unmodifiable List<LazyFixDescription> myLazyQuickFixes; // guarded by this
   private record LazyFixDescription(
     @NotNull Consumer<? super QuickFixActionRegistrar> fixesComputer,
+    // 0 means the stamp not set yet
+    long psiModificationStamp,
     // null means the computation is not started yet
     @Nullable Future<? extends @NotNull List<IntentionActionDescriptor>> future) {}
 
@@ -207,7 +211,7 @@ public class HighlightInfo implements Segment {
     this.gutterIconRenderer = gutterIconRenderer;
     this.toolId = toolId;
     this.group = group;
-    myLazyQuickFixes = ContainerUtil.map(lazyFixes, c->new LazyFixDescription(c,null));
+    myLazyQuickFixes = ContainerUtil.map(lazyFixes, c->new LazyFixDescription(c,0, null));
   }
 
   @ApiStatus.Internal
@@ -1109,7 +1113,15 @@ public class HighlightInfo implements Segment {
     myIntentionActionDescriptors = List.copyOf(result);
     updateFields(getIntentionActionDescriptors(), document);
   }
-
+  synchronized void updatePsiTimeStamp(long psiTimeStamp) {
+    List<LazyFixDescription> newFixes = ContainerUtil.map(myLazyQuickFixes,
+                                                     d -> d.psiModificationStamp() == 0
+                                                          ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future())
+                                                          : d);
+    if (!newFixes.equals(myLazyQuickFixes)) {
+      myLazyQuickFixes = newFixes;
+    }
+  }
   private void updateFields(@NotNull @Unmodifiable List<? extends IntentionActionDescriptor> descriptors, @Nullable Document document) {
     long newFixRange = TextRangeScalarUtil.toScalarRange(getFixTextRange());
     for (IntentionActionDescriptor descriptor : descriptors) {
@@ -1315,7 +1327,7 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(result);
   }
 
-  void computeQuickFixesSynchronously(@NotNull Document document) throws ExecutionException, InterruptedException {
+  void computeQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Document document) throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -1328,7 +1340,7 @@ public class HighlightInfo implements Segment {
       if (future == null) {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
         future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, computer));
-        return new LazyFixDescription(computer, future);
+        return new LazyFixDescription(computer, psiFile.getManager().getModificationTracker().getModificationCount(), future);
       }
       else {
         return desc;
@@ -1382,7 +1394,7 @@ public class HighlightInfo implements Segment {
    * Starts computing lazy quick fixes in the background.
    * The result will be stored back in {@link #myLazyQuickFixes} inside {@link LazyFixDescription#future}
    */
-  synchronized void startComputeQuickFixes(@NotNull Document document) {
+  synchronized void startComputeQuickFixes(@NotNull Document document, @NotNull Project project) {
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors());
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -1396,7 +1408,7 @@ public class HighlightInfo implements Segment {
             () -> result.set(doComputeLazyQuickFixes(document, computer)));
           return result.get();
         }).submit(ForkJoinPool.commonPool());
-        return new LazyFixDescription(computer, future);
+        return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
       }
       return description;
     });
@@ -1411,11 +1423,23 @@ public class HighlightInfo implements Segment {
       list = new ArrayList<>(myLazyQuickFixes);
     }
     synchronized (newInfo) {
-      if (newInfo.myLazyQuickFixes.size() == list.size()) {
+      if (newInfo.myLazyQuickFixes.size() == list.size() && psiModificationStampIsTheSame(newInfo.myLazyQuickFixes, list)) {
         newInfo.myLazyQuickFixes = list;
         newInfo.updateFields(newInfo.getIntentionActionDescriptors(), document);
       }
     }
+  }
+
+  private static boolean psiModificationStampIsTheSame(@NotNull @Unmodifiable List<LazyFixDescription> list1,
+                                                       @NotNull @Unmodifiable List<LazyFixDescription> list2) {
+    for (int i = 0; i < list1.size(); i++) {
+      LazyFixDescription fix1 = list1.get(i);
+      LazyFixDescription fix2 = list2.get(i);
+      if (fix1.psiModificationStamp() != fix2.psiModificationStamp()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull

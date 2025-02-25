@@ -356,6 +356,49 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertSize(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
+  public void testUnresolvedReferenceQuickFixMustReappearAfterTheClassUnderQuestionIsCreated() throws Exception {
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    @Language("JAVA")
+    String otherText = """
+      package x;
+      public class OtherClass {
+       //
+      }""";
+    Editor otherEditor = createSaveAndOpenFile("x/OtherClass.java", otherText);
+    @Language("JAVA")
+    @NonNls String text = """
+      <caret>
+      class S {
+        SomeOtherMethodClass12 t;
+       }""";
+    configureByText(text);
+    JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getFile()).getCustomSettings(JavaCodeStyleSettings.class);
+    javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
+
+    HighlightInfo error = assertOneElement(highlightErrors());
+    assertEquals("Cannot resolve symbol 'SomeOtherMethodClass12'", error.getDescription());
+
+    assertNoImportsAdded();
+
+    otherEditor.getCaretModel().moveToOffset(otherText.indexOf("//")); //before //
+    @Language("JAVA")
+    String toType = "public static class SomeOtherMethodClass12 {}";
+    for (int i = 0; i < toType.length(); i++) {
+      char c = toType.charAt(i);
+      EditorTestUtil.performTypingAction(otherEditor, c);
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNotNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(otherEditor.getDocument()));
+    doHighlighting();
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertEmpty(highlightErrors());
+    assertOneImportAdded("x.OtherClass.SomeOtherMethodClass12");
+    assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+  }
+
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() throws Exception {
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(text);
