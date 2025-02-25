@@ -31,6 +31,8 @@ import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.v2.conda.toExecutor
+import com.jetbrains.python.sdk.add.v2.hatch.HatchUIError
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor

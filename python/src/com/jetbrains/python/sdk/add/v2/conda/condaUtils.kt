@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -13,6 +13,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.convertToPathOnTarget
+import com.jetbrains.python.sdk.add.v2.existingSdks
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
@@ -22,6 +22,13 @@ import com.jetbrains.python.ui.flow.bindText
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
+import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
+import com.jetbrains.python.sdk.add.v2.executableSelector
+import com.jetbrains.python.sdk.add.v2.toStatisticsField
 
 internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
 
