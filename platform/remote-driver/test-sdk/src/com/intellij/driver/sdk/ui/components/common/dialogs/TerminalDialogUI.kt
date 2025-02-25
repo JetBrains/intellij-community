@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
@@ -21,7 +22,10 @@ fun Driver.terminal(action: TerminalDialogUI.() -> Unit) {
 
 class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
   init {
-    if (notPresent()) x("//div[@class='ToolWindowLeftToolbar']").waitOneText("Terminal").click()
+    if (notPresent()) {
+      driver.ui.ideFrame().leftToolWindowToolbar.terminalButton.click()
+    }
+    waitFound()
   }
 
   fun execute(command: String, finishFlag: String = "") {
