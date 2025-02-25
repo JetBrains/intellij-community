@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("UsagesOfObsoleteApi")
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();  // for platform-specific tests
   @Rule public InMemoryFsRule memoryFs = new InMemoryFsRule();
@@ -281,5 +282,15 @@ public class NioFilesTest {
     finally {
       PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "rm", "-rf", tmpPath));
     }
+  }
+
+  @Test
+  public void sizeIfExists() throws IOException {
+    var data = new byte[]{1, 2, 3};
+    var existing = Files.write(memoryFs.getFs().getPath("/existing.file"), data);
+    assertThat(NioFiles.sizeIfExists(existing)).isEqualTo(data.length);
+
+    var nonExisting = memoryFs.getFs().getPath("/non-existing");
+    assertThat(NioFiles.sizeIfExists(nonExisting)).isEqualTo(-1);
   }
 }

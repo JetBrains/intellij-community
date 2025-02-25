@@ -1395,6 +1395,7 @@ f:com.intellij.openapi.util.io.NioFiles
 - s:readAttributes(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
 - s:setExecutable(java.nio.file.Path):V
 - s:setReadOnly(java.nio.file.Path,Z):V
+- s:sizeIfExists(java.nio.file.Path):J
 - s:toPath(java.lang.String):java.nio.file.Path
 a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
 - java.nio.file.SimpleFileVisitor

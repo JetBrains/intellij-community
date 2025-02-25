@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -155,9 +155,11 @@ public class UpdateCheckerService {
   }
 
   static void checkIfPreviousUpdateFailed(BuildNumber current) {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (current.asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
-        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
+    var properties = PropertiesComponent.getInstance();
+    if (
+      current.asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
+      NioFiles.sizeIfExists(Path.of(PathManager.getLogPath(), ERROR_LOG_FILE_NAME)) > 0
+    ) {
       IdeUpdateUsageTriggerCollector.UPDATE_FAILED.log();
       LOG.info("The previous IDE update failed");
     }
