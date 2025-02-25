@@ -28,7 +28,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
-
+import com.intellij.python.hatch.icons.PythonHatchIcons
 
 @Service(Service.Level.APP)
 internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
@@ -63,6 +63,7 @@ enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Ico
   POETRY("sdk.create.custom.poetry", POETRY_ICON),
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
   UV("sdk.create.custom.uv", UV_ICON),
+  HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo),
   PYTHON("sdk.create.custom.python", com.jetbrains.python.psi.icons.PythonPsiApiIcons.Python)
 }
 

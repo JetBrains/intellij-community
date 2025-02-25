@@ -15,7 +15,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelpersLocator
-import com.jetbrains.python.execution.PyExecutionFailure
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -27,6 +26,7 @@ import com.jetbrains.python.errorProcessing.emit
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import com.jetbrains.python.Result
 
 @Internal
 internal abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
@@ -55,7 +55,7 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
     savePathToExecutableToProperties(null)
 
     // todo think about better error handling
@@ -71,14 +71,13 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
                              ProjectJdkTable.getInstance().allJdks.asList(),
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
-                             false)
-      .getOrElse { return com.jetbrains.python.Result.failure(if (it is PyExecutionFailure) PyError.ExecException(it) else PyError.Message(it.localizedMessage)) }
+                             false).getOr { return it }
     newSdk.persist()
-
+6
     module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
 
-    return com.jetbrains.python.Result.success(newSdk)
+    return Result.success(newSdk)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =
@@ -100,7 +99,7 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
    * 5. Reruns `detectExecutable`
    */
   @RequiresEdt
-  private fun createInstallFix(errorSink: ErrorSink): ActionLink {
+  protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       PythonSdkFlavor.clearExecutablesCache()
       installExecutable(errorSink)
@@ -154,7 +153,7 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
    */
   internal abstract fun savePathToExecutableToProperties(path: Path?)
 
-  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk>
+  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError>
 
   internal abstract suspend fun detectExecutable()
 }

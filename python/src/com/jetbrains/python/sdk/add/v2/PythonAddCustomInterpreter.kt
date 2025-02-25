@@ -32,13 +32,17 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     PIPENV to EnvironmentCreatorPip(model),
     POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
     UV to EnvironmentCreatorUv(model),
+    HATCH to HatchNewEnvironmentCreator(model),
   )
 
   private val existingInterpreterSelectors = buildMap {
     put(PYTHON, PythonExistingEnvironmentSelector(model))
     put(CONDA, CondaExistingEnvironmentSelector(model, errorSink))
-    if (moduleOrProject != null) put(POETRY, PoetryExistingEnvironmentSelector(model, moduleOrProject))
-    if (moduleOrProject != null) put(UV, UvExistingEnvironmentSelector(model, moduleOrProject))
+    if (moduleOrProject != null) {
+      put(POETRY, PoetryExistingEnvironmentSelector(model, moduleOrProject))
+      put(UV, UvExistingEnvironmentSelector(model, moduleOrProject))
+      put(HATCH, HatchExistingEnvironmentSelector(model, moduleOrProject))
+    }
   }
 
   val currentSdkManager: PythonAddEnvironment

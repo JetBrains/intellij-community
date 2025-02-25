@@ -21,8 +21,10 @@
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
 
-    <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
+    <refactoring.elementListenerProvider
+      implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
                  key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
     <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
@@ -109,8 +111,10 @@
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
                                       id="poetry"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
+                                      id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="after poetry"/>
+                                      id="uv" order="after hatch"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

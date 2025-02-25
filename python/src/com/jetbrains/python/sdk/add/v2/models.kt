@@ -10,16 +10,23 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.UICustomization
+import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchStandaloneEnvironment
+import com.intellij.python.hatch.getHatchService
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.failure
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.isFailure
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
@@ -33,16 +40,13 @@ import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.venvReader.tryResolvePath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.plus
-import kotlinx.coroutines.withContext
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, private val systemPythonService: SystemPythonService = SystemPythonService()) {
@@ -64,6 +68,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   private var installable: List<PythonSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
+  val hatchEnvironmentsResult: MutableStateFlow<com.jetbrains.python.Result<List<HatchStandaloneEnvironment>, PyError>?> = MutableStateFlow(null)
 
   var allInterpreters: StateFlow<List<PythonSelectableInterpreter>> = combine(knownInterpreters,
                                                                               detectedInterpreters,
@@ -81,6 +86,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
 
   val interpreterLoading = MutableStateFlow(false)
   val condaEnvironmentsLoading = MutableStateFlow(false)
+  val hatchEnvironmentsLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
   open fun createBrowseAction(): () -> String? = TODO()
 
@@ -124,6 +130,33 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
       }
       return@withContext null
     }
+
+  suspend fun detectHatchEnvironments(
+    hatchExecutablePathString: String,
+  ): com.jetbrains.python.Result<List<HatchStandaloneEnvironment>, PyError> {
+    hatchEnvironmentsLoading.value = true
+    val environmentsResult = withContext(Dispatchers.IO) {
+      val projectPath = myProjectPathFlows.projectPathWithDefault.first()
+      val hatchExecutablePath = NioFiles.toPath(hatchExecutablePathString)
+                                ?: return@withContext com.jetbrains.python.Result.failure(
+                                  HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString)
+                                )
+      val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
+      val hatchService = getHatchService(
+        workingDirectoryPath = hatchWorkingDirectory,
+        hatchExecutablePath = hatchExecutablePath,
+      ).getOr { return@withContext it }
+
+      val hatchEnvironments = hatchService.findStandaloneEnvironments().getOr { return@withContext it }
+      val availableEnvironments = when {
+        hatchWorkingDirectory == projectPath -> hatchEnvironments
+        else -> HatchStandaloneEnvironment.AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT
+      }
+
+      com.jetbrains.python.Result.success(availableEnvironments)
+    }
+    return environmentsResult
+  }
 
   private suspend fun initInterpreterList() {
     withContext(Dispatchers.IO) {
@@ -215,11 +248,30 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   : PythonAddInterpreterModel(params) {
   override val state: MutableTargetState = MutableTargetState(propertyGraph)
 
+  init {
+    state.hatchExecutable.afterChange { pathString ->
+      scope.launch {
+        hatchEnvironmentsLoading.value = true
+        val hatchEnvironmentResult = detectHatchEnvironments(pathString)
+        withContext(uiContext) {
+          hatchEnvironmentsResult.value = hatchEnvironmentResult
+          if (hatchEnvironmentResult.isFailure) {
+            state.selectedHatchEnv.set(null)
+          }
+          else {
+            hatchEnvironmentsLoading.value = false
+          }
+        }
+      }
+    }
+  }
+
   override suspend fun initialize() {
     super.initialize()
     detectPoetryExecutable()
     detectPipEnvExecutable()
     detectUvExecutable()
+    detectHatchExecutable()
   }
 
   suspend fun detectPoetryExecutable() {
@@ -242,6 +294,15 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     getUvExecutable()?.pathString?.let {
       withContext(Dispatchers.EDT) {
         state.uvExecutable.set(it)
+      }
+    }
+  }
+
+  suspend fun detectHatchExecutable() {
+    HatchConfiguration.getOrDetectHatchExecutablePath().getOrNull()?.pathString?.let {
+      withContext(Dispatchers.EDT) {
+        hatchEnvironmentsLoading.value = true
+        state.hatchExecutable.set(it)
       }
     }
   }
@@ -337,6 +398,8 @@ open class AddInterpreterState(propertyGraph: PropertyGraph) {
    * Use [PythonAddInterpreterModel.getBaseCondaOrError]
    */
   val baseCondaEnv: ObservableMutableProperty<PyCondaEnv?> = propertyGraph.property(null)
+
+  val selectedHatchEnv: ObservableMutableProperty<HatchStandaloneEnvironment?> = propertyGraph.property(null)
 }
 
 class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(propertyGraph) {
@@ -344,6 +407,7 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
   val newCondaEnvName: ObservableMutableProperty<String> = propertyGraph.property("")
   val poetryExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val uvExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
+  val hatchExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val pipenvExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val venvPath: ObservableMutableProperty<String> = propertyGraph.property("")
   val inheritSitePackages = propertyGraph.property(false)

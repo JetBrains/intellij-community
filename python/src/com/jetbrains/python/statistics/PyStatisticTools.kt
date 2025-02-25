@@ -113,6 +113,7 @@ enum class InterpreterType(val value: String) {
   POETRY("poetry"),
   PYENV("pyenv"),
   UV("uv"),
+  HATCH("hatch"),
 }
 
 enum class InterpreterCreationMode(val value: String) {

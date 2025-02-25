@@ -11,6 +11,9 @@ import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
 
 internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("uv", model) {
   override val interpreterType: InterpreterType = InterpreterType.UV
@@ -27,14 +30,14 @@ internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterMode
     setUvExecutable(savingPath)
   }
 
-  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> {
+  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
     if (module == null) {
       // FIXME: should not happen, proper error
-      return Result.failure(Exception("module is null"))
+      return kotlin.Result.failure<Sdk>(Exception("module is null")).asPythonResult()
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), baseSdks, python)
+    return setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), baseSdks, python).asPythonResult()
   }
 
   override suspend fun detectExecutable() {
