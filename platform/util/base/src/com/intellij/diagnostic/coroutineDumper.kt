@@ -290,9 +290,7 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
   }
   val interestingContext = context.minusKey(Job).minusKey(CoroutineName)
   val contextString = if (interestingContext != EmptyCoroutineContext) {
-    interestingContext.fold("") { acc, element ->
-      if (acc.isEmpty()) element.toString() else "$acc, $element"
-    }
+    interestingContext.joinElementsToString()
   }
   else null
   val trace = debugInfo?.let { traceToDump(it, stripTrace) } ?: emptyList()
@@ -336,6 +334,11 @@ private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<Sta
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
 }
+
+private fun CoroutineContext.joinElementsToString(): String =
+  this.fold("") { acc, element ->
+    if (acc.isEmpty()) element.toString() else "$acc, $element"
+  }
 
 private fun <T, R> MutableSet<T>.withElement(elem: T, body: (added: Boolean) -> R): R {
   val added = add(elem)
