@@ -15,6 +15,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -22,9 +23,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyPackageInstallUtils {
-  fun checkIsInstalled(project: Project, sdk: Sdk, vararg packageNames: String): Boolean {
+  fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
     val packageManager = PythonPackageManager.forSdk(project, sdk)
-    return packageManager.installedPackages.any { it.name in packageNames }
+    val normalizedName = normalizePackageName(packageName)
+    return packageManager.installedPackages.any { normalizePackageName(it.name) == normalizedName }
   }
 
   fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
@@ -33,7 +35,8 @@ object PyPackageInstallUtils {
     }
     val packageManager = PythonPackageManager.forSdk(project, sdk)
     val repositoryManager = packageManager.repositoryManager
-    return repositoryManager.allPackages().any { it == packageName }
+    val normalizedName = normalizePackageName(packageName)
+    return repositoryManager.allPackages().any { normalizePackageName(it) == normalizedName }
   }
 
 
