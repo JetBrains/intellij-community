@@ -5175,6 +5175,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/nonLocalReturnWithLabelRuntime.kt");
             }
 
+            @TestMetadata("nonWritableOverride.kt")
+            public void testNonWritableOverride() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/nonWritableOverride.kt");
+            }
+
             @TestMetadata("notApplicableToConstructor.kt")
             public void testNotApplicableToConstructor() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/notApplicableToConstructor.kt");
@@ -5595,6 +5600,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("changeReturnTypeWhenValueParameterListIsAbsent.kt")
         public void testChangeReturnTypeWhenValueParameterListIsAbsent() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeWhenValueParameterListIsAbsent.kt");
+        }
+
+        @TestMetadata("changeVariableTypeToMatchExpectedTypeOfCall.kt")
+        public void testChangeVariableTypeToMatchExpectedTypeOfCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeVariableTypeToMatchExpectedTypeOfCall.kt");
         }
 
         @TestMetadata("compareToTypeMismatch.kt")
