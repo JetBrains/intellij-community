@@ -106,6 +106,8 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
         }
         if (result) out.append(tracker.text(onlyArgument));
         if (!result) out.append("!").append(tracker.text(onlyArgument, ParenthesesUtils.PREFIX_PRECEDENCE));
+      } else {
+        out.append(tracker.text(methodCallExpr));
       }
     }
     else if (expression != null) {
