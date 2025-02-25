@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+
 @ApiStatus.Internal
 class ModuleRootComponentBridge(
   private val currentModule: Module
@@ -32,9 +34,13 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
+  private val moduleEntityCache = VersionedCache<ModuleEntity> {
+    moduleBridge.findModuleEntity(moduleBridge.entityStorage.current)
+  }
+
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
-      moduleEntity = moduleBridge.findModuleEntity(storage),
+      moduleEntity = moduleEntityCache.getValue(moduleBridge.entityStorage.version),
       storage = moduleBridge.entityStorage,
       itemUpdater = null,
       // TODO
@@ -87,6 +93,7 @@ class ModuleRootComponentBridge(
 
   internal fun dropRootModelCache() {
     moduleBridge.entityStorage.clearCachedValue(modelValue)
+    //cachedModuleEntity = null
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version
@@ -170,5 +177,19 @@ private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
     is ImmutableEntityStorage -> this
     is MutableEntityStorage -> this.toSnapshot()
     else -> error("Unexpected storage: $this")
+  }
+}
+
+private class VersionedCache<T>(val compute: () -> T?) {
+  private var version: Long = -1
+  private var valueResult: T? = null
+
+  @Synchronized
+  fun getValue(currentVersion: Long): T? {
+    if (this.version != currentVersion) {
+      this.version = currentVersion
+      valueResult = compute()
+    }
+    return valueResult
   }
 }
