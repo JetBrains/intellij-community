@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import org.jdom.Element
-import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
@@ -173,12 +173,12 @@ class MavenProjectReader(private val myProject: Project) {
         parent = MavenParent(MavenId(parentGroupId,
                                      parentArtifactId,
                                      calculateParentVersion(xmlProject, problems, file, isAutomaticVersionFeatureEnabled)),
-                             findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml"))
+                             findChildValueByPath(xmlProject, "parent.relativePath", DEFAULT_RELATIVE_PATH))
         result.parent = parent
         MavenLog.LOG.trace("Parent maven id for $file: $parent")
       }
       else {
-        parent = MavenParent(MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../pom.xml")
+        parent = MavenParent(MavenId(UNKNOWN, UNKNOWN, UNKNOWN), DEFAULT_RELATIVE_PATH)
       }
 
       result.mavenId = MavenId(
@@ -378,7 +378,7 @@ class MavenProjectReader(private val myProject: Project) {
       }
 
       if (projectFile.parent != null) {
-        val parentFileCandidate = projectFile.parent.findFileByRelativePath(MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+        val parentFileCandidate = projectFile.parent.findFileByRelativePath(DEFAULT_RELATIVE_PATH)
 
         val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
           parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
@@ -394,7 +394,7 @@ class MavenProjectReader(private val myProject: Project) {
         }
       }
 
-      val defaultParentDesc = MavenParentDesc(parentDesc.parentId, MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH)
+      val defaultParentDesc = MavenParentDesc(parentDesc.parentId, DEFAULT_RELATIVE_PATH)
       return findInLocalRepository(defaultParentDesc)
     }
 
@@ -627,7 +627,7 @@ class MavenProjectReader(private val myProject: Project) {
       val parentTag = findChildByPath(xmlProject, "parent") ?: return UNKNOWN
       if (!xmlProject.checkParentGroupAndArtefactIdsPresence(file)) return UNKNOWN
 
-      val relativePath = findChildValueByPath(parentTag, "relativePath", "../pom.xml")!!
+      val relativePath = findChildValueByPath(parentTag, "relativePath", DEFAULT_RELATIVE_PATH)!!
       return getVersionFromParentPomRecursively(file, relativePath, problems)
     }
 
