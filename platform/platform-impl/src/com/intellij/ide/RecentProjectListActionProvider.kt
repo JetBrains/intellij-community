@@ -42,7 +42,7 @@ open class RecentProjectListActionProvider {
 
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths, recentProjectManager)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
-    val projectGroups = groups.asSequence().map { projectGroup ->
+    val projectGroups = groups.map { projectGroup ->
       val projects = projectGroup.projects.toSet()
       val children = projects.map { recentProject ->
         createRecentProject(
@@ -58,7 +58,7 @@ open class RecentProjectListActionProvider {
       return@map ProjectsGroupItem(projectGroup, children)
     }
 
-    val projectsWithoutGroups = allRecentProjectPaths.asSequence().map { recentProject ->
+    val projectsWithoutGroups = allRecentProjectPaths.map { recentProject ->
       createRecentProject(path = recentProject, duplicates = duplicates, projectGroup = null, recentProjectManager = recentProjectManager)
     }
 
@@ -140,7 +140,7 @@ open class RecentProjectListActionProvider {
     recentProjectManager: RecentProjectsManagerBase,
   ): List<AnAction> {
     val actions = mutableListOf<AnAction>()
-    for (group in groups.asSequence().filter { it.isBottomGroup == bottom }) {
+    for (group in groups.filter { it.isBottomGroup == bottom }) {
       val children = mutableListOf<AnAction>()
       for (path in group.projects) {
         val action = createOpenAction(path = path ?: continue, duplicates = duplicates, recentProjectManager = recentProjectManager)
