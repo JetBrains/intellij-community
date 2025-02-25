@@ -269,10 +269,7 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
 
 internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): Boolean {
-  if (!useBackgroundWriteAction) {
-    return false
-  }
-  return contextModality == null || contextModality == ModalityState.nonModal()
+  return useBackgroundWriteAction
 }
 
 /**
@@ -292,7 +289,6 @@ internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): B
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
-@ApiStatus.Obsolete
 @Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
   val isBackgroundActionAllowed = isBackgroundWriteActionPossible(coroutineContext.contextModality())
