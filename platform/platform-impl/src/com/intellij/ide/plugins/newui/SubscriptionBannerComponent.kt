@@ -72,7 +72,7 @@ private class PluginBanner(ideData: CommercialIdeData, val text: @Nls String) : 
     add(centerPanel)
     centerPanel.add(message)
 
-    val link = BrowserLink(IdeBundle.message("link.purchase.subscription"), ideData.purchaseLink)
+    val link = BrowserLink(IdeBundle.message("link.purchase.subscription", ideData.name), ideData.purchaseLink)
     centerPanel.add(link)
   }
 }
