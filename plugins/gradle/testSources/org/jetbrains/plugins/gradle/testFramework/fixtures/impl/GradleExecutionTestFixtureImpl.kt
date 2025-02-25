@@ -8,28 +8,18 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionConsoleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyExecution
-import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleEventDispatcherClosing
-import org.jetbrains.plugins.gradle.testFramework.util.getExecutionOperation
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
-import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
+import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import org.junit.jupiter.api.Assertions
@@ -42,41 +32,16 @@ class GradleExecutionTestFixtureImpl(
   private lateinit var taskExecutionLeakTracker: OperationLeakTracker
   private lateinit var executionLeakTracker: OperationLeakTracker
 
-  private lateinit var executionOutputFixture: GradleExecutionOutputFixture
-  private lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
-  private lateinit var executionConsoleFixture: GradleExecutionConsoleFixture
-  private lateinit var buildViewFixture: BuildViewTestFixture
-
-  override fun getExecutionEnvironment(): ExecutionEnvironment {
-    return executionEnvironmentFixture.getExecutionEnvironment()
-  }
-
   override fun setUp() {
     taskExecutionLeakTracker = OperationLeakTracker { getGradleTaskExecutionOperation(project, it) }
     taskExecutionLeakTracker.setUp()
 
     executionLeakTracker = OperationLeakTracker { getExecutionOperation(project, it) }
     executionLeakTracker.setUp()
-
-    executionOutputFixture = GradleExecutionOutputFixtureImpl()
-    executionOutputFixture.setUp()
-
-    executionEnvironmentFixture = GradleExecutionEnvironmentFixtureImpl(project)
-    executionEnvironmentFixture.setUp()
-
-    executionConsoleFixture = GradleExecutionConsoleFixtureImpl(project, executionEnvironmentFixture)
-    executionConsoleFixture.setUp()
-
-    buildViewFixture = BuildViewTestFixture(project)
-    buildViewFixture.setUp()
   }
 
   override fun tearDown() {
     RunAll.Companion.runAll(
-      { buildViewFixture.tearDown() },
-      { executionConsoleFixture.tearDown() },
-      { executionEnvironmentFixture.tearDown() },
-      { executionOutputFixture.tearDown() },
       { executionLeakTracker.tearDown() },
       { taskExecutionLeakTracker.tearDown() }
     )
@@ -166,40 +131,5 @@ class GradleExecutionTestFixtureImpl(
         }
       }
     }
-  }
-
-  override fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertSyncViewTree(assert)
-  }
-
-  override fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertBuildViewTree(assert)
-  }
-
-  override fun assertRunViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    executionConsoleFixture.assertRunTreeView(assert)
-  }
-
-  override fun assertRunViewTreeIsEmpty() {
-    executionConsoleFixture.assertRunTreeViewIsEmpty()
-  }
-
-  override fun assertPsiLocation(
-    testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
-    className: String, methodName: String?, parameterName: String?
-  ) {
-    executionConsoleFixture.assertPsiLocation(testAssertion, className, methodName, parameterName)
-  }
-
-  override fun assertTestEventsContain(className: String, methodName: String?) {
-    executionOutputFixture.assertTestEventContain(className, methodName)
-  }
-
-  override fun assertTestEventsDoNotContain(className: String, methodName: String?) {
-    executionOutputFixture.assertTestEventDoesNotContain(className, methodName)
-  }
-
-  override fun assertTestEventsWereNotReceived() {
-    executionOutputFixture.assertTestEventsWasNotReceived()
   }
 }

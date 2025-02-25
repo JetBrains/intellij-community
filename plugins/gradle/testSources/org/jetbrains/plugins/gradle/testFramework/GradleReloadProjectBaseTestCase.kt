@@ -6,12 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
@@ -26,23 +25,22 @@ abstract class GradleReloadProjectBaseTestCase {
 
   private lateinit var testInfo: TestInfo
 
-  private var gradleTestFixture: GradleTestFixture? = null
-  private var gradleProjectTestFixture: GradleProjectTestFixture? = null
-  private var gradleExecutionTestFixture: GradleExecutionTestFixture? = null
-
+  private var _gradleFixture: GradleTestFixture? = null
   val gradleFixture: GradleTestFixture
-    get() = requireNotNull(gradleTestFixture) {
+    get() = requireNotNull(_gradleFixture) {
       "Gradle fixture isn't setup. Please use [test] function inside your tests."
     }
 
+  private var _projectFixture: GradleProjectTestFixture? = null
   val projectFixture: GradleProjectTestFixture
-    get() = requireNotNull(gradleProjectTestFixture) {
-      "Gradle fixture isn't setup. Please use [test] function inside your tests."
+    get() = requireNotNull(_projectFixture) {
+      "Gradle project fixture isn't setup. Please use [test] function inside your tests."
     }
 
-  val executionFixture: GradleExecutionTestFixture
-    get() = requireNotNull(gradleExecutionTestFixture) {
-      "Gradle fixture isn't setup. Please use [test] function inside your tests."
+  private var _buildViewFixture: BuildViewTestFixture? = null
+  val buildViewFixture: BuildViewTestFixture
+    get() = requireNotNull(_buildViewFixture) {
+      "Gradle execution build view fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
   open fun setUp() = Unit
@@ -75,7 +73,7 @@ abstract class GradleReloadProjectBaseTestCase {
   }
 
   private fun setUpGradleReloadProjectBaseTestCase(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction) {
-    gradleTestFixture = GradleTestFixtureImpl(
+    _gradleFixture = GradleTestFixtureImpl(
       className = testInfo.testClass.get().simpleName,
       methodName = testInfo.testMethod.get().name,
       gradleVersion = gradleVersion,
@@ -83,14 +81,11 @@ abstract class GradleReloadProjectBaseTestCase {
     )
     gradleFixture.setUp()
 
-    gradleProjectTestFixture = GradleProjectTestFixtureImpl(gradleFixture)
+    _projectFixture = GradleProjectTestFixtureImpl(gradleFixture)
     projectFixture.setUp()
 
-    gradleExecutionTestFixture = GradleExecutionTestFixtureImpl(
-      projectFixture.project,
-      projectFixture.projectRoot
-    )
-    executionFixture.setUp()
+    _buildViewFixture = BuildViewTestFixture(projectFixture.project)
+    buildViewFixture.setUp()
 
     setUp()
   }
@@ -98,12 +93,12 @@ abstract class GradleReloadProjectBaseTestCase {
   private fun tearDownGradleReloadProjectBaseTestCase() {
     runAll(
       { tearDown() },
-      { gradleExecutionTestFixture?.tearDown() },
-      { gradleExecutionTestFixture = null },
-      { gradleProjectTestFixture?.tearDown() },
-      { gradleProjectTestFixture = null },
-      { gradleTestFixture?.tearDown() },
-      { gradleTestFixture = null }
+      { _buildViewFixture?.tearDown() },
+      { _buildViewFixture = null },
+      { _projectFixture?.tearDown() },
+      { _projectFixture = null },
+      { _gradleFixture?.tearDown() },
+      { _gradleFixture = null }
     )
   }
 

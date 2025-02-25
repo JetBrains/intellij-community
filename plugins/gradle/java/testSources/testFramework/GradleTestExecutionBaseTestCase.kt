@@ -4,54 +4,67 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestExecutionTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionConsoleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestExecutionConsoleTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.SMTestRunnerOutputTestFixtureImpl
 
 abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
 
-  private var _testExecutionFixture: GradleTestExecutionTestFixture? = null
-  val testExecutionFixture: GradleTestExecutionTestFixture
-    get() = requireNotNull(_testExecutionFixture) {
-      "Gradle test execution fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+  private var _testExecutionConsoleFixture: GradleTestExecutionConsoleTestFixture? = null
+  val testExecutionConsoleFixture: GradleTestExecutionConsoleTestFixture
+    get() = requireNotNull(_testExecutionConsoleFixture) {
+      "Gradle test execution console fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
+
+  private var _testRunnerOutputFixture: SMTestRunnerOutputTestFixture? = null
+  val testRunnerOutputFixture: SMTestRunnerOutputTestFixture
+    get() = requireNotNull(_testRunnerOutputFixture) {
+      "Gradle test runner output fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
   override fun setUp() {
     super.setUp()
 
-    _testExecutionFixture = GradleTestExecutionTestFixtureImpl(project, executionFixture)
-    testExecutionFixture.setUp()
+    _testExecutionConsoleFixture = GradleTestExecutionConsoleTestFixtureImpl(executionEnvironmentFixture)
+    testExecutionConsoleFixture.setUp()
+
+    _testRunnerOutputFixture = SMTestRunnerOutputTestFixtureImpl(project)
+    testRunnerOutputFixture.setUp()
   }
 
   override fun tearDown() {
     runAll(
-      { _testExecutionFixture?.tearDown() },
-      { _testExecutionFixture = null },
+      { _testRunnerOutputFixture?.tearDown() },
+      { _testRunnerOutputFixture = null },
+      { _testExecutionConsoleFixture?.tearDown() },
+      { _testExecutionConsoleFixture = null },
       { super.tearDown() },
     )
   }
 
   fun assertTestViewTree(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    testExecutionFixture.assertTestViewTree(assert)
+    testExecutionConsoleFixture.assertTestTreeView(assert)
   }
 
   fun assertTestViewTreeIsEmpty() {
-    testExecutionFixture.assertTestViewTreeIsEmpty()
+    testExecutionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
   fun assertTestConsoleContains(expected: String) {
-    testExecutionFixture.assertTestConsoleContains(expected)
+    testExecutionConsoleFixture.assertTestConsoleContains(expected)
   }
 
   fun assertTestConsoleDoesNotContain(expected: String) {
-    testExecutionFixture.assertTestConsoleDoesNotContain(expected)
+    testExecutionConsoleFixture.assertTestConsoleDoesNotContain(expected)
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
-    testExecutionFixture.assertTestConsoleContains(this, expectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleContains(this, expectedTextSample)
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
-    testExecutionFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
   }
 
   fun assertTestEventCount(
@@ -59,6 +72,6 @@ abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
     suiteStart: Int, suiteFinish: Int,
     testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int,
   ) {
-    testExecutionFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
+    testRunnerOutputFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

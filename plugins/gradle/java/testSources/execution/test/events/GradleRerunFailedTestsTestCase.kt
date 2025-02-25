@@ -14,8 +14,8 @@ abstract class GradleRerunFailedTestsTestCase : GradleTestExecutionTestCase() {
 
   fun rerunFailedTests() {
     invokeAndWaitIfNeeded {
-      val testExecutionConsole = testExecutionFixture.getTestExecutionConsole()
-      val executionEnvironment = executionFixture.getExecutionEnvironment()
+      val testExecutionConsole = testExecutionConsoleFixture.getTestExecutionConsole()
+      val executionEnvironment = executionEnvironmentFixture.getExecutionEnvironment()
       val rerunAction = GradleRerunFailedTestsAction(testExecutionConsole)
       rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
       val actionEvent = TestActionEvent.createTestEvent(

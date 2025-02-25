@@ -12,13 +12,13 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionConsoleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
 class GradleTestExecutionConsoleTestFixtureImpl(
-  private val executionFixture: GradleExecutionTestFixture,
+  private val executionEnvironmentFixture: GradleExecutionEnvironmentFixture,
 ) : GradleTestExecutionConsoleTestFixture {
 
   override fun setUp() = Unit
@@ -26,7 +26,7 @@ class GradleTestExecutionConsoleTestFixtureImpl(
   override fun tearDown() = Unit
 
   override fun getTestExecutionConsole(): GradleTestsExecutionConsole {
-    val executionEnvironment = executionFixture.getExecutionEnvironment()
+    val executionEnvironment = executionEnvironmentFixture.getExecutionEnvironment()
     val buildView = executionEnvironment.contentToReuse!!.executionConsole!! as BuildView
     val testExecutionConsole = buildView.consoleView as? GradleTestsExecutionConsole
     Assertions.assertNotNull(testExecutionConsole) {

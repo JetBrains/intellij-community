@@ -15,7 +15,7 @@ class GradleSyncOutputTest : GradleReloadProjectTestCase() {
   fun `test sync with lazy task configuration`(gradleVersion: GradleVersion) {
     test(gradleVersion) {
       reloadProject()
-      executionFixture.assertSyncViewTree {
+      buildViewFixture.assertSyncViewTree {
         assertNode("finished")
       }
       edtWriteAction {
@@ -29,7 +29,7 @@ class GradleSyncOutputTest : GradleReloadProjectTestCase() {
         }
       }
       reloadProject()
-      executionFixture.assertSyncViewTree {
+      buildViewFixture.assertSyncViewTree {
         assertNode("finished")
       }
       edtWriteAction {
@@ -46,7 +46,7 @@ class GradleSyncOutputTest : GradleReloadProjectTestCase() {
         }
       }
       reloadProject()
-      executionFixture.assertSyncViewTree {
+      buildViewFixture.assertSyncViewTree {
         assertNode("finished")
       }
     }
