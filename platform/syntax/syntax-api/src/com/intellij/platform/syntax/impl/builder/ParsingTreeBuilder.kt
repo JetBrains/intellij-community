@@ -363,7 +363,7 @@ internal class ParsingTreeBuilder(
     return result
   }
 
-  override val lexemes: TokenList
+  override val tokens: TokenList
     get() = TokenSequence(myLexStarts, myLexTypes, lexemeCount, text)
 
   inner class ProductionResultImpl : ProductionResult {
@@ -381,7 +381,7 @@ internal class ParsingTreeBuilder(
     }
 
     override val tokenSequence: TokenList
-      get() = lexemes
+      get() = tokens
 
     override fun copyTokenStartsToArray(dest: IntArray, srcStart: Int, destStart: Int, length: Int) {
       System.arraycopy(myLexStarts, srcStart, dest, destStart, length)

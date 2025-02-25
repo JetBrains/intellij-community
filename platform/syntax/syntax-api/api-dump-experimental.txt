@@ -61,11 +61,11 @@
 - a:error(java.lang.String):V
 - a:getCurrentOffset():I
 - a:getLastDoneMarker():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
-- a:getLexemes():com.intellij.platform.syntax.lexer.TokenList
 - a:getProductions():java.util.List
 - a:getText():java.lang.CharSequence
 - a:getTokenText():java.lang.String
 - a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- a:getTokens():com.intellij.platform.syntax.lexer.TokenList
 - a:hasErrorsAfter(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):Z
 - isWhitespaceOrComment(com.intellij.platform.syntax.SyntaxElementType):Z
 - a:lookAhead(I):com.intellij.platform.syntax.SyntaxElementType

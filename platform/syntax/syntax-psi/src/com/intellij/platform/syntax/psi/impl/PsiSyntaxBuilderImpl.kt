@@ -277,7 +277,7 @@ internal class PsiSyntaxBuilderImpl(
   }
 
   private fun reportUnbalancedMarkers(marker: NodeBase?) {
-    val tokenSequence = builder.lexemes
+    val tokenSequence = builder.tokens
     val lexemeSize = tokenSequence.tokenCount
     val index = if (marker != null) marker.startIndex + 1 else lexemeSize
 

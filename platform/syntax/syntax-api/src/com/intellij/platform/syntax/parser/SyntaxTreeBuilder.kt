@@ -170,10 +170,10 @@ interface SyntaxTreeBuilder {
 
   // todo extract to separate interface???
   /**
-   * A view of token list being used for parsing.
-   * The lexemes can mutate during parsing.
+   * A view of the token list being used for parsing.
+   * The tokens can mutate during parsing.
    */
-  val lexemes: TokenList
+  val tokens: TokenList
 
   fun isWhitespaceOrComment(elementType: SyntaxElementType): Boolean = false
 
