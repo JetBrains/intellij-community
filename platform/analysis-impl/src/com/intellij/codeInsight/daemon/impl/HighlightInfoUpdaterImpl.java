@@ -487,8 +487,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     if (oldInfos.isEmpty() && newInfos.isEmpty()) {
       return;
     }
+    long psiTimeStamp = PsiManager.getInstance(project).getModificationTracker().getModificationCount();
     for (HighlightInfo newInfo : newInfos) {
       assert newInfo.getHighlighter() == null : newInfo;
+      newInfo.updatePsiTimeStamp(psiTimeStamp);
     }
     assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
     // execute in non-cancelable block. It should not throw PCE anyway, but just in case
