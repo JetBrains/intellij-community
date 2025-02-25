@@ -1,6 +1,5 @@
 [graph]
 targets = []
-exclude = ["cargo-deny", "cargo-about"]
 
 [advisories]
 version = 2
