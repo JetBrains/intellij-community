@@ -1949,6 +1949,9 @@
     <listener class="com.intellij.ide.AppIdleMemoryCleaner$MyApplicationActivationListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.openapi.editor.impl.ad.document.MyFileDocumentBindingListener"
+              topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
   </applicationListeners>
 
   <projectListeners>

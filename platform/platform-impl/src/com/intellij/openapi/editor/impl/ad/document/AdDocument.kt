@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.ad
+package com.intellij.openapi.editor.impl.ad.document
 
 import andel.text.*
 import com.intellij.openapi.Disposable
@@ -9,13 +9,14 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditReadOnlyListener
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.editor.ex.RangeMarkerEx
-import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.beans.PropertyChangeListener
 import java.util.*
+
 
 @Experimental
 internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {

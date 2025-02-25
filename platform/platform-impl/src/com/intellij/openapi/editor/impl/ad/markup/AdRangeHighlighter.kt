@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.ad.AdIntervalData
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
