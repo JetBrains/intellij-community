@@ -57,6 +57,16 @@ fun SearchScope.getAnyCorrespondingContext(file: VirtualFile): CodeInsightContex
   }
 }
 
+//todo ijpl-339 mark experimental
+@Internal
+fun SearchScope.getCorrespondingContexts(file: VirtualFile): Collection<CodeInsightContext> {
+  return when (val contextInfo = getFileContextInfo(file)) {
+    is ActualContextFileInfo -> contextInfo.contexts
+    is NoContextFileInfo -> listOf(anyContext())
+    else -> emptyList()
+  }
+}
+
 val SearchScope.codeInsightContextInfo: CodeInsightContextInfo
   @Internal
   get() = if (this is CodeInsightContextAwareSearchScope) this.codeInsightContextInfo else NoContextInformation()

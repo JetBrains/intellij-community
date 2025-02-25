@@ -30,7 +30,10 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -42,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -159,39 +163,20 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     for (VirtualFile file : files) {
       // The scope allows us to pre-filter the virtual files and avoid creating unnecessary PSI files.
 
-      PsiFile psiFile;
-      if (sharedSourceSupportEnabled) {
-        if (scope != null) {
-          CodeInsightContextFileInfo contextInfo = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, file);
-          if (contextInfo instanceof NoContextFileInfo) {
-            // file is in scope, but context is not specified
-            psiFile = myManager.findFile(file);
+      if (sharedSourceSupportEnabled && scope != null) {
+        Collection<CodeInsightContext> contexts = CodeInsightContextAwareSearchScopes.getCorrespondingContexts(scope, file);
+        for (CodeInsightContext context : contexts) {
+          PsiFile psiFile = myManager.findFile(file, context);
+          if (psiFile != null) {
+            psiFiles.add(psiFile);
           }
-          else if (contextInfo instanceof ActualContextFileInfo) {
-            // file is in scope, context is specified
-            CodeInsightContext context = ((ActualContextFileInfo)contextInfo).getContexts().iterator().next();
-            psiFile = myManager.findFile(file, context);
-          }
-          else {
-            // DoesNotContainFileInfo, file is not in scope
-            psiFile = null;
-          }
-        }
-        else {
-          psiFile = myManager.findFile(file);
         }
       }
-      else {
-        if (scope == null || scope.contains(file)) {
-          psiFile = myManager.findFile(file);
+      else if (scope == null || scope.contains(file)) {
+        PsiFile psiFile = myManager.findFile(file);
+        if (psiFile != null) {
+          psiFiles.add(psiFile);
         }
-        else {
-          psiFile = null;
-        }
-      }
-
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
       }
     }
     return PsiUtilCore.toPsiFileArray(psiFiles);
