@@ -1212,8 +1212,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     p = readProject(module)
     assertEquals(1, p.profiles.size)
-    assertEquals("profiles", p.profiles[0].modules[0])
-    assertEquals("profiles.xml", p.profiles[0].source)
+    assertEquals("pom", p.profiles[0].source)
 
     p = readProject(module)
     assertEquals(1, p.profiles.size)
@@ -1229,7 +1228,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     p = readProject(module)
     assertEquals(1, p.profiles.size)
     UsefulTestCase.assertEmpty("parentProfiles", p.profiles[0].modules)
-    assertEquals("profiles.xml", p.profiles[0].source)
+    assertEquals("settings.xml", p.profiles[0].source)
 
     p = readProject(module)
     assertEquals(1, p.profiles.size)
