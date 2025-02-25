@@ -184,10 +184,18 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun componentConfig() {
+  fun `descriptor with project components loads`() {
     val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
-    pluginFile.write("<idea-plugin>\n  <id>bar</id>\n  <project-components>\n    <component>\n      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n      <option name=\"workspace\" value=\"true\"/>\n    </component>\n\n    \n  </project-components>\n</idea-plugin>")
-    val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
+    pluginFile.write("""<idea-plugin>
+  <id>bar</id>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </project-components>
+</idea-plugin>""")
+    val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
