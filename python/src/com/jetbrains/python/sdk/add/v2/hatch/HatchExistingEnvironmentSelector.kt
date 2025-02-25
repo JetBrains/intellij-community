@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -14,6 +14,10 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.hatch.createSdk
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType

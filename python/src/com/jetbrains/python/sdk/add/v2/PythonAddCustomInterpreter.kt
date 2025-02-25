@@ -14,6 +14,14 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.sdk.add.v2.conda.CondaExistingEnvironmentSelector
+import com.jetbrains.python.sdk.add.v2.conda.CondaNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.hatch.HatchExistingEnvironmentSelector
+import com.jetbrains.python.sdk.add.v2.hatch.HatchNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.poetry.EnvironmentCreatorPoetry
+import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
+import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
+import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import kotlinx.coroutines.flow.Flow
 import java.nio.file.Path
 

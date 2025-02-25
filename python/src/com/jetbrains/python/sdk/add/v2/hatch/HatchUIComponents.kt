@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -25,7 +25,13 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
+import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
+import com.jetbrains.python.sdk.add.v2.executableSelector
+import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
