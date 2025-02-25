@@ -91,18 +91,7 @@ public class MetadataDebugHelper {
   }
 
   private static String toJson(String str) {
-    StringBuilder sb = new StringBuilder();
-    sb.append('"');
-    for (int i = 0; i < str.length(); i++) {
-      char c = str.charAt(i);
-      if (c == '"') {
-        sb.append("\\\"");
-      } else {
-        sb.append(c);
-      }
-    }
-    sb.append('"');
-    return sb.toString();
+    return "\"" + JsonUtils.escapeJsonString(str) + "\"";
   }
 
   private static String[] toJson(String[] array) {
