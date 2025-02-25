@@ -307,7 +307,14 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
+
+  /**
+   * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
+   * this function will return not-null string with advice on how to fix the problem
+   */
+  @ApiStatus.Internal
+  fun getLockingProhibitedAdvice(): String?
 
   /** DO NOT USE */
   @ApiStatus.Internal
