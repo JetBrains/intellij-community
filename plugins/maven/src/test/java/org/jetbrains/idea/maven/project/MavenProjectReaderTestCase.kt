@@ -17,7 +17,7 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile,
                                     locator: MavenProjectReaderProjectLocator,
                                     vararg profiles: String): MavenProjectReaderResult {
-    val result = MavenProjectReader(project).readProjectAsync(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val result = MavenProjectReader(project, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator).readProjectAsync(file)
     return result
   }
 
