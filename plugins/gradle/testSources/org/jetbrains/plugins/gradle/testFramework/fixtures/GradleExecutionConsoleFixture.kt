@@ -5,7 +5,7 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 
-interface GradleExecutionViewFixture : IdeaTestFixture {
+interface GradleExecutionConsoleFixture : IdeaTestFixture {
 
   fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit)
 

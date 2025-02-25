@@ -23,7 +23,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionConsoleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleEventDispatcherClosing
@@ -44,7 +44,7 @@ class GradleExecutionTestFixtureImpl(
 
   private lateinit var executionOutputFixture: GradleExecutionOutputFixture
   private lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
-  private lateinit var executionConsoleFixture: GradleExecutionViewFixture
+  private lateinit var executionConsoleFixture: GradleExecutionConsoleFixture
   private lateinit var buildViewFixture: BuildViewTestFixture
 
   override fun getExecutionEnvironment(): ExecutionEnvironment {
@@ -64,7 +64,7 @@ class GradleExecutionTestFixtureImpl(
     executionEnvironmentFixture = GradleExecutionEnvironmentFixtureImpl(project)
     executionEnvironmentFixture.setUp()
 
-    executionConsoleFixture = GradleExecutionViewFixtureImpl(project, executionEnvironmentFixture)
+    executionConsoleFixture = GradleExecutionConsoleFixtureImpl(project, executionEnvironmentFixture)
     executionConsoleFixture.setUp()
 
     buildViewFixture = BuildViewTestFixture(project)

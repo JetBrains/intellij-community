@@ -16,13 +16,13 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionConsoleFixture
 import org.junit.jupiter.api.Assertions
 
-class GradleExecutionViewFixtureImpl(
+class GradleExecutionConsoleFixtureImpl(
   private val project: Project,
   private val executionEnvironmentFixture: GradleExecutionEnvironmentFixture,
-) : GradleExecutionViewFixture {
+) : GradleExecutionConsoleFixture {
 
   override fun setUp() = Unit
 
