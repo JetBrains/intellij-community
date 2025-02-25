@@ -93,7 +93,6 @@ internal class ContextParametersMigrationInspection :
     ): KtVisitor<*, *> {
         return object : KtVisitorVoid() {
             override fun visitContextReceiverList(contextReceiverList: KtContextReceiverList) {
-                visitTargetElement(contextReceiverList, holder, isOnTheFly)
                 contextReceiverList.contextReceivers().forEach { contextReceiver ->
                     visitTargetElement(contextReceiver, holder, isOnTheFly)
                 }
