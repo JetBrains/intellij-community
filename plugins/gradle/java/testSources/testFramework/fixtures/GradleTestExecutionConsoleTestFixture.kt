@@ -6,7 +6,7 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 
-interface GradleTestExecutionViewTestFixture : IdeaTestFixture {
+interface GradleTestExecutionConsoleTestFixture : IdeaTestFixture {
 
   fun getTestExecutionConsole(): GradleTestsExecutionConsole
 

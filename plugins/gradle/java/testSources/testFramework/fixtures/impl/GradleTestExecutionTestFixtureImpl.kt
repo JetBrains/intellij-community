@@ -8,7 +8,7 @@ import com.intellij.testFramework.RunAll
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionViewTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionConsoleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 
 class GradleTestExecutionTestFixtureImpl(
@@ -17,55 +17,55 @@ class GradleTestExecutionTestFixtureImpl(
 ) : GradleTestExecutionTestFixture {
 
   private lateinit var testRunnerOutputFixture: SMTestRunnerOutputTestFixture
-  private lateinit var testExecutionViewFixture: GradleTestExecutionViewTestFixture
+  private lateinit var testExecutionConsoleFixture: GradleTestExecutionConsoleTestFixture
 
   override fun getTestExecutionConsole(): GradleTestsExecutionConsole {
-    return testExecutionViewFixture.getTestExecutionConsole()
+    return testExecutionConsoleFixture.getTestExecutionConsole()
   }
 
   override fun setUp() {
     testRunnerOutputFixture = SMTestRunnerOutputTestFixtureImpl(project)
     testRunnerOutputFixture.setUp()
 
-    testExecutionViewFixture = GradleTestExecutionViewTestFixtureImpl(executionFixture)
-    testExecutionViewFixture.setUp()
+    testExecutionConsoleFixture = GradleTestExecutionConsoleTestFixtureImpl(executionFixture)
+    testExecutionConsoleFixture.setUp()
   }
 
   override fun tearDown() {
     RunAll.runAll(
-      { testExecutionViewFixture.tearDown() },
+      { testExecutionConsoleFixture.tearDown() },
       { testRunnerOutputFixture.tearDown() },
     )
   }
 
   override fun assertTestViewTree(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    testExecutionViewFixture.assertTestTreeView(assert)
+    testExecutionConsoleFixture.assertTestTreeView(assert)
   }
 
   override fun assertTestViewTreeIsEmpty() {
-    testExecutionViewFixture.assertTestTreeViewIsEmpty()
+    testExecutionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
   override fun assertTestConsoleContains(expectedTextSample: String) {
-    testExecutionViewFixture.assertTestConsoleContains(expectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleContains(expectedTextSample)
   }
 
   override fun assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
-    testExecutionViewFixture.assertTestConsoleDoesNotContain(unexpectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleDoesNotContain(unexpectedTextSample)
   }
 
   override fun assertTestConsoleContains(
     testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
     expectedTextSample: String,
   ) {
-    testExecutionViewFixture.assertTestConsoleContains(testAssertion, expectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleContains(testAssertion, expectedTextSample)
   }
 
   override fun assertTestConsoleDoesNotContain(
     testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
     unexpectedTextSample: String,
   ) {
-    testExecutionViewFixture.assertTestConsoleDoesNotContain(testAssertion, unexpectedTextSample)
+    testExecutionConsoleFixture.assertTestConsoleDoesNotContain(testAssertion, unexpectedTextSample)
   }
 
   override fun assertTestEventCount(

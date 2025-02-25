@@ -12,14 +12,14 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionViewTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionConsoleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
-class GradleTestExecutionViewTestFixtureImpl(
+class GradleTestExecutionConsoleTestFixtureImpl(
   private val executionFixture: GradleExecutionTestFixture,
-) : GradleTestExecutionViewTestFixture {
+) : GradleTestExecutionConsoleTestFixture {
 
   override fun setUp() = Unit
 
