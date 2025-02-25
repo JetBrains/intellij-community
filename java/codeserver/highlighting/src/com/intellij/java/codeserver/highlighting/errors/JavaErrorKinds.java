@@ -994,6 +994,23 @@ public final class JavaErrorKinds {
           return message("switch.label.duplicate", value);
         }
       });
+  public static final Simple<PsiCaseLabelElement> SWITCH_FALLTHROUGH_TO_PATTERN = error("switch.fallthrough.to.pattern");
+  public static final Simple<PsiCaseLabelElement> SWITCH_MULTIPLE_LABELS_WITH_PATTERN_VARIABLES = 
+    error("switch.multiple.labels.with.pattern.variables");
+  public static final Parameterized<PsiDefaultCaseLabelElement, PsiCaseLabelElementList> SWITCH_DEFAULT_NULL_ORDER = 
+    parameterized("switch.default.null.order");
+  public static final Simple<PsiDefaultCaseLabelElement> SWITCH_DEFAULT_LABEL_NOT_ALLOWED = 
+    error("switch.default.label.not.allowed");
+  public static final Simple<PsiExpression> SWITCH_NULL_LABEL_NOT_ALLOWED = 
+    error("switch.null.label.not.allowed");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS = 
+    error("switch.label.combination.constants.and.patterns");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED = 
+    error("switch.label.combination.constants.and.patterns.unnamed");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_MULTIPLE_PATTERNS = 
+    error("switch.label.multiple.patterns");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED = 
+    error("switch.label.multiple.patterns.unnamed");
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 

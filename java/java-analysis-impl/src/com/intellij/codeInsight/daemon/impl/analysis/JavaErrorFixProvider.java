@@ -734,6 +734,13 @@ final class JavaErrorFixProvider {
     fix(SWITCH_LABEL_QUALIFIED_ENUM, error -> myFactory.createDeleteFix(
       requireNonNull(error.psi().getQualifier()), JavaErrorBundle.message("qualified.enum.constant.in.switch.remove.fix")));
     fix(SWITCH_DEFAULT_LABEL_CONTAINS_CASE, error -> myFactory.createReplaceCaseDefaultWithDefaultFix(error.context()));
+    JavaFixProvider<PsiCaseLabelElement, Void> splitCase = error -> myFactory.createSplitSwitchBranchWithSeveralCaseValuesAction();
+    fix(SWITCH_MULTIPLE_LABELS_WITH_PATTERN_VARIABLES, splitCase);
+    fix(SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS, splitCase);
+    fix(SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED, splitCase);
+    fix(SWITCH_LABEL_MULTIPLE_PATTERNS, splitCase);
+    fix(SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED, splitCase);
+    fix(SWITCH_DEFAULT_NULL_ORDER, error -> myFactory.createReverseCaseDefaultNullFixFix(error.context()));
   }
 
   private void createAccessFixes() {

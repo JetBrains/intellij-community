@@ -647,6 +647,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) mySwitchChecker.checkSwitchSelectorType(block);
     if (!hasErrorResults()) mySwitchChecker.checkLabelSelectorCompatibility(block);
     if (!hasErrorResults()) mySwitchChecker.checkDuplicates(block);
+    if (!hasErrorResults()) mySwitchChecker.checkFallthroughLegality(block);
   }
 
   @Override
