@@ -470,7 +470,7 @@ suspend fun <T> withTransactor(
       }
 
       override fun toString(): String {
-        return "Kernel($kernelId)"
+        return "Kernel@$kernelId"
       }
     }
 
