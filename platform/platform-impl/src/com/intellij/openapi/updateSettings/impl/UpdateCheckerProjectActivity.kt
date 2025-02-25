@@ -4,6 +4,8 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller.cleanupPatch
@@ -36,8 +38,9 @@ private class UpdateCheckerProjectActivity : ProjectActivity {
     UpdateCheckerService.showUpdatedPluginsNotification(project)
 
     withContext(Dispatchers.IO) {
-      UpdateCheckerService.deleteOldApplicationDirectories()
-
+      coroutineToIndicator {
+        UpdateCheckerService.deleteOldApplicationDirectories(ProgressManager.getGlobalProgressIndicator())
+      }
       cleanupPatch()
     }
   }

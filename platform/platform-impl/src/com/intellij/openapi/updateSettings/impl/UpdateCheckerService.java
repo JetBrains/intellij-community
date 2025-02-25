@@ -17,6 +17,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
@@ -334,7 +335,7 @@ public class UpdateCheckerService {
     return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 
-  static void deleteOldApplicationDirectories() {
+  static void deleteOldApplicationDirectories(@Nullable ProgressIndicator indicator) {
     PropertiesComponent propertyService = PropertiesComponent.getInstance();
     if (ConfigImportHelper.isConfigImported()) {
       long scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
@@ -349,7 +350,7 @@ public class UpdateCheckerService {
         LOG.info("starting old directories scan");
         long expireAfter = now - DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
 
-        new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null);
+        new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, indicator);
         propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
         LOG.info("old directories scan complete");
       }
