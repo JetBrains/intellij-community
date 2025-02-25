@@ -57,16 +57,7 @@ internal sealed class EdtCoroutineDispatcher(
   private fun wrapWithLocking(runnable: Runnable): Runnable {
     if (!type.allowLocks()) {
       return Runnable {
-        try {
-          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, type.lockBehavior == LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT)
-        }
-        catch (e: ThreadingSupport.LockAccessDisallowed) {
-          throw IllegalStateException("You are attempting to use the RW lock inside `$this`.\n" +
-                                      "This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).\n" +
-                                      "The following solutions are available:\n" +
-                                      "1. Consider moving the model access outside `$this`. This would help to ensure that the UI is responsive.\n" +
-                                      "2. Consider using legacy `Dispatchers.EDT` that allows using the RW lock.\n", e)
-        }
+        ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, type.lockBehavior == LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, lockAccessViolationMessage)
       }
     }
     if (isCoroutineWILEnabled) {
@@ -82,6 +73,12 @@ internal sealed class EdtCoroutineDispatcher(
   object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.LEGACY_EDT)
   object NonLocking : EdtCoroutineDispatcher(EdtDispatcherKind.MODERN_UI)
   object Main : EdtCoroutineDispatcher(EdtDispatcherKind.MAIN)
+
+  val lockAccessViolationMessage = """The use of the RW lock is forbidden by `$this`. This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).
+The following solutions are available:
+1. Consider moving the model access outside `$this`. This would help to ensure that the UI is responsive.
+2. Consider using legacy `Dispatchers.EDT` that permits usage of the RW lock. In this case, you can wrap the model-accessing code in `Dispatchers.EDT`
+"""
 }
 
 private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoroutineDispatcher(type) {
@@ -161,7 +158,7 @@ internal enum class EdtDispatcherKind(
   fun presentableName(): String = when (this) {
     LEGACY_EDT -> "Dispatchers.EDT"
     MODERN_UI -> "Dispatchers.UI"
-    MAIN -> "Dispatchers.UI.Main"
+    MAIN -> "Dispatchers.Main"
   }
 }
 
