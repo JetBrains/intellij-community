@@ -345,7 +345,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
           PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false, true);
           mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
-          CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.Companion.getInstanceImpl(getProject());
+          CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.getInstanceImpl(getProject());
           if (contextManager.isSharedSourceSupportEnabled()) {
             CodeInsightContext context = contextManager.getCodeInsightContext(getViewProvider());
             contextManager.setCodeInsightContext(mirror.getViewProvider(), context);

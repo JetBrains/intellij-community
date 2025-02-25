@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.concurrency.currentThreadContext
@@ -36,6 +36,7 @@ class CodeInsightContextManagerImpl(
 ) : CodeInsightContextManager, Disposable.Default {
 
   companion object {
+    @JvmStatic
     fun getInstanceImpl(project: Project): CodeInsightContextManagerImpl = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
   }
 
