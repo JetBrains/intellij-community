@@ -6,13 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.ThreadLocalRhizomeDB
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.pasta.common.DocumentEntity
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.EDT
 import fleet.kernel.awaitCommitted
 import fleet.kernel.change
@@ -20,6 +20,7 @@ import fleet.kernel.shared
 import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -32,51 +33,58 @@ internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope
     fun getInstance(): AdDocumentSynchronizer = service()
   }
 
-  init {
-    // TODO: PrioritizedDocumentListener Int.MIN_VALUE + 1
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(
-      object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) {
-          val document = event.document
-          if (FileDocumentManager.getInstance().getFile(document) is VirtualFileWithId) { // TODO: more reliable condition
-            val entityChange = coroutineScope.async(AdTheManager.AD_DISPATCHER) {
-              val entity = DocumentEntityManager.getInstance().getDocEntity(document)
-              if (entity != null) {
-                val operation = operation(event)
-                change {
-                  shared { // shared to mutate shared document components (e.g., AdMarkupModel)
-                    entity.mutate(this, OpenMap.empty()) {
-                      edit(operation)
-                    }
-                  }
-                }
-                awaitCommitted()
-                true
-              } else {
-                false
-              }
-            }
-            // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
-            val changed = runBlocking { entityChange.await() }
-            if (EDT.isCurrentThreadEdt() && changed) {
-              ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
+  fun bindDocumentListener(document: DocumentEx): CoroutineScope {
+    val debugName = document.toString()
+    val cs = coroutineScope.childScope("doc->entity sync $debugName")
+    coroutineScope.launch(AdTheManager.AD_DISPATCHER) {
+      val entity = DocumentEntityManager.getInstance().getDocEntity(document)
+      checkNotNull(entity) { "entity $debugName not found" }
+      document.addDocumentListener(DocToEntitySynchronizer(debugName, entity, cs))
+    }
+    return cs
+  }
+
+  private class DocToEntitySynchronizer(
+    private val debugName: String,
+    private val entity: DocumentEntity,
+    private val coroutineScope: CoroutineScope
+  ) : PrioritizedDocumentListener {
+
+    override fun getPriority(): Int = Int.MIN_VALUE + 1
+
+    override fun documentChanged(event: DocumentEvent) {
+      val entityChange = coroutineScope.async {
+        val operation = operation(event)
+        change {
+          shared { // shared to mutate shared document components (e.g., AdMarkupModel)
+            entity.mutate(this, OpenMap.empty()) {
+              edit(operation)
             }
           }
         }
-      },
-      this,
-    )
-  }
+        awaitCommitted()
+      }
+      // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
+      runBlocking { entityChange.await() }
+      if (EDT.isCurrentThreadEdt()) {
+        ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
+      }
+    }
 
-  private fun operation(event: DocumentEvent): Operation {
-    val oldFragment = event.oldFragment.toString()
-    val newFragment = event.newFragment.toString()
-    val lengthBefore = event.document.textLength - newFragment.length + oldFragment.length
-    return Operation.Companion.replaceAt(
-      offset = event.offset.toLong(),
-      oldText = oldFragment,
-      newText = newFragment,
-      totalLength = lengthBefore.toLong(),
-    )
+    private fun operation(event: DocumentEvent): Operation {
+      val oldFragment = event.oldFragment.toString()
+      val newFragment = event.newFragment.toString()
+      val lengthBefore = event.document.textLength - newFragment.length + oldFragment.length
+      return Operation.replaceAt(
+        offset = event.offset.toLong(),
+        oldText = oldFragment,
+        newText = newFragment,
+        totalLength = lengthBefore.toLong(),
+      )
+    }
+
+    override fun toString(): String {
+      return "DocToEntitySynchronizer($debugName, entity=$entity)"
+    }
   }
 }

@@ -10,8 +10,12 @@ import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.util.UID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.set
 
 
 @Experimental
@@ -52,22 +56,27 @@ interface DocumentEntityProvider {
 
 private class DefaultDocumentEntityProvider() : DocumentEntityProvider {
 
+  private val entityToScope= ConcurrentHashMap<DocumentEntity, CoroutineScope>()
+
   override fun canCreateEntity(file: VirtualFile, document: DocumentEx): Boolean {
     return file is VirtualFileWithId
   }
 
   override suspend fun createEntity(file: VirtualFile, document: DocumentEx): DocumentEntity {
     val uid = DocumentEntityProvider.fileUID(file as VirtualFileWithId)
-    AdDocumentSynchronizer.getInstance()
-    // TODO: data race?
-    return change {
+    val coroutineScope = AdDocumentSynchronizer.getInstance().bindDocumentListener(document)
+    val text = document.immutableCharSequence // TODO: data race between creation and synchronizer?
+    val entity = change {
       shared {
-        DocumentEntity.fromText(uid, document.immutableCharSequence)
+        DocumentEntity.fromText(uid, text)
       }
     }
+    entityToScope[entity] = coroutineScope
+    return entity
   }
 
   override suspend fun deleteEntity(entity: DocumentEntity) {
+    entityToScope.remove(entity)!!.cancel()
     change {
       shared {
         if (entity.exists()) {

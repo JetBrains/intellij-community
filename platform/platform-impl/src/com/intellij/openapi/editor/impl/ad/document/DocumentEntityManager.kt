@@ -124,6 +124,7 @@ private data class DocEntityHandle(
     if (entity != null) {
       return entity
     }
+    AdTheManager.LOG.debug { "slow path entity creation $debugName" }
     return runWithModalProgressBlocking(
       ModalTaskOwner.guess(),
       "Shared document entity creation $debugName",
@@ -138,7 +139,6 @@ private data class DocEntityHandle(
     }
     assert(deferred != ENTITY_IS_READY)
     assert(deferred != ENTITY_IS_NOT_READY)
-    AdTheManager.LOG.debug { "slow path entity creation $debugName" }
     return (deferred to null)
   }
 
