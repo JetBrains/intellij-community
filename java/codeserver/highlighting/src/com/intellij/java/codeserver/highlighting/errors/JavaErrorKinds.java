@@ -1328,7 +1328,7 @@ public final class JavaErrorKinds {
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
   public static final Simple<PsiImportModuleStatement> IMPORT_MODULE_NOT_ALLOWED =
-    error(PsiImportModuleStatement.class, "import.module.not.allowed");
+    error(PsiImportModuleStatement.class, "module.import.not.allowed");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
       .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));

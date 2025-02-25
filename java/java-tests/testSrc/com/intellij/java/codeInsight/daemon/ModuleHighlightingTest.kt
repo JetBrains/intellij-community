@@ -86,7 +86,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testModuleImportDeclarationInModuleInfoFile() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       highlight("module-info.java", """
-        <error descr="Import module is not allowed">import module M2;</error>
+        <error descr="Module import is not allowed">import module M2;</error>
         module my.module {
           requires M2;
         }
@@ -97,7 +97,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testModuleImportDeclarationInModuleInfoFileFix() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
-        <error descr="Import module is not allowed">import module <caret>M2;</error>
+        <error descr="Module import is not allowed">import module <caret>M2;</error>
         module my.module {
           requires M2;
         }
