@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -446,6 +447,52 @@ class EdtCoroutineDispatcherTest {
       }
     }
     job.join()
+  }
+
+  @Test
+  fun `exception messages in preventive locking for Dispatchers UI`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.UI) {
+      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction<Unit, RuntimeException> {
+        val error = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertReadAccess()
+        }
+        assertThat(error.message)
+          .contains("read access")
+          .contains("Dispatchers.UI")
+          .doesNotContain("Dispatchers.Main")
+
+        val error2 = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertWriteIntentReadAccess()
+        }
+        assertThat(error2.message)
+          .contains("write-intent access")
+          .contains("Dispatchers.UI")
+          .doesNotContain("Dispatchers.Main")
+      }
+    }
+  }
+
+  @Test
+  fun `exception messages in preventive locking for Dispatchers Main`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.Main) {
+      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction<Unit, RuntimeException> {
+        val error = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertReadAccess()
+        }
+        assertThat(error.message)
+          .contains("read access")
+          .contains("Dispatchers.Main")
+          .doesNotContain("Dispatchers.UI")
+
+        val error2 = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertWriteIntentReadAccess()
+        }
+        assertThat(error2.message)
+          .contains("write-intent access")
+          .contains("Dispatchers.Main")
+          .doesNotContain("Dispatchers.UI")
+      }
+    }
   }
 
 }

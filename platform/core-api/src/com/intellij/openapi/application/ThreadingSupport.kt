@@ -10,7 +10,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.CoroutineContext
-import kotlin.jvm.Throws
 
 @ApiStatus.Internal
 interface ThreadingSupport {
@@ -28,6 +27,14 @@ interface ThreadingSupport {
    */
   // @Throws(E::class)
   fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
+
+
+  /**
+   * Executes a runnable with a write-intent lock only if locking is permitted on this thread
+   * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
+   * may be not needed.
+   */
+  fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
 
   /**
    * Checks, if Write Intent lock acquired by the current thread.
