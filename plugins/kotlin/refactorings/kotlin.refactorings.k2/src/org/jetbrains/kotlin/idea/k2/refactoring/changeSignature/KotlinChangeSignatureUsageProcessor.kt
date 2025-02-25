@@ -17,7 +17,15 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -46,7 +54,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 private val primaryElementsKey = Key.create<List<KtNamedDeclaration>>("expectActual")
 
@@ -286,6 +294,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return true
     }
 
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     fun updatePrimaryMethod(
         element: KtNamedDeclaration,
         changeInfo: KotlinChangeInfoBase,
@@ -355,10 +364,18 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             changeVisibility(changeInfo, element)
         }
 
-        if (changeInfo.newName == OperatorNameConventions.GET.asString() || changeInfo.newName == OperatorNameConventions.INVOKE.asString()) {
-            val method = changeInfo.method
-            if (changeInfo.receiverParameterInfo == null && method.parent is KtFile) {
-                (method as? KtNamedDeclaration)?.removeModifier(KtTokens.OPERATOR_KEYWORD)
+        val newName = changeInfo.newName
+        if (newName != null && OperatorConventions.isConventionName(Name.identifier(newName)) && element.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+            val brokenSignature = allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(element) {
+                        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                            .any { it.diagnosticClass == KaFirDiagnostic.InapplicableOperatorModifier::class }
+                    }
+                }
+            }
+            if (brokenSignature) {
+                element.removeModifier(KtTokens.OPERATOR_KEYWORD)
             }
         }
 

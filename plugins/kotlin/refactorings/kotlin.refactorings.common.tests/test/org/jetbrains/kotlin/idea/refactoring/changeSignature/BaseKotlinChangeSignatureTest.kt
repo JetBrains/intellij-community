@@ -595,6 +595,10 @@ public @interface NotNull {
         addNewIntParameterWithValue(true)
     }
 
+    fun testAddParameterToOperator() = doTest {
+        addNewIntParameterWithValue(true)
+    }
+
     fun testAddNewFirstParameterWithDefaultValue() = doTest {
         addNewIntParameterWithValue(true, 0)
     }
