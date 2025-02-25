@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -128,18 +127,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        <packaging>pom</packaging>
                        """.trimIndent())
     assertProblems(readProject(projectPom, NullProjectLocator()), "Self-inheritance found")
-  }
-
-  fun testInvalidProfilesXml() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       """.trimIndent())
-
-    createProfilesXml("<profiles")
-
-    assertProblems(readProject(projectPom, NullProjectLocator()), "'profiles.xml' has syntax errors")
   }
 
   fun testInvalidSettingsXml() = runBlocking {
@@ -1062,42 +1049,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.build.directory)
   }
 
-  fun testPropertiesFromProfilesXmlOldStyle() = runBlocking {
-    createProjectPom("<name>\${prop}</name>")
-    createProfilesXmlOldStyle("""
-                                <profile>
-                                  <id>one</id>
-                                  <properties>
-                                    <prop>foo</prop>
-                                  </properties>
-                                </profile>
-                                """.trimIndent())
-
-    var mavenProject = readProject(projectPom)
-    assertEquals("\${prop}", mavenProject.name)
-
-    mavenProject = readProject(projectPom, "one")
-    assertEquals("foo", mavenProject.name)
-  }
-
-  fun testPropertiesFromProfilesXmlNewStyle() = runBlocking {
-    createProjectPom("<name>\${prop}</name>")
-    createProfilesXml("""
-                        <profile>
-                          <id>one</id>
-                          <properties>
-                            <prop>foo</prop>
-                          </properties>
-                        </profile>
-                        """.trimIndent())
-
-    var mavenProject = readProject(projectPom)
-    assertEquals("\${prop}", mavenProject.name)
-
-    mavenProject = readProject(projectPom, "one")
-    assertEquals("foo", mavenProject.name)
-  }
-
   fun testPropertiesFromSettingsXml() = runBlocking {
     createProjectPom("<name>\${prop}</name>")
     updateSettingsXml("""
@@ -1215,13 +1166,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    val parentProfiles = createProfilesXml("""
-                                                           <profile>
-                                                             <id>profile</id>
-                                                             <modules><module>parentProfiles</module></modules>
-                                                           </profile>
-                                                           """.trimIndent())
-
     val module = createModulePom("module",
                                  """
                                            <groupId>test</groupId>
@@ -1249,14 +1193,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                         </profiles>
                         """.trimIndent())
 
-    val profiles = createProfilesXml("module",
-                                     """
-                                                     <profile>
-                                                       <id>profile</id>
-                                                       <modules><module>profiles</module></modules>
-                                                     </profile>
-                                                     """.trimIndent())
-
     var p = readProject(module)
     assertEquals(1, p.profiles.size)
     assertEquals("pom", p.profiles[0].modules[0])
@@ -1279,9 +1215,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertEquals("profiles", p.profiles[0].modules[0])
     assertEquals("profiles.xml", p.profiles[0].source)
 
-    WriteCommandAction.writeCommandAction(project).run<IOException> { profiles.delete(this) }
-
-
     p = readProject(module)
     assertEquals(1, p.profiles.size)
     UsefulTestCase.assertEmpty("parent", p.profiles[0].modules)
@@ -1297,9 +1230,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertEquals(1, p.profiles.size)
     UsefulTestCase.assertEmpty("parentProfiles", p.profiles[0].modules)
     assertEquals("profiles.xml", p.profiles[0].source)
-
-    WriteCommandAction.writeCommandAction(project).run<IOException> { parentProfiles.delete(null) }
-
 
     p = readProject(module)
     assertEquals(1, p.profiles.size)
@@ -1608,31 +1538,6 @@ $value</value>
     assertActiveProfiles(mutableListOf("explicit"), "explicit", "settings")
   }
 
-  fun testAlwaysActivatingActiveProfilesInProfilesXml() = runBlocking {
-    createFullProfilesXml("""
-                            <?xml version="1.0"?>
-                            <profilesXml>
-                              <activeProfiles>
-                                <activeProfile>profiles</activeProfile>
-                              </activeProfiles>
-                            </profilesXml>
-                            """.trimIndent())
-
-    createProjectPom("""
-                       <profiles>
-                         <profile>
-                           <id>explicit</id>
-                         </profile>
-                         <profile>
-                           <id>profiles</id>
-                         </profile>
-                       </profiles>
-                       """.trimIndent())
-
-    assertActiveProfiles("profiles")
-    assertActiveProfiles(mutableListOf("explicit"), "explicit", "profiles")
-  }
-
   fun testActivatingBothActiveProfilesInSettingsXmlAndImplicitProfiles() = runBlocking {
     updateSettingsXml("""
                         <activeProfiles>
@@ -1707,51 +1612,12 @@ $value</value>
     assertActiveProfiles("default", "settings")
   }
 
-  fun testActivateDefaultProfilesWhenThereAreActiveProfilesInProfilesXml() = runBlocking {
-    createFullProfilesXml("""
-                            <?xml version="1.0"?>
-                            <profilesXml>
-                              <profiles>
-                                <profile>
-                                  <id>profiles</id>
-                                </profile>
-                              </profiles>
-                              <activeProfiles>
-                                <activeProfile>profiles</activeProfile>
-                              </activeProfiles>
-                            </profilesXml>
-                            """.trimIndent())
-
-    createProjectPom("""
-                       <profiles>
-                         <profile>
-                           <id>default</id>
-                           <activation>
-                             <activeByDefault>true</activeByDefault>
-                           </activation>
-                         </profile>
-                       </profiles>
-                       """.trimIndent())
-
-    assertActiveProfiles("default", "profiles")
-  }
-
-  fun testActiveProfilesInSettingsXmlOrProfilesXmlThroughInheritance() = runBlocking {
+  fun testActiveProfilesInSettingsXmlThroughInheritance() = runBlocking {
     updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>settings</activeProfile>
                         </activeProfiles>
                         """.trimIndent())
-
-    createFullProfilesXml("parent",
-                          """
-                            <?xml version="1.0"?>
-                            <profilesXml>
-                              <activeProfiles>
-                                <activeProfile>parent</activeProfile>
-                              </activeProfiles>
-                            </profilesXml>
-                            """.trimIndent())
 
     createModulePom("parent",
                     """
@@ -1759,16 +1625,6 @@ $value</value>
                       <artifactId>parent</artifactId>
                       <version>1</version>
                       """.trimIndent())
-
-    createFullProfilesXml("""
-                            <?xml version="1.0"?>
-                            <profilesXml>
-                              <activeProfiles>
-                                <activeProfile>project</activeProfile>
-                              </activeProfiles>
-                            </profilesXml>
-                            """.trimIndent())
-
 
     createProjectPom("""
                        <parent>
