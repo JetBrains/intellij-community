@@ -43,7 +43,7 @@ class MavenProjectReader(private val myProject: Project) {
     explicitProfiles: MavenExplicitProfiles,
     locator: MavenProjectReaderProjectLocator,
   ): MavenProjectReaderResult {
-    return MavenProjectReadHelper(myProject, myCache, myReadHelper, mySettingsProfilesCache, generalSettings, file, explicitProfiles, locator).readProjectAsync()
+    return MavenProjectReadHelper(myProject, myCache, myReadHelper, mySettingsProfilesCache, generalSettings, explicitProfiles, locator).readProjectAsync(file)
   }
 
   private class MavenProjectReadHelper(
@@ -52,16 +52,14 @@ class MavenProjectReader(private val myProject: Project) {
     private val myReadHelper: MavenProjectModelReadHelper,
     private val mySettingsProfilesCache: AtomicReference<SettingsProfilesCache?>,
     private val generalSettings: MavenGeneralSettings,
-    private val file: VirtualFile,
     private val explicitProfiles: MavenExplicitProfiles,
     private val locator: MavenProjectReaderProjectLocator,
   ) {
     private val recursionGuard: MutableSet<VirtualFile> = HashSet()
-    private val baseDir = MavenUtil.getBaseDir(file)
 
-    suspend fun readProjectAsync(): MavenProjectReaderResult {
+    suspend fun readProjectAsync(file: VirtualFile): MavenProjectReaderResult {
       val readResult = readProjectModel(file)
-
+      val baseDir = MavenUtil.getBaseDir(file)
       val model = myReadHelper.interpolate(baseDir, file, readResult.first.model)
 
       val modelMap: MutableMap<String, String> = HashMap()
@@ -100,6 +98,7 @@ class MavenProjectReader(private val myProject: Project) {
 
       addSettingsProfiles(file, modelWithInheritance, alwaysOnProfiles, problems)
 
+      val baseDir = MavenUtil.getBaseDir(file)
       val baseDirString = baseDir.toString()
       val transformer = RemotePathTransformerFactory.createForProject(myProject)
       val baseDirFile = File(transformer.toRemotePathOrSelf(baseDirString))
@@ -134,6 +133,7 @@ class MavenProjectReader(private val myProject: Project) {
     ): RawModelReadResult {
       var result: MavenModel? = null
       val manager = MavenProjectsManager.getInstance(project).embeddersManager
+      val baseDir = MavenUtil.getBaseDir(file)
       val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDir.toString())
       try {
         result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }
@@ -321,6 +321,7 @@ class MavenProjectReader(private val myProject: Project) {
             true))
         }
 
+        val baseDir = MavenUtil.getBaseDir(file)
         val modelWithInheritance = myReadHelper.assembleInheritance(baseDir, parentModel, model, file)
 
         // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
