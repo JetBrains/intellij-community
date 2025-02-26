@@ -11592,9 +11592,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("augmentedAssignment.kt")
+        public void testAugmentedAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/augmentedAssignment.kt");
+        }
+
         @TestMetadata("constant.kt")
         public void testConstant() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/constant.kt");
+        }
+
+        @TestMetadata("constantSum.kt")
+        public void testConstantSum() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/constantSum.kt");
         }
 
         @TestMetadata("functionCall.kt")
@@ -11602,14 +11612,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/functionCall.kt");
         }
 
+        @TestMetadata("infixDecrement.kt")
+        public void testInfixDecrement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/infixDecrement.kt");
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/is.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/lambda.kt");
+        }
+
         @TestMetadata("notRedundant.kt")
         public void testNotRedundant() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/notRedundant.kt");
         }
 
+        @TestMetadata("postfixIncrement.kt")
+        public void testPostfixIncrement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/postfixIncrement.kt");
+        }
+
         @TestMetadata("simpleRef.kt")
         public void testSimpleRef() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/simpleRef.kt");
+        }
+
+        @TestMetadata("this.kt")
+        public void testThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantAssignment/this.kt");
         }
     }
 

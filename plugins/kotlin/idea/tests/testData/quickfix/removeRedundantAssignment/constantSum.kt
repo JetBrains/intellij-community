@@ -1,6 +1,7 @@
 // "Remove redundant assignment" "true"
-fun test(n: Int) {
+fun test() {
     var i: Int
-<caret>}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedValueFix
+    <caret>i = 1 + 1
+}
+// IGNORE_K1
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.AssignedValueIsNeverReadInspection$RemoveRedundantAssignmentFix
