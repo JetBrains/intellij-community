@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 @Serializable
-data class AdIntervalData(
+internal data class AdIntervalData(
   val id: Long,
   val start: Int,
   val end: Int,

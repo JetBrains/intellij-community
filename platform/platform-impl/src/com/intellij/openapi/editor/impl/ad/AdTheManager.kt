@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityManager
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModelManager
+import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.openapi.project.Project
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
@@ -60,7 +61,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
         return object : EditorModel {
           override fun getDocument(): DocumentEx = AdDocument(docEntity)
           override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
-          override fun getDocumentMarkupModel(): MarkupModelEx = adMarkupModel // filtered
+          override fun getDocumentMarkupModel(): MarkupModelEx = adMarkupModel // TODO: filtered
           override fun getHighlighter(): EditorHighlighter = editor.highlighter
           override fun getInlayModel(): InlayModelEx = editor.inlayModel
           override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
