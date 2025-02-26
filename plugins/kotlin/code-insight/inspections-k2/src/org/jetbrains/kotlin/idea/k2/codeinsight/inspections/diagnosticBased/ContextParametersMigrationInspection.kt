@@ -179,15 +179,32 @@ internal class ContextParametersMigrationInspection :
             contextReceiver.replace(contextParameter) as? KtParameter
         }
 
+        val nonSuitableNames = mutableSetOf<String>()
+        collectAllParameterNames(declarationCopy, nonSuitableNames)
         val suggestedNames = replaced.map { contextParameter ->
-            val namesHolder = mutableSetOf<String>()
-            NameSuggestionProvider.suggestNames(contextParameter, containingDeclaration, namesHolder)
-            namesHolder.firstOrNull { it != contextParameter.name } ?: contextParameter.name ?: return null
+            val resultNames = mutableSetOf<String>()
+            NameSuggestionProvider.suggestNames(contextParameter, containingDeclaration, resultNames)
+            resultNames.firstOrNull { it !in nonSuitableNames }?.also { nonSuitableNames.add(it) }
+                ?: contextParameter.name
+                ?: return null
         }
         if (contextReceivers.size != suggestedNames.size) return null
 
         return contextReceivers.zip(suggestedNames)
             .associate { (contextReceiver, suggestedName) -> contextReceiver.createSmartPointer() to suggestedName }
+    }
+
+    private fun collectAllParameterNames(declaration: KtNamedDeclaration, result: MutableSet<String>) {
+        when (declaration) {
+            is KtNamedFunction -> {
+                result.addAll(declaration.valueParameters.mapNotNull { it.name })
+                result.addAll(declaration.contextReceiverList?.contextParameters()?.mapNotNull { it.name }.orEmpty())
+            }
+            is KtProperty -> {
+                declaration.setter?.parameter?.name?.let { result.add(it) }
+                result.addAll(declaration.contextReceiverList?.contextParameters()?.mapNotNull { it.name }.orEmpty())
+            }
+        }
     }
 
     private fun createFallbackNames(receivers: List<KtContextReceiver>): Map<SmartPsiElementPointer<KtContextReceiver>, String> {
