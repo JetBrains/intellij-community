@@ -103,7 +103,7 @@ class OutputSink internal constructor(
     val info = fileToData.get(path) ?: return -1
     return when (info) {
       is KotlinOutputData -> info.data.size
-      is ImmutableZipEntry -> info.getByteBuffer(oldZipFile!!, null).remaining()
+      is ImmutableZipEntry -> info.uncompressedSize
       else -> (info as ByteArray).size
     }
   }
@@ -211,7 +211,7 @@ class OutputSink internal constructor(
       packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
 
       // now, close the old files, before writing to it
-      close()
+      oldZipFile?.close()
     }
   }
 

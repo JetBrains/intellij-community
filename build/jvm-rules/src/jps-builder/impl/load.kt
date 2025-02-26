@@ -17,7 +17,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.incremental.storage.BuildTargetsState
-import org.jetbrains.jps.incremental.storage.StorageManager
 import org.jetbrains.jps.indices.IgnoredFileIndex
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
@@ -35,8 +34,7 @@ private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
   override fun getTargetDataRoot(targetType: BuildTargetType<*>, targetId: String): Path = dir
 }
 
-internal fun loadJpsProject(
-  storageManager: StorageManager,
+internal fun createJpsProjectDescriptor(
   dataStorageRoot: Path,
   fsState: BuildFSState,
   jpsModel: JpsModel,

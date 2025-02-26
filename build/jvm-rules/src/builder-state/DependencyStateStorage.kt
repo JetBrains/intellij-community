@@ -12,6 +12,7 @@ import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
+import org.jetbrains.bazel.jvm.hashMap
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -36,11 +37,10 @@ fun loadDependencyState(
     val depFileVector = root.getVector(depFileField) as VarCharVector
     val digestVector = root.getVector(digestField) as VarBinaryVector
 
-    val result = LinkedHashMap<Path, ByteArray>(root.rowCount)
+    val result = hashMap<Path, ByteArray>(root.rowCount)
     for (rowIndex in 0 until root.rowCount) {
       val file = relativizer.toAbsoluteFile(depFileVector.get(rowIndex).decodeToString())
       val digest = digestVector.get(rowIndex)
-
       result.put(file, digest)
     }
     return result
@@ -51,12 +51,13 @@ fun loadDependencyState(
 class DependencyStateStorage(
   private val actualDependencyFileToDigest: Map<Path, ByteArray>,
   private val storageFile: Path,
+  private val classpath: Array<Path>,
   private val fileToDigest: MutableMap<Path, ByteArray>,
 ) {
   private var isChanged = false
 
   @Synchronized
-  fun checkState(classpath: Array<Path>): List<Path> {
+  fun checkState(): List<Path> {
     val changedOrAdded = ArrayList<Path>()
     for (file in classpath) {
       val currentDigest = requireNotNull(actualDependencyFileToDigest.get(file)) { "cannot find actual digest for $file" }

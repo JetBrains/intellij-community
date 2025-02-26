@@ -10,7 +10,6 @@ import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
@@ -47,7 +46,7 @@ internal suspend fun checkDependencies(
 
   val graph = graphConfig.graph
 
-  val changedOrAdded = dataProvider.libRootManager.checkState(target.module.container.getChild(BazelConfigurationHolder.KIND).classPath)
+  val changedOrAdded = dataProvider.libRootManager.checkState()
   if (changedOrAdded.isEmpty()) {
     return true
   }

@@ -24,6 +24,7 @@ import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
 import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph
 import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.BuildDataManager.Companion.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -33,19 +34,18 @@ import java.util.function.Function
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+private val processConstantsIncrementally = !System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false").toBoolean()
+
 class BuildDataManager internal constructor(
   val dataPaths: BuildDataPaths,
   @get:Deprecated("Use {@link #getTargetStateManager()} or, preferably, avoid using internal APIs.") val targetsState: BuildTargetsState,
-  relativizer: PathRelativizerService,
+  val relativizer: PathRelativizerService,
   private val dataManager: BuildDataProvider,
   containerFactory: BazelPersistentMapletFactory,
   span: Span,
 ) {
   private val depGraph: DependencyGraph
   private val depGraphPathMapper: NodeSourcePathMapper
-
-  val relativizer: PathRelativizerService
-  private var processConstantsIncrementally = !System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false").toBoolean()
 
   private val targetToStorages = ConcurrentHashMap<Pair<BuildTarget<*>, StorageProvider<StorageOwner>>, StorageOwner>()
 
@@ -68,7 +68,6 @@ class BuildDataManager internal constructor(
       Function { typeAwareRelativizer.toAbsolute(it, RelativePathType.SOURCE) },
       Function { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) },
     )
-    this.relativizer = relativizer
   }
 
   @Suppress("unused")
