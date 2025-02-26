@@ -604,7 +604,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
-  val data = try {
+  val bundledPluginClasspathBytes = try {
     // use only if the format is supported (first byte it is a version)
     Files.readAllBytes(effectiveBundledPluginDir.resolve("plugin-classpath.txt")).takeIf { it[0] == 2.toByte() }
   }
@@ -612,7 +612,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     null
   }
 
-  if (data == null) {
+  if (bundledPluginClasspathBytes == null) {
     result.addAll(loadCoreModules(
       context = context,
       platformPrefix = platformPrefix,
@@ -627,10 +627,10 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipPool))
   }
   else {
-    val byteInput = ByteArrayInputStream(data, 2, data.size)
+    val byteInput = ByteArrayInputStream(bundledPluginClasspathBytes, 2, bundledPluginClasspathBytes.size)
     val input = DataInputStream(byteInput)
     val descriptorSize = input.readInt()
-    val descriptorStart = data.size - byteInput.available()
+    val descriptorStart = bundledPluginClasspathBytes.size - byteInput.available()
     input.skipBytes(descriptorSize)
     // Gateway will be removed soon
     result.add(async {
@@ -643,7 +643,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
           getResourceReader(path = PluginManagerCore.PLUGIN_XML_PATH, classLoader = mainClassLoader)!!
         }
         else {
-          createXmlStreamReader(data, descriptorStart, descriptorSize)
+          createXmlStreamReader(bundledPluginClasspathBytes, descriptorStart, descriptorSize)
         },
       )
     })
@@ -652,7 +652,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
 
     loadFromPluginClasspathDescriptor(
       input = input,
-      jarOnly = data[1] == 1.toByte(),
+      jarOnly = bundledPluginClasspathBytes[1] == 1.toByte(),
       context = context,
       zipPool = zipPool,
       bundledPluginDir = effectiveBundledPluginDir,
