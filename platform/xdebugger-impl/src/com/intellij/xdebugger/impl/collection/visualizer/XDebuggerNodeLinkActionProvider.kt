@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.collection.visualizer
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerSuspendScopeProvider
 import com.intellij.xdebugger.impl.frame.XDebugView
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
@@ -37,8 +38,8 @@ interface XDebuggerNodeLinkActionProvider {
     fun computeHyperlink(project: Project, node: XValueNodeImpl) {
       if (node.hasLinks()) return
 
-      val session = XDebugView.getSession(node.tree) ?: return
-      val scope = XDebuggerSuspendScopeProvider.provideSuspendScope(session) ?: return
+      val session = XDebugView.getSession(node.tree) as? XDebugSessionImpl ?: return
+      val scope = session.suspendCoroutineScope ?: return
 
       scope.launch(Dispatchers.Default) {
         for (provider in EP_NAME.extensionList) {
