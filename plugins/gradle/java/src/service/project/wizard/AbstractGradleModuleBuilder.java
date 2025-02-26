@@ -251,12 +251,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (isCreatingWrapper && isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
       generateGradleWrapper(project);
     }
-    try {
-      Thread.sleep(1000);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
       setUpProjectDaemonJvmCriteria(project, () -> {
         reloadProject(project);
