@@ -35,6 +35,8 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -265,10 +267,51 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
-                                                      myUi.getComponent(), session.getSessionName(), icon, this::computeWatches, restartActions);
+                                                      myUi.getComponent(), session.getSessionName(), icon, this::computeWatches,
+                                                      restartActions);
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
+
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionResumed() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionStopped() {
+        updateActions();
+        AppUIUtil.invokeOnEdt(() -> {
+          myUi.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
+          if (!myProject.isDisposed()) {
+            myWatchesView.updateSessionData();
+          }
+          detachFromSession();
+        });
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        updateActions();
+      }
+
+      @Override
+      public void beforeSessionResume() {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        });
+      }
+
+      private void updateActions() {
+        UIUtil.invokeLaterIfNeeded(() -> getUi().updateActionsNow());
+      }
+    }, this);
   }
 
   private @Nullable Content createVariablesContent(@NotNull XDebugSessionProxy proxy) {
@@ -280,7 +323,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
       variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
-    } else {
+    }
+    else {
       variablesView = new XVariablesView(session);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
@@ -303,7 +347,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), null,
+                                                myWatchesView.getDefaultFocusedComponent());
     watchesContent.setCloseable(false);
     return watchesContent;
   }
@@ -317,7 +362,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XFramesView framesView = new XFramesView(session);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getFramesList());
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), null,
+                                               framesView.getFramesList());
     framesContent.setCloseable(false);
     return framesContent;
   }
@@ -425,7 +471,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public void detachFromSession() {
+  private void detachFromSession() {
     assert mySession != null;
     mySession = null;
   }

@@ -32,7 +32,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -45,7 +44,6 @@ import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
@@ -58,7 +56,6 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
@@ -473,31 +470,6 @@ public final class XDebugSessionImpl implements XDebugSession {
         }
       }
     }
-    addSessionListener(new XDebugSessionListener() {
-      @Override
-      public void sessionPaused() {
-        updateActions();
-      }
-
-      @Override
-      public void sessionResumed() {
-        updateActions();
-      }
-
-      @Override
-      public void sessionStopped() {
-        updateActions();
-      }
-
-      @Override
-      public void stackFrameChanged() {
-        updateActions();
-      }
-
-      private void updateActions() {
-        UIUtil.invokeLaterIfNeeded(() -> mySessionTab.getUi().updateActionsNow());
-      }
-    });
   }
 
   public @NotNull XDebugSessionData getSessionData() {
@@ -742,11 +714,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().beforeSessionResume();
     XSuspendContext context = mySuspendContext.getValue();
     clearPausedData();
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (mySessionTab != null) {
-        mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
-      }
-    });
     myDispatcher.getMulticaster().sessionResumed();
     return context;
   }
@@ -1117,16 +1084,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
     }
 
-    if (mySessionTab != null) {
-      AppUIUtil.invokeOnEdt(() -> {
-        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
-        if (!myProject.isDisposed()) {
-          ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
-        }
-        mySessionTab.detachFromSession();
-      });
-    }
-    else if (myConsoleView != null) {
+    if (!isTabInitialized() && myConsoleView != null) {
       AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));
     }
 
