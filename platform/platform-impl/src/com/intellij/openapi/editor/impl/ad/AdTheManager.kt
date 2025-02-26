@@ -16,20 +16,12 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityManager
-import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
-import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizer
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModelManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.pasta.common.DocumentComponentEntity
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.jetbrains.rhizomedb.entities
-import fleet.kernel.change
-import fleet.kernel.shared
 import fleet.kernel.transactor
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
@@ -44,42 +36,16 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     @JvmStatic
     fun getInstance(): AdTheManager = service()
 
-    private val MARKUP_SYNC_KEY: Key<AdMarkupSynchronizer> = Key.create("AD_MARKUP_SYNC_KEY")
     internal val LOG = logger<AdTheManager>()
     internal val AD_DISPATCHER by lazy {
       AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
     }
   }
 
-  // TODO: Only monolith mode so far. EditorId needed for split mode
   fun bindMarkupEntity(project: Project?, document: Document) {
-    if (isEnabled() && isSharedMarkupEnabled() && project != null && document is DocumentEx) {
-      val documentMarkup = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
-      if (documentMarkup.getUserData(MARKUP_SYNC_KEY) == null) {
-        val cs = appCoroutineScope.childScope("AdMarkupSynchronizer", AD_DISPATCHER)
-        val async = cs.async {
-          val docEntity = AdDocumentEntityManager.getInstance().getDocEntity(document)
-          if (docEntity != null) {
-            change {
-              shared {
-                AdMarkupEntity.empty(docEntity)
-              }
-            }
-          } else {
-            null
-          }
-        }
-        val markupEntity = runBlocking { async.await() }
-        if (markupEntity != null) {
-          val markupSynchronizer = AdMarkupSynchronizer(markupEntity, documentMarkup, cs)
-
-          // TODO: dispose with editor, remove MARKUP_SYNC_KEY
-          val disposable = Disposer.newDisposable(project)
-
-          document.addDocumentListener(markupSynchronizer, disposable)
-          documentMarkup.addMarkupModelListener(disposable, markupSynchronizer)
-        }
-      }
+    if (isEnabled() && project != null && document is DocumentEx) {
+      val markupModel = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
+      AdMarkupModelManager.getInstance(project).bindMarkupModelEntity(markupModel)
     }
   }
 
@@ -87,12 +53,14 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     if (isEnabled()) {
       val docEntity = docEntity(editor)
       if (docEntity != null) {
+        val project = editor.project!!
+        val mm = DocumentMarkupModel.forDocument(editor.document, project, true) as MarkupModelEx
+        val adMarkupModel = adMarkupModel(editor, mm)
         ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-        val adMarkupModel = adMarkupModel(docEntity)
         return object : EditorModel {
           override fun getDocument(): DocumentEx = AdDocument(docEntity)
           override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
-          override fun getDocumentMarkupModel(): MarkupModelEx = adMarkupModel ?: editor.filteredDocumentMarkupModel
+          override fun getDocumentMarkupModel(): MarkupModelEx = adMarkupModel // filtered
           override fun getHighlighter(): EditorHighlighter = editor.highlighter
           override fun getInlayModel(): InlayModelEx = editor.inlayModel
           override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
@@ -102,7 +70,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
           override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
           override fun getFocusModel(): FocusModeModel = editor.focusModeModel
           override fun isAd(): Boolean = true
-          override fun dispose() = releaseEditor()
+          override fun dispose() = AdMarkupModelManager.getInstance(project).releaseMarkupModelEntity(mm)
         }
       }
     }
@@ -126,10 +94,6 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     }
   }
 
-  private fun releaseEditor() {
-    // TODO
-  }
-
   private fun docEntity(editor: Editor): DocumentEntity? {
     val document = editor.document
     val debugName = document.toString()
@@ -140,18 +104,11 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     }.getOrNull()
   }
 
-  private fun adMarkupModel(docEntity: DocumentEntity): AdMarkupModel? {
-    if (isSharedMarkupEnabled()) {
-      val markupEntity = entities(DocumentComponentEntity.DocumentAttr, docEntity)
-        .filterIsInstance<AdMarkupEntity>()
-        .first() // single()  TODO
-      return AdMarkupModel(markupEntity)
-    }
-    return null
-  }
-
-  private fun isSharedMarkupEnabled(): Boolean {
-    return Registry.`is`("ijpl.rhizome.ad.markup.enabled", false)
+  private fun adMarkupModel(editor: Editor, markupModel: MarkupModelEx): AdMarkupModel {
+    val project = editor.project!!
+    val manager = AdMarkupModelManager.getInstance(project)
+    val entity = manager.getMarkupEntityRunBlocking(markupModel)!!
+    return AdMarkupModel(entity)
   }
 
   private fun isEnabled(): Boolean {

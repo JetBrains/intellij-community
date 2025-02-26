@@ -632,8 +632,8 @@
                     interface="com.intellij.execution.process.CommandLineEnvCustomizer"
                     dynamic="true"/>
 
-    <extensionPoint name="documentEntityProvider"
-                    interface="com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityProvider"
+    <extensionPoint name="adEntityProvider"
+                    interface="com.intellij.openapi.editor.impl.ad.document.AdEntityProvider"
                     dynamic="true"/>
 
   </extensionPoints>

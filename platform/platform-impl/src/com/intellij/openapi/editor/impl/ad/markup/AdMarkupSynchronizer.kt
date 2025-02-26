@@ -1,13 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.ad.AdTheManager.Companion.AD_DISPATCHER
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity.Companion.MarkupStorageAttr
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asDisposable
 import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.util.AtomicRef
@@ -22,7 +28,21 @@ import kotlin.math.max
 
 
 @Experimental
-internal class AdMarkupSynchronizer(
+@Service(Level.PROJECT)
+internal class AdMarkupSynchronizerService(private val coroutineScope: CoroutineScope): Disposable.Default {
+  fun createSynchronizer(markupEntity: AdMarkupEntity, markupModel: MarkupModelEx): CoroutineScope {
+    val cs = coroutineScope.childScope("markup->entity sync", AD_DISPATCHER)
+    val disposable = cs.asDisposable()
+    val sync = AdMarkupSynchronizer(markupEntity, markupModel, cs)
+    markupModel.document.addDocumentListener(sync, disposable)
+    markupModel.addMarkupModelListener(disposable, sync)
+    return cs
+  }
+}
+
+
+@Experimental
+private class AdMarkupSynchronizer(
   private val markupEntity: AdMarkupEntity,
   private val markupModel: MarkupModelEx,
   private val coroutineScope: CoroutineScope,

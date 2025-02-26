@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.impl.ad.AdTheManager
+import com.intellij.openapi.editor.impl.ad.util.EntityCleanService
 import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,8 +48,9 @@ internal class AdDocumentEntityManager(private val coroutineScope: CoroutineScop
     if (isEnabled() &&
         document is DocumentEx &&
         oldFile == null && file != null /* TODO: listen not only this case */) {
-      val provider = AdDocumentEntityProvider.getInstance()
-      if (provider.canCreateEntity(file, document)) {
+      val provider = AdEntityProvider.getInstance()
+      val uid = provider.getDocEntityUid(document)
+      if (uid != null) {
         lock.withLock { // ensure createEntity is called only once
           if (document.getUserData(DOC_ENTITY_HANDLE_KEY) == null) {
             val entityRef = AtomicReference<DocumentEntity>()
@@ -59,7 +61,7 @@ internal class AdDocumentEntityManager(private val coroutineScope: CoroutineScop
               AdTheManager.LOG.debug {
                 "binding doc entity $debugName with provider ${provider.javaClass.simpleName}"
               }
-              val entity = provider.createEntity(file, document)
+              val entity = provider.createDocEntity(uid, document)
               entityRef.set(entity)
               deferredRef.set(ENTITY_IS_READY) // release document hard reference captured by this lambda
               entity
@@ -70,10 +72,10 @@ internal class AdDocumentEntityManager(private val coroutineScope: CoroutineScop
 
             EntityCleanService.getInstance().registerEntity(document, debugName) {
               val entity = entityDeferred.await()
-              provider.deleteEntity(entity)
+              provider.deleteDocEntity(entity)
             }
 
-            document.putUserData(DOC_ENTITY_HANDLE_KEY, DocEntityHandle(entityRef, deferredRef, debugName))
+            document.putUserData(DOC_ENTITY_HANDLE_KEY, DocEntityHandle(debugName, entityRef, deferredRef))
           }
         }
       }
@@ -105,9 +107,9 @@ private val ENTITY_IS_READY: Deferred<DocumentEntity> = CompletableDeferred()
 private val ENTITY_IS_NOT_READY: Deferred<DocumentEntity>? = null
 
 private data class DocEntityHandle(
+  private val debugName: String,
   private val entityRef: AtomicReference<DocumentEntity>,
   private val entityDeferredRef: AtomicReference<Deferred<DocumentEntity>>,
-  private val debugName: String,
 ) {
 
   suspend fun entity(): DocumentEntity {
