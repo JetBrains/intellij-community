@@ -1151,13 +1151,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       AnAction next = newVisibleActions.get(count);
       if (next == prev) continue;
       if (next.getClass() != prev.getClass()) return false;
+      if (next instanceof CustomComponentAction) return false;
+      // replace only regular action buttons without text (same size 16x16)
+      Presentation nextP = myPresentationFactory.getPresentation(next);
+      if (nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null ||
+          Boolean.TRUE.equals(nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR))) {
+        return false;
+      }
       Pair<Integer, AnAction> pair = null;
       for (; buttonIndex < components.length && pair == null; buttonIndex++) {
         Component component = components[buttonIndex];
-        AnAction action =
-          component instanceof ActionButton o ? o.getAction() :
-          prev instanceof CustomComponentAction ? ClientProperty.get(component, CustomComponentAction.ACTION_KEY) : null;
-        if (action == prev) {
+        AnAction action = component instanceof ActionButton o ? o.getAction() : null;
+        if (action == prev && component.getClass() == ActionButton.class) {
           pair = Pair.create(buttonIndex, next);
         }
       }
@@ -1558,18 +1563,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public @NotNull List<AnAction> getActions() {
-    List<AnAction> result = new ArrayList<>();
-    List<AnAction> secondary = new ArrayList<>();
+    if (myVisibleActions.isEmpty()) return List.of();
+    List<AnAction> result = new ArrayList<>(myVisibleActions.size());
+    List<AnAction> secondary = null;
     for (AnAction each : myVisibleActions) {
       if (myActionGroup.isPrimary(each)) {
         result.add(each);
       }
       else {
+        if (secondary == null) secondary = new ArrayList<>();
         secondary.add(each);
       }
     }
-    result.add(new Separator());
-    result.addAll(secondary);
+    if (secondary != null) {
+      result.add(new Separator());
+      result.addAll(secondary);
+    }
     return result;
   }
 
