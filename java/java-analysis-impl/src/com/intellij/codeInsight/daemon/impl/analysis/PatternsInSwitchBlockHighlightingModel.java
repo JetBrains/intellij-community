@@ -309,8 +309,8 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return StreamEx.of(result).distinct().toList();
   }
 
-  static @Nullable PsiCaseLabelElement findUnconditionalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements,
-                                                                       @NotNull PsiType type) {
+  private static @Nullable PsiCaseLabelElement findUnconditionalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements,
+                                                                               @NotNull PsiType type) {
     return ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, type));
   }
 
@@ -395,7 +395,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
   }
 
 
-  static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
+  private static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
     if (element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern)) {
       return pattern;
     }

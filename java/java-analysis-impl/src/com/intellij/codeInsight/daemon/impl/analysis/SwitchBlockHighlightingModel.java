@@ -16,15 +16,14 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -176,40 +175,5 @@ public class SwitchBlockHighlightingModel {
 
   static @NotNull HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-  }
-
-  /**
-   * @param switchBlock switch statement/expression to check
-   * @return a set of label elements that are duplicates. If a switch block contains patterns,
-   * then dominated label elements will be also included in the result set.
-   */
-  public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
-    SwitchBlockHighlightingModel switchModel =
-      createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
-    if (switchModel == null) return Collections.emptySet();
-    List<PsiCaseLabelElement> labelElements =
-      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
-    if (labelElements.isEmpty()) return Collections.emptySet();
-    MultiMap<Object, PsiElement> duplicateCandidates = JavaPsiSwitchUtil.getValuesAndLabels(switchBlock);
-
-    Set<PsiElement> result = new SmartHashSet<>();
-
-    for (Map.Entry<Object, Collection<PsiElement>> entry : duplicateCandidates.entrySet()) {
-      if (entry.getValue().size() <= 1) continue;
-      result.addAll(entry.getValue());
-    }
-
-    // Find only one unconditional pattern, but not all, because if there are
-    // multiple unconditional patterns, they will all be found as duplicates
-    PsiCaseLabelElement unconditionalPattern =
-      PatternsInSwitchBlockHighlightingModel.findUnconditionalPatternForType(labelElements, switchModel.mySelectorType);
-    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
-    if (unconditionalPattern != null && defaultElement != null) {
-      result.add(unconditionalPattern);
-      result.add(defaultElement);
-    }
-
-    return StreamEx.ofKeys(JavaPsiSwitchUtil.findDominatedLabels(switchBlock), value -> value instanceof PsiPattern)
-      .into(result);
   }
 }

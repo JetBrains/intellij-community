@@ -3,7 +3,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
@@ -22,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.WriteExternalException;
@@ -35,6 +35,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -342,7 +344,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     unreachableLabels.forEach((label, switchBlock) -> {
       if (isThrowing(label)) return;
       // duplicate case label is a compilation error so no need to highlight by the inspection
-      Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+      Set<PsiElement> suspiciousElements = findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
         holder.problem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"))
             .maybeFix(createDeleteLabelFix(label)).register();
@@ -819,6 +821,42 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   @Override
   public @NotNull String getShortName() {
     return SHORT_NAME;
+  }
+
+  /**
+   * @param switchBlock switch statement/expression to check
+   * @return a set of label elements that are duplicates. If a switch block contains patterns,
+   * then dominated label elements will be also included in the result set.
+   */
+  private static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return Collections.emptySet();
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return Collections.emptySet();
+    List<PsiCaseLabelElement> labelElements =
+      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
+    if (labelElements.isEmpty()) return Collections.emptySet();
+    MultiMap<Object, PsiElement> duplicateCandidates = JavaPsiSwitchUtil.getValuesAndLabels(switchBlock);
+
+    Set<PsiElement> result = new SmartHashSet<>();
+
+    for (Map.Entry<Object, Collection<PsiElement>> entry : duplicateCandidates.entrySet()) {
+      if (entry.getValue().size() <= 1) continue;
+      result.addAll(entry.getValue());
+    }
+
+    // Find only one unconditional pattern, but not all, because if there are
+    // multiple unconditional patterns, they will all be found as duplicates
+    PsiCaseLabelElement unconditionalPattern = ContainerUtil.find(
+      labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, selectorType));
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    if (unconditionalPattern != null && defaultElement != null) {
+      result.add(unconditionalPattern);
+      result.add(defaultElement);
+    }
+
+    return StreamEx.ofKeys(JavaPsiSwitchUtil.findDominatedLabels(switchBlock), value -> value instanceof PsiPattern)
+      .into(result);
   }
 
   /**
