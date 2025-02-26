@@ -288,7 +288,8 @@ internal class DocumentationRenderer(private val project: Project) {
     if (element.childrenDescription != null) {
       appendLine(element.childrenDescription)
       appendParagraphSeparator()
-    } else {
+    }
+    else {
       for (child in element.children) {
         val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
         val linkText = childElement.name

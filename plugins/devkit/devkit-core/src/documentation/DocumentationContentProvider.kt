@@ -131,7 +131,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     val constructor = DescriptorDocumentationConstructor(loaderOptions)
     // DumperOptions pointed in the deprecation message doesn't support skipping missing properties
     return Yaml(constructor, representer).load<DocumentationContent>(yamlContent)
-      ?.takeIf { it.elements.isNotEmpty() == true }
+      ?.takeIf { it.elements.isNotEmpty() }
   }
 
   fun initializeContentDownload() {
@@ -192,7 +192,7 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
   ) {
     val element = elementWrapper.element ?: return
     val parent = parentWrapper?.element
-    if (parentWrapper != null && parent != null && alreadyUsedElements.contains(elementWrapper) && element.containsItself == false) {
+    if (parentWrapper != null && parent != null && alreadyUsedElements.contains(elementWrapper) && !element.containsItself) {
       val elementCopy = element.copy()
       val wrapperCopy = ElementWrapper(elementCopy)
       parent.children = parent.children.replace(elementWrapper, wrapperCopy)
