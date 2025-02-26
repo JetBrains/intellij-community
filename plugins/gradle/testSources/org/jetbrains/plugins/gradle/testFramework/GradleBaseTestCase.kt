@@ -1,29 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.TempDirTestFixture
-import kotlinx.coroutines.runBlocking
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 
 @GradleTestApplication
@@ -32,53 +24,24 @@ abstract class GradleBaseTestCase {
   val gradleVersion: GradleVersion = GradleVersion.current()
   private val javaVersion = JavaVersionRestriction.NO
 
-  private lateinit var testDisposable: Disposable
+  private val testDisposable by disposableFixture()
 
-  private lateinit var fileFixture: TempDirTestFixture
-  lateinit var testRoot: VirtualFile
-    private set
-  lateinit var testPath: Path
-    private set
+  private val testPathFixture = tempPathFixture()
+  val testPath: Path by testPathFixture
+  val testRoot: VirtualFile get() = testPath.refreshAndGetVirtualDirectory()
 
-  private lateinit var gradleJvmFixture: GradleJvmTestFixture
+  private val gradleJvmFixture by gradleJvmFixture(gradleVersion, javaVersion)
   val gradleJvm: String get() = gradleJvmFixture.gradleJvm
   val gradleJvmInfo: JdkVersionInfo get() = gradleJvmFixture.gradleJvmInfo
 
-  private lateinit var gradleFixture: GradleTestFixture
+  private val gradleFixture by gradleFixture(testPathFixture)
 
   @BeforeEach
-  fun setUpGradleBaseTestCase(testInfo: TestInfo) {
-    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersion)
-    gradleJvmFixture.setUp()
-    gradleJvmFixture.installProjectSettingsConfigurator()
-
-    fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
-    fileFixture.setUp()
-    testRoot = runBlocking {
-      edtWriteAction {
-        fileFixture.findOrCreateDir(testInfo.displayName)
-          .findOrCreateDirectory(gradleVersion.version)
-      }
-    }
-    testPath = testRoot.toNioPath()
-
-    gradleFixture = GradleTestFixtureImpl(testPath)
-    gradleFixture.setUp()
-
-    testDisposable = Disposer.newDisposable()
+  fun setUpGradleBaseTestCase() {
+    gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
     ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
-  }
-
-  @AfterEach
-  fun tearDownGradleBaseTestCase() {
-    runAll(
-      { Disposer.dispose(testDisposable) },
-      { gradleFixture.tearDown() },
-      { fileFixture.tearDown() },
-      { gradleJvmFixture.tearDown() },
-    )
   }
 
   suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {

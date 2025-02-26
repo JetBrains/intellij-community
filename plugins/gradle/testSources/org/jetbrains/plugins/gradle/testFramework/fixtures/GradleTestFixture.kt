@@ -11,7 +11,7 @@ interface GradleTestFixture : IdeaTestFixture {
 
   suspend fun linkProject(project: Project, relativePath: String)
 
-  suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit)
+  suspend fun reloadProject(project: Project, relativePath: String = ".", configure: ImportSpecBuilder.() -> Unit = {})
 
   suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project
 

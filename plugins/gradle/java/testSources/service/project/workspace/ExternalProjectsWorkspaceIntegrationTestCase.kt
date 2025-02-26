@@ -14,7 +14,6 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -25,18 +24,15 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuilder.Companion.mavenPom
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder.Companion.mavenSettings
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.io.ByteArrayOutputStream
@@ -57,24 +53,14 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
 
   private val testDisposable by disposableFixture()
 
-  private lateinit var gradleJvmFixture: GradleJvmTestFixture
+  private val gradleJvmFixture by gradleJvmFixture(gradleVersion, javaVersion)
 
   @BeforeEach
   fun setUp() {
-    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersion)
-    gradleJvmFixture.setUp()
-    gradleJvmFixture.installProjectSettingsConfigurator()
-
+    gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
     ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
-  }
-
-  @AfterEach
-  fun tearDown() {
-    runAll(
-      { gradleJvmFixture.tearDown() }
-    )
   }
 
   suspend fun openProject(relativePath: String): Project {
@@ -169,9 +155,7 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
 
   suspend fun createGradleBuildFile(relativePath: String, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     withContext(Dispatchers.IO) {
-      testRoot.resolve(relativePath).resolve(getBuildScriptName(GradleDsl.KOTLIN))
-        .createParentDirectories().createFile()
-        .writeText(buildScript(gradleVersion, GradleDsl.KOTLIN, configure))
+      testRoot.createBuildFile(gradleVersion, relativePath, configure = configure)
     }
   }
 

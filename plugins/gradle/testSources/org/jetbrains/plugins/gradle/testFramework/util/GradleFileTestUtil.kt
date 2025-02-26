@@ -3,6 +3,8 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package org.jetbrains.plugins.gradle.testFramework.util
 
+import com.intellij.openapi.util.io.findOrCreateDirectory
+import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
@@ -20,6 +22,8 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettin
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 @RequiresWriteLock
 fun VirtualFile.createSettingsFile(
@@ -117,4 +121,26 @@ fun TestFilesConfiguration.withBuildFile(
   content: String,
 ) {
   withFile(relativeModulePath + "/" + getBuildScriptName(gradleDsl), content)
+}
+
+fun Path.createSettingsFile(
+  gradleVersion: GradleVersion,
+  relativeModulePath: String = ".",
+  gradleDsl: GradleDsl = GradleDsl.KOTLIN,
+  configure: GradleSettingScriptBuilder<*>.() -> Unit,
+) {
+  findOrCreateDirectory(relativeModulePath)
+    .findOrCreateFile(getSettingsScriptName(gradleDsl))
+    .writeText(settingsScript(gradleVersion, gradleDsl, configure))
+}
+
+fun Path.createBuildFile(
+  gradleVersion: GradleVersion,
+  relativeModulePath: String = ".",
+  gradleDsl: GradleDsl = GradleDsl.KOTLIN,
+  configure: GradleBuildScriptBuilder<*>.() -> Unit,
+) {
+  findOrCreateDirectory(relativeModulePath)
+    .findOrCreateFile(getBuildScriptName(gradleDsl))
+    .writeText(buildScript(gradleVersion, gradleDsl, configure))
 }

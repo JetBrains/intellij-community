@@ -8,10 +8,10 @@ import org.junit.jupiter.api.extension.*
 /**
  * @see com.intellij.testFramework.junit5.TestApplication
  */
-@TestApplication
 @ExtendWith(
   GradleTestApplicationLeakTrackerExtension::class
 )
+@TestApplication
 annotation class GradleTestApplication
 
 private class GradleTestApplicationLeakTrackerExtension : BeforeEachCallback, AfterEachCallback {
