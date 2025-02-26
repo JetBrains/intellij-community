@@ -49,9 +49,10 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
       Files.createTempDirectory(root, prefix)
     }
   }
-  initialized(tempDir) {
+  val realTempDir = tempDir.toRealPath()
+  initialized(realTempDir) {
     withContext(Dispatchers.IO) {
-      tempDir.delete(recursively = true)
+      realTempDir.delete(recursively = true)
     }
   }
 }
