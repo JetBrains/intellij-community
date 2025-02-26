@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
@@ -15,17 +15,18 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   : DebuggerTaskImpl(), CoroutineContext.Element {
 
   /**
-   * [CoroutineScope] tied to this command execution.
+   * [Job] tied to this command execution.
    *
-   * The command is executed in its own scope to have a possibility to cancel all the work started within the command when
+   * The job is saved to have a possibility to cancel all the work started within the command when
    * [notifyCancelled] is called.
    * For example, a command can start a computation in [kotlinx.coroutines.Dispatchers.Default].
-   * When the program is resumed, the scope will be canceled.
+   * When the program is resumed, the job will be canceled.
    */
   @Volatile
-  private var commandScope: CoroutineScope? = null
+  private var commandJob: Job? = null
     set(value) {
-      if (value != null && field != null) error("Command scope is already set")
+      val old = field
+      if (value != null && old != null && !old.isCompleted) error("Command job is already set")
       field = value
     }
 
@@ -89,8 +90,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 
   @ApiStatus.Internal
   fun cancelCommandScope() {
-    commandScope?.cancel()
-    commandScope = null
+    commandJob?.cancel()
   }
 
   internal fun resetContinuation(runnable: Runnable?): Runnable? = continuation.getAndSet(runnable)
@@ -105,17 +105,9 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     if (continuation.get() == null) {
       // executed synchronously until the first suspend, resume is handled by dispatcher
       val job = parentScope.async(this + dispatcher, start = CoroutineStart.UNDISPATCHED) {
-        try {
-          // wrap with a separate scope to be sure that we can clean `commandScope` in finally
-          coroutineScope {
-            commandScope = this
-            runSuspend()
-          }
-        }
-        finally {
-          // Command finished or postponed
-          commandScope = null
-        }
+        runSuspend()
+      }.also {
+        commandJob = it
       }
       onSuspendOrFinish()
       handleCompletionException(job, exception)
