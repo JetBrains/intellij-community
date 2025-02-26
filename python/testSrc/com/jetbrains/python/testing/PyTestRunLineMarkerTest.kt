@@ -54,4 +54,12 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
       assertInfoFound(element, lineMarkerContributor)
     }
   }
+
+  fun testNestedTestClass() {
+    val lineMarkerContributor = PyTestLineMarkerContributor()
+    val element = getCaretElement("nestedTest.py")
+    if (element != null) {
+      assertInfoFound(element, lineMarkerContributor)
+    }
+  }
 }
