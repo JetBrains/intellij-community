@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.actions.WhatsNewUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,7 +38,10 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Math.max;
@@ -80,14 +81,14 @@ public class UpdateCheckerService {
   }
 
   public void cancelChecks() {
-    ScheduledFuture<?> future = myScheduledCheck;
+    var future = myScheduledCheck;
     if (future != null) {
       future.cancel(false);
     }
   }
 
   private void appStarted() {
-    UpdateSettings settings = UpdateSettings.getInstance();
+    var settings = UpdateSettings.getInstance();
     updateDefaultChannel(settings);
     if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
       scheduleFirstCheck(settings);
@@ -95,11 +96,11 @@ public class UpdateCheckerService {
   }
 
   private static void updateDefaultChannel(UpdateSettings settings) {
-    ChannelStatus current = settings.getSelectedChannelStatus();
+    var current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
 
-    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
-    ChannelStatus changedChannel = customization.changeDefaultChannel(current);
+    var customization = UpdateStrategyCustomization.getInstance();
+    var changedChannel = customization.changeDefaultChannel(current);
     if (changedChannel != null) {
       settings.setSelectedChannelStatus(changedChannel);
       LOG.info("channel set to '" + changedChannel.getCode() + "' by " + customization.getClass().getName());
@@ -112,8 +113,8 @@ public class UpdateCheckerService {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
-        String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-        String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
+        var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+        var message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup()
           .createNotification(title, message, NotificationType.INFORMATION)
           .setDisplayId("ide.update.channel.switched")
@@ -128,9 +129,9 @@ public class UpdateCheckerService {
   }
 
   public void scheduleFirstCheck(UpdateSettings settings) {
-    BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-    BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
-    long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
+    var currentBuild = ApplicationInfo.getInstance().getBuild();
+    var lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
+    var timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
     if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS) {
       checkUpdates();
@@ -166,7 +167,7 @@ public class UpdateCheckerService {
   }
 
   static void showWhatsNew(Project project, BuildNumber current) {
-    Url url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
+    var url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
     if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
         ApplicationManager.getApplication().invokeLater(
@@ -185,13 +186,13 @@ public class UpdateCheckerService {
     if (ExperimentalUI.Companion.getForcedSwitchedUi()) {
       return false;
     }
-    UpdateSettings settings = UpdateSettings.getInstance();
+    var settings = UpdateSettings.getInstance();
 
-    int lastShownFor = settings.getWhatsNewShownFor();
+    var lastShownFor = settings.getWhatsNewShownFor();
     if (lastShownFor == 0) {
       // migration from `PropertiesComponent`; safe to drop around 2024.2
-      String fallbackProperty = "ide.updates.whats.new.shown.for";
-      PropertiesComponent properties = PropertiesComponent.getInstance();
+      var fallbackProperty = "ide.updates.whats.new.shown.for";
+      var properties = PropertiesComponent.getInstance();
       lastShownFor = properties.getInt(fallbackProperty, 0);
       if (lastShownFor != 0) {
         properties.unsetValue(fallbackProperty);
@@ -206,10 +207,10 @@ public class UpdateCheckerService {
     }
 
     if (!majorEap && lastShownFor < current.getBaselineVersion()) {
-      Product product = loadProductData();
+      var product = loadProductData();
       if (product != null) {
         // checking whether the actual "what's new" page is relevant to the current release
-        int lastRelease = product.getChannels().stream()
+        var lastRelease = product.getChannels().stream()
           .filter(channel -> channel.getLicensing() == UpdateChannel.Licensing.RELEASE && channel.getStatus() == ChannelStatus.RELEASE)
           .flatMap(channel -> channel.getBuilds().stream())
           .mapToInt(build -> build.getNumber().getBaselineVersion())
@@ -227,13 +228,13 @@ public class UpdateCheckerService {
   static void showSnapUpdateNotification(Project project, BuildNumber current) {
     if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
 
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
+    var properties = PropertiesComponent.getInstance();
+    var previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
     properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
     if (previous == null || current.equals(previous)) return;
 
     String blogPost = null;
-    Product product = loadProductData();
+    var product = loadProductData();
     if (product != null) {
       blogPost = product.getChannels().stream()
         .flatMap(channel -> channel.getBuilds().stream())
@@ -241,8 +242,8 @@ public class UpdateCheckerService {
         .findFirst().map(BuildInfo::getBlogPost).orElse(null);
     }
 
-    String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    String message = IdeBundle.message("update.snap.message");
+    var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+    var message = IdeBundle.message("update.snap.message");
     var notification = UpdateChecker.getNotificationGroupForIdeUpdateResults()
       .createNotification(title, message, NotificationType.INFORMATION)
       .setDisplayId("ide.updated.by.snap");
@@ -266,11 +267,11 @@ public class UpdateCheckerService {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        Collection<PluginId> plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
+        var plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
         if (plugins.isEmpty()) return;
 
-        Set<String> idStrings = getUpdatedPlugins();
-        for (PluginId plugin : plugins) {
+        var idStrings = getUpdatedPlugins();
+        for (var plugin : plugins) {
           idStrings.add(plugin.getIdString());
         }
         try {
@@ -283,10 +284,10 @@ public class UpdateCheckerService {
     });
 
     List<HtmlChunk.Element> links = new ArrayList<>();
-    for (String id : getUpdatedPlugins()) {
-      PluginId pluginId = PluginId.findId(id);
+    for (var id : getUpdatedPlugins()) {
+      var pluginId = PluginId.findId(id);
       if (pluginId != null) {
-        IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
+        var descriptor = PluginManagerCore.getPlugin(pluginId);
         if (descriptor != null) {
           links.add(HtmlChunk.link(id, descriptor.getName()));
         }
@@ -294,8 +295,8 @@ public class UpdateCheckerService {
     }
     if (links.isEmpty()) return;
 
-    String title = IdeBundle.message("update.installed.notification.title");
-    String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
+    var title = IdeBundle.message("update.installed.notification.title");
+    var text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
     //noinspection deprecation
     UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(title, text, NotificationType.INFORMATION)
@@ -305,9 +306,9 @@ public class UpdateCheckerService {
   }
 
   private static void showPluginConfigurable(HyperlinkEvent event, Project project) {
-    String id = event.getDescription();
+    var id = event.getDescription();
     if (id != null) {
-      PluginId pluginId = PluginId.findId(id);
+      var pluginId = PluginId.findId(id);
       if (pluginId != null) {
         PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId));
       }
@@ -316,9 +317,9 @@ public class UpdateCheckerService {
 
   private static Set<String> getUpdatedPlugins() {
     try {
-      Path file = getUpdatedPluginsFile();
+      var file = getUpdatedPluginsFile();
       if (Files.isRegularFile(file)) {
-        List<String> list = Files.readAllLines(file);
+        var list = Files.readAllLines(file);
         Files.delete(file);
         return new HashSet<>(list);
       }
@@ -334,9 +335,9 @@ public class UpdateCheckerService {
   }
 
   static void deleteOldApplicationDirectories(@Nullable ProgressIndicator indicator) {
-    PropertiesComponent propertyService = PropertiesComponent.getInstance();
+    var propertyService = PropertiesComponent.getInstance();
     if (ConfigImportHelper.isConfigImported()) {
-      long scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+      var scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
       LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
       propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
       OldDirectoryCleaner.Stats.scheduled();
@@ -346,7 +347,7 @@ public class UpdateCheckerService {
       if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
         OldDirectoryCleaner.Stats.started((int)MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
         LOG.info("starting old directories scan");
-        long expireAfter = now - DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
+        var expireAfter = now - DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
 
         new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, indicator);
         propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
@@ -356,9 +357,9 @@ public class UpdateCheckerService {
   }
 
   static void cleanupObsoleteCustomRepositories() {
-    UpdateSettings settings = UpdateSettings.getInstance();
+    var settings = UpdateSettings.getInstance();
     if (settings.isObsoleteCustomRepositoriesCleanNeeded()) {
-      boolean cleaned = settings.getStoredPluginHosts().removeIf(host -> host.startsWith("https://secure.feed.toolbox.app/plugins"));
+      var cleaned = settings.getStoredPluginHosts().removeIf(host -> host.startsWith("https://secure.feed.toolbox.app/plugins"));
       if (cleaned) {
         LOG.info("Some obsolete TBE custom repositories have been removed");
       }
