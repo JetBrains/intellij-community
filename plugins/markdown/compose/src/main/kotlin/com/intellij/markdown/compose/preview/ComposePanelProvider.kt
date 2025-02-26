@@ -7,8 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider.AvailabilityInfo
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider.ProviderInfo
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 @OptIn(ExperimentalJewelApi::class)
