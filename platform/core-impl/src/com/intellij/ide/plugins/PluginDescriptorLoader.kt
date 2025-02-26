@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
+
 package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
@@ -34,6 +35,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.atomic.AtomicReferenceArray
 import java.util.jar.JarInputStream
 import java.util.zip.ZipInputStream
 import javax.xml.stream.XMLStreamException
@@ -129,10 +131,8 @@ fun loadDescriptorFromJar(
   useCoreClassLoader: Boolean = false,
   pluginDir: Path? = null,
 ): IdeaPluginDescriptorImpl? {
-  var closeable: Closeable? = null
+  val resolver = pool.load(file)
   try {
-    val resolver = pool.load(file)
-    closeable = resolver as? Closeable
     val dataLoader = ImmutableZipFileDataLoader(resolver, zipPath = file)
     val input = dataLoader.load(descriptorRelativePath, pluginDescriptorSourceOnly = true) ?: return null
     val descriptor = loadDescriptorFromStream(
@@ -157,7 +157,7 @@ fun loadDescriptorFromJar(
     context.reportCannotLoad(file, e)
   }
   finally {
-    closeable?.close()
+    resolver.close()
   }
   return null
 }
@@ -711,6 +711,8 @@ private fun loadFromPluginClasspathDescriptor(
   }
 }
 
+private data class FileItem(@JvmField val file: Path, @JvmField val path: String)
+
 private fun loadPluginDescriptor(
   fileItems: Array<FileItem>,
   zipPool: ZipEntryResolverPool,
@@ -719,8 +721,28 @@ private fun loadPluginDescriptor(
   context: DescriptorListLoadingContext,
   pluginDir: Path,
 ): IdeaPluginDescriptorImpl {
-  val item = fileItems.first()
   val dataLoader = MixedDirAndJarDataLoader(fileItems, zipPool, jarOnly)
+  dataLoader.use {
+    return loadPluginDescriptor(
+      fileItems = fileItems,
+      zipPool = zipPool,
+      dataLoader = dataLoader,
+      pluginDescriptorData = pluginDescriptorData,
+      context = context,
+      pluginDir = pluginDir
+    )
+  }
+}
+
+private fun loadPluginDescriptor(
+  fileItems: Array<FileItem>,
+  zipPool: ZipEntryResolverPool,
+  dataLoader: MixedDirAndJarDataLoader,
+  pluginDescriptorData: ByteArray,
+  context: DescriptorListLoadingContext,
+  pluginDir: Path,
+): IdeaPluginDescriptorImpl {
+  val item = fileItems.first()
   val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
   val raw = readModuleDescriptor(reader = descriptorInput, readContext = context, dataLoader = dataLoader, pathResolver = pluginPathResolver)
@@ -765,7 +787,10 @@ private class MixedDirAndJarDataLoader(
   private val files: Array<FileItem>,
   private val pool: ZipEntryResolverPool,
   private val jarOnly: Boolean,
-) : DataLoader {
+) : DataLoader, Closeable {
+  // atomic array because it was marked volatile before
+  private val resolvers = AtomicReferenceArray<ZipEntryResolverPool.EntryResolver?>(files.size)
+
   // loading must return a result for the sub
   override fun isExcludedFromSubSearch(jarFile: Path): Boolean = true
 
@@ -773,20 +798,13 @@ private class MixedDirAndJarDataLoader(
 
   override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
     val effectivePath = if (path[0] == '/') path.substring(1) else path
-    for (item in files) {
+    for ((index, item) in files.withIndex()) {
       if (jarOnly || item.path.endsWith(".jar")) {
-        var resolver = item.resolver
-        if (resolver == null) {
-          resolver = pool.load(item.file)
-          if (resolver !is Closeable) {
-            item.resolver = resolver
-          }
+        if (resolvers[index] == null) { // fixme isn't it racy? might leak something
+          resolvers[index] = pool.load(item.file)
         }
-
+        val resolver = resolvers[index]!!
         val result = resolver.loadZipEntry(effectivePath)
-        if (resolver is Closeable) {
-          resolver.close()
-        }
         if (result != null) {
           return result
         }
@@ -795,15 +813,20 @@ private class MixedDirAndJarDataLoader(
         try {
           return Files.newInputStream(item.file.resolve(effectivePath))
         }
-        catch (_: NoSuchFileException) { }
+        catch (_: NoSuchFileException) {
+        }
       }
-
       if (jarOnly && pluginDescriptorSourceOnly) {
         break
       }
     }
-
     return null
+  }
+
+  override fun close() {
+    for (index in files.indices) {
+      resolvers.getAndSet(index, null)?.close()
+    }
   }
 
   override fun toString(): String = "plugin-classpath.txt based data loader"
@@ -825,12 +848,6 @@ private fun loadModuleFromSeparateJar(
   finally {
     (resolver as? Closeable)?.close()
   }
-}
-
-private data class FileItem(@JvmField val file: Path, @JvmField val path: String) {
-  @JvmField
-  @Volatile
-  var resolver: ZipEntryResolverPool.EntryResolver? = null
 }
 
 private fun CoroutineScope.loadCoreModules(
@@ -1076,7 +1093,8 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
         }
       }
     }
-    catch (_: NoSuchFileException) { }
+    catch (_: NoSuchFileException) {
+    }
   }
   finally {
     NioFiles.deleteRecursively(outputDir)
@@ -1131,7 +1149,7 @@ fun loadDescriptorsFromOtherIde(
   }
 }
 
-suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false) : PluginLoadingResult {
+suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
   return DescriptorListLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { context ->
     val result = PluginLoadingResult()
     result.addAll(
@@ -1152,7 +1170,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
 @JvmOverloads
 fun testLoadDescriptorsFromClassPath(
   loader: ClassLoader,
-  zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool()
+  zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool(),
 ): List<IdeaPluginDescriptor> {
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(loader)
