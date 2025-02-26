@@ -57,10 +57,13 @@ internal fun startTerminalSession(
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
+  val shellIntegrationController = TerminalShellIntegrationController(services.controller)
+  shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
   val outputFlow = createTerminalOutputFlow(
     services.textBuffer,
     services.terminalDisplay,
     services.controller,
+    shellIntegrationController,
     outputScope,
     ensureEmulationActive = { ensureEmulationActive(services.terminalStarter) }
   )

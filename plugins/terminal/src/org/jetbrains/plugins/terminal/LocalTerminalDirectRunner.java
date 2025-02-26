@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
@@ -95,10 +96,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
+    var usingGenTwoTerminal = isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled();
     boolean isBlockTerminal =
       (isGenOneTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null)
-      || (isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled());
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
+      || usingGenTwoTerminal;
+    if (usingGenTwoTerminal) {
+      ReworkedTerminalUsageCollector.logLocalShellStarted(myProject, command);
+    }
+    else {
+      TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
+    }
 
     if (isBlockTerminal) {
       TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
