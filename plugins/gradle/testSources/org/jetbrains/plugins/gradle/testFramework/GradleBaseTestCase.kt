@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
+import java.nio.file.Path
 
 @GradleTestApplication
 abstract class GradleBaseTestCase {
@@ -35,6 +36,8 @@ abstract class GradleBaseTestCase {
 
   private lateinit var fileFixture: TempDirTestFixture
   lateinit var testRoot: VirtualFile
+    private set
+  lateinit var testPath: Path
     private set
 
   private lateinit var gradleJvmFixture: GradleJvmTestFixture
@@ -57,8 +60,9 @@ abstract class GradleBaseTestCase {
           .findOrCreateDirectory(gradleVersion.version)
       }
     }
+    testPath = testRoot.toNioPath()
 
-    gradleFixture = GradleTestFixtureImpl(testRoot)
+    gradleFixture = GradleTestFixtureImpl(testPath)
     gradleFixture.setUp()
 
     testDisposable = Disposer.newDisposable()

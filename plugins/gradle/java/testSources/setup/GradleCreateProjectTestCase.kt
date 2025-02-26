@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.getDirectory
@@ -64,12 +63,8 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     return createProjectByWizard(JAVA) {
       configureWizardStepSettings(this, rootModuleInfo, null)
     }.withProjectAsync { project ->
-      val projectRoot = testRoot.getDirectory(projectInfo.relativePath)
-      val parentData = ExternalSystemApiUtil.findProjectNode(
-        project,
-        GradleConstants.SYSTEM_ID,
-        projectRoot.path
-      )!!
+      val parentPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
+      val parentData = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, parentPath)!!
       for (moduleInfo in projectInfo.modules) {
         if (moduleInfo != rootModuleInfo) {
           createModuleByWizard(project, JAVA) {
@@ -82,7 +77,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
     step.baseData!!.name = moduleInfo.name
-    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
+    step.baseData!!.path = testPath.resolve(moduleInfo.relativePath).normalize().parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
     step.javaGradleData!!.gradleDsl = moduleInfo.gradleDsl
     step.javaGradleData!!.parentData = parentData

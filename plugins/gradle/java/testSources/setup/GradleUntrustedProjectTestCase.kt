@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.getResolvedPath
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -45,7 +44,7 @@ abstract class GradleUntrustedProjectTestCase : GradleTestCase() {
 
   fun assertTrustedLocations(relativePaths: List<String>) {
     Assertions.assertEquals(
-      relativePaths.map { testRoot.toNioPath().getResolvedPath(it) }.toSet(),
+      relativePaths.map { testPath.resolve(it).normalize() }.toSet(),
       trustedLocations.toSet()
     )
   }
@@ -56,7 +55,7 @@ abstract class GradleUntrustedProjectTestCase : GradleTestCase() {
   ) {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
-      relativePaths.map { testRoot.toNioPath().getResolvedPath(it) }.toSet(),
+      relativePaths.map { testPath.resolve(it).normalize() }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

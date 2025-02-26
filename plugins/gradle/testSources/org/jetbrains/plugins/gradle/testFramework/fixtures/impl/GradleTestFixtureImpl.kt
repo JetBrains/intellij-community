@@ -6,10 +6,9 @@ import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivi
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.utils.vfs.getDirectory
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
@@ -18,9 +17,10 @@ import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfigu
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
+import java.nio.file.Path
 
 class GradleTestFixtureImpl(
-  private val testRoot: VirtualFile,
+  private val testRoot: Path,
 ) : GradleTestFixture {
 
   private lateinit var reloadLeakTracker: OperationLeakTracker
@@ -35,23 +35,21 @@ class GradleTestFixtureImpl(
   }
 
   override suspend fun openProject(relativePath: String, numProjectSyncs: Int): Project {
-    val projectRoot = testRoot.getDirectory(relativePath)
     return awaitOpenProjectConfiguration(numProjectSyncs) {
-      openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+      openProjectAsync(testRoot.resolve(relativePath).normalize(), UnlinkedProjectStartupActivity())
     }
   }
 
   override suspend fun linkProject(project: Project, relativePath: String) {
-    val projectRoot = testRoot.getDirectory(relativePath)
     awaitProjectConfiguration(project) {
-      linkAndSyncGradleProject(project, projectRoot)
+      linkAndSyncGradleProject(project, testRoot.resolve(relativePath).toCanonicalPath())
     }
   }
 
   override suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit) {
     awaitProjectConfiguration(project) {
       ExternalSystemUtil.refreshProject(
-        testRoot.getDirectory(relativePath).path,
+        testRoot.resolve(relativePath).toCanonicalPath(),
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
           .apply(configure)
       )

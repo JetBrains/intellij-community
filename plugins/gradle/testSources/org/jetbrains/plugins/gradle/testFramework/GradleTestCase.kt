@@ -11,11 +11,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -98,7 +98,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   fun assertDefaultProjectSettings(project: Project, projectInfo: ProjectInfo) {
-    val externalProjectPath = testRoot.getDirectory(projectInfo.relativePath).path
+    val externalProjectPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
     val settings = GradleSettings.getInstance(project)
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath)
     val rootModule = project.modules.first { it.name == projectInfo.name }

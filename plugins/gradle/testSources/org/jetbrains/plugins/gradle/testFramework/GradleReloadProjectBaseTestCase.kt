@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
@@ -11,18 +10,23 @@ import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
-import com.intellij.testFramework.utils.vfs.createDirectory
+import com.intellij.testFramework.utils.io.createFile
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
+import java.nio.file.Path
+import kotlin.io.path.createDirectory
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeText
 
 @GradleTestApplication
 abstract class GradleReloadProjectBaseTestCase {
@@ -66,7 +70,7 @@ abstract class GradleReloadProjectBaseTestCase {
   open fun test(
     gradleVersion: GradleVersion,
     javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.NO,
-    action: suspend () -> Unit
+    action: suspend () -> Unit,
   ) {
     runAll(
       {
@@ -99,6 +103,7 @@ abstract class GradleReloadProjectBaseTestCase {
       edtWriteAction {
         fileFixture.findOrCreateDir(testInfo.displayName)
           .findOrCreateDirectory(gradleVersion.version)
+          .toNioPath()
       }
     }
 
@@ -136,30 +141,29 @@ abstract class GradleReloadProjectBaseTestCase {
 
     val projectName: String
 
-    val projectRoot: VirtualFile
+    val projectRoot: Path
   }
 
   private class GradleProjectTestFixtureImpl(
     private val gradleVersion: GradleVersion,
-    private val testRoot: VirtualFile,
+    private val testRoot: Path,
     private val gradleFixture: GradleTestFixture,
   ) : GradleProjectTestFixture {
 
     override lateinit var project: Project
     override lateinit var projectName: String
-    override lateinit var projectRoot: VirtualFile
+    override lateinit var projectRoot: Path
 
     override fun setUp() {
       runBlocking {
         projectName = "project"
-        projectRoot = edtWriteAction {
-          testRoot.createDirectory(projectName)
-        }
-        edtWriteAction {
-          projectRoot.createSettingsFile(gradleVersion) {
+        projectRoot = testRoot.resolve(projectName)
+          .createDirectory()
+        projectRoot.resolve("settings.gradle")
+          .createParentDirectories().createFile()
+          .writeText(settingsScript(gradleVersion, GradleDsl.GROOVY) {
             setProjectName(projectName)
-          }
-        }
+          })
         project = gradleFixture.openProject(projectName)
       }
     }

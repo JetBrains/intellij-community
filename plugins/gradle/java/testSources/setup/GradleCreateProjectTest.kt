@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.junit5.RegistryKey
@@ -171,11 +172,11 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     runBlocking {
       createProjectByWizard(NEW_EMPTY_PROJECT, numProjectSyncs = 0) {
         baseData!!.name = "project"
-        baseData!!.path = testRoot.path
+        baseData!!.path = testPath.toCanonicalPath()
       }.withProjectAsync { project ->
         assertModules(project, "project")
         createModuleByWizard(project, JAVA) {
-          baseData!!.path = testRoot.path + "/project"
+          baseData!!.path = testPath.resolve("project").toCanonicalPath()
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -184,7 +185,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertNull(javaGradleData!!.parentData)
         }
         createModuleByWizard(project, JAVA) {
-          baseData!!.path = testRoot.path + "/project"
+          baseData!!.path = testPath.resolve("project").toCanonicalPath()
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -198,15 +199,17 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           "untitled1", "untitled1.main", "untitled1.test"
         )
       }.useProjectAsync { project ->
-        val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled")!!
-        val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled1")!!
+        val projectPath1 = testPath.resolve("project/untitled").toCanonicalPath()
+        val projectPath2 = testPath.resolve("project/untitled1").toCanonicalPath()
+        val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, projectPath1)!!
+        val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, projectPath2)!!
         createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode1.data
           javaGradleData!!.addSampleCode = false
 
           Assertions.assertEquals("untitled2", baseData!!.name)
-          Assertions.assertEquals(testRoot.path + "/project/untitled", baseData!!.path)
+          Assertions.assertEquals(projectPath1, baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
         createModuleByWizard(project, JAVA) {
@@ -215,7 +218,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           javaGradleData!!.addSampleCode = false
 
           Assertions.assertEquals("untitled2", baseData!!.name)
-          Assertions.assertEquals(testRoot.path + "/project/untitled1", baseData!!.path)
+          Assertions.assertEquals(projectPath2, baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
         assertModules(
