@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.CommandLineUtil
@@ -98,6 +98,12 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     val signedUrl = signUrl(url.trim { it <= ' ' })
     LOG.debug { "opening [${signedUrl}]" }
 
+    if (canBrowse(project, signedUrl)) {
+      doBrowse(url, browser, project)
+    }
+  }
+
+  private fun doBrowse(signedUrl: String, browser: WebBrowser?, project: Project?) {
     if (processWithUrlOpener(browser, signedUrl, project)) {
       return
     }
@@ -118,9 +124,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
-      if (!canBrowse(project, signedUrl)) {
-        return
-      }
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
         openWithDesktopApi(uri, project)
       }
@@ -136,7 +139,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
       else {
         spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project, retry = {
-          browse(url, browser = null, project)
+          doBrowse(signedUrl, browser = null, project)
         })
       }
     }
