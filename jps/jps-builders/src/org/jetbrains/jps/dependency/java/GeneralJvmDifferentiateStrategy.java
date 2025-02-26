@@ -15,7 +15,7 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy");
 
   private static final Iterable<JvmDifferentiateStrategy> ourExtensions = collect(
-    ServiceLoader.load(JvmDifferentiateStrategy.class, GeneralJvmDifferentiateStrategy.class.getClassLoader()),
+    ServiceLoader.load(JvmDifferentiateStrategy.class),
     new SmartList<>()
   );
 

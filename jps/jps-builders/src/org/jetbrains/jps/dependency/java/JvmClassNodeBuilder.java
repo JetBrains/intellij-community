@@ -32,10 +32,7 @@ import java.util.function.Supplier;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
   
-  private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = Iterators.collect(
-    ServiceLoader.load(AnnotationChangesTracker.class, JvmClassNodeBuilder.class.getClassLoader()),
-    new SmartList<>()
-  );
+  private static final Iterable<JvmDifferentiateStrategy> ourDifferentiateStrategies = Iterators.collect(ServiceLoader.load(JvmDifferentiateStrategy.class), new SmartList<>());
 
   private static final Logger LOG = Logger.getInstance(JvmClassNodeBuilder.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
@@ -969,8 +966,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   private static boolean isAnnotationTracked(TypeRepr.ClassType annotationType) {
-    for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
-      if (tracker.isAnnotationTracked(annotationType)) {
+    for (JvmDifferentiateStrategy strategy : ourDifferentiateStrategies) {
+      if (strategy.isAnnotationTracked(annotationType)) {
         return true;
       }
     }
