@@ -12,7 +12,7 @@ class RedundantEscapeInRegexReplacement {
     m.replaceFirst("@");
     m.appendReplacement(new StringBuilder(), "#");
     m.appendReplacement(new StringBuffer(), "%");
-    "x".replaceAll("x", ".\\.");
+    "x".replaceAll("x", "..");
 
     final String replacement = "\\[";
     "x".replaceAll("x", replacement);
