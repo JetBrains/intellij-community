@@ -27,8 +27,8 @@ internal sealed class EdtCoroutineDispatcher(
 
   override val immediate: MainCoroutineDispatcher
     get() = when (type) {
-      EdtDispatcherKind.LEGACY_EDT -> ImmediateLockingDispatcher
-      EdtDispatcherKind.MODERN_UI -> ImmediateNonLockingDispatcher
+      EdtDispatcherKind.EDT -> ImmediateLockingDispatcher
+      EdtDispatcherKind.UI -> ImmediateNonLockingDispatcher
       EdtDispatcherKind.MAIN -> ImmediateMainDispatcher
     }
 
@@ -70,8 +70,8 @@ internal sealed class EdtCoroutineDispatcher(
     return runnable
   }
 
-  object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.LEGACY_EDT)
-  object NonLocking : EdtCoroutineDispatcher(EdtDispatcherKind.MODERN_UI)
+  object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.EDT)
+  object NonLocking : EdtCoroutineDispatcher(EdtDispatcherKind.UI)
   object Main : EdtCoroutineDispatcher(EdtDispatcherKind.MAIN)
 
   val lockAccessViolationMessage = """The use of the RW lock is forbidden by `$this`. This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).
@@ -131,9 +131,9 @@ internal enum class EdtDispatcherKind(
 ) {
 
 
-  LEGACY_EDT(LockBehavior.LOCKS_ALLOWED, DefaultModality.NON_MODAL),
+  EDT(LockBehavior.LOCKS_ALLOWED, DefaultModality.NON_MODAL),
 
-  MODERN_UI(LockBehavior.LOCKS_DISALLOWED_FAIL_HARD, DefaultModality.NON_MODAL),
+  UI(LockBehavior.LOCKS_DISALLOWED_FAIL_HARD, DefaultModality.NON_MODAL),
 
   MAIN(LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, DefaultModality.ANY);
 
@@ -156,12 +156,12 @@ internal enum class EdtDispatcherKind(
   fun allowLocks(): Boolean = lockBehavior == LockBehavior.LOCKS_ALLOWED
 
   fun presentableName(): String = when (this) {
-    LEGACY_EDT -> "Dispatchers.EDT"
-    MODERN_UI -> "Dispatchers.UI"
+    EDT -> "Dispatchers.EDT"
+    UI -> "Dispatchers.UI"
     MAIN -> "Dispatchers.Main"
   }
 }
 
-private val ImmediateLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.LEGACY_EDT)
-private val ImmediateNonLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.MODERN_UI)
+private val ImmediateLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.EDT)
+private val ImmediateNonLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.UI)
 private val ImmediateMainDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.MAIN)
