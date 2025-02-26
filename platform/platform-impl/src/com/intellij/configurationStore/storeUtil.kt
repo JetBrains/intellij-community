@@ -114,28 +114,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: CancellationException) { throw e }
   catch (e: ProcessCanceledException) { throw e }
   catch (e: Throwable) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      LOG.error("Save settings failed", e)
-    }
-    else {
-      LOG.warn("Save settings failed", e)
-    }
-
-    val reason = if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""
-    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName, reason)
-    val pluginId = PluginUtil.getInstance().findPluginId(e)
-    val message =
-      if (pluginId == null) IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix)
-      else IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix)
-    val notification = Notification(
-      "Settings Error",
-      IdeBundle.message("notification.title.unable.to.save.settings"),
-      message,
-      NotificationType.ERROR
-    )
-    blockingContext {
-      notification.notify(componentManager as? Project)
-    }
+    LOG.error("Save settings failed, p]lease restart application", e)
   }
   finally {
     storeReloadManager?.unblockReloadingProjectOnExternalChanges()
