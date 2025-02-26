@@ -182,35 +182,24 @@ internal class MavenServerManagerImpl : MavenServerManager {
     }
 
     synchronized(myMultimoduleDirToConnectorMap) {
-      var connector: MavenServerConnector?
-      connector = myMultimoduleDirToConnectorMap[multimoduleDirectory]
-      if (connector != null) return connector
-      connector = findCompatibleConnector(project, jdk, multimoduleDirectory)
-      if (connector != null) {
-        MavenLog.LOG.debug("[connector] use existing connector for $connector")
-        connector.addMultimoduleDir(multimoduleDirectory)
+      val cachedConnector = myMultimoduleDirToConnectorMap[multimoduleDirectory]
+      if (cachedConnector != null) return cachedConnector
+
+      val compatibleConnector = myMultimoduleDirToConnectorMap.values.firstOrNull {
+        it.isCompatibleWith(project, jdk, multimoduleDirectory)
       }
-      else {
-        connector = registerNewConnector(project, jdk, multimoduleDirectory)
+
+      if (compatibleConnector != null) {
+        MavenLog.LOG.debug("[connector] use existing connector for $compatibleConnector")
+        compatibleConnector.addMultimoduleDir(multimoduleDirectory)
       }
+
+      val connector = compatibleConnector ?: registerNewConnector(project, jdk, multimoduleDirectory)
+
       myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector)
 
       return connector
     }
-  }
-
-  private fun findCompatibleConnector(
-    project: Project,
-    jdk: Sdk,
-    multimoduleDirectory: String,
-  ): MavenServerConnector? {
-    for ((_, value) in myMultimoduleDirToConnectorMap) {
-      if (value.isCompatibleWith(project, jdk, multimoduleDirectory)) {
-        return value
-      }
-    }
-
-    return null
   }
 
   private fun MavenServerConnector.isCompatibleWith(project: Project, anotherJdk: Sdk, multimoduleDirectory: String): Boolean {
