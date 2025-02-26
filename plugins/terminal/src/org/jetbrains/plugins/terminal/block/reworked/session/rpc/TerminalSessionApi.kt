@@ -7,13 +7,14 @@ import com.intellij.terminal.session.TerminalOutputEvent
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
 interface TerminalSessionApi : RemoteApi<Unit> {
-  suspend fun sendInputEvent(sessionId: TerminalSessionId, event: TerminalInputEvent)
+  suspend fun getInputChannel(sessionId: TerminalSessionId): SendChannel<TerminalInputEvent>
 
   suspend fun getOutputFlow(sessionId: TerminalSessionId): Flow<List<TerminalOutputEvent>>
 

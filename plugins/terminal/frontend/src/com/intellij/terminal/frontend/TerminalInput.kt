@@ -1,16 +1,12 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.terminal.session.TerminalClearBufferEvent
-import com.intellij.terminal.session.TerminalResizeEvent
-import com.intellij.terminal.session.TerminalSession
-import com.intellij.terminal.session.TerminalWriteBytesEvent
+import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
@@ -24,6 +20,11 @@ internal class TerminalInput(
   companion object {
     val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
   }
+
+  private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
+    coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
+      terminalSessionFuture.await().getInputChannel()
+    }
 
   /**
    * Use this dispatcher to ensure that events are sent in the same order as methods in this class were called.
@@ -45,34 +46,25 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    withTerminalSession { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent(data))
-    }
+    sendEvent(TerminalWriteBytesEvent(data))
   }
 
   fun sendClearBuffer() {
-    withTerminalSession { session ->
-      session.sendInputEvent(TerminalClearBufferEvent)
-    }
+    sendEvent(TerminalClearBufferEvent)
   }
 
   /**
    * Note that resize events sent before the terminal session is initialized will be ignored.
    */
   fun sendResize(newSize: TermSize) {
-    val session = terminalSessionFuture.getNow(null) ?: return
-    coroutineScope.launch(synchronousDispatcher) {
-      session.sendInputEvent(TerminalResizeEvent(newSize.toDto()))
-    }
+    terminalSessionFuture.getNow(null) ?: return
+    sendEvent(TerminalResizeEvent(newSize.toDto()))
   }
 
-  private fun withTerminalSession(block: suspend (TerminalSession) -> Unit) {
-    terminalSessionFuture.thenAccept { session ->
-      if (session != null) {
-        coroutineScope.launch(synchronousDispatcher) {
-          block(session)
-        }
-      }
+  private fun sendEvent(event: TerminalInputEvent) {
+    coroutineScope.launch(synchronousDispatcher + CoroutineName("Send input event")) {
+      val channel = inputChannelDeferred.await()
+      channel.send(event)
     }
   }
 }
