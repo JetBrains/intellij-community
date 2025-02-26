@@ -335,6 +335,8 @@ fun CoroutineScope.startApplication(
 
       executeApplicationStarter(starter = starter, args = args)
     }
+    // no need to use a pool once started
+    ZipFilePool.PATH_CLASSLOADER_POOL = null
   }
 }
 
