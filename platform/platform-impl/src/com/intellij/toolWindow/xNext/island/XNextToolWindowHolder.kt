@@ -21,8 +21,8 @@ import kotlin.math.max
 class XNextToolWindowHolder private constructor(): JPanel() {
   companion object {
     @JvmStatic
-    fun create(): JComponent = XNextToolWindowHolder().apply {
-      border = JRoundedCornerBorder()
+    fun create(parentColor: Color? = null, fillColor: Color? = null): JComponent = XNextToolWindowHolder().apply {
+      border = JRoundedCornerBorder(parentColor, fillColor)
       ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
     }
   }
@@ -42,7 +42,7 @@ class XNextToolWindowHolder private constructor(): JPanel() {
   }
 }
 
-private class JRoundedCornerBorder : AbstractBorder() {
+private class JRoundedCornerBorder(private val parentColor: Color?, private val fillColor: Color?) : AbstractBorder() {
   companion object {
     const val THICKNESS: Int = 10
     const val ARC: Int = 25
@@ -64,11 +64,11 @@ private class JRoundedCornerBorder : AbstractBorder() {
 
       val extArea = Area(Rectangle(0, 0, width, height))
       extArea.subtract(Area(getBorderShape(width, height)))
-      g2.color = InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.background
+      g2.color =  parentColor ?: InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.background
 
       g2.fill(extArea)
 
-      g2.color = c.parent.background
+      g2.color = fillColor ?: c.parent.background
       val th = JBUI.scale(THICKNESS).toFloat()
       g2.stroke = BasicStroke(th, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
       val borderShape = getBorderShape(width, height)
