@@ -83,8 +83,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public RefModule getModule() {
-    final RefEntity owner = getOwner();
-    return owner instanceof RefElement ? ((RefElement)owner).getModule() : null;
+    return getOwner() instanceof RefElement e ? e.getModule() : null;
   }
 
   @Override
@@ -236,9 +235,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public @Nullable String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
-    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem
-                                             ? (PsiFileSystemItem) element
-                                             : element.getContainingFile();
+    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem item ? item : element.getContainingFile();
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
@@ -285,7 +282,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
         }
       }
     }
-    final RefEntity entity = getOwner();
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolIds);
+    return getOwner() instanceof RefElementImpl e && e.isSuppressed(toolIds);
   }
 }
