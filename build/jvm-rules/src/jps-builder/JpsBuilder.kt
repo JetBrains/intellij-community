@@ -9,7 +9,11 @@ import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
@@ -37,6 +41,7 @@ import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
+import org.jetbrains.bazel.jvm.jps.storage.AsyncExecutor
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
@@ -52,6 +57,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.coroutineContext
 
 internal suspend fun incrementalBuild(
@@ -252,6 +258,9 @@ suspend fun buildUsingJps(
     )
   }
   catch (e: RebuildRequestedException) {
+    if (isDebugEnabled) {
+      log.out.appendLine("rebuild requested: ${e.stackTraceToString()}")
+    }
     parentSpan.recordException(e)
     rebuildReason = e.cause!!.message
     -1
@@ -307,6 +316,7 @@ internal fun createJavaBuilder(
   }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun initAndBuild(
   rebuildReason: String?,
   compileScope: BazelCompileScope,
@@ -339,7 +349,11 @@ private suspend fun initAndBuild(
         moduleTarget = moduleTarget,
         relativizer = relativizer,
         buildDataProvider = dataManager,
-        requestLog = requestLog,
+        executor = object : AsyncExecutor {
+          override fun <T> execute(action: () -> T): CompletableFuture<T> {
+            return GlobalScope.async { action() }.asCompletableFuture()
+          }
+        },
         span = span,
       )
     }

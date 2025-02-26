@@ -1,16 +1,14 @@
 @file:Suppress("UnstableApiUsage")
 
-package org.jetbrains.bazel.jvm.jps.impl
+package org.jetbrains.bazel.jvm.jps.storage
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentStringEnumerator
-import com.intellij.util.io.StorageLockContext
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.jps.dependency.BaseMaplet
-import org.jetbrains.jps.dependency.Enumerator
+import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.Maplet
 import org.jetbrains.jps.dependency.MapletFactory
@@ -28,7 +26,7 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Function
+import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import kotlin.math.max
 import kotlin.math.min
@@ -37,30 +35,30 @@ private const val BASE_CACHE_SIZE = 512
 
 private val cacheSize = BASE_CACHE_SIZE * min(max(1, (Runtime.getRuntime().maxMemory() / 1073741824L).toInt()), 5)
 
+internal interface AsyncExecutor {
+  fun <T> execute(action: () -> T): CompletableFuture<T>
+}
+
 internal class BazelPersistentMapletFactory(
   private val rootDir: Path,
+  executor: AsyncExecutor,
 ) : MapletFactory, Closeable {
-  private val stringTable: PersistentStringEnumerator
   private val maps = ArrayList<BaseMaplet<*>>()
-  private val enumerator: Enumerator
-  private val usageInternerFunction: Function<Any?, Any?>
-  private val usageInterner: LoadingCache<Usage, Usage>
 
-  init {
-    stringTable = PersistentStringEnumerator(getMapFile("string-table"), 4096, true, StorageLockContext())
-    enumerator = object : Enumerator {
-      override fun toString(num: Int): String? {
-        return stringTable.valueOf(num)
-      }
+  private val stringEnumeratorImpl = DurableStringEnumerator.openAsync(getMapFile("strings"), executor)
 
-      override fun toNumber(str: String?): Int {
-        return stringTable.enumerate(str)
-      }
+  private val stringEnumerator = object : StringEnumerator {
+    override fun enumerate(string: String): Int {
+      return stringEnumeratorImpl.enumerate(string)
     }
 
-    usageInterner = Caffeine.newBuilder().maximumSize(cacheSize.toLong()).build { it }
-    usageInternerFunction = Function { if (it is Usage) usageInterner.get(it) else it }
+    override fun valueOf(id: Int): String? {
+      return stringEnumeratorImpl.valueOf(id)
+    }
   }
+
+  private val usageInterner: LoadingCache<Usage, Usage> = Caffeine.newBuilder().maximumSize(cacheSize.toLong()).build { it }
+  private val usageInternerFunction: (Usage) -> Usage = { usageInterner.get(it) }
 
   override fun <K, V> createSetMultiMaplet(
     storageName: String,
@@ -70,8 +68,8 @@ internal class BazelPersistentMapletFactory(
     val container = CachingMultiMaplet(
       PersistentMultiMaplet(
         getMapFile(storageName),
-        GraphKeyDescriptor(keyExternalizer, enumerator),
-        GraphDataExternalizer(valueExternalizer, enumerator, usageInternerFunction),
+        GraphKeyDescriptor(keyExternalizer, stringEnumerator),
+        GraphDataExternalizer(valueExternalizer, stringEnumerator, usageInternerFunction),
         Supplier { hashSet() }
       ),
       cacheSize,
@@ -88,8 +86,8 @@ internal class BazelPersistentMapletFactory(
     val container = CachingMaplet<K, V>(
       PersistentMaplet(
         getMapFile(storageName),
-        GraphKeyDescriptor(keyExternalizer, enumerator),
-        GraphDataExternalizer(valueExternalizer, enumerator, usageInternerFunction)
+        GraphKeyDescriptor(keyExternalizer, stringEnumerator),
+        GraphDataExternalizer(valueExternalizer, stringEnumerator, usageInternerFunction)
       ),
       cacheSize,
     )
@@ -102,7 +100,7 @@ internal class BazelPersistentMapletFactory(
       for (container in maps) {
         yield { container.close() }
       }
-      yield { stringTable.close() }
+      yield { stringEnumeratorImpl.close() }
     })
   }
 
@@ -113,24 +111,56 @@ internal class BazelPersistentMapletFactory(
   }
 }
 
+private interface StringEnumerator {
+  fun enumerate(string: String): Int
+
+  fun valueOf(id: Int): String?
+}
+
 private open class GraphDataExternalizer<T>(
   private val externalizer: Externalizer<T>,
-  private val enumerator: Enumerator?,
-  private val objectInterner: Function<Any?, Any?>?,
+  private val stringEnumerator: StringEnumerator,
+  private val elementInterner: ((Usage) -> Usage)?,
 ) : DataExternalizer<T> {
-  override fun save(out: DataOutput, value: T?) {
-    externalizer.save(GraphDataOutputImpl.wrap(out, enumerator), value)
+  final override fun save(out: DataOutput, value: T?) {
+    val wrapped = object : GraphDataOutputImpl(out) {
+      override fun writeUTF(s: String) {
+        writeInt(stringEnumerator.enumerate(s))
+      }
+    }
+    externalizer.save(wrapped, value)
   }
 
-  override fun read(`in`: DataInput): T? {
-    return externalizer.load(GraphDataInputImpl.wrap(`in`, enumerator, objectInterner))
+  final override fun read(`in`: DataInput): T? {
+    val wrapped = if (elementInterner == null) {
+      object : GraphDataInputImpl(`in`) {
+        override fun readUTF(): String {
+          val id = readInt()
+          return stringEnumerator.valueOf(id) ?: throw IllegalStateException("$id is not valid")
+        }
+      }
+    }
+    else {
+      object : GraphDataInputImpl(`in`) {
+        override fun readUTF(): String {
+          val id = readInt()
+          return stringEnumerator.valueOf(id) ?: throw IllegalStateException("$id is not valid")
+        }
+
+        override fun <T : ExternalizableGraphElement?> processLoadedGraphElement(element: T?): T? {
+          @Suppress("UNCHECKED_CAST")
+          return if (element is Usage) elementInterner(element) as T else element
+        }
+      }
+    }
+    return externalizer.load(wrapped)
   }
 }
 
 private class GraphKeyDescriptor<T>(
   externalizer: Externalizer<T>,
-  enumerator: Enumerator,
-) : GraphDataExternalizer<T>(externalizer, enumerator, null), KeyDescriptor<T> {
+  stringEnumerator: StringEnumerator,
+) : GraphDataExternalizer<T>(externalizer = externalizer, stringEnumerator = stringEnumerator, elementInterner = null), KeyDescriptor<T> {
   override fun isEqual(val1: T?, val2: T?): Boolean {
     return val1 == val2
   }

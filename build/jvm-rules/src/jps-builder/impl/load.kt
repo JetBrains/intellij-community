@@ -3,6 +3,8 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import org.jetbrains.bazel.jvm.jps.storage.AsyncExecutor
+import org.jetbrains.bazel.jvm.jps.storage.BazelPersistentMapletFactory
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetIndex
 import org.jetbrains.jps.builders.BuildTargetRegistry.ModuleTargetSelector
@@ -38,9 +40,9 @@ internal fun createDataManager(
   dataStorageRoot: Path,
   relativizer: PathRelativizerService,
   buildDataProvider: BazelBuildDataProvider,
-  requestLog: RequestLog,
+  executor: AsyncExecutor,
 ): BuildDataManager {
-  val containerFactory = BazelPersistentMapletFactory(dataStorageRoot.resolve("mappings-graph"))
+  val containerFactory = BazelPersistentMapletFactory(dataStorageRoot.resolve("mappings-graph"), executor)
   return BuildDataManager(
     dataPaths = BazelBuildDataPaths(dataStorageRoot),
     targetsState = BuildTargetsState(BazelBuildTargetStateManager),

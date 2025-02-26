@@ -9,8 +9,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.createDataManager
+import org.jetbrains.bazel.jvm.jps.storage.AsyncExecutor
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsModel
@@ -30,8 +30,8 @@ internal class StorageInitializer(private val dataDir: Path) {
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
     buildDataProvider: BazelBuildDataProvider,
-    requestLog: RequestLog,
     span: Span,
+    executor: AsyncExecutor,
   ): BuildDataManager {
     try {
       return createDataManager(
@@ -40,7 +40,7 @@ internal class StorageInitializer(private val dataDir: Path) {
         // see `JpsProjectBuilder.ensureFsStateInitialized`
         relativizer = relativizer,
         buildDataProvider = buildDataProvider,
-        requestLog = requestLog,
+        executor = executor,
       )
     }
     catch (e: Throwable) {
@@ -59,7 +59,7 @@ internal class StorageInitializer(private val dataDir: Path) {
       moduleTarget = moduleTarget,
       relativizer = relativizer,
       buildDataProvider = buildDataProvider,
-      requestLog = requestLog,
+      executor = executor,
       span = span,
     )
   }

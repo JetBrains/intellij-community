@@ -2,7 +2,7 @@
 
 package org.jetbrains.jps.incremental.storage
 
-import org.jetbrains.bazel.jvm.jps.impl.BazelPersistentMapletFactory
+import org.jetbrains.bazel.jvm.jps.storage.BazelPersistentMapletFactory
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.java.dependencyView.Mappings
