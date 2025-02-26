@@ -135,9 +135,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -1459,7 +1457,12 @@ public final class BuildManager implements Disposable {
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
     if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
+      try {
+        cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
+      }
+      catch (FileSystemException err) {
+        LOG.warn("Can't copy JNA", err);
+      }
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.nosys=true");
       //noinspection SpellCheckingInspection
@@ -1509,13 +1512,20 @@ public final class BuildManager implements Disposable {
 
     if (ProjectUtilCore.isExternalStorageEnabled(project)) {
       Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
-      String pathToExternalStorage;
       if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-        pathToExternalStorage = cmdLine.copyPathToHostIfRequired(externalProjectConfig);
-        cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=' + pathToExternalStorage);
+        try {
+          String pathToExternalStorage = cmdLine.copyPathToHostIfRequired(externalProjectConfig);
+          cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=' + pathToExternalStorage);
+        }
+        catch (NoSuchFileException ignored) {
+          // No external project cache -- no copy of external project cache.
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy external project configuration", err);
+        }
       }
       else {
-        pathToExternalStorage = externalProjectConfig.toString();
+        String pathToExternalStorage = externalProjectConfig.toString();
         cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=', pathToExternalStorage);
       }
     }
@@ -1674,7 +1684,12 @@ public final class BuildManager implements Disposable {
       }
 
       for (Pair<String, Path> parameter : provider.getPathParameters()) {
-        cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyPathToTargetIfRequired(parameter.getSecond()));
+        try {
+          cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyPathToTargetIfRequired(parameter.getSecond()));
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy parameter " + parameter.getFirst(), err);
+        }
       }
     }
 
@@ -1738,7 +1753,12 @@ public final class BuildManager implements Disposable {
 
     for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
-        cmdLine.copyPathToTargetIfRequired(Paths.get(path));
+        try {
+          cmdLine.copyPathToTargetIfRequired(Paths.get(path));
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy additional plugin", err);
+        }
       }
     }
 
