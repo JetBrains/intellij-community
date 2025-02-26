@@ -4,12 +4,15 @@ package com.intellij.ide.structureView.logical
 import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService.Companion.getInstance
+import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,6 +21,18 @@ class PhysicalAndLogicalStructureViewBuilder(
   private val physicalBuilder: TreeBasedStructureViewBuilder,
   private val psiFile: PsiFile,
 ): TreeBasedStructureViewBuilder() {
+
+  companion object {
+    fun wrapPhysicalBuilderIfPossible(physicalBuilder: StructureViewBuilder?, psiFile: PsiFile): StructureViewBuilder? {
+      if (physicalBuilder !is TreeBasedStructureViewBuilder) return physicalBuilder
+      if (ApplicationManager.getApplication().isUnitTestMode()
+          || !Registry.`is`("logical.structure.enabled", true)
+          || AppMode.isRemoteDevHost()) {
+        return physicalBuilder
+      }
+      return PhysicalAndLogicalStructureViewBuilder(physicalBuilder, psiFile)
+    }
+  }
 
   override fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView {
     val logicalBuilder = getInstance(psiFile.project).getLogicalStructureBuilder(psiFile)

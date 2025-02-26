@@ -4,16 +4,12 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
-import com.intellij.idea.AppMode;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -31,13 +27,6 @@ class LanguageFileTypeStructureViewBuilderProvider implements StructureViewBuild
     PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
     if (factory == null) return null;
     StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
-    if (!(physicalBuilder instanceof TreeBasedStructureViewBuilder treeBasedStructureViewBuilder)) return physicalBuilder;
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        || !Registry.is("logical.structure.enabled", true)
-        || AppMode.isRemoteDevHost()) {
-      return physicalBuilder;
-    }
-
-    return new PhysicalAndLogicalStructureViewBuilder(treeBasedStructureViewBuilder, psiFile);
+    return PhysicalAndLogicalStructureViewBuilder.Companion.wrapPhysicalBuilderIfPossible(physicalBuilder, psiFile);
   }
 }
