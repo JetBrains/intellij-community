@@ -2,6 +2,11 @@ package com.intellij.settingsSync.core.config
 
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -11,12 +16,13 @@ import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.*
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.UpdateResult.*
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
@@ -26,6 +32,7 @@ import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.groupedTextListCellRenderer
+import com.intellij.util.Consumer
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -172,7 +179,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               }
               if (checkServerState(syncPanelHolder, remoteCommunicator)) {
                 enabledStatus.set(true)
-                syncStatusChanged()
+                triggerUpdateConfigurable()
               }
             }
           } else {
@@ -180,7 +187,6 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
             if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
               enabledStatus.set(false)
               disableSyncOption.set(syncDisableOption)
-              syncStatusChanged()
             }
           }
         }
@@ -375,8 +381,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               userDropDownLink.text
               enabledStatus.set(true)
               wasUsedBefore.set(true)
-              syncStatusChanged()
               syncConfigPanel.reset()
+              triggerUpdateConfigurable()
             }
           }
         }
@@ -432,6 +438,16 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         enableButton.text = message("config.button.enable")
       }
     }
+  }
+
+  // triggers fake action, which causes SettingEditor to update and check if configurable was modified
+  private fun triggerUpdateConfigurable() {
+    println("triggerUpdateConfigurable")
+    val dumbAwareAction = DumbAwareAction.create(Consumer { _: AnActionEvent? ->
+      // do nothing
+    })
+    val event = AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null)
+    ActionUtil.performActionDumbAwareWithCallbacks(dumbAwareAction, event)
   }
 
   private fun getReadableSyncTime(): String =
