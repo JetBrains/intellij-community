@@ -8,14 +8,15 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbarListener
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.SeparatorAction
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
-import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
@@ -28,13 +29,17 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.*
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 
 class TableFloatingToolbar(private val tableResultView: TableResultView, private val grid: DataGrid, private val cs: CoroutineScope) {
+
+  data class ToolbarPosition(val rightBottomCorner: Point, val rowNum: Int, val columnNum: Int)
 
   class CustomizableGroupProvider : CustomizableActionGroupProvider() {
     override fun registerGroups(registrar: CustomizableActionGroupRegistrar) {
@@ -51,22 +56,18 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     }
   )
 
-  private val actionToolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(
-    actionGroup,
-    ACTION_PLACE,
-    tableResultView,
-    horizontal = true,
-    onUpdated = { }
-  )
-    .apply {
-      addListener(object : ActionToolbarListener {
-        override fun actionsUpdated() {
-          hintUpdate()
-        }
-      }, tableResultView)
-      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-      component.border = JBUI.Borders.empty()
+  private val actionToolbar = object : ActionToolbarImpl(ACTION_PLACE, actionGroup, true) {
+    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
+      super.actionsUpdated(forced, newVisibleActions)
+      hintUpdate()
     }
+  }.apply {
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+    component.border = JBUI.Borders.empty()
+    targetComponent = tableResultView
+    isReservePlaceAutoPopupIcon = false
+    putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
+  }
 
   private val panel = BorderLayoutPanel().addToCenter(actionToolbar.component).apply {
     border = BorderFactory.createEtchedBorder()
@@ -74,22 +75,27 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   private val hint = LightweightHint(panel).apply {
     setForceLightweightPopup(true)
   }
-
-  private fun hintUpdate() {
-    if (!hint.isVisible) return
-    hint.pack()
-    hint.updateLocation(position.rightBottomCorner.x - hint.component.width, position.rightBottomCorner.y - hint.component.height)
-  }
-
   private val hintOptions: HintHint = HintHint()
     .setRequestFocus(false)
     .setTextBg(JBColor.background())
     .setBorderColor(getHintBorderColor())
     .setTextFg(JBColor.foreground())
-
-  data class ToolbarPosition(val rightBottomCorner: Point, val rowNum: Int, val columnNum: Int)
-
   private var position = ToolbarPosition(Point(0, 0), 0, 0)
+  private var showingJob: AtomicReference<Job?> = AtomicReference(null)
+
+  private fun hintUpdate() {
+    if (!hint.isVisible) {
+      return
+    }
+    if (!actionToolbar.actions.any { it !is SeparatorAction && it !is MoreActionGroup }) {
+      hide()
+      return
+    }
+
+    hint.pack()
+    hint.updateLocation(position.rightBottomCorner.x - hint.component.width, position.rightBottomCorner.y - hint.component.height)
+  }
+
   private fun cornerPositionForCell(cell: Rectangle): Point = Point(
     cell.x + cell.width,
     cell.y,
@@ -163,7 +169,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
       return
     }
 
-    cs.launch(Dispatchers.EDT) {
+    showingJob.set(cs.launch(Dispatchers.EDT) {
       ComponentUtil.markAsShowing(actionToolbar.component, true)
       val future = actionToolbar.updateActionsAsync()
       try {
@@ -180,15 +186,17 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
         return@launch
       }
 
+      checkCanceled()
       hint.show(tableResultView,
                 position.rightBottomCorner.x - hint.component.preferredWidth,
                 position.rightBottomCorner.y - hint.component.preferredHeight,
                 tableResultView,
                 hintOptions)
-    }
+    })
   }
 
   fun hide() {
+    showingJob.get()?.cancel()
     hint.hide()
   }
 
