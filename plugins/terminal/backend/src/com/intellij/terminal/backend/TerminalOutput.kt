@@ -18,6 +18,7 @@ internal fun createTerminalOutputFlow(
   textBuffer: TerminalTextBuffer,
   terminalDisplay: TerminalDisplayImpl,
   controller: ObservableJediTerminal,
+  shellIntegrationController: TerminalShellIntegrationController,
   coroutineScope: CoroutineScope,
   ensureEmulationActive: () -> Unit,
 ): MutableSharedFlow<List<TerminalOutputEvent>> {
@@ -36,7 +37,6 @@ internal fun createTerminalOutputFlow(
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
   val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
   val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
-  val shellIntegrationController = TerminalShellIntegrationController(controller)
 
   /**
    * Events should be sent in the following order: content update, cursor position update, other events.
