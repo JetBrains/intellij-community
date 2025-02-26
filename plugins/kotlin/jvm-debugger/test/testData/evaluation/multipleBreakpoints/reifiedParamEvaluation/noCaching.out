@@ -1,0 +1,12 @@
+LineBreakpoint created at noCaching.kt:5
+Run Java
+Connected to the target VM
+noCaching.kt:5
+Compile bytecode for T::class.qualifiedName
+noCaching.kt:5
+Compile bytecode for T::class.qualifiedName
+noCaching.kt:5
+Compile bytecode for T::class.qualifiedName
+Disconnected from the target VM
+
+Process finished with exit code 0

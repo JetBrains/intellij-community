@@ -1,0 +1,10 @@
+LineBreakpoint created at call.kt:5
+Run Java
+Connected to the target VM
+call.kt:5
+foo2.kt:4
+foo1.kt:7
+Compile bytecode for T1::class.toString() + "_" + T2::class.toString()
+Disconnected from the target VM
+
+Process finished with exit code 0

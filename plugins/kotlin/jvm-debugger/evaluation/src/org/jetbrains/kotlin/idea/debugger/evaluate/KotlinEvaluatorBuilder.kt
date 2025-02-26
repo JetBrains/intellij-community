@@ -302,6 +302,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 FailedCompilationCodeFragment(e)
             }
         }
+        
+        if (result is CompiledCodeFragmentData && !result.canBeCached) {
+            cache.remove(key)
+        }
+        
         when (result) {
             is CompiledCodeFragmentData -> return result
             is FailedCompilationCodeFragment -> throw result.evaluateException
@@ -568,7 +573,7 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
     }
 }
 
-fun createCompiledDataDescriptor(result: CompilationResult): CompiledCodeFragmentData {
+fun createCompiledDataDescriptor(result: CompilationResult, canBeCached: Boolean): CompiledCodeFragmentData {
     val localFunctionSuffixes = result.localFunctionSuffixes
 
     val dumbParameters = ArrayList<CodeFragmentParameter.Dumb>(result.parameterInfo.parameters.size)
@@ -589,7 +594,9 @@ fun createCompiledDataDescriptor(result: CompilationResult): CompiledCodeFragmen
         dumbParameters,
         result.parameterInfo.crossingBounds,
         result.mainMethodSignature,
-        result.compilerType
+        result.compilerType,
+        statisticReported = false,
+        canBeCached = canBeCached
     )
 }
 

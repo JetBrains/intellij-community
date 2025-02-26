@@ -1471,6 +1471,35 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/reifiedTypeParameters")
+        public static class ReifiedTypeParameters extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("crossfileInlining.kt")
+            public void testCrossfileInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/crossfileInlining.kt");
+            }
+
+            @TestMetadata("properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/properties.kt");
+            }
+
+            @TestMetadata("variousTypeOperators.kt")
+            public void testVariousTypeOperators() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/variousTypeOperators.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             @java.lang.Override
@@ -2489,6 +2518,40 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation")
+        public static class ReifiedParamEvaluation extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("generics.kt")
+            public void testGenerics() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/generics.kt");
+            }
+
+            @TestMetadata("multilineCall.kt")
+            public void testMultilineCall() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/multilineCall.kt");
+            }
+
+            @TestMetadata("noCaching.kt")
+            public void testNoCaching() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/noCaching.kt");
+            }
+
+            @TestMetadata("reifiedParamEvalWithComplexInvocationLookup.kt")
+            public void testReifiedParamEvalWithComplexInvocationLookup() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/reifiedParamEvalWithComplexInvocationLookup.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints")
         public static class Uncategorized extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             @java.lang.Override
@@ -2826,6 +2889,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
             @TestMetadata("objectsInInlineFunctions.kt")
             public void testObjectsInInlineFunctions() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/objectsInInlineFunctions.kt");
+            }
+
+            @TestMetadata("reifiedParamEvaluation.kt")
+            public void testReifiedParamEvaluation() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/reifiedParamEvaluation.kt");
             }
         }
     }
