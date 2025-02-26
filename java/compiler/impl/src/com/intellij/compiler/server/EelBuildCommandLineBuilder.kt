@@ -31,6 +31,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   private val workingDirectory: Path = run {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
     PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), eel.userInfo.home.asNioPath().toString(), selector)
+      .resolve(BuildManager.SYSTEM_ROOT)
   }
 
   override fun addParameter(parameter: String) {
@@ -78,6 +79,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     return remotePath
   }
 
+  @Throws(java.nio.file.FileSystemException::class)
   override fun copyPathToHostIfRequired(path: Path): String {
     return copyPathToTargetIfRequired(path).asEelPath().toString()
   }

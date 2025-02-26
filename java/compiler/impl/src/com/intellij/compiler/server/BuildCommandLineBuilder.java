@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -49,7 +50,7 @@ interface BuildCommandLineBuilder {
    * @return a path which points to a copy on a remote machine, and is available to the IDE (but maybe not to the OS of the IDE)
    * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code \\wsl.localhost\home\a.zip}.
    */
-  default @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
+  default @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) throws FileSystemException {
     return path;
   }
 
@@ -58,7 +59,7 @@ interface BuildCommandLineBuilder {
    * @return a path which points to a copy on a remote machine, and is available to the remote machine (and it does not make sense to the OS of the IDE).
    * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code /home/a.zip}.
    */
-  default @NotNull String copyPathToHostIfRequired(@NotNull Path path) {
+  default @NotNull String copyPathToHostIfRequired(@NotNull Path path) throws FileSystemException {
     return path.toString();
   }
 }
