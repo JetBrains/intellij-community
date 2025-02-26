@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
@@ -68,7 +70,11 @@ internal class WorkspaceFileIndexDataImpl(
     registerAllEntities(EntityStorageKind.UNLOADED)
     if (librariesAndSdkContributors != null) {
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-        librariesAndSdkContributors.registerFileSets()
+        runBlockingCancellable {
+          readAction {
+            librariesAndSdkContributors.registerFileSets()
+          }
+        }
       }
     }
 

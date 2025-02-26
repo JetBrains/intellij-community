@@ -5,7 +5,6 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -249,9 +248,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   override suspend fun initialize() {
     if (indexData is EmptyWorkspaceFileIndexData) {
       val contributors = EP_NAME.extensionList
-      readAction {
-        indexData = WorkspaceFileIndexDataImpl(contributorList = contributors, project = project, parentDisposable = this)
-      }
+      indexData = WorkspaceFileIndexDataImpl(contributorList = contributors, project = project, parentDisposable = this)
     }
   }
 
