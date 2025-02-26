@@ -24,10 +24,6 @@ class MavenIndexingConnectorImpl(jdk: Sdk,
     throwExceptionIfProjectDisposed = false
   }
 
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
-    throw UnsupportedOperationException()
-  }
-
   override fun newStartServerTask(): StartIndexingServerTask {
     return StartIndexingServerTask()
   }

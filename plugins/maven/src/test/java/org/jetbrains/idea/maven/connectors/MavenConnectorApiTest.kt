@@ -88,9 +88,6 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
 
   }
 
-  private suspend fun getConnector() =
-    MavenServerManager.getInstance().getConnector(project, projectPath.toString())
-
   private suspend fun getEmbedder() =
     MavenServerManager.getInstance().createEmbedder(project, true, projectPath.toString())
 }

@@ -30,8 +30,6 @@ class DummyMavenServerConnector(override val project: Project,
 
   override fun isNew() = false
 
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution) = true
-
   override fun connect() {
   }
 
