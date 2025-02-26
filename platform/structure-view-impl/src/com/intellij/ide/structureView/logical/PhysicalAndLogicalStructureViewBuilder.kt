@@ -16,12 +16,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 class PhysicalAndLogicalStructureViewBuilder(
   private val physicalBuilder: TreeBasedStructureViewBuilder,
   private val psiFile: PsiFile,
 ): TreeBasedStructureViewBuilder() {
 
+  @ApiStatus.Internal
   companion object {
     fun wrapPhysicalBuilderIfPossible(physicalBuilder: StructureViewBuilder?, psiFile: PsiFile): StructureViewBuilder? {
       if (physicalBuilder !is TreeBasedStructureViewBuilder) return physicalBuilder
