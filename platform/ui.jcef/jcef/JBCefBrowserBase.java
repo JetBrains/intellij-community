@@ -44,8 +44,6 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -564,36 +562,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     if (delegate != null) {
       return delegate.isInitialized(cefBrowser);
     }
-    if (cefBrowser instanceof CefNativeAdapter)
-      return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
-
-    // Temporary use reflection to avoid jcef-version increment
-    // TODO: use CefClient.isNativeBrowserCreated directly
-    try {
-      Class cefClientClass = Class.forName("org.cef.CefClient");
-      Method m = cefClientClass.getMethod("isNativeBrowserCreated", CefBrowser.class);
-      return (boolean)m.invoke(cefClientClass, cefBrowser);
-    }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | ClassNotFoundException ignored) {
-    }
-    return false;
+    return CefClient.isNativeBrowserCreated(cefBrowser);
   }
 
   static boolean isCefBrowserCreationStarted(@NotNull CefBrowser browser) {
-    // Temporary use reflection to avoid jcef-version increment
-    // TODO: use isNativeBrowserCreationStarted directly
-    try {
-      Class cefClientClass = Class.forName("org.cef.CefClient");
-      Method m = cefClientClass.getMethod("isNativeBrowserCreationStarted", CefBrowser.class);
-      return (boolean)m.invoke(cefClientClass, browser);
-    }
-    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException  ignored) {
-    }
-
-    // Fallback to old logic (incorrect in general, since creation is always started before native ref obtained)
-    if (browser instanceof CefNativeAdapter)
-      return ((CefNativeAdapter)browser).getNativeRef("CefBrowser") != 0;
-    return false;
+    return CefClient.isNativeBrowserCreationStarted(browser);
   }
 
   /**
@@ -953,23 +926,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                               boolean isMouseWheelEventEnabled,
                                               CefBrowserSettings settings) {
     if (JBCefApp.isRemoteEnabled()) {
-      CefBrowser browser = null;
-      try {
-        // Use latest API via reflection to avoid jcef-version increment
-        // TODO: remove reflection
-        Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
-        Method m = CefClient.class.getMethod("createBrowser", String.class, Supplier.class, boolean.class, CefRequestContext.class, CefBrowserSettings.class);
-        browser = (CefBrowser)m.invoke(client, url, renderingSupplier, true, context, settings);
-      } catch (Throwable e) {}
-
-      if (browser == null) {
-        final CefRendering.CefRenderingWithHandler rendering = createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
-        browser = client.createBrowser(
-          ObjectUtils.notNull(url, ""),
-          rendering,
-          true /* isTransparent - unused*/,
-          context);
-      }
+      Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
+      CefBrowser browser = client.createBrowser(url, renderingSupplier, true, context, settings);
 
       if (browser.getUIComponent() instanceof JBCefOsrComponent)
         ((JBCefOsrComponent)browser.getUIComponent()).setBrowser(browser);
