@@ -29,10 +29,12 @@ import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
 
+internal const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
+
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
   helpTopic = "reference.settings.terminal",
-  _id = "terminal"
+  _id = TERMINAL_CONFIGURABLE_ID
 ) {
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
