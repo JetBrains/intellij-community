@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.*;
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
+import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.SwitchExhaustivenessState.*;
 
 /**
  * This class represents the model for highlighting patterns in a switch block.
@@ -62,64 +62,59 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
     }
     if (needToCheckCompleteness(elementsToCheckCompleteness)) {
-      checkCompleteness(elementsToCheckCompleteness, true, errorSink);
+      if (checkRedundantDefaultBranch(elementsToCheckCompleteness, errorSink)) return;
+      checkCompleteness(elementsToCheckCompleteness, errorSink);
     }
   }
 
-  /**
-   * 14.11.1 Switch Blocks
-   * To ensure completeness and the absence of undescribed statements, different rules are provided
-   * for enums, sealed and plain classes.
-   *
-   * @see JavaPsiPatternUtil#isUnconditionalForType(PsiCaseLabelElement, PsiType)
-   */
-  private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements,
-                                 boolean inclusiveUnconditionalAndDefault,
-                                 @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+  private boolean checkRedundantDefaultBranch(@NotNull List<? extends PsiCaseLabelElement> elements,
+                                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
-    List<PsiType> selectorTypes = JavaPsiPatternUtil.deconstructSelectorType(mySelectorType);
-
-    if (inclusiveUnconditionalAndDefault) {
-      PsiCaseLabelElement elementCoversType =
-        selectorTypes.stream()
-          .map(type -> findUnconditionalPatternForType(elements, type))
-          .filter(t -> t != null)
-          .findAny()
-          .orElse(null);
-      PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
-      if (defaultElement != null && elementCoversType != null) {
-        HighlightInfo.Builder defaultInfo =
-          createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.pattern.and.default.exist"));
-        registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
-        errorSink.accept(defaultInfo);
-        HighlightInfo.Builder patternInfo = createError(elementCoversType, JavaErrorBundle.message(
-          "switch.unconditional.pattern.and.default.exist"));
-        IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
-        patternInfo.registerFix(action, null, null, null, null);
-        errorSink.accept(patternInfo);
-        return;
-      }
-      //default (or unconditional), TRUE and FALSE cannot be together
-      if ((defaultElement != null || elementCoversType != null) && mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && elements.size() >= 2) {
-        if (hasTrueAndFalse(elements)) {
-          if (defaultElement != null) {
-            HighlightInfo.Builder defaultInfo =
-              createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
-            registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
-            errorSink.accept(defaultInfo);
-          }
-          if (elementCoversType != null) {
-            HighlightInfo.Builder patternInfo = createError(elementCoversType,
-                                                            JavaErrorBundle.message(
-                                                              "switch.unconditional.boolean.and.unconditional.exist"));
-            IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
-            patternInfo.registerFix(action, null, null, null, null);
-            errorSink.accept(patternInfo);
-          }
+    PsiCaseLabelElement elementCoversType =
+      JavaPsiPatternUtil.deconstructSelectorType(mySelectorType).stream()
+        .map(type -> findUnconditionalPatternForType(elements, type))
+        .filter(t -> t != null)
+        .findAny()
+        .orElse(null);
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
+    if (defaultElement != null && elementCoversType != null) {
+      HighlightInfo.Builder defaultInfo =
+        createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.pattern.and.default.exist"));
+      registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
+      errorSink.accept(defaultInfo);
+      HighlightInfo.Builder patternInfo = createError(elementCoversType, JavaErrorBundle.message(
+        "switch.unconditional.pattern.and.default.exist"));
+      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
+      patternInfo.registerFix(action, null, null, null, null);
+      errorSink.accept(patternInfo);
+      return true;
+    }
+    //default (or unconditional), TRUE and FALSE cannot be together
+    if ((defaultElement != null || elementCoversType != null) &&
+        mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN &&
+        elements.size() >= 2) {
+      if (hasTrueAndFalse(elements)) {
+        if (defaultElement != null) {
+          HighlightInfo.Builder defaultInfo =
+            createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
+          registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
+          errorSink.accept(defaultInfo);
+        }
+        if (elementCoversType != null) {
+          HighlightInfo.Builder patternInfo = createError(elementCoversType,
+                                                          JavaErrorBundle.message(
+                                                            "switch.unconditional.boolean.and.unconditional.exist"));
+          IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
+          patternInfo.registerFix(action, null, null, null, null);
+          errorSink.accept(patternInfo);
         }
       }
-      if (defaultElement != null || elementCoversType != null) return;
     }
+    return defaultElement != null || elementCoversType != null;
+  }
+
+  private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements,
+                                 @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (isExhaustiveForSwitchSelectorPrimitiveWrapper(elements)) return;
     if (mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && hasTrueAndFalse(elements)) return;
     //enums are final; checking intersections are not needed
@@ -133,7 +128,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       checkEnumCompleteness(selectorClass, enumElements, errorSink);
       return;
     }
-    List<PsiType> sealedTypes = getAbstractSealedTypes(selectorTypes);
+    List<PsiType> sealedTypes = getAbstractSealedTypes(JavaPsiPatternUtil.deconstructSelectorType(mySelectorType));
     if (!sealedTypes.isEmpty()) {
       errorSink.accept(checkSealedClassCompleteness(mySelectorType, elements));
       return;
@@ -285,14 +280,14 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
    * @param switchBlock                          the PsiSwitchBlock to evaluate
    * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
    *                                             because nested deconstruction patterns don't cover null values
-   * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
+   * @return {@link SwitchExhaustivenessState#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
    * (this is already covered by highlighting)
-   * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-   * <p>{@link CompletenessResult#COMPLETE_WITH_UNCONDITIONAL}, if switch is complete because an unconditional pattern exists
-   * <p>{@link CompletenessResult#COMPLETE_WITHOUT_UNCONDITIONAL}, if switch is complete and doesn't contain an unconditional pattern
+   * <p>{@link SwitchExhaustivenessState#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
+   * <p>{@link SwitchExhaustivenessState#EXHAUSTIVE_WITH_UNCONDITIONAL}, if switch is complete because an unconditional pattern exists
+   * <p>{@link SwitchExhaustivenessState#EXHAUSTIVE_WITHOUT_UNCONDITIONAL}, if switch is complete and doesn't contain an unconditional pattern
    */
-  public static @NotNull CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
-                                                              boolean considerNestedDeconstructionPatterns) {
+  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
+                                                                              boolean considerNestedDeconstructionPatterns) {
     SwitchBlockHighlightingModel switchModel = createInstance(
       PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return UNEVALUATED;
@@ -305,20 +300,23 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     boolean isEnumSelector = switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.ENUM;
     AtomicBoolean reported = new AtomicBoolean();
     if (switchModel instanceof PatternsInSwitchBlockHighlightingModel patternsInSwitchModel) {
-      if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_UNCONDITIONAL;
-      if (switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && hasTrueAndFalse(labelElements))  return COMPLETE_WITH_UNCONDITIONAL;
-      if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
-      //it is necessary,
-      // because deconstruction patterns don't cover cases when some of their components are null and deconstructionPattern too
-      if (!considerNestedDeconstructionPatterns) {
-        labelElements =
-          ContainerUtil.filter(labelElements,
-                               label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
-                                          ContainerUtil.or(
-                                            deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
-                                            component -> component instanceof PsiDeconstructionPattern)));
+      if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) {
+        return EXHAUSTIVE_WITH_UNCONDITIONAL;
       }
-      patternsInSwitchModel.checkCompleteness(labelElements, false, builder -> {
+      if (switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && hasTrueAndFalse(labelElements)) {
+        return EXHAUSTIVE_WITH_UNCONDITIONAL;
+      }
+      if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
+      // It is necessary because deconstruction patterns don't cover cases 
+      // when some of their components are null and deconstructionPattern too
+      if (!considerNestedDeconstructionPatterns) {
+        labelElements = ContainerUtil.filter(
+          labelElements, label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
+                                    ContainerUtil.or(
+                                      deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                      component -> component instanceof PsiDeconstructionPattern)));
+      }
+      patternsInSwitchModel.checkCompleteness(labelElements, (Consumer<? super HighlightInfo.Builder>)builder -> {
         if (builder != null) reported.set(true);
       });
     }
@@ -334,8 +332,10 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       });
     }
     // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
-    if (needToCheckCompleteness) return reported.get() ? UNEVALUATED : COMPLETE_WITHOUT_UNCONDITIONAL;
-    return reported.get() ? INCOMPLETE : COMPLETE_WITHOUT_UNCONDITIONAL;
+    if (needToCheckCompleteness) {
+      return reported.get() ? UNEVALUATED : EXHAUSTIVE_WITHOUT_UNCONDITIONAL;
+    }
+    return reported.get() ? INCOMPLETE : EXHAUSTIVE_WITHOUT_UNCONDITIONAL;
   }
 
   private static QuickFixFactory getFixFactory() {
@@ -473,10 +473,25 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return new SealedResult(missingClasses, coveredClasses);
   }
 
-  public enum CompletenessResult {
+  /**
+   * State of switch exhaustiveness.
+   */
+  public enum SwitchExhaustivenessState {
+    /**
+     * Switch is malformed and produces a compilation error (no body, no selector, etc.)
+     */
     UNEVALUATED,
+    /**
+     * Switch is not exhaustive
+     */
     INCOMPLETE,
-    COMPLETE_WITH_UNCONDITIONAL,
-    COMPLETE_WITHOUT_UNCONDITIONAL
+    /**
+     * Switch is exhaustive (complete) because an unconditional pattern exists
+     */
+    EXHAUSTIVE_WITH_UNCONDITIONAL,
+    /**
+     * Switch is exhaustive (complete) despite there's no unconditional pattern
+     */
+    EXHAUSTIVE_WITHOUT_UNCONDITIONAL
   }
 }
