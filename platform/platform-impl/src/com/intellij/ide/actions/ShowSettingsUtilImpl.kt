@@ -47,7 +47,8 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         project = currentOrDefaultProject(project),
         groups = filterEmptyGroups(groups),
         configurable = toSelect,
-        filter = filter
+        filter = filter,
+        isModal = isModal,
       )
 
     @JvmStatic

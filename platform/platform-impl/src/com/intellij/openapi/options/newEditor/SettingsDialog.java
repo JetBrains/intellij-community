@@ -159,11 +159,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
     if (UISettings.isIdeHelpTooltipEnabled() ) {
-      if (!myIsModal) {
-        ((SettingsEditor)editor).setHelpTooltip(helpButton);
-      } else {
-        new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
-      }
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {
       super.setHelpTooltip(helpButton);
