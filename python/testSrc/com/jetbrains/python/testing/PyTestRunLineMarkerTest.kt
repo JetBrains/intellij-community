@@ -12,6 +12,7 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
   companion object {
     const val TESTS_DIR = "/pyTestLineMarker/"
     const val PYTHON_FILE = "pythonFile.py"
+    const val PYTHON_FILE_WITH_NESTED_CLASSES = "nestedTest.py"
   }
 
   override fun getTestDataPath(): String = super.getTestDataPath() + TESTS_DIR
@@ -50,6 +51,14 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
   fun testPythonFile() {
     val lineMarkerContributor = PyTestLineMarkerContributor()
     val element = getCaretElement(PYTHON_FILE)
+    if (element != null) {
+      assertInfoFound(element, lineMarkerContributor)
+    }
+  }
+
+  fun testNestedTestClass() {
+    val lineMarkerContributor = PyTestLineMarkerContributor()
+    val element = getCaretElement(PYTHON_FILE_WITH_NESTED_CLASSES)
     if (element != null) {
       assertInfoFound(element, lineMarkerContributor)
     }
