@@ -203,7 +203,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                     it.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                         .map { it.diagnosticClass }
                 }
-                .any { it == KaFirDiagnostic.IllegalSuspendFunctionCall::class || it == KaFirDiagnostic.IllegalSuspendPropertyAccess::class }
+                .any { it == KaFirDiagnostic.IllegalSuspendFunctionCall::class || it == KaFirDiagnostic.IllegalSuspendPropertyAccess::class || it == KaFirDiagnostic.NonLocalSuspensionPoint::class }
         }
         if (illegalSuspendInside) {
             descriptor = descriptor.copy(modifiers = listOf(KtTokens.SUSPEND_KEYWORD))

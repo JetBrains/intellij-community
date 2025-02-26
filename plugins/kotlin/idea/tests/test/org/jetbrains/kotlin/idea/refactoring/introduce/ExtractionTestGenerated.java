@@ -1569,6 +1569,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/suspendCallInsideSuspendContinuation.kt");
             }
 
+            @TestMetadata("suspendCallLocal.kt")
+            public void testSuspendCallLocal() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/suspendCallLocal.kt");
+            }
+
             @TestMetadata("suspendCallWithExtractedParameter.kt")
             public void testSuspendCallWithExtractedParameter() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");

@@ -338,6 +338,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallInsideSuspendContinuation.kt");
         }
 
+        @TestMetadata("suspendCallLocal.kt")
+        public void testSuspendCallLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallLocal.kt");
+        }
+
         @TestMetadata("suspendCallWithExtractedParameter.kt")
         public void testSuspendCallWithExtractedParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
