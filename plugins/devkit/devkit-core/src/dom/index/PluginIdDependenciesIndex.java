@@ -77,7 +77,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     for (DependencyDescriptor.PluginDescriptor pluginDescriptor : dependencyDescriptor.getPlugin()) {
       ContainerUtil.addIfNotNull(ids, pluginDescriptor.getId().getStringValue());
     }
-    for (ContentDescriptor.ModuleDescriptor moduleDescriptor : dependencyDescriptor.getModuleEntry()) {
+    for (DependencyDescriptor.ModuleDescriptor moduleDescriptor : dependencyDescriptor.getModuleEntry()) {
       ContainerUtil.addIfNotNull(ids, moduleDescriptor.getName().getStringValue());
     }
 
