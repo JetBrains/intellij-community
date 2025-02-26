@@ -17,7 +17,7 @@ public class CompletionInitializationContextImpl extends CompletionInitializatio
                                       @NotNull Caret caret,
                                       PsiFile file,
                                       CompletionType completionType, int invocationCount) {
-    super(editor, caret, PsiUtilBase.getLanguageInEditor(editor, file.getProject()), file, completionType, invocationCount);
+    super(editor, caret, PsiUtilBase.getLanguageInEditor(file, editor, file.getProject()), file, completionType, invocationCount);
     myHostOffsets = new OffsetsInFile(file, getOffsetMap()).toTopLevelFile();
   }
 

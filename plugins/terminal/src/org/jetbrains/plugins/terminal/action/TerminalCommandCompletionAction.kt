@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService.Companion.getInstance
@@ -32,6 +33,8 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
@@ -135,9 +138,15 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
     val initCmd = Runnable {
       WriteAction.run<RuntimeException> { EditorUtil.fillVirtualSpaceUntilCaret(editor) }
 
+      val psiFile =  PsiFileFactory.getInstance(project).createFileFromText(
+        "command_output",
+        PlainTextLanguage.INSTANCE,
+        ""
+      )
+
       var context: CompletionInitializationContextImpl? =
         withTimeout<CompletionInitializationContextImpl?>(calcSyncTimeOut(startingTime).toLong(), Computable {
-          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType)
+          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType, psiFile)
         })
       val hasValidContext = context != null
       if (!hasValidContext) {
