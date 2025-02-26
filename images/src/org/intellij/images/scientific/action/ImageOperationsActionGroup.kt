@@ -43,6 +43,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    selectedMode = ORIGINAL_IMAGE
     val comboBox = ComboBox(DefaultComboBoxModel(availableModes.toTypedArray())).apply {
       selectedItem = selectedMode
       isOpaque = false
