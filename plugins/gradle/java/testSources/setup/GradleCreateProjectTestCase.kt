@@ -34,7 +34,6 @@ import com.intellij.testFramework.withProjectAsync
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
@@ -85,7 +84,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     step.baseData!!.name = moduleInfo.name
     step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
-    step.javaGradleData!!.gradleDsl = GradleDsl.valueOf(moduleInfo.useKotlinDsl)
+    step.javaGradleData!!.gradleDsl = moduleInfo.gradleDsl
     step.javaGradleData!!.parentData = parentData
     step.javaGradleData!!.groupId = moduleInfo.groupId
     step.javaGradleData!!.artifactId = moduleInfo.artifactId
@@ -177,10 +176,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   override fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withBuildFile(
-      useKotlinDsl = useKotlinDsl,
-      content = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl).apply(configure).generate()
-    )
+    filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
   fun assertBuildFiles(projectInfo: ProjectInfo) {

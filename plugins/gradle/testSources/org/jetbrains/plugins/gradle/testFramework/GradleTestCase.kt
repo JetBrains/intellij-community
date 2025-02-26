@@ -18,6 +18,7 @@ import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -121,7 +122,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   ) = ProjectInfo.create(
     Path.of(relativePath).name,
     relativePath,
-    useKotlinDsl,
+    GradleDsl.valueOf(useKotlinDsl),
     configure
   )
 
@@ -171,10 +172,10 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withSettingsFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
+    filesConfiguration.withSettingsFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
   open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withBuildFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
+    filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 }

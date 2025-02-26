@@ -5,6 +5,7 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase.Companion.KOTLIN_PROJECT
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
@@ -58,7 +59,7 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
                 setProjectName("kotlin-plugin-multiplatform-project")
             }
 
-            withBuildFile(gradleVersion, useKotlinDsl = true) {
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
                 addPostfix(

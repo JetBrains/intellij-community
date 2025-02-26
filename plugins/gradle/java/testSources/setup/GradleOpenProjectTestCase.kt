@@ -24,7 +24,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
       performOpenAction(
         action = ImportProjectAction(),
         systemId = GradleConstants.SYSTEM_ID,
-        selectedFile = testRoot.getSettingsFile(projectInfo.relativePath, projectInfo.useKotlinDsl)
+        selectedFile = testRoot.getSettingsFile(projectInfo.relativePath, projectInfo.gradleDsl)
       )
     }
   }

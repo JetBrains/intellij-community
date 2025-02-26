@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+
 data class ProjectInfo(
   val name: String,
   val relativePath: String,
-  val useKotlinDsl: Boolean,
+  val gradleDsl: GradleDsl,
   val rootModule: ModuleInfo,
   val modules: List<ModuleInfo>,
   val composites: List<ProjectInfo>
@@ -15,17 +17,17 @@ data class ProjectInfo(
     fun create(
       name: String,
       relativePath: String,
-      useKotlinDsl: Boolean,
+      gradleDsl: GradleDsl,
       configure: Builder.() -> Unit = {}
     ): ProjectInfo {
-      val builder = BuilderImpl(name, relativePath, useKotlinDsl)
+      val builder = BuilderImpl(name, relativePath, gradleDsl)
       builder.configure()
       val rootModule = ModuleInfo.create(builder)
       builder.modules.add(rootModule)
       return ProjectInfo(
         builder.projectName,
         builder.projectRelativePath,
-        rootModule.useKotlinDsl,
+        rootModule.gradleDsl,
         rootModule,
         builder.modules,
         builder.composites
@@ -53,11 +55,11 @@ data class ProjectInfo(
   private class BuilderImpl(
     val projectName: String,
     val projectRelativePath: String,
-    val defaultUseKotlinDsl: Boolean,
+    val defaultGradleDsl: GradleDsl,
   ) : Builder, ModuleInfo.Builder by ModuleInfo.createBuilder(
     ideName = projectName,
     relativePath = projectRelativePath,
-    useKotlinDsl = defaultUseKotlinDsl
+    gradleDsl = defaultGradleDsl
   ) {
 
     val modules = ArrayList<ModuleInfo>()
@@ -73,7 +75,7 @@ data class ProjectInfo(
       val projectInfo = create(
         name,
         "$projectRelativePath/$relativePath",
-        useKotlinDsl ?: defaultUseKotlinDsl,
+        useKotlinDsl?.let(GradleDsl::valueOf) ?: defaultGradleDsl,
         configure
       )
       composites.add(projectInfo)
@@ -89,7 +91,7 @@ data class ProjectInfo(
       val builder = ModuleInfo.createBuilder(
         ideName,
         "$projectRelativePath/$relativePath",
-        useKotlinDsl ?: defaultUseKotlinDsl,
+        useKotlinDsl?.let(GradleDsl::valueOf) ?: defaultGradleDsl,
         configure
       )
       val moduleInfo = ModuleInfo.create(builder)
