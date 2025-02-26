@@ -376,7 +376,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @ApiStatus.Internal
   public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, boolean isEnabledAndVisible) {
     if (isSelected) return NamedColorUtil.getListSelectionForeground(hasFocus);
-    if (isEnabledAndVisible) return NamedColorUtil.getInactiveTextColor();
+    if (!isEnabledAndVisible) return NamedColorUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
   }
 
