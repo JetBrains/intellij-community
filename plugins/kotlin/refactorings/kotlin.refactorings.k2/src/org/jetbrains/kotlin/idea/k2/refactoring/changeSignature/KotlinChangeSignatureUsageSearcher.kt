@@ -109,7 +109,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                             result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
                                         }
                                     }
-                                    else if (receiverValue is KaImplicitReceiverValue) {
+                                    else if (((receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) is KaImplicitReceiverValue) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }

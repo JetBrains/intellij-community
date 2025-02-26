@@ -7989,6 +7989,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertReceiverToParameter/replaceThis.kt");
         }
 
+        @TestMetadata("smartCastReceiver.kt")
+        public void testSmartCastReceiver() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/smartCastReceiver.kt");
+        }
+
         @TestMetadata("smartCasts.kt")
         public void testSmartCasts() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/smartCasts.kt");
