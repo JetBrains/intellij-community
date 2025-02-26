@@ -3,20 +3,9 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import org.gradle.util.GradleVersion
-import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 
 interface GradleTestFixture : IdeaTestFixture {
-
-  val testRoot: VirtualFile
-
-  val gradleJvm: String
-
-  val gradleJvmInfo: JdkVersionInfo
-
-  val gradleVersion: GradleVersion
 
   suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project
 
