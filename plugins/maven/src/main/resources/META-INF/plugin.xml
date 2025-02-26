@@ -88,7 +88,7 @@
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
     <externalSystemDependencyAnalyzer implementation="org.jetbrains.idea.maven.project.MavenDependencyAnalyzerExtension"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizard$Builder"/>
-    <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
+    <!--<frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>-->
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
     <trustedProjectsLocator implementation="org.jetbrains.idea.maven.wizards.MavenTrustedProjectsLocator"/>
