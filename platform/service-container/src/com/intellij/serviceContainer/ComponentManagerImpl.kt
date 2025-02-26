@@ -47,6 +47,7 @@ import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
@@ -1679,8 +1680,8 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         getLockPermitContext(ctx, false) + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(contextForInitializer, action)
+      @OptIn(InternalCoroutinesApi::class)
+      IntellijCoroutines.runBlockingWithParallelismCompensation(contextForInitializer, action)
     }
     catch (e: ProcessCanceledException) {
       throw e

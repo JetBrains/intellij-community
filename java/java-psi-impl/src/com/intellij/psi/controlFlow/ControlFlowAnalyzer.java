@@ -2,6 +2,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -9,7 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -956,7 +960,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       //16.2.9 (for statements) and 16.1.6 (for expressions)
-      boolean needToCreateDefault = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
+      boolean needToCreateDefault = ExpressionUtil.isEnhancedSwitch(statement);
       PsiType exprType = expr == null ? null : expr.getType();
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();

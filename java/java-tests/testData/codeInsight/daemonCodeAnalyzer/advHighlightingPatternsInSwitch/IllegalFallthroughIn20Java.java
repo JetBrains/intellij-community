@@ -144,7 +144,7 @@ public class Main {
 
   void test14(Object obj) {
     switch (obj) {
-      case null, String s when s.isEmpty()<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error> Integer i<error descr="';' expected"> </error><error descr="Cannot resolve symbol 'when'">when</error> <error descr="Variable 'i' is already defined in the scope">i</error><error descr="';' expected"> </error><error descr="Unexpected token">==</error> <error descr="Not a statement">42</error> <error descr="Unexpected token">-></error> {}
+      case null, String s when s.isEmpty()<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error> Integer i<error descr="';' expected"> </error><error descr="Cannot resolve symbol 'when'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">when</error> <error descr="Variable 'i' is already defined in the scope">i</error><error descr="';' expected"> </error><error descr="Unexpected token">==</error> <error descr="Not a statement">42</error> <error descr="Unexpected token">-></error> {}
       default -> {}
     }
   }
@@ -172,7 +172,7 @@ public class Main {
 
   void test18(String s) {
     switch (s) {
-      case "hello", "world", null, String str when <error descr="Cannot resolve symbol 'str'">str</error>.isEmpty() -> {}
+      case "hello", "world", null, String str when <error descr="Cannot resolve symbol 'str'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">str</error>.isEmpty() -> {}
       default -> {}
     }
   }

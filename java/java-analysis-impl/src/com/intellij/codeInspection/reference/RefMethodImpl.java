@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -11,7 +11,6 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -52,8 +51,14 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
   }
 
-  // To be used only from RefImplicitConstructor!
-  RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
+  /**
+   * Only used from RefImplicitConstructorImpl
+   * Creates a new RefMethodImpl object with the given name and owner class.
+   *
+   * @param name       the name of the method
+   * @param ownerClass the owner class of the method
+   */
+  protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
 
     // fair enough to add parent here
@@ -76,12 +81,12 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     if (!paramList.isEmpty()) {
       // Empty constructor body signals Java record header or Kotlin primary constructor (or red code): uses all parameters implicitly
       // TODO create an extension point for this kind of thing.
-      boolean parameterUsed = method.isConstructor() && method.getUastBody() == null;
+      boolean markParametersUsed = method.isConstructor() && method.getUastBody() == null;
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
         if (param.getSourcePsi() != null) {
           RefParameterImpl parameter = (RefParameterImpl)getRefJavaManager().getParameterReference(param, i, this);
-          if (parameterUsed && parameter != null) {
+          if (markParametersUsed && parameter != null) {
             parameter.setUsedForReading();
           }
         }
@@ -89,15 +94,16 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     }
 
     WritableRefEntity parentRef = (WritableRefEntity)findParentRef(sourcePsi, method, myManager);
-    if (parentRef == null) return;
-    if (!myManager.isDeclarationsFound()) {
-      parentRef.add(this);
-      return;
+    if (parentRef != null) {
+      if (!myManager.isDeclarationsFound()) {
+        parentRef.add(this);
+        return;
+      }
+      setOwner(parentRef);
     }
-    setOwner(parentRef);
 
-    PsiMethod javaPsi = method.getJavaPsi();
     if (!method.isConstructor()) {
+      PsiMethod javaPsi = method.getJavaPsi();
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
@@ -107,11 +113,11 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
       }
     }
 
-    if (sourcePsi instanceof PsiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-      if (!method.isConstructor() && JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)sourcePsi) != null) {
+    if (sourcePsi instanceof PsiMethod psiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      if (!method.isConstructor() && JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod) != null) {
         setRecordAccessor(true);
       }
-      collectUncaughtExceptions((PsiMethod)sourcePsi);
+      collectUncaughtExceptions(psiMethod);
     }
   }
 
@@ -194,7 +200,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public synchronized @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
-    return ObjectUtils.notNull(myDerivedReferences, Collections.emptyList());
+    return (myDerivedReferences == null) ? Collections.emptyList() : myDerivedReferences;
   }
 
   @Override
@@ -281,14 +287,10 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public void buildReferences() {
-    initializeIfNeeded();
-
-    // Work on code block to find what we're referencing...
     UMethod method = getUastElement();
     if (method == null) return;
-    if (isConstructor()) {
-      final RefClass ownerClass = getOwnerClass();
-      assert ownerClass != null;
+    final RefClass ownerClass = getOwnerClass();
+    if (isConstructor() && ownerClass != null) {
       ownerClass.initializeIfNeeded();
       addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
     }
@@ -307,7 +309,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
     if (throwsList.length > 0) {
       List<String> unThrownExceptions = throwsList.length == 1 ? new SmartList<>() : new ArrayList<>(throwsList.length);
-      for (final PsiClassType type : throwsList) {
+      for (PsiClassType type : throwsList) {
         PsiClass aClass = type.resolve();
         String fqn = aClass == null ? null : aClass.getQualifiedName();
         if (fqn != null) {
@@ -409,7 +411,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public @Nullable RefClass getOwnerClass() {
-    return ObjectUtils.tryCast(getOwner(), RefClass.class);
+    return getOwner() instanceof RefClass aClass ? aClass : null;
   }
 
   @Override
@@ -504,7 +506,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     }
 
     if (!getSuperMethods().isEmpty()) {
-      for (final RefMethod refMethod : getSuperMethods()) {
+      for (RefMethod refMethod : getSuperMethods()) {
         RefMethodImpl refSuper = (RefMethodImpl)refMethod;
         refSuper.initializeIfNeeded();
         refSuper.updateReturnValueTemplate(expression);
@@ -658,15 +660,9 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   static @Nullable RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement, @NotNull RefManagerImpl refManager) {
     UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
     PsiElement containingDeclaration = RefJavaUtilImpl.returnToPhysical(containingUDecl == null ? null : containingUDecl.getSourcePsi());
-    final RefElement parentRef;
-    //TODO strange
-    if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
-      parentRef = refManager.getReference(psiElement.getContainingFile(), true);
-    }
-    else {
-      parentRef = refManager.getReference(containingDeclaration, true);
-    }
-    return parentRef;
+    return containingDeclaration == null || containingDeclaration instanceof LightElement
+           ? refManager.getReference(psiElement.getContainingFile(), true)
+           : refManager.getReference(containingDeclaration, true);
   }
 
   /**

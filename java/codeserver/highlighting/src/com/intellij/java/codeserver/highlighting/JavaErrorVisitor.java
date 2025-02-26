@@ -630,7 +630,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     super.visitSwitchExpression(expression);
-    checkSwitchBlock(expression);
+    mySwitchChecker.checkSwitchBlock(expression);
     if (!hasErrorResults()) checkFeature(expression.getFirstChild(), JavaFeature.SWITCH_EXPRESSION);
     if (!hasErrorResults()) mySwitchChecker.checkSwitchExpressionReturnTypeCompatible(expression);
     if (!hasErrorResults()) mySwitchChecker.checkSwitchExpressionHasResult(expression);
@@ -639,15 +639,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
-    checkSwitchBlock(statement);
-  }
-
-  private void checkSwitchBlock(@NotNull PsiSwitchBlock block) {
-    if (!hasErrorResults()) mySwitchChecker.checkSwitchBlockStatements(block);
-    if (!hasErrorResults()) mySwitchChecker.checkSwitchSelectorType(block);
-    if (!hasErrorResults()) mySwitchChecker.checkLabelSelectorCompatibility(block);
-    if (!hasErrorResults()) mySwitchChecker.checkDuplicates(block);
-    if (!hasErrorResults()) mySwitchChecker.checkFallthroughLegality(block);
+    mySwitchChecker.checkSwitchBlock(statement);
   }
 
   @Override

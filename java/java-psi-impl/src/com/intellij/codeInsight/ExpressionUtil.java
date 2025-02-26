@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class ExpressionUtil {
   /**
@@ -21,5 +24,71 @@ public final class ExpressionUtil {
       return innerMostClass == thisQualifier.resolve();
     }
     return false;
+  }
+
+  /**
+   * Checks if the given switch is enhanced.
+   *
+   * @param statement the switch to check
+   * @return true if the switch is an enhanced switch, false otherwise
+   */
+  public static boolean isEnhancedSwitch(@NotNull PsiSwitchBlock statement) {
+    if (statement instanceof PsiSwitchExpression) return true;
+
+    PsiExpression selector = statement.getExpression();
+    if (selector == null) return false;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return false;
+    if (isEnhancedSelectorType(selectorType)) return true;
+    PsiCodeBlock body = statement.getBody();
+    if (body == null) return false;
+    
+    for (PsiStatement psiStatement : body.getStatements()) {
+      if (psiStatement instanceof PsiSwitchLabelStatementBase) {
+        PsiSwitchLabelStatementBase labelStatementBase = (PsiSwitchLabelStatementBase)psiStatement;
+        PsiCaseLabelElementList elementList = labelStatementBase.getCaseLabelElementList();
+        if (elementList == null) continue;
+        PsiCaseLabelElement[] elements = elementList.getElements();
+        for (PsiCaseLabelElement caseLabelElement : elements) {
+          if (caseLabelElement != null) {
+            if (caseLabelElement instanceof PsiPattern || isNullType(caseLabelElement)) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param element element to check
+   * @return true if the element is an expression whose type is {@link PsiTypes#nullType()}.
+   */
+  public static boolean isNullType(@NotNull PsiElement element) {
+    return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
+  }
+
+  /**
+   * @param type type of switch selector to check
+   * @return true if this type of switch selector is a type of enhanced switch selector; 
+   * false if it's a classic (Java 7) switch selector type.
+   */
+  private static boolean isEnhancedSelectorType(@NotNull PsiType type) {
+    PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(type);
+    if (unboxedType != null &&
+        (unboxedType.equals(PsiTypes.booleanType()) ||
+         unboxedType.equals(PsiTypes.floatType()) ||
+         unboxedType.equals(PsiTypes.doubleType()) ||
+         unboxedType.equals(PsiTypes.longType()))) {
+      return true;
+    }
+    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return false;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return false;
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (psiClass != null) {
+      if (psiClass.isEnum()) return false;
+      String fqn = psiClass.getQualifiedName();
+      if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) return false;
+    }
+    return true;
   }
 }

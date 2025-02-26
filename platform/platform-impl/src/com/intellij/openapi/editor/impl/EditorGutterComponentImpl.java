@@ -2372,7 +2372,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
     Project project = myEditor.getProject();
-    return project != null && DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
+    return project == null
+           ? DumbService.isDumbAware(possiblyDumbAware)
+           : DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
   }
 
   private void notifyNotDumbAware() {

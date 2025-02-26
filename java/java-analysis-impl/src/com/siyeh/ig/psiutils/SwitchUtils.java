@@ -15,13 +15,17 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel;
+import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -944,7 +948,7 @@ public final class SwitchUtils {
     if (unreachableElements.isEmpty() || hasDefault) {
       return unreachableElements;
     }
-    boolean isEnhancedSwitch = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
+    boolean isEnhancedSwitch = ExpressionUtil.isEnhancedSwitch(statement);
     if (isEnhancedSwitch) {
       PsiExpression expression = statement.getExpression();
       if (expression == null) {
@@ -960,7 +964,7 @@ public final class SwitchUtils {
         boolean isDominated = false;
         for (int j = i + 1; j < unreachableElements.size(); j++) {
           PsiCaseLabelElement nextElement = unreachableElements.get(j);
-          isDominated = PatternsInSwitchBlockHighlightingModel.isDominated(currentElement, nextElement, selectorType);
+          isDominated = JavaPsiSwitchUtil.isDominated(currentElement, nextElement, selectorType);
           if (!isDominated) {
             break;
           }

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
@@ -42,6 +43,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -741,6 +743,23 @@ final class JavaErrorFixProvider {
     fix(SWITCH_LABEL_MULTIPLE_PATTERNS, splitCase);
     fix(SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED, splitCase);
     fix(SWITCH_DEFAULT_NULL_ORDER, error -> myFactory.createReverseCaseDefaultNullFixFix(error.context()));
+    fixes(SWITCH_DOMINANCE_VIOLATION, (error, sink) -> {
+      PsiElement who = error.context();
+      PsiCaseLabelElement overWhom = error.psi();
+      if (who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
+          JavaPsiSwitchUtil.isInCaseNullDefaultLabel(who)) {
+        PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
+        if (labelStatementBase != null) {
+          sink.accept(new MakeDefaultLastCaseFix(labelStatementBase));
+        }
+      }
+      else if (who instanceof PsiCaseLabelElement whoElement) {
+        if (!JavaPsiPatternUtil.dominates(overWhom, whoElement) && overWhom.getParent() != whoElement.getParent()) {
+          sink.accept(myFactory.createMoveSwitchBranchUpFix(whoElement, overWhom));
+        }
+        sink.accept(myFactory.createDeleteSwitchLabelFix(overWhom));
+      }
+    });
   }
 
   private void createAccessFixes() {

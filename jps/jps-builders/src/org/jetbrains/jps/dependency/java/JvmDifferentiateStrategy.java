@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.diff.Difference;
@@ -10,6 +11,15 @@ import org.jetbrains.jps.dependency.diff.Difference;
  * @noinspection unused
  */
 public interface JvmDifferentiateStrategy {
+
+  /**
+   * @param annotationType the annotation class type to check. DependencyGraph will parse and store only those annotations,
+   *                       if there exists at least one registered AnnotationTracker that can track annotations of this type
+   * @return true if this AnnotationTracker can track annotations of this type, false otherwise.
+   */
+  default boolean isAnnotationTracked(@NotNull TypeRepr.ClassType annotationType) {
+    return false;
+  }
 
   default boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
     return true;
@@ -46,39 +56,47 @@ public interface JvmDifferentiateStrategy {
       if (!processChangedClass(context, change, future, present)) {
         return false;
       }
-
-      JvmClass changedClass = change.getPast();
-
-      Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = change.getDiff().methods();
-      if (!methodsDiff.unchanged()) {
-        if (!processRemovedMethods(context, change, methodsDiff.removed(), future, present)) {
-          return false;
-        }
-        if (!processAddedMethods(context, change, methodsDiff.added(), future, present)) {
-          return false;
-        }
-        if (!processChangedMethods(context, change, methodsDiff.changed(), future, present)) {
-          return false;
-        }
-      }
-
-      Difference.Specifier<JvmField, JvmField.Diff> fieldsDiff = change.getDiff().fields();
-      if (!fieldsDiff.unchanged()) {
-        if (!processRemovedFields(context, change, fieldsDiff.removed(), future, present)) {
-          return false;
-        }
-        if (!processAddedFields(context, change, fieldsDiff.added(), future, present)) {
-          return false;
-        }
-        if (!processChangedFields(context, change, fieldsDiff.changed(), future, present)) {
-          return false;
-        }
-      }
     }
     return true;
   }
 
   default boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
+    Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = change.getDiff().methods();
+    if (!methodsDiff.unchanged()) {
+      if (!processRemovedMethods(context, change, methodsDiff.removed(), future, present)) {
+        return false;
+      }
+      if (!processAddedMethods(context, change, methodsDiff.added(), future, present)) {
+        return false;
+      }
+      if (!processChangedMethods(context, change, methodsDiff.changed(), future, present)) {
+        return false;
+      }
+    }
+
+    Difference.Specifier<JvmField, JvmField.Diff> fieldsDiff = change.getDiff().fields();
+    if (!fieldsDiff.unchanged()) {
+      if (!processRemovedFields(context, change, fieldsDiff.removed(), future, present)) {
+        return false;
+      }
+      if (!processAddedFields(context, change, fieldsDiff.added(), future, present)) {
+        return false;
+      }
+      if (!processChangedFields(context, change, fieldsDiff.changed(), future, present)) {
+        return false;
+      }
+    }
+
+    Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff = change.getDiff().annotations();
+    if (!annotationDiff.unchanged()) {
+      if (!processClassAnnotations(context, change, annotationDiff, future, present)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  default boolean processClassAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff, Utils future, Utils present) {
     return true;
   }
 
@@ -118,6 +136,18 @@ public interface JvmDifferentiateStrategy {
   }
 
   default boolean processChangedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Utils future, Utils present) {
+    JvmMethod.Diff diff = methodChange.getDiff();
+    Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff = diff.annotations();
+    Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff = diff.paramAnnotations();
+    if (!annotationsDiff.unchanged() || !paramAnnotationsDiff.unchanged()) {
+      if (!processMethodAnnotations(context, clsChange, methodChange, annotationsDiff, paramAnnotationsDiff, future, present)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  default boolean processMethodAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff, Utils future, Utils present){
     return true;
   }
 
@@ -157,6 +187,16 @@ public interface JvmDifferentiateStrategy {
   }
 
   default boolean processChangedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Utils future, Utils present) {
+    Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff = fieldChange.getDiff().annotations();
+    if (!annotationDiff.unchanged()) {
+      if (!processFieldAnnotations(context, clsChange, fieldChange, annotationDiff, future, present)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  default boolean processFieldAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff, Utils future, Utils present) {
     return true;
   }
 

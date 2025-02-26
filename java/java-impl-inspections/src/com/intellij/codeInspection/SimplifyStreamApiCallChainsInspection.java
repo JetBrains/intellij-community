@@ -1983,8 +1983,8 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       while (call != null) {
         if (STREAM_MAP_TO_ALL.test(call) || STREAM_FILTER.test(call)) {
           PsiExpression arg = skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
-          if (arg instanceof PsiLambdaExpression) {
-            updateLambda((PsiLambdaExpression)arg);
+          if (arg instanceof PsiLambdaExpression lambdaExpr) {
+            updateLambda(lambdaExpr);
           }
           else if (arg instanceof PsiMethodReferenceExpression) {
             PsiType type = LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)arg);
@@ -2006,7 +2006,6 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 1) return;
       PsiParameter parameter = parameters[0];
-      PsiType type = PsiUtil.substituteTypeParameter(parameter.getType(), JAVA_UTIL_MAP_ENTRY, 1, true);
       PsiElement body = lambda.getBody();
       if (body == null) return;
       List<PsiMethodCallExpression> calls = new ArrayList<>();
@@ -2025,6 +2024,8 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       }
       String name = declaration == null ? null : declaration.getName();
       if (name == null) {
+        int typeParamIndex = myMapMethod.equals("keySet") ? 0 : 1;
+        PsiType type = PsiUtil.substituteTypeParameter(parameter.getType(), JAVA_UTIL_MAP_ENTRY, typeParamIndex, true);
         name = new VariableNameGenerator(lambda, VariableKind.PARAMETER).byType(type).byName(myNames).generate(false);
       }
       for (PsiMethodCallExpression call : calls) {

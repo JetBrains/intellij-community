@@ -105,6 +105,26 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/annotations/");
         }
 
+        @TestMetadata("deprecateFunction")
+        public void testDeprecateFunction() throws Exception {
+            runTest("pureKotlin/deprecateFunction/");
+        }
+
+        @TestMetadata("deprecateProperty")
+        public void testDeprecateProperty() throws Exception {
+            runTest("pureKotlin/deprecateProperty/");
+        }
+
+        @TestMetadata("deprecatePropertyGetter")
+        public void testDeprecatePropertyGetter() throws Exception {
+            runTest("pureKotlin/deprecatePropertyGetter/");
+        }
+
+        @TestMetadata("deprecatePropertySetter")
+        public void testDeprecatePropertySetter() throws Exception {
+            runTest("pureKotlin/deprecatePropertySetter/");
+        }
+
         @TestMetadata("anonymousObjectChanged")
         public void testAnonymousObjectChanged() throws Exception {
             runTest("pureKotlin/anonymousObjectChanged/");

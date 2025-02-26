@@ -1,18 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.util;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeserver.core;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,80 +24,11 @@ import static java.util.Objects.requireNonNull;
  */
 public final class JavaPsiSwitchUtil {
 
-  /**
-   * Checks if the given switch is enhanced.
-   *
-   * @param statement the switch to check
-   * @return true if the switch is an enhanced switch, false otherwise
-   */
-  public static boolean isEnhancedSwitch(@NotNull PsiSwitchBlock statement) {
-    if(statement instanceof PsiSwitchExpression) return true;
-
-    PsiExpression selector = statement.getExpression();
-    if (selector == null) {
-      return false;
-    }
-    PsiType selectorType = selector.getType();
-    if (selectorType == null) {
-      return false;
-    }
-    PsiCodeBlock body = statement.getBody();
-    if (body == null) {
-      return false;
-    }
-    List<PsiCaseLabelElement> cases = new ArrayList<>();
-    for (PsiStatement psiStatement : body.getStatements()) {
-      if (psiStatement instanceof PsiSwitchLabelStatementBase) {
-        PsiSwitchLabelStatementBase labelStatementBase = (PsiSwitchLabelStatementBase)psiStatement;
-        PsiCaseLabelElementList elementList = labelStatementBase.getCaseLabelElementList();
-        if (elementList == null) {
-          continue;
-        }
-        PsiCaseLabelElement[] elements = elementList.getElements();
-        for (PsiCaseLabelElement caseLabelElement : elements) {
-          if (caseLabelElement != null) {
-            cases.add(caseLabelElement);
-          }
-        }
-      }
-    }
-    return isEnhancedSwitch(cases, selectorType);
-  }
-
-  public static boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements, @NotNull PsiType selectorType) {
-    if (isEnhancedSelectorType(selectorType)) return true;
-    return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
-  }
-
-
-  private static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
-  }
-
-  private static boolean isEnhancedSelectorType(@NotNull PsiType type) {
-    PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(type);
-    if (unboxedType != null &&
-        (unboxedType.equals(PsiTypes.booleanType()) ||
-         unboxedType.equals(PsiTypes.floatType()) ||
-         unboxedType.equals(PsiTypes.doubleType()) ||
-         unboxedType.equals(PsiTypes.longType()))) {
-      return true;
-    }
-    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return false;
-    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return false;
-    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (psiClass != null) {
-      if (psiClass.isEnum()) return false;
-      String fqn = psiClass.getQualifiedName();
-      if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) return false;
-    }
-    return true;
-  }
 
   /**
    * Returns the selector kind based on the type.
    * <p> 
-   * The result may depend on type language level for boxed primitive types.
+   * The result may depend on the type language level for boxed primitive types.
    * E.g., if selector type is {@link Double} then {@link SelectorKind#DOUBLE} will be returned
    * if primitives in patterns are supported, but {@link SelectorKind#CLASS_OR_ARRAY} will be returned otherwise.
    * <p>
@@ -148,8 +82,7 @@ public final class JavaPsiSwitchUtil {
     PsiCodeBlock body = block.getBody();
     if (body == null) return false;
     for (PsiElement st = body.getFirstChild(); st != null; st = st.getNextSibling()) {
-      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
-      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
       if (labelStatement.isDefaultCase()) {
         return true;
       }
@@ -169,8 +102,7 @@ public final class JavaPsiSwitchUtil {
   }
 
   private static @Nullable Object getBranchConstant(@NotNull PsiCaseLabelElement labelElement, @NotNull PsiType selectorType) {
-    if (labelElement instanceof PsiExpression) {
-      PsiExpression expr = (PsiExpression)labelElement;
+    if (labelElement instanceof PsiExpression expr) {
       if (expr instanceof PsiReferenceExpression) {
         PsiEnumConstant enumConstant = getEnumConstant(expr);
         if (enumConstant != null) {
@@ -216,8 +148,7 @@ public final class JavaPsiSwitchUtil {
     PsiType selectorType = selector.getType();
     if (selectorType == null) return elementsToCheckDuplicates;
     for (PsiStatement st : body.getStatements()) {
-      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
-      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
       if (labelStatement.isDefaultCase()) {
         elementsToCheckDuplicates.putValue(SwitchSpecialValue.DEFAULT_VALUE, requireNonNull(labelStatement.getFirstChild()));
         continue;
@@ -234,6 +165,125 @@ public final class JavaPsiSwitchUtil {
     return elementsToCheckDuplicates;
   }
 
+  /**
+   * Determines if the given case label element is dominated by another case label element according to JEP 440-441
+   *
+   * @param overWhom The case label element that may dominate.
+   * @param who The case label element that may be dominated.
+   * @param selectorType The type used to select the case label element.
+   * @return {@code true} if the 'overWhom' case label element dominates the 'who' case label element, {@code false} otherwise.
+   */
+  public static boolean isDominated(@NotNull PsiCaseLabelElement overWhom,
+                                    @NotNull PsiElement who,
+                                    @NotNull PsiType selectorType) {
+    boolean isOverWhomUnconditionalForSelector = JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType);
+    if (!isOverWhomUnconditionalForSelector &&
+        ((!(overWhom instanceof PsiExpression expression) || JavaPsiExpressionUtil.isNullLiteral(expression)) &&
+         who instanceof PsiKeyword &&
+         PsiKeyword.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
+      // JEP 440-441
+      // A 'default' label dominates a case label with a case pattern,
+      // and it also dominates a case label with a null case constant.
+      // A 'case null, default' label dominates all other switch labels.
+      return true;
+    }
+    if (who instanceof PsiCaseLabelElement currentElement) {
+      if (JavaPsiPatternUtil.isGuarded(currentElement)) return false;
+      if (isConstantLabelElement(overWhom)) {
+        PsiExpression constExpr = ObjectUtils.tryCast(overWhom, PsiExpression.class);
+        assert constExpr != null;
+        if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
+          return true;
+        }
+      }
+      else {
+        if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean isInCaseNullDefaultLabel(@NotNull PsiElement element) {
+    PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
+    if (list == null || list.getElementCount() != 2) return false;
+    PsiCaseLabelElement[] elements = list.getElements();
+    return elements[0] instanceof PsiExpression expr &&
+           JavaPsiExpressionUtil.isNullLiteral(expr) &&
+           elements[1] instanceof PsiDefaultCaseLabelElement;
+  }
+
+  private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
+    Object value = JavaPsiFacade.getInstance(labelElement.getProject()).getConstantEvaluationHelper()
+      .computeConstantExpression(labelElement, false);
+    return value != null || isEnumConstant(labelElement);
+  }
+
+  private static boolean isEnumConstant(@NotNull PsiCaseLabelElement element) {
+    return getEnumConstant(element) != null;
+  }
+
+  /**
+   * @param block switch block to analyze
+   * @return map of labels where keys are dominated labels, and values are dominating labels (or 'default' keyword from default label,
+   * which may dominate over any other label).
+   * Only labels for which domination rules are violated will be returned.
+   */
+  public static @NotNull Map<PsiCaseLabelElement, PsiElement> findDominatedLabels(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return Collections.emptyMap();
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return Collections.emptyMap();
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return Collections.emptyMap();
+
+    List<PsiElement> elementsToCheckDominance = new ArrayList<>();
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
+      if (labelStatement.isDefaultCase()) {
+        elementsToCheckDominance.add(requireNonNull(labelStatement.getFirstChild()));
+        continue;
+      }
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) continue;
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        if (shouldConsiderForDominance(labelElement)) {
+          elementsToCheckDominance.add(labelElement);
+        }
+      }
+    }
+    Map<PsiCaseLabelElement, PsiElement> result = new HashMap<>();
+    for (int i = 0; i < elementsToCheckDominance.size() - 1; i++) {
+      PsiElement current = elementsToCheckDominance.get(i);
+      if (result.containsKey(current)) continue;
+      for (int j = i + 1; j < elementsToCheckDominance.size(); j++) {
+        PsiElement next = elementsToCheckDominance.get(j);
+        if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
+        boolean dominated = isDominated(nextElement, current, selectorType);
+        if (dominated) {
+          result.put(nextElement, current);
+        }
+      }
+    }
+    return result;
+  }
+
+  private static boolean shouldConsiderForDominance(@NotNull PsiCaseLabelElement labelElement) {
+    if (labelElement instanceof PsiPattern) return true;
+    if (labelElement instanceof PsiExpression) {
+      boolean isNullType = ExpressionUtil.isNullType(labelElement);
+      if (isNullType && isInCaseNullDefaultLabel(labelElement)) {
+        // JEP 432
+        // A 'case null, default' label dominates all other switch labels.
+        //
+        // In this case, only the 'default' case will be added to the elements checked for dominance
+        return false;
+      }
+      return isNullType || isConstantLabelElement(labelElement);
+    }
+    return labelElement instanceof PsiDefaultCaseLabelElement;
+  }
 
   /**
    * Kinds of switch selector
