@@ -588,8 +588,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx()
-    for ((path, options) in taskList) {
-      projectManager.openProjectAsync(path, options)
+    try {
+      val iterator = taskList.iterator()
+      while (iterator.hasNext()) {
+        val (path, options) = iterator.next()
+        projectManager.openProjectAsync(path, options)
+        iterator.remove()
+      }
+    }
+    finally {
+      // cleanup unused pre-allocated frames if the operation failed or was canceled
+      for (task in taskList) {
+        task.second.frame?.dispose()
+      }
     }
     return true
   }
