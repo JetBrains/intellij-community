@@ -14673,6 +14673,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/removeUnused/usedClassAsAlias.kt");
         }
 
+        @TestMetadata("usedContextParameters.kt")
+        public void testUsedContextParameters() throws Exception {
+            runTest("testData/quickfix/removeUnused/usedContextParameters.kt");
+        }
+
         @TestMetadata("usedFunAsAlias.kt")
         public void testUsedFunAsAlias() throws Exception {
             runTest("testData/quickfix/removeUnused/usedFunAsAlias.kt");
