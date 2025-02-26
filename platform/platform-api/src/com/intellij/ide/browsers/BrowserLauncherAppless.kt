@@ -25,7 +25,6 @@ import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Desktop
-import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
@@ -48,7 +47,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       browse(url, browser = null, project = null)
     }
     else {
-      val file = File(url)
+      val file = java.io.File(url)
       if (isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
           showError(IdeBundle.message("error.file.does.not.exist", file.path), project = null)
@@ -62,7 +61,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  private fun openWithDesktopApi(url: String, file: File) {
+  private fun openWithDesktopApi(url: String, file: java.io.File) {
     getScope(null).launch {
       try {
         LOG.debug { "trying Desktop#open on [${url}]" }
@@ -75,7 +74,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  override fun browse(file: File) {
+  @Suppress("UsagesOfObsoleteApi")
+  override fun browse(file: java.io.File) {
     val path = file.absolutePath
     val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
     browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
