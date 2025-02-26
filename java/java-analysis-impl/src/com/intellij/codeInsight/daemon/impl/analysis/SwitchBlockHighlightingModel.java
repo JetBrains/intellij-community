@@ -1,21 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiSwitchUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -125,11 +124,7 @@ public class SwitchBlockHighlightingModel {
   }
 
   boolean needToCheckCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements) {
-    return myBlock instanceof PsiSwitchExpression || myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements);
-  }
-
-  private boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements) {
-    return JavaPsiSwitchUtil.isEnhancedSwitch(labelElements, mySelectorType);
+    return ExpressionUtil.isEnhancedSwitch(myBlock);
   }
 
   void checkEnumCompleteness(@NotNull PsiClass selectorClass,
@@ -214,13 +209,7 @@ public class SwitchBlockHighlightingModel {
       result.add(defaultElement);
     }
 
-    PatternsInSwitchBlockHighlightingModel patternInSwitchModel =
-      ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
-    if (patternInSwitchModel == null) return result;
-    List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
-    labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
-    if (dominanceCheckingCandidates.isEmpty()) return result;
-    return StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
+    return StreamEx.ofKeys(JavaPsiSwitchUtil.findDominatedLabels(switchBlock), value -> value instanceof PsiPattern)
       .into(result);
   }
 }

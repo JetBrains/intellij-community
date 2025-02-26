@@ -6,16 +6,18 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -29,7 +31,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
-import static java.util.Objects.requireNonNull;
 
 /**
  * This class represents the model for highlighting patterns in a switch block.
@@ -50,117 +51,36 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
 
   @Override
   void checkSwitchLabelValues(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    if (checkDominance(errorSink)) return;
+    
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
-    List<PsiElement> elementsToCheckDominance = new ArrayList<>();
     List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
     for (PsiStatement st : body.getStatements()) {
-      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
-      if (labelStatement.isDefaultCase()) {
-        elementsToCheckDominance.add(requireNonNull(labelStatement.getFirstChild()));
-        continue;
-      }
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement) || labelStatement.isDefaultCase()) continue;
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-      if (labelElementList == null) continue;
-      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        fillElementsToCheckDominance(elementsToCheckDominance, labelElement);
-        elementsToCheckCompleteness.add(labelElement);
+      if (labelElementList != null) {
+        Collections.addAll(elementsToCheckCompleteness, labelElementList.getElements());
       }
     }
-    if (checkDominance(elementsToCheckDominance, errorSink)) {
-      return;
-    }
-
     if (needToCheckCompleteness(elementsToCheckCompleteness)) {
       checkCompleteness(elementsToCheckCompleteness, true, errorSink);
     }
   }
 
-  @NotNull Map<PsiCaseLabelElement, PsiElement> findDominatedLabels(@NotNull List<? extends PsiElement> switchLabels) {
-    Map<PsiCaseLabelElement, PsiElement> result = new HashMap<>();
-    for (int i = 0; i < switchLabels.size() - 1; i++) {
-      PsiElement current = switchLabels.get(i);
-      if (result.containsKey(current)) continue;
-      for (int j = i + 1; j < switchLabels.size(); j++) {
-        PsiElement next = switchLabels.get(j);
-        if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
-        boolean dominated = isDominated(nextElement, current, mySelectorType);
-        if (dominated) {
-          result.put(nextElement, current);
-        }
-      }
-    }
-    return result;
+  private boolean checkDominance(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    Map<PsiCaseLabelElement, PsiElement> dominatedLabels = JavaPsiSwitchUtil.findDominatedLabels(myBlock);
+    return doCheckDominance(errorSink, dominatedLabels);
   }
 
-  /**
-   * Determines if the given case label element is dominated by another case label element according to JEP 440-441
-   *
-   * @param overWhom The case label element that may dominate.
-   * @param who The case label element that may be dominated.
-   * @param selectorType The type used to select the case label element.
-   * @return {@code true} if the 'overWhom' case label element dominates the 'who' case label element, {@code false} otherwise.
-   */
-  public static boolean isDominated(@NotNull PsiCaseLabelElement overWhom,
-                                    @NotNull PsiElement who,
-                                    @NotNull PsiType selectorType) {
-    boolean isOverWhomUnconditionalForSelector = JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType);
-    if (!isOverWhomUnconditionalForSelector &&
-        ((!(overWhom instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
-         who instanceof PsiKeyword &&
-         PsiKeyword.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
-      // JEP 440-441
-      // A 'default' label dominates a case label with a case pattern,
-      // and it also dominates a case label with a null case constant.
-      // A 'case null, default' label dominates all other switch labels.
-      return true;
-    }
-    if (who instanceof PsiCaseLabelElement currentElement) {
-      if (JavaPsiPatternUtil.isGuarded(currentElement)) return false;
-      if (isConstantLabelElement(overWhom)) {
-        PsiExpression constExpr = ObjectUtils.tryCast(overWhom, PsiExpression.class);
-        assert constExpr != null;
-        if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
-          return true;
-        }
-      }
-      else {
-        if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean isInCaseNullDefaultLabel(@NotNull PsiElement element) {
-    PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
-    if (list == null || list.getElementCount() != 2) return false;
-    PsiCaseLabelElement[] elements = list.getElements();
-    return elements[0] instanceof PsiExpression expr &&
-           ExpressionUtils.isNullLiteral(expr) &&
-           elements[1] instanceof PsiDefaultCaseLabelElement;
-  }
-
-  /**
-   * 14.11.1 Switch Blocks
-   * To ensure the absence of unreachable statements, domination rules provide a possible order
-   * of different case label elements.
-   * <p>
-   * The dominance is based on Properties of Patterns (14.30.3).
-   *
-   * @see JavaPsiPatternUtil#isUnconditionalForType(PsiCaseLabelElement, PsiType)
-   * @see JavaPsiPatternUtil#dominates(PsiCaseLabelElement, PsiCaseLabelElement)
-   */
-  private boolean checkDominance(@NotNull List<? extends PsiElement> switchLabels,
-                                 @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    Map<PsiCaseLabelElement, PsiElement> dominatedLabels = findDominatedLabels(switchLabels);
+  private static boolean doCheckDominance(@NotNull Consumer<? super HighlightInfo.Builder> errorSink,
+                                          Map<PsiCaseLabelElement, PsiElement> dominatedLabels) {
     AtomicBoolean reported = new AtomicBoolean();
     dominatedLabels.forEach((overWhom, who) -> {
       HighlightInfo.Builder info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
       if (who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
-          isInCaseNullDefaultLabel(who)) {
+          JavaPsiSwitchUtil.isInCaseNullDefaultLabel(who)) {
         PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
         if (labelStatementBase != null) {
           MakeDefaultLastCaseFix action = new MakeDefaultLastCaseFix(labelStatementBase);
@@ -332,29 +252,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return ContainerUtil.exists(elements, element -> extractPattern(element) != null);
   }
 
-  static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
-                                           @NotNull PsiCaseLabelElement labelElement) {
-    if (labelElement instanceof PsiPattern) {
-      elements.add(labelElement);
-    }
-    else if (labelElement instanceof PsiExpression) {
-      boolean isNullType = isNullType(labelElement);
-      if (isNullType && isInCaseNullDefaultLabel(labelElement)) {
-        // JEP 432
-        // A 'case null, default' label dominates all other switch labels.
-        //
-        // In this case, only the 'default' case will be added to the elements checked for dominance
-        return;
-      }
-      if (isNullType || isConstantLabelElement(labelElement)) {
-        elements.add(labelElement);
-      }
-    }
-    else if (labelElement instanceof PsiDefaultCaseLabelElement) {
-      elements.add(labelElement);
-    }
-  }
-
   private static void registerDeleteFixForDefaultElement(@NotNull HighlightInfo.Builder info,
                                                          PsiElement defaultElement,
                                                          @NotNull PsiElement duplicateElement) {
@@ -417,14 +314,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, type));
   }
 
-  private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
-    return evaluateConstant(labelElement) != null || isEnumConstant(labelElement);
-  }
-
-  private static boolean isEnumConstant(@NotNull PsiCaseLabelElement element) {
-    return getEnumConstant(element) != null;
-  }
-
   /**
    * Evaluates the completeness of a switch block.
    *
@@ -482,10 +371,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
     if (needToCheckCompleteness) return reported.get() ? UNEVALUATED : COMPLETE_WITHOUT_UNCONDITIONAL;
     return reported.get() ? INCOMPLETE : COMPLETE_WITHOUT_UNCONDITIONAL;
-  }
-
-  private static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType());
   }
 
   private static QuickFixFactory getFixFactory() {

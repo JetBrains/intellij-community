@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPsiExpressionUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
@@ -280,10 +282,12 @@ final class SwitchChecker {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement label : labelElementList.getElements()) {
-        if (!(label instanceof PsiParenthesizedExpression) && isNullType(label)) {
-          if (selectorType instanceof PsiPrimitiveType && !isNullType(selector)) {
-            myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
-            return;
+        if (!(label instanceof PsiParenthesizedExpression) && ExpressionUtil.isNullType(label)) {
+          if (selectorType instanceof PsiPrimitiveType) {
+            if (!ExpressionUtil.isNullType(selector)) {
+              myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
+              return;
+            }
           }
           return;
         }
@@ -312,10 +316,6 @@ final class SwitchChecker {
         }
       }
     }
-  }
-
-  private static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType());
   }
 
   static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
