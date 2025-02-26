@@ -42,7 +42,6 @@ internal class GitBranchesTreePopupStep(
   private var finalRunnable: Runnable? = null
 
   private val topLevelItems: List<Any> = buildList {
-    val affectedRepositories = affectedRepositories(selectedRepository, repositories)
     val presentationFactory = PresentationFactory()
 
     if (ExperimentalUI.isNewUI() && isFirstStep) {

@@ -22,7 +22,7 @@ internal abstract class GitBranchesTreePopupStepBase(
   internal val selectedRepository: GitRepository?,
   internal val repositories: List<GitRepository>,
 ) : PopupStep<Any> {
-  internal val affectedRepositories get() = affectedRepositories(selectedRepository, repositories)
+  internal val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
 
   internal abstract val treeModel: GitBranchesTreeModel
 
@@ -99,8 +99,4 @@ internal abstract class GitBranchesTreePopupStepBase(
     GitBranchesTreeTextProvider.getText(node, selectedRepository, repositories.size > 1, treeModel.isPrefixGrouping)
 
   override fun isAutoSelectionEnabled() = false
-
-  companion object {
-    fun affectedRepositories(selectedRepository: GitRepository?, repositories: List<GitRepository>) = selectedRepository?.let(::listOf) ?: repositories
-  }
 }
