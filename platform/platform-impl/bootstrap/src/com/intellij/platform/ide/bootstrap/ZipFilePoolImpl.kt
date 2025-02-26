@@ -3,8 +3,8 @@
 
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.util.lang.ZipEntryResolverPool.EntryResolver
 import com.intellij.util.lang.ZipEntryResolverPool
+import com.intellij.util.lang.ZipEntryResolverPool.EntryResolver
 import com.intellij.util.lang.ZipFile
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
@@ -17,7 +17,7 @@ private const val STRIPE_COUNT = 64
 /**
  * Concurrent ZipFilePool. Loads at most [STRIPE_COUNT] zip files concurrently.
  *
- * Pool must be explicitly cleared by [clear].
+ * Pool must be explicitly cleared by [close].
  */
 @ApiStatus.Internal
 class ZipFilePoolImpl : ZipFilePool(), ZipEntryResolverPool {
