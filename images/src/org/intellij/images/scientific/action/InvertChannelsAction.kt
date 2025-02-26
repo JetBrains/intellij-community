@@ -5,13 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.intellij.images.editor.ImageEditor
 import org.intellij.images.scientific.ScientificUtils
-import org.intellij.images.ui.ImageComponent
+import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.convertToByteArray
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
-class BGRAction : DumbAwareAction() {
-
+class InvertChannelsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -20,13 +21,12 @@ class BGRAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val imageEditor = getImageEditor(e) ?: return
-    val imageComponent = getImageComponent(imageEditor) ?: return
-    val document = imageComponent.document
-    val originalImage = document.value ?: return
-    val bgrImage = applyInvertChannels(originalImage)
-    document.setValue(bgrImage) // TODO: how to view result without changing original image?
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
+    val invertedImage = applyInvertChannels(originalImage)
+    imageFile.setBinaryContent(convertToByteArray(invertedImage, imageFile.fileType.defaultExtension))
   }
+
 
   private fun applyInvertChannels(image: BufferedImage): BufferedImage {
     val invertedImage = BufferedImage(image.width, image.height, image.type)
@@ -41,13 +41,5 @@ class BGRAction : DumbAwareAction() {
       }
     }
     return invertedImage
-  }
-
-  private fun getImageEditor(e: AnActionEvent): ImageEditor? {
-    return null
-  }
-
-  private fun getImageComponent(imageEditor: ImageEditor): ImageComponent? {
-    return null
   }
 }

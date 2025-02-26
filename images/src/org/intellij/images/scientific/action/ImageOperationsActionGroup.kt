@@ -13,7 +13,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
-
   private var selectedMode: String = ORIGINAL_IMAGE
   private val availableModes = listOf(ORIGINAL_IMAGE, INVERTED_IMAGE, GRAYSCALE_IMAGE)
 
@@ -61,18 +60,18 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
   private fun createPopupActionGroup(): DefaultActionGroup {
     val actionGroup = DefaultActionGroup()
-    actionGroup.add(RGBAction())
-    actionGroup.add(BGRAction())
-    actionGroup.add(GrayscaleAction())
+    actionGroup.add(RestoreOriginalImageAction())
+    actionGroup.add(InvertChannelsAction())
+    actionGroup.add(GrayscaleImageAction())
     return actionGroup
   }
 
   private fun triggerModeAction(mode: String) {
     val actionManager = ActionManager.getInstance()
     when (mode) {
-      ORIGINAL_IMAGE -> actionManager.tryToExecute(RGBAction(), null, null, null, true)
-      INVERTED_IMAGE -> actionManager.tryToExecute(BGRAction(), null, null, null, true)
-      GRAYSCALE_IMAGE -> actionManager.tryToExecute(GrayscaleAction(), null, null, null, true)
+      ORIGINAL_IMAGE -> actionManager.tryToExecute(RestoreOriginalImageAction(), null, null, null, true)
+      INVERTED_IMAGE -> actionManager.tryToExecute(InvertChannelsAction(), null, null, null, true)
+      GRAYSCALE_IMAGE -> actionManager.tryToExecute(GrayscaleImageAction(), null, null, null, true)
     }
   }
 
