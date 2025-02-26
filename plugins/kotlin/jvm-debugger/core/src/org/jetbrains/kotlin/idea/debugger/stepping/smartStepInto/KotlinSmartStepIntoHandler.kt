@@ -131,7 +131,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     }
 }
 
-private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
+fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
     val targets = OrderedSet<SmartStepTarget>()
     val visitor = SmartStepTargetVisitor(lines, targets)
     element.accept(visitor, null)
@@ -147,7 +147,10 @@ private suspend fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarge
     return targetsToShow
 }
 
-private suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(context: SmartStepIntoContext): List<KotlinMethodSmartStepTarget> {
+suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
+    context: SmartStepIntoContext,
+    specificLocation: Location? = null
+): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     val debugProcess = context.debugProcess
     if (isEmpty()) {
@@ -159,7 +162,7 @@ private suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(cont
             ?: this
     }
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
-    val location = frameProxy?.safeLocation() ?: run {
+    val location = specificLocation ?: frameProxy?.safeLocation() ?: run {
         DebuggerStatistics.logSmartStepIntoTargetsDetection(
             debugProcess.project, Engine.KOTLIN,
             SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
@@ -190,7 +193,7 @@ private fun fixOrdinalsAfterTargetRemoval(removedTarget: KotlinMethodSmartStepTa
  * It should be suitable for smart step into analysis,
  * meaning that it is expected to include all possible step targets.
  */
-private fun SourcePosition.getContainingExpression(): KtElement? {
+fun SourcePosition.getContainingExpression(): KtElement? {
     val element = elementAt ?: return null
     // Firstly, try to locate an element that starts at the current line
     val topmostElement = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement

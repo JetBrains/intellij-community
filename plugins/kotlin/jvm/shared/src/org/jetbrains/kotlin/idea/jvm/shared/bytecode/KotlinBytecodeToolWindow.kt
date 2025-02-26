@@ -376,15 +376,20 @@ class KotlinBytecodeToolWindow(
             val effectiveConfiguration = CompilationConfigurationEnricher.single?.enrich(configuration) ?: configuration
 
             val classFileOrigins = mutableMapOf<String, MutableSet<PsiFile>>()
-            val compilerTarget = KaCompilerTarget.Jvm(isTestMode = true) { file, className ->
-                if (file != null) {
-                    classFileOrigins.computeIfAbsent("$className.class") { _ -> mutableSetOf() }.add(file)
-                }
-            }
+            val compilerTarget = KaCompilerTarget.Jvm(
+                isTestMode = true,
+                compiledClassHandler = { file, className ->
+                    if (file != null) {
+                        classFileOrigins.computeIfAbsent("$className.class") { _ -> mutableSetOf() }.add(file)
+                    }
+                },
+                debuggerExtension = null
+            )
             val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
             try {
-                val result = compile(ktFile, effectiveConfiguration, compilerTarget, allowedErrorFilter)
+                val result =
+                    compile(ktFile, effectiveConfiguration, compilerTarget, allowedErrorFilter)
                 return Pair(result, classFileOrigins)
             } catch (e: ProcessCanceledException) {
                 throw e

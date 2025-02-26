@@ -1,0 +1,16 @@
+LineBreakpoint created at generics.kt:9
+Run Java
+Connected to the target VM
+generics.kt:9
+Compile bytecode for typeOf<T>().toString()
+generics.kt:9
+Compile bytecode for typeOf<T>().toString()
+generics.kt:9
+Compile bytecode for typeOf<T>().toString()
+generics.kt:9
+Compile bytecode for typeOf<T>().toString()
+generics.kt:9
+Compile bytecode for typeOf<T>().toString()
+Disconnected from the target VM
+
+Process finished with exit code 0

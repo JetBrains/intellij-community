@@ -72,11 +72,17 @@ open class KotlinMethodFilter(
     private fun isIntrinsicEqualsMatch(location: Location): Boolean =
         methodInfo.name == "equals" && location.safeMethod()?.isIntrinsicEquals() == true
 
-    private fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
+    fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
         val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
         // Stops at first location in dumb mode
         return runDumbAnalyze(currentDeclaration, fallback = true) {
             declarationMatches(currentDeclaration)
+        }
+    }
+
+    fun declarationMatches(declaration: KtDeclaration): Boolean {
+        return runDumbAnalyze(declaration, fallback = true) {
+            declarationMatches(declaration)
         }
     }
 
@@ -136,7 +142,7 @@ open class KotlinMethodFilter(
 private fun Method.isIntrinsicEquals(): Boolean =
     isIntrinsicEquals(declaringType().name().fqnToInternalName(), name(), signature())
 
-private fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
+fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
     val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
         it !is KtProperty || !it.isLocal
