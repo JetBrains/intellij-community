@@ -87,9 +87,6 @@ a:org.jetbrains.builtInWebServer.SingleConnectionNetService
 - pf:connectAgain():org.jetbrains.concurrency.Promise
 - pf:connectToProcess(org.jetbrains.concurrency.AsyncPromise,I,com.intellij.execution.process.OSProcessHandler,com.intellij.util.Consumer):V
 - pf:getProcessChannel():java.util.concurrent.atomic.AtomicReference
-f:org.jetbrains.builtInWebServer.StaticFileHandlerKt
-- sf:checkAccess(java.nio.file.Path,java.nio.file.Path):Z
-- bs:checkAccess$default(java.nio.file.Path,java.nio.file.Path,I,java.lang.Object):Z
 a:org.jetbrains.builtInWebServer.WebServerFileHandler
 - <init>():V
 - getPageFileExtensions():java.util.List
