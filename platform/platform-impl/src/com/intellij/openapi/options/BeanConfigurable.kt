@@ -141,7 +141,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
       set(value) = component.setSelected(value)
   }
 
-  @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead")
+  @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead", level = DeprecationLevel.ERROR)
   protected fun checkBox(fieldName: @NonNls String, title: @NlsContexts.Checkbox String?) {
     myFields.add(CheckboxField(fieldName, title))
   }
