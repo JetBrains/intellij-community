@@ -18,12 +18,11 @@ import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder
 import org.jetbrains.jps.dependency.impl.PathSource
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
-import org.jetbrains.jps.incremental.GlobalContextKey
-import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.dependencies.LibraryDef
-import org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater
+import org.jetbrains.jps.incremental.dependencies.checkDependencies
+import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
@@ -31,14 +30,12 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.FileFilter
 import java.nio.file.Path
 
-private val LIBRARIES_STATE_UPDATER_KEY = GlobalContextKey.create<LibraryDependenciesUpdater>("_libraries_state_updater_")
 private val ALL_AFFECTED_NODE_SOURCES_KEY = Key.create<MutableSet<NodeSource>>("_all_compiled_node_sources_")
 
 internal fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer): NodeSource {
   return PathSource(relativizer.toRelative(file, RelativePathType.SOURCE))
 }
 
-@Suppress("InconsistentCommentForJavaParameter")
 internal suspend fun markDirtyDependenciesForInitialRound(
   dataProvider: BazelBuildDataProvider,
   target: BazelModuleBuildTarget,
@@ -50,13 +47,15 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   val relativizer = dataProvider.relativizer
 
   tracer.span("check lib deps") { span ->
-    var libUpdater = context.getUserData(LIBRARIES_STATE_UPDATER_KEY)
-    if (libUpdater == null) {
-      libUpdater = LibraryDependenciesUpdater(dataProvider.libRootManager)
-      context.putUserData(LIBRARIES_STATE_UPDATER_KEY, libUpdater)
-    }
-
-    val incremental = libUpdater.update(context, chunk, target, relativizer, span)
+    val incremental = checkDependencies(
+      context = context,
+      chunk = chunk,
+      target = target,
+      relativizer = relativizer,
+      dataProvider = dataProvider,
+      tracer = tracer,
+      span = span,
+    )
     if (!incremental) {
       throw RebuildRequestedException(RuntimeException("incremental lib deps update failed"))
     }
@@ -74,7 +73,7 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   }
 
   tracer.span("update dependency graph") { span ->
-    val delta = context.projectDescriptor.dataManager.getDependencyGraph()!!.graph.createDelta(
+    val delta = context.projectDescriptor.dataManager.getDependencyGraph().graph.createDelta(
       /* sourcesToProcess = */ toCompile,
       /* deletedSources = */ deletedSources,
       /* isSourceOnly = */ true,
@@ -85,7 +84,8 @@ internal suspend fun markDirtyDependenciesForInitialRound(
       chunk = chunk,
       markDirtyRound = CompilationRound.CURRENT,
       skipMarkDirtyFilter = null,
-      relativizer = relativizer,
+      dataProvider = dataProvider,
+      target = target,
       span = span,
     )
   }
@@ -120,16 +120,15 @@ private fun updateDependencyGraph(
   context: BazelCompileContext,
   delta: Delta?,
   chunk: ModuleChunk,
+  target: BazelModuleBuildTarget,
   markDirtyRound: CompilationRound,
   skipMarkDirtyFilter: FileFilter?,
   span: Span,
-  relativizer: PathTypeAwareRelativizer,
+  dataProvider: BazelBuildDataProvider,
 ): Boolean {
   val errorsDetected = Utils.errorsDetected(context)
-  val performIntegrate = !errorsDetected
-  var additionalPassRequired = false
   val dataManager = context.projectDescriptor.dataManager
-  val graphConfig = dataManager.getDependencyGraph()!!
+  val graphConfig = dataManager.getDependencyGraph()
   val dependencyGraph = graphConfig.graph
 
   val isRebuild = context.scope.isRebuild
@@ -152,7 +151,7 @@ private fun updateDependencyGraph(
     if (!affectedForChunk.isEmpty() && !getOrCreate(context, ALL_AFFECTED_NODE_SOURCES_KEY) { hashSet() }.addAll(affectedForChunk)) {
       // All affected files in this round have already been affected in previous rounds.
       // This might indicate a build cycle => recompiling the whole chunk.
-      span.addEvent("build cycle detected for " + chunk.name + "; recompiling whole module chunk")
+      span.addEvent("build cycle detected for ${chunk.name}; recompiling whole module chunk")
       // turn on non-incremental mode for all targets from the current chunk =>
       // next time the whole chunk is recompiled and affected files won't be calculated anymore
       for (target in chunk.targets) {
@@ -163,80 +162,40 @@ private fun updateDependencyGraph(
     }
   }
 
-  if (diffResult.isIncremental) {
-    dataManager.relativizer
-    assert(skipMarkDirtyFilter == null)
-    val affectedFiles = diffResult.affectedSources
-      .mapTo(hashSet()) { relativizer.toAbsoluteFile(it.toString(), RelativePathType.SOURCE) }
-
-    if (differentiateParams.isCalculateAffected) {
-      span.addEvent("affected file count", Attributes.of(AttributeKey.longKey("count"), affectedFiles.size.toLong()))
-    }
-
-    if (!affectedFiles.isEmpty()) {
-      if (span.isRecording) {
-        span.addEvent("affected files", Attributes.of(AttributeKey.stringArrayKey("count"), affectedFiles.map { it.toString() }))
-      }
-
-      var targetsToMark: MutableSet<ModuleBuildTarget>? = null
-      val moduleIndex = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.projectDescriptor.project)
-      for (file in affectedFiles) {
-        if (file.fileName.toString() == "module-info.java") {
-          val rootDescriptor = (context.getProjectDescriptor().buildRootIndex as BazelBuildRootIndex).fileToDescriptors.get(file)
-          if (rootDescriptor != null) {
-            val target = rootDescriptor.getTarget()
-            val targetModuleInfo = moduleIndex.getModuleInfoFile(target.module, target.isTests)
-            if (targetModuleInfo?.toPath() == file) {
-              if (targetsToMark == null) {
-                targetsToMark = hashSet<ModuleBuildTarget>()
-              }
-              targetsToMark.add(target)
-            }
-          }
-        }
-        else {
-          FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file)
-        }
-      }
-
-      var isCurrentChunkAffected = false
-      if (targetsToMark != null) {
-        for (target in targetsToMark) {
-          if (chunk.targets.contains(target)) {
-            isCurrentChunkAffected = true
-          }
-          else {
-            FSOperations.markDirty(context, markDirtyRound, target, null)
-          }
-        }
-        if (isCurrentChunkAffected) {
-          if (compilingIncrementally) {
-            // turn on non-incremental mode for targets from the current chunk if at least one of them was affected
-            for (target in chunk.targets) {
-              context.markNonIncremental(target)
-            }
-          }
-          FSOperations.markDirty(context, markDirtyRound, chunk, null)
-        }
-      }
-      additionalPassRequired = compilingIncrementally && (isCurrentChunkAffected)
-    }
-  }
-  else {
+  if (!diffResult.isIncremental) {
     // non-incremental mode
     throw RebuildRequestedException(RuntimeException("diffResult is non incremental: $diffResult"))
   }
 
-  if (!additionalPassRequired) {
-    // cleanup
-    ALL_AFFECTED_NODE_SOURCES_KEY.set(context, null)
+  val relativizer = dataProvider.relativizer
+
+  assert(skipMarkDirtyFilter == null)
+  val affectedFiles = diffResult.affectedSources.mapTo(hashSet()) { relativizer.toAbsoluteFile(it.toString(), RelativePathType.SOURCE) }
+
+  if (differentiateParams.isCalculateAffected) {
+    span.addEvent("affected file count", Attributes.of(AttributeKey.longKey("count"), affectedFiles.size.toLong()))
   }
 
-  if (performIntegrate) {
+  if (!affectedFiles.isEmpty()) {
+    if (span.isRecording) {
+      span.addEvent("affected files", Attributes.of(AttributeKey.stringArrayKey("count"), affectedFiles.map { it.toString() }))
+    }
+
+    markAffectedFilesDirty(
+      context = context,
+      dataProvider = dataProvider,
+      target = target,
+      affectedFiles = affectedFiles.asSequence(),
+    )
+  }
+
+  ALL_AFFECTED_NODE_SOURCES_KEY.set(context, null)
+
+  if (!errorsDetected) {
     dependencyGraph.integrate(diffResult)
   }
 
-  return additionalPassRequired
+  return false
 }
 
 private inline fun <T : Any> getOrCreate(context: CompileContext, @Suppress("SameParameterValue") dataKey: Key<T>, factory: () -> T): T {
@@ -246,4 +205,32 @@ private inline fun <T : Any> getOrCreate(context: CompileContext, @Suppress("Sam
     context.putUserData(dataKey, result)
   }
   return result
+}
+
+internal fun markAffectedFilesDirty(
+  context: CompileContext,
+  affectedFiles: Sequence<Path>,
+  dataProvider: BazelBuildDataProvider,
+  target: BazelModuleBuildTarget,
+) {
+  val projectDescriptor = context.projectDescriptor
+  val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
+  val stampStorage = dataProvider.stampStorage
+  for (file in affectedFiles) {
+    if (file.fileName.toString() == "module-info.java") {
+      val moduleIndex = JpsJavaExtensionService.getInstance().getJavaModuleIndex(projectDescriptor.project)
+      if (moduleIndex.getModuleInfoFile(target.module, target.isTests)?.toPath() == file) {
+        throw RebuildRequestedException(RuntimeException("module-info.java is changed (file=$file"))
+      }
+    }
+    else {
+      val rootDescriptor = buildRootIndex.fileToDescriptors.get(file) ?: continue
+      val marked = projectDescriptor.fsState.getDelta(target).markRecompileIfNotDeleted(rootDescriptor, file)
+      if (marked) {
+        stampStorage.markChanged(file)
+        val roundDelta = context.getUserData(CURRENT_ROUND_DELTA_KEY)
+        roundDelta?.markRecompile(rootDescriptor, file)
+      }
+    }
+  }
 }

@@ -478,15 +478,9 @@ private fun completeRecompiledSourcesSet(context: CompileContext, target: BazelM
   val delta = projectDescriptor.fsState.getEffectiveFilesDelta(context, target)
   delta.lockData()
   try {
-    if (delta.sourceMapToRecompile.isEmpty()) {
-      return
-    }
-
-    for (entry in delta.sourceMapToRecompile.entries) {
-      for (file in entry.value) {
-        sourceToOut.getDescriptor(file)?.outputs?.let {
-          affected.add(it)
-        }
+    if (!delta.sourceMapToRecompile.isEmpty()) {
+      for (files in delta.sourceMapToRecompile.values) {
+        sourceToOut.collectAffectedOutputs(files, affected)
       }
     }
   }

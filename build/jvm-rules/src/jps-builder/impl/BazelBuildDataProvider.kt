@@ -97,9 +97,7 @@ internal class BazelStampStorage(private val map: Map<Path, SourceDescriptor>) :
 
   override fun removeStamp(sourceFile: Path, buildTarget: BuildTarget<*>?) {
     // used by BazelKotlinFsOperationsHelper (markChunk -> fsState.markDirty)
-    synchronized(map) {
-      map.get(sourceFile)?.isChanged = true
-    }
+    markChanged(sourceFile)
   }
 
   fun markChanged(sourceFile: Path) {
@@ -212,8 +210,13 @@ internal class BazelSourceToOutputMapping(
     }
   }
 
-  fun getDescriptor(sourceFile: Path): SourceDescriptor? {
-    return synchronized(map) { map.get(sourceFile) }
+  fun collectAffectedOutputs(sourceFiles: Collection<Path>, to: MutableList<Array<String>>) {
+    synchronized(map) {
+      for (sourceFile in sourceFiles) {
+        val descriptor = map.get(sourceFile) ?: continue
+        to.add(descriptor.outputs)
+      }
+    }
   }
 
   fun findAffectedSources(affectedSources: List<Array<String>>): List<SourceDescriptor> {

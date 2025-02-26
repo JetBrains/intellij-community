@@ -17,7 +17,8 @@ internal object TestKotlinBuildWorker {
     val baseDir = testPaths.baseDir
     runBlocking(Dispatchers.Default) {
       val testModule = TestModules.XML_DOM
-      val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
+      val sources = testModule.sourcePaths.flatMap { collectSources(sourceDirPath = it, paths = testPaths) }
+      require(sources.isNotEmpty())
       val testParams = testModule.getParams(baseDir)
 
       val args = parseArgs(testParams.trimStart().lines().toTypedArray())
