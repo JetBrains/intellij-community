@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
@@ -32,7 +33,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,7 +251,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     if (!(type instanceof PsiClassType)) {
       return null;
     }
-    final PsiElement result = SwitchUtils.findDefaultElement(switchBlock);
+    final PsiElement result = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
     if (result == null) {
       return null;
     }

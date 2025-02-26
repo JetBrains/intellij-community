@@ -70,13 +70,8 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
   private boolean checkRedundantDefaultBranch(@NotNull List<? extends PsiCaseLabelElement> elements,
                                               @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
-    PsiCaseLabelElement elementCoversType =
-      JavaPsiPatternUtil.deconstructSelectorType(mySelectorType).stream()
-        .map(type -> findUnconditionalPatternForType(elements, type))
-        .filter(t -> t != null)
-        .findAny()
-        .orElse(null);
-    PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
+    PsiCaseLabelElement elementCoversType = JavaPsiSwitchUtil.getUnconditionalPatternLabel(myBlock);
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(myBlock);
     if (defaultElement != null && elementCoversType != null) {
       HighlightInfo.Builder defaultInfo =
         createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.pattern.and.default.exist"));
@@ -90,24 +85,21 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       return true;
     }
     //default (or unconditional), TRUE and FALSE cannot be together
-    if ((defaultElement != null || elementCoversType != null) &&
-        mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN &&
-        elements.size() >= 2) {
-      if (hasTrueAndFalse(elements)) {
-        if (defaultElement != null) {
-          HighlightInfo.Builder defaultInfo =
-            createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
-          registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
-          errorSink.accept(defaultInfo);
-        }
-        if (elementCoversType != null) {
-          HighlightInfo.Builder patternInfo = createError(elementCoversType,
-                                                          JavaErrorBundle.message(
-                                                            "switch.unconditional.boolean.and.unconditional.exist"));
-          IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
-          patternInfo.registerFix(action, null, null, null, null);
-          errorSink.accept(patternInfo);
-        }
+    if ((defaultElement != null || elementCoversType != null) && 
+        mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && JavaPsiSwitchUtil.hasTrueAndFalse(myBlock)) {
+      if (defaultElement != null) {
+        HighlightInfo.Builder defaultInfo =
+          createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
+        registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
+        errorSink.accept(defaultInfo);
+      }
+      if (elementCoversType != null) {
+        HighlightInfo.Builder patternInfo = createError(elementCoversType,
+                                                        JavaErrorBundle.message(
+                                                          "switch.unconditional.boolean.and.unconditional.exist"));
+        IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
+        patternInfo.registerFix(action, null, null, null, null);
+        errorSink.accept(patternInfo);
       }
     }
     return defaultElement != null || elementCoversType != null;

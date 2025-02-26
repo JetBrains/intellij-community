@@ -10,6 +10,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -283,6 +284,94 @@ public final class JavaPsiSwitchUtil {
       return isNullType || isConstantLabelElement(labelElement);
     }
     return labelElement instanceof PsiDefaultCaseLabelElement;
+  }
+
+  /**
+   * Retrieves the first unconditional pattern label in the case labels of a provided switch block,
+   * if present and valid for the given selector type.
+   *
+   * @param block the switch block to analyze. Must not be null.
+   * @return the first unconditional pattern label element if found; otherwise, returns null.
+   */
+  public static PsiCaseLabelElement getUnconditionalPatternLabel(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return null;
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return null;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return null;
+    List<PsiType> types = JavaPsiPatternUtil.deconstructSelectorType(selectorType);
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
+      if (labelStatement.isDefaultCase()) continue;
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) continue;
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        if (ContainerUtil.exists(types, type -> JavaPsiPatternUtil.isUnconditionalForType(labelElement, type))) {
+          return labelElement;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean hasTrueAndFalse(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return false;
+
+    PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(block.getProject()).getConstantEvaluationHelper();
+    boolean hasTrue = false, hasFalse = false;
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
+      if (labelStatement.isDefaultCase()) continue;
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) continue;
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        if (!(labelElement instanceof PsiExpression expression)) continue;
+        if (PsiTypes.booleanType().equals(expression.getType())) {
+          if (helper.computeConstantExpression(expression, false) instanceof Boolean res) {
+            if (res) {
+              hasTrue = true;
+            }
+            else {
+              hasFalse = true;
+            }
+            if (hasTrue && hasFalse) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param switchBlock a switch statement or expression
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (switchLabelStatement == null) continue;
+      PsiElement defaultElement = findDefaultElement(switchLabelStatement);
+      if (defaultElement != null) return defaultElement;
+    }
+    return null;
+  }
+
+  /**
+   * @param label a switch label statement
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchLabelStatementBase label) {
+    if (label.isDefaultCase()) return label;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList == null) return null;
+    return ContainerUtil.find(labelElementList.getElements(),
+                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
   }
 
   /**

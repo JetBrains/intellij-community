@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -18,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +89,7 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
         return;
       }
       else if (labelElementList.getElementCount() == 2) {
-        PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+        PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(label);
         if (defaultElement != null && defaultElement != labelElement) {
           assert PsiKeyword.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
           makeLabelDefault(label, project);

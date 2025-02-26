@@ -849,7 +849,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     // multiple unconditional patterns, they will all be found as duplicates
     PsiCaseLabelElement unconditionalPattern = ContainerUtil.find(
       labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, selectorType));
-    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
     if (unconditionalPattern != null && defaultElement != null) {
       result.add(unconditionalPattern);
       result.add(defaultElement);

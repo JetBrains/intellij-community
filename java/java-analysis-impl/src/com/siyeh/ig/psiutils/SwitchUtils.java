@@ -566,36 +566,6 @@ public final class SwitchUtils {
     }
   }
 
-  /**
-   * @param switchBlock a switch statement or expression
-   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
-   * or null, if nothing was found.
-   */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
-    PsiCodeBlock body = switchBlock.getBody();
-    if (body == null) return null;
-    for (PsiStatement statement : body.getStatements()) {
-      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
-      if (switchLabelStatement == null) continue;
-      PsiElement defaultElement = findDefaultElement(switchLabelStatement);
-      if (defaultElement != null) return defaultElement;
-    }
-    return null;
-  }
-
-  /**
-   * @param label a switch label statement
-   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
-   * or null, if nothing was found.
-   */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchLabelStatementBase label) {
-    if (label.isDefaultCase()) return label;
-    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList == null) return null;
-    return ContainerUtil.find(labelElementList.getElements(),
-                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
-  }
-
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression instanceOf) {

@@ -2,13 +2,13 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -231,7 +231,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
       newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("default->{}", null);
     }
     else {
-      PsiElement defaultElement = SwitchUtils.findDefaultElement(labeledRule);
+      PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(labeledRule);
       if (defaultElement != null) {
         return moveRuleAfter((PsiCaseLabelElement)defaultElement, labeledRule);
       }
@@ -372,7 +372,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
         newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("default:", null);
       }
       else {
-        PsiElement defaultElement = SwitchUtils.findDefaultElement(labelStatement);
+        PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(labelStatement);
         if (defaultElement != null) {
           return addLabelAfter((PsiCaseLabelElement)defaultElement, labelStatement);
         }
