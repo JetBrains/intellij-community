@@ -58,15 +58,18 @@
         },
         "deprecationNote": {
           "type": "string",
-          "description": "Deprecation note for the element. Supports Writerside Markdown format."
+          "description": "Deprecation note for the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "description": {
           "type": "string",
-          "description": "Description of the element. Supports Writerside Markdown format."
+          "description": "Description of the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "sdkDocsSupportDetails": {
           "type": "string",
-          "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format."
+          "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "attributes": {
           "type": "array",
@@ -81,7 +84,8 @@
         },
         "childrenDescription": {
           "type": "string",
-          "description": "Description of child elements. Use it when children elements can't be included in the descriptor documentation (for example, they are dynamic), or additional information is needed. Supports Writerside Markdown format."
+          "description": "Description of child elements. Use it when children elements can't be included in the descriptor documentation (for example, they are dynamic), or additional information is needed. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "children": {
           "type": "array",
@@ -93,6 +97,7 @@
         "references": {
           "type": "array",
           "description": "Array of reference page links associated with the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown",
           "items": {
             "type": "string"
           }
@@ -102,11 +107,13 @@
         },
         "defaultValue": {
           "type": "string",
-          "description": "Default value for the element, if applicable. Supports Writerside Markdown format."
+          "description": "Default value for the element, if applicable. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "examples": {
           "type": "array",
           "description": "Examples for the element. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown",
           "items": {
             "type": "string"
           }
@@ -121,11 +128,17 @@
         "required": {
           "type": "string",
           "description": "Element requirement.",
-          "enum": ["yes", "no", "yes_for_paid", "unknown"]
+          "enum": [
+            "yes",
+            "no",
+            "yes_for_paid",
+            "unknown"
+          ]
         },
         "details": {
           "type": "array",
           "description": "Additional details about the requirement. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown",
           "items": {
             "type": "string"
           }
@@ -163,18 +176,21 @@
         },
         "deprecationNote": {
           "type": "string",
-          "description": "Deprecation note for the attribute. Supports Writerside Markdown format."
+          "description": "Deprecation note for the attribute. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "requirement": {
           "$ref": "#/definitions/Requirement"
         },
         "description": {
           "type": "string",
-          "description": "Description of the attribute. Supports Writerside Markdown format."
+          "description": "Description of the attribute. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         },
         "defaultValue": {
           "type": "string",
-          "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format."
+          "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
         }
       },
       "required": ["name"],
