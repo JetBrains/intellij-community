@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -49,6 +50,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
     }
 
     fun getInstance(): SettingsSyncMain = service<SettingsSyncMain>()
+    suspend fun getInstanceAsync(): SettingsSyncMain = serviceAsync<SettingsSyncMain>()
 
     // Extracted to simplify testing, otherwise it is fast and is called from the service initializer
     internal fun init(

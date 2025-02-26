@@ -3,6 +3,7 @@ package com.intellij.settingsSync.core.config
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
@@ -26,18 +27,10 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object SettingsSyncPanelFactory {
-  fun createCombinedSyncSettingsPanel(
-    syncLabel: @Nls String,
-    syncSettings: SettingsSyncState,
-    syncScopeSettings: SettingsSyncLocalState,
-  ): DialogPanel {
-    return SettingsSyncPanelHolder().createCombinedSyncSettingsPanel(syncLabel, syncSettings, syncScopeSettings)
-  }
-}
 internal class SettingsSyncPanelHolder() {
   private lateinit var panel : DialogPanel
   private var isCrossIdeSyncEnabled = false
+  internal val crossSyncSupported = AtomicBooleanProperty(true)
 
   fun setSyncSettings(syncSettings: SettingsSyncState?) {
     val notNullState = syncSettings ?: SettingsSyncStateHolder()
@@ -72,7 +65,7 @@ internal class SettingsSyncPanelHolder() {
           .onApply(syncScopePanel::apply)
           .onReset(syncScopePanel::reset)
           .onIsModified(syncScopePanel::isModified)
-      }
+      }.visibleIf(crossSyncSupported)
       onApply {
         // do nothing, handled by descendants
       }

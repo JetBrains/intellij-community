@@ -15,9 +15,12 @@ import icons.SettingsSyncIcons
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-private enum class SyncStatus {ON, OFF, FAILED}
+private enum class SyncStatus {ON, OFF, FAILED, PENDING_ACTION}
 
 private fun getStatus() : SyncStatus {
+  if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+    return SyncStatus.PENDING_ACTION
+  }
   if (SettingsSyncSettings.getInstance().syncEnabled &&
       RemoteCommunicatorHolder.getCurrentUserData() != null) {
     return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
@@ -47,6 +50,8 @@ internal class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(),
         p.icon = SettingsSyncIcons.StatusDisabled
       SyncStatus.FAILED ->
         p.icon = AllIcons.General.Error
+      SyncStatus.PENDING_ACTION ->
+        p.icon = AllIcons.General.Warning
     }
     p.text = getStyledStatus(status)
   }
@@ -62,6 +67,7 @@ internal class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(),
       SyncStatus.ON -> builder.append(message("status.action.settings.sync.is.on"))
       SyncStatus.OFF -> builder.append(message("status.action.settings.sync.is.off"))
       SyncStatus.FAILED -> builder.append(message("status.action.settings.sync.failed"))
+      SyncStatus.PENDING_ACTION -> builder.append(message("status.action.settings.sync.pending.action"))
     }
     builder
       .append("</font>")
@@ -73,7 +79,10 @@ internal class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(),
       return if (getStatus() == SyncStatus.FAILED) {
         supplier.getErrorIcon(true)
       }
-      else null
+      else if (getStatus() == SyncStatus.PENDING_ACTION) {
+        supplier.getWarningIcon(true)
+      } else
+        null
     }
   }
 

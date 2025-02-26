@@ -17,6 +17,24 @@ interface SettingsSyncCommunicatorProvider {
   val authService: SettingsSyncAuthService
 
   /**
+   * Used in the main configurable after Sync UI, Code, ...
+   * a Pair:
+   * * link text, for instance: Learn more
+   * * actual link itself, for instance: https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html
+   */
+  val learnMoreLinkPair: Pair<String, String>?
+    get() = null
+
+  /**
+   * Used in the select provider dialog.
+   * a Pair:
+   * * link text, for instance: Learn more
+   * * actual link itself, for instance: https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html
+   */
+  val learnMoreLinkPair2: Pair<String, String>?
+    get() = null
+
+  /**
    * Creates a communicator (using the login data from authService)
    */
   fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator?
