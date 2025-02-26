@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.registry.Registry
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
 import java.awt.BorderLayout
@@ -37,6 +38,11 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
   }
 
   override fun update(e: AnActionEvent) {
+    val shouldShowTheGroup = Registry.`is`("ide.images.sci.mode.channels.operations")
+    if (!shouldShowTheGroup) {
+      e.presentation.isVisible = false
+      return
+    }
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
   }
