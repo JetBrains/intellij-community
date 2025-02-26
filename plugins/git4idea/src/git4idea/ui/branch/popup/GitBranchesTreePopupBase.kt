@@ -146,10 +146,10 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   init {
     setParentValue(parentValue)
     minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
-    this.dimensionServiceKey = if (isChild()) null else dimensionServiceKey
-    userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
+    this.dimensionServiceKey = if (isNestedPopup()) null else dimensionServiceKey
+    userResized = !isNestedPopup() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installShortcutActions(step.treeModel)
-    if (!isChild()) {
+    if (!isNestedPopup()) {
       setSpeedSearchAlwaysShown()
       if (!isNewUI) installTitleToolbar()
       installRepoListener()
@@ -269,7 +269,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     return tree
   }
 
-  protected fun isChild() = parent != null
+  protected fun isNestedPopup() = parent != null
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
     treeStep.updateTreeModelIfNeeded(tree, pattern)
@@ -302,8 +302,8 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         }
 
         val nodeToExpand = when {
-          node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
+          node is GitBranch && isNestedPopup() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isNestedPopup() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
           node is RefUnderRepository && node.repository.currentBranch == node.ref -> node
           node is RefTypeUnderRepository -> node
@@ -430,7 +430,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
-        if (isChild()) {
+        if (isNestedPopup()) {
           parent.cancel()
         }
       }
@@ -493,7 +493,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     }
 
     overrideBuiltInAction(TreeActions.Left.ID) {
-      if (isChild()) {
+      if (isNestedPopup()) {
         cancel()
         true
       }
@@ -575,7 +575,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   final override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
-    if (!isChild()) {
+    if (!isNestedPopup()) {
       treeStateHolder.applyStateTo(tree)
     }
     if (treeStep.isSpeedSearchEnabled) {
