@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.net.NetUtils
@@ -196,8 +197,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
       return connector
     }
-
-
   }
 
   private fun findCompatibleConnector(
@@ -216,6 +215,29 @@ internal class MavenServerManagerImpl : MavenServerManager {
     }
 
     return null
+  }
+
+  private fun compatibleParameters(
+    project: Project,
+    connector: MavenServerConnector,
+    jdk: Sdk,
+    multimoduleDirectory: String,
+  ): Boolean {
+    if (Registry.`is`("maven.server.per.idea.project")) return true
+    val cache = MavenDistributionsCache.getInstance(project)
+    val distribution = cache.getMavenDistribution(multimoduleDirectory)
+    val vmOptions = cache.getVmOptions(multimoduleDirectory)
+    return connector.isCompatibleWith(jdk, vmOptions, distribution)
+  }
+
+  private fun MavenServerConnector.isCompatibleWith(anotherJdk: Sdk, otherVmOptions: String, distribution: MavenDistribution): Boolean {
+    if (!mavenDistribution.compatibleWith(distribution)) {
+      return false
+    }
+    if (!StringUtil.equals(jdk.name, anotherJdk.name)) {
+      return false
+    }
+    return StringUtil.equals(vmOptions, otherVmOptions)
   }
 
   private fun registerNewConnector(
@@ -505,19 +527,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
         MavenLog.LOG.info("Selected jdk [" + jdk.name + "] is not JDK1.8+ Will use internal jdk instead")
         return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
       }
-    }
-
-    private fun compatibleParameters(
-      project: Project,
-      connector: MavenServerConnector,
-      jdk: Sdk,
-      multimoduleDirectory: String,
-    ): Boolean {
-      if (Registry.`is`("maven.server.per.idea.project")) return true
-      val cache = MavenDistributionsCache.getInstance(project)
-      val distribution = cache.getMavenDistribution(multimoduleDirectory)
-      val vmOptions = cache.getVmOptions(multimoduleDirectory)
-      return connector.isCompatibleWith(jdk, vmOptions, distribution)
     }
 
     private val eventSpyPathForLocalBuild: Path

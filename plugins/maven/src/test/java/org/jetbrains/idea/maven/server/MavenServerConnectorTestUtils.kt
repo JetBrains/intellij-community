@@ -57,7 +57,7 @@ suspend fun <R> withCompatibleConnector(action: suspend () -> R): R {
                           debugPort: Int?,
                           mavenDistribution: MavenDistribution,
                           multimoduleDirectory: String): MavenServerConnector {
-        return CompatibleMavenServerConnector(project)
+        return CompatibleMavenServerConnector(project, jdk, mavenDistribution, vmOptions)
       }
     }
     ApplicationManager.getApplication().replaceService(MavenServerManager.MavenServerConnectorFactory::class.java, factory, disposable)
@@ -65,16 +65,15 @@ suspend fun <R> withCompatibleConnector(action: suspend () -> R): R {
   }
 }
 
-private class CompatibleMavenServerConnector(override val project: Project) : MavenServerConnector {
+private class CompatibleMavenServerConnector(
+  override val project: Project,
+  override val jdk: Sdk,
+  override val mavenDistribution: MavenDistribution,
+  override val vmOptions: String
+) : MavenServerConnector {
   override val supportType: String
     get() = throw RuntimeException("not implemented")
   override val state: MavenServerConnector.State
-    get() = throw RuntimeException("not implemented")
-  override val jdk: Sdk
-    get() = throw RuntimeException("not implemented")
-  override val mavenDistribution: MavenDistribution
-    get() = throw RuntimeException("not implemented")
-  override val vmOptions: String
     get() = throw RuntimeException("not implemented")
   override val multimoduleDirectories: List<String>
     get() = throw RuntimeException("not implemented")
@@ -119,10 +118,6 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
 
   override fun dispose() {
   }
-
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
-    return true
-  }
 }
 
 private class StoppedMavenServerConnector : MavenServerConnector {
@@ -136,8 +131,8 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     get() = throw RuntimeException("not implemented")
   override val vmOptions: String
     get() = throw RuntimeException("not implemented")
-  override val project: Project
-    get() = throw RuntimeException("not implemented")
+  override val project: Project?
+    get() = null
   override val multimoduleDirectories: List<String>
     get() = throw RuntimeException("not implemented")
 
@@ -146,10 +141,6 @@ private class StoppedMavenServerConnector : MavenServerConnector {
   }
 
   override fun dispose() {
-  }
-
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
-    return true
   }
 
   override fun isNew(): Boolean {

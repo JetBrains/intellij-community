@@ -44,8 +44,6 @@ interface MavenServerConnector : Disposable {
   @ApiStatus.Internal
   fun getDebugStatus(clean: Boolean): MavenServerStatus
 
-  fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean
-
   fun addMultimoduleDir(multimoduleDirectory: String): Boolean
 
   @Throws(RemoteException::class)

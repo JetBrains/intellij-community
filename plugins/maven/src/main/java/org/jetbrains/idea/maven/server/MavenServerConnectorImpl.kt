@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -35,17 +34,6 @@ open class MavenServerConnectorImpl(project: Project,
 
   private var myPullingLoggerFuture: ScheduledFuture<*>? = null
   private var myPullingDownloadFuture: ScheduledFuture<*>? = null
-
-
-  override fun isCompatibleWith(anotherJdk: Sdk, otherVmOptions: String, distribution: MavenDistribution): Boolean {
-    if (!mavenDistribution.compatibleWith(distribution)) {
-      return false
-    }
-    if (!StringUtil.equals(jdk.name, anotherJdk.name)) {
-      return false
-    }
-    return StringUtil.equals(vmOptions, otherVmOptions)
-  }
 
   override fun newStartServerTask(): StartServerTask {
     return StartServerTask()
