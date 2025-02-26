@@ -17,7 +17,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
-import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -51,8 +50,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
 
   @Override
   void checkSwitchLabelValues(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (checkDominance(errorSink)) return;
-    
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
@@ -67,38 +64,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     if (needToCheckCompleteness(elementsToCheckCompleteness)) {
       checkCompleteness(elementsToCheckCompleteness, true, errorSink);
     }
-  }
-
-  private boolean checkDominance(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    Map<PsiCaseLabelElement, PsiElement> dominatedLabels = JavaPsiSwitchUtil.findDominatedLabels(myBlock);
-    return doCheckDominance(errorSink, dominatedLabels);
-  }
-
-  private static boolean doCheckDominance(@NotNull Consumer<? super HighlightInfo.Builder> errorSink,
-                                          Map<PsiCaseLabelElement, PsiElement> dominatedLabels) {
-    AtomicBoolean reported = new AtomicBoolean();
-    dominatedLabels.forEach((overWhom, who) -> {
-      HighlightInfo.Builder info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
-      if (who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
-          JavaPsiSwitchUtil.isInCaseNullDefaultLabel(who)) {
-        PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
-        if (labelStatementBase != null) {
-          MakeDefaultLastCaseFix action = new MakeDefaultLastCaseFix(labelStatementBase);
-          info.registerFix(action, null, null, null, null);
-        }
-      }
-      else if (who instanceof PsiCaseLabelElement whoElement) {
-        if (!JavaPsiPatternUtil.dominates(overWhom, whoElement) && overWhom.getParent() != whoElement.getParent()) {
-          IntentionAction action = getFixFactory().createMoveSwitchBranchUpFix(whoElement, overWhom);
-          info.registerFix(action, null, null, null, null);
-        }
-        IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(overWhom);
-        info.registerFix(action, null, null, null, null);
-      }
-      errorSink.accept(info);
-      reported.set(true);
-    });
-    return reported.get();
   }
 
   /**

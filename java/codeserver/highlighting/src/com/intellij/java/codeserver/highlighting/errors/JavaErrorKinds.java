@@ -1012,6 +1012,9 @@ public final class JavaErrorKinds {
     error("switch.label.multiple.patterns");
   public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED = 
     error("switch.label.multiple.patterns.unnamed");
+  public static final Parameterized<PsiCaseLabelElement, PsiElement> SWITCH_DOMINANCE_VIOLATION =
+    parameterized(PsiCaseLabelElement.class, PsiElement.class, "switch.dominance.violation")
+      .withDescription((overWhom, who) -> message("switch.dominance.violation", who.getText()));
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
