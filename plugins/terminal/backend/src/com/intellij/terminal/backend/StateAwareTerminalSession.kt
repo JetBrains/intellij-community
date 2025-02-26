@@ -7,6 +7,7 @@ import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flattenConcat
 import kotlinx.coroutines.flow.flowOf
@@ -41,8 +42,8 @@ internal class StateAwareTerminalSession(private val delegate: TerminalSession) 
     blocksModel = TerminalBlocksModelImpl(outputDocument)
   }
 
-  override suspend fun sendInputEvent(event: TerminalInputEvent) {
-    delegate.sendInputEvent(event)
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
+    return delegate.getInputChannel()
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {

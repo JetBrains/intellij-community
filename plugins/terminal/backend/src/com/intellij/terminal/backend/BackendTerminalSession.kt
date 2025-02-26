@@ -4,6 +4,7 @@ import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -22,12 +23,12 @@ internal class BackendTerminalSession(
     }
   }
 
-  override suspend fun sendInputEvent(event: TerminalInputEvent) {
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     if (isClosed) {
-      return
+      return Channel<TerminalInputEvent>(capacity = 0).also { it.close() }
     }
 
-    inputChannel.send(event)
+    return inputChannel
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
