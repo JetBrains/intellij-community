@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -103,18 +104,20 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    PsiClass bestClass = null;
     for (PsiElementFinder finder : finders) {
       try {
-        PsiClass aClass = finder.findClass(qualifiedName, scope);
-        if (aClass != null && (classesFilter == null || classesFilter.test(aClass))) {
-          return aClass;
-        }
+        PsiClass candidateClass = finder.findClass(qualifiedName, scope);
+        if (candidateClass == null) continue;
+        if (classesFilter != null && !classesFilter.test(candidateClass)) continue;
+        if (bestClass != null && PsiClassUtil.createScopeComparator(scope).compare(candidateClass, bestClass) >= 0) continue;
+        bestClass = candidateClass;
       }
       catch (IndexNotReadyException ex) {
         handleIndexNotReadyException(ex);
       }
     }
-    return null;
+    return bestClass;
   }
 
   private PsiClass @NotNull [] findClassesInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
