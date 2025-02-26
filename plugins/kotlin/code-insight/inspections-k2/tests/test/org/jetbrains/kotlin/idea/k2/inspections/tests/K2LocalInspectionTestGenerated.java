@@ -12811,6 +12811,46 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/singleExtensionReceiver.kt");
         }
 
+        @TestMetadata("suggestedNamesAllUsedFallback.kt")
+        public void testSuggestedNamesAllUsedFallback() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesAllUsedFallback.kt");
+        }
+
+        @TestMetadata("suggestedNamesClashInside.kt")
+        public void testSuggestedNamesClashInside() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesClashInside.kt");
+        }
+
+        @TestMetadata("suggestedNamesContextsAndParameters.kt")
+        public void testSuggestedNamesContextsAndParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesContextsAndParameters.kt");
+        }
+
+        @TestMetadata("suggestedNamesNotClash.kt")
+        public void testSuggestedNamesNotClash() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesNotClash.kt");
+        }
+
+        @TestMetadata("suggestedNamesOuterUsage.kt")
+        public void testSuggestedNamesOuterUsage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesOuterUsage.kt");
+        }
+
+        @TestMetadata("suggestedNamesProperty.kt")
+        public void testSuggestedNamesProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesProperty.kt");
+        }
+
+        @TestMetadata("suggestedNamesSameContext.kt")
+        public void testSuggestedNamesSameContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesSameContext.kt");
+        }
+
+        @TestMetadata("suggestedNamesSameContextMigrateBoth.kt")
+        public void testSuggestedNamesSameContextMigrateBoth() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/suggestedNamesSameContextMigrateBoth.kt");
+        }
+
         @TestMetadata("unchangedThisReference.kt")
         public void testUnchangedThisReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/unchangedThisReference.kt");
