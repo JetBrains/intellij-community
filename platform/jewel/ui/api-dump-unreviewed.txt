@@ -420,7 +420,10 @@ f:org.jetbrains.jewel.ui.component.LinkState$Companion
 - bs:of-oSacjZw$default(org.jetbrains.jewel.ui.component.LinkState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 - sf:EditableListComboBox-lYrZsNM(java.util.List,androidx.compose.ui.Modifier,Z,I,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- sf:EditableListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function2,androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- sf:ListComboBox-8u0NR3k(java.util.List,I,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
 - sf:ListComboBox-lYrZsNM(java.util.List,androidx.compose.ui.Modifier,Z,I,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- sf:selectedItemIndex(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):I
 f:org.jetbrains.jewel.ui.component.ListItemState
 - sf:$stable:I
 - <init>(Z,Z):V
