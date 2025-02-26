@@ -161,6 +161,9 @@ public final class JBCefApp {
         // Init verbose chromium logging to stderr via 'vmodule' (to decrease output size)
         args = ArrayUtil.mergeArrays(args, "--enable-logging=stderr", "--vmodule=statistics_recorder*=0", "--v=1");
       }
+      if (settings.log_severity != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || settings.log_file != null)
+        LOG.info(String.format("JCEF logging: level=%s, file=%s", settings.log_severity, settings.log_file));
+
       CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
       myCefSettings = settings;
       myCefApp = CefApp.getInstance(settings);
