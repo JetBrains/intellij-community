@@ -3,7 +3,6 @@ package org.intellij.images.scientific.action
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.intellij.images.ImagesBundle
@@ -15,8 +14,8 @@ import javax.swing.JPanel
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
 
-  private var selectedMode: String = RGB
-  private val availableModes = listOf(RGB, BGR, GRAYSCALE)
+  private var selectedMode: String = ORIGINAL_IMAGE
+  private val availableModes = listOf(ORIGINAL_IMAGE, INVERTED_IMAGE, GRAYSCALE_IMAGE)
 
   init {
     templatePresentation.apply {
@@ -33,9 +32,8 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       null,
       createPopupActionGroup(),
       e.dataContext,
-      null,
-      true,
-      null
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      true
     ).showUnderneathOf(component)
   }
 
@@ -50,6 +48,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       isOpaque = false
       addActionListener {
         selectedMode = selectedItem as String
+        triggerModeAction(selectedMode)
       }
     }
     return JPanel(BorderLayout()).apply {
@@ -61,19 +60,24 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
   private fun createPopupActionGroup(): DefaultActionGroup {
     val actionGroup = DefaultActionGroup()
-    availableModes.forEach { mode ->
-      actionGroup.add(
-        DumbAwareAction.create(mode) {
-          selectedMode = mode
-        }
-      )
-    }
+    actionGroup.add(RGBAction())
+    actionGroup.add(BGRAction())
+    actionGroup.add(GrayscaleAction())
     return actionGroup
   }
 
+  private fun triggerModeAction(mode: String) {
+    val actionManager = ActionManager.getInstance()
+    when (mode) {
+      ORIGINAL_IMAGE -> actionManager.tryToExecute(RGBAction(), null, null, null, true)
+      INVERTED_IMAGE -> actionManager.tryToExecute(BGRAction(), null, null, null, true)
+      GRAYSCALE_IMAGE -> actionManager.tryToExecute(GrayscaleAction(), null, null, null, true)
+    }
+  }
+
   companion object {
-    private val RGB: String = ImagesBundle.message("image.color.mode.rgb")
-    private val BGR: String = ImagesBundle.message("image.color.mode.bgr")
-    private val GRAYSCALE: String = ImagesBundle.message("image.color.mode.grayscale")
+    private val ORIGINAL_IMAGE: String = ImagesBundle.message("image.color.mode.original.image")
+    private val INVERTED_IMAGE: String = ImagesBundle.message("image.color.mode.inverted.image")
+    private val GRAYSCALE_IMAGE: String = ImagesBundle.message("image.color.mode.grayscale.image")
   }
 }
