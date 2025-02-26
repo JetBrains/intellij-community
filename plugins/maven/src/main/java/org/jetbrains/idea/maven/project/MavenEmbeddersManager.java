@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -126,21 +125,14 @@ public class MavenEmbeddersManager {
     releasePooledEmbedders(true);
   }
 
-  private synchronized void releasePooledEmbedders(boolean force) {
-    forEachPooled(force, each -> {
-      each.release();
-      return null;
-    });
-    myPool.clear();
-    myEmbeddersInUse.clear();
-  }
-
-  private void forEachPooled(boolean includeInUse, Function<MavenEmbedderWrapper, ?> func) {
+  private synchronized void releasePooledEmbedders(boolean includeInUse) {
     for (var each : myPool.keySet()) {
       MavenEmbedderWrapper embedder = myPool.get(each);
       if (embedder == null) continue; // collected
       if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue;
-      func.fun(embedder);
+      embedder.release();
     }
+    myPool.clear();
+    myEmbeddersInUse.clear();
   }
 }
