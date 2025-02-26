@@ -53,7 +53,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
       // we need to try looking in the local session as a fallback
       // use case: coroutine has a frontend ClientId -> some code requests for a service registered as 'local' in the xml
       val localSession = sessionManager.getSession(ClientId.localId) as? ClientSessionImpl ?: return null
-      localSession.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
+      return localSession.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
     }
     return service
   }
