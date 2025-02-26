@@ -41,6 +41,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
@@ -74,6 +75,7 @@ import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
@@ -1792,8 +1794,47 @@ object MavenUtil {
     return MavenPathWrapper(path)
   }
 
-  @Throws(ExternalSystemJdkException::class)
-  fun getJdk(project: Project, name: String): Sdk {
+  internal fun MavenServerConnector.isCompatibleWith(project: Project, jdk: Sdk, multimoduleDirectory: String): Boolean {
+    if (Registry.`is`("maven.server.per.idea.project")) return true
+    if (this.project != project) return false
+
+    val cache = MavenDistributionsCache.getInstance(project)
+    val distribution = cache.getMavenDistribution(multimoduleDirectory)
+    val vmOptions = cache.getVmOptions(multimoduleDirectory)
+
+    if (!this.mavenDistribution.compatibleWith(distribution)) {
+      return false
+    }
+    if (!StringUtil.equals(this.jdk.name, jdk.name)) {
+      return false
+    }
+    return StringUtil.equals(this.vmOptions, vmOptions)
+  }
+
+  internal fun getJdkForImporter(project: Project): Sdk {
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
+    val jdkForImporterName = settings.importingSettings.jdkForImporter
+    var jdk: Sdk
+    try {
+      jdk = getJdk(project, jdkForImporterName)
+    }
+    catch (_: ExternalSystemJdkException) {
+      jdk = getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK)
+      MavenProjectsManager.getInstance(project).syncConsole.addWarning(
+        SyncBundle.message("importing.jdk.changed"),
+        SyncBundle.message("importing.jdk.changed.description", jdkForImporterName, jdk.name)
+      )
+    }
+    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
+      return jdk
+    }
+    else {
+      MavenLog.LOG.info("Selected jdk [" + jdk.name + "] is not JDK1.8+ Will use internal jdk instead")
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
+    }
+  }
+
+  private fun getJdk(project: Project, name: String): Sdk {
     if (name == MavenRunnerSettings.USE_INTERNAL_JAVA || project.isDefault()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
     }
@@ -1825,8 +1866,7 @@ object MavenUtil {
     throw InvalidSdkException(name)
   }
 
-
-  internal fun getSdkByExactName(name: String): Sdk? {
+  private fun getSdkByExactName(name: String): Sdk? {
     for (projectJdk in ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName() == name) {
         if (projectJdk.getSdkType() is JavaSdkType) {
