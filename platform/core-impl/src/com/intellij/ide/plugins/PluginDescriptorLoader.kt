@@ -587,8 +587,8 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   if (isUnitTestMode) {
     result.addAll(loadCoreModules(
-      context,
-      platformPrefix,
+      context = context,
+      platformPrefix = platformPrefix,
       isUnitTestMode = true,
       isInDevServerMode = false,
       isRunningFromSources = true,
