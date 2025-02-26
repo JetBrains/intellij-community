@@ -60,7 +60,7 @@ public final class IdeaLogger extends JulLogger {
     MyCache.cache.cleanUp();
   }
 
-  private static boolean isTooFrequentException(@Nullable Throwable t) {
+  private boolean isTooFrequentException(@Nullable Throwable t) {
     if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
       return false;
     }
@@ -68,7 +68,19 @@ public final class IdeaLogger extends JulLogger {
     var hash = ThrowableInterner.computeAccurateTraceHashCode(t);
     var counter = MyCache.getOrCreate(hash, t);
     var occurrences = counter.incrementAndGet();
+    if (isFascinatingNumber(occurrences)) {
+      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " + t.getMessage());
+    }
     return occurrences != 1;
+  }
+
+  /**
+   * 2, 5, 10, 20, 50, 100, ...
+   */
+  private static boolean isFascinatingNumber(int number) {
+    if (number <= 1) return false;
+    while (number % 10 == 0) number /= 10;
+    return number == 1 || number == 2 || number == 5;
   }
 
   private static void reportToFus(@NotNull Throwable t) {
