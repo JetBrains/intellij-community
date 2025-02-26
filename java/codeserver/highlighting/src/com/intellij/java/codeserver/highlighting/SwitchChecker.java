@@ -538,7 +538,7 @@ final class SwitchChecker {
       }
     }
 
-    boolean hasUnnamed = myVisitor.isApplicable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
+    boolean unnamedAllowed = myVisitor.isApplicable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
     boolean reported = false;
     for (PsiCaseLabelElement element : elements) {
       if (element instanceof PsiDefaultCaseLabelElement defaultLabel) {
@@ -550,7 +550,7 @@ final class SwitchChecker {
         reported = true;
       }
       else if (element instanceof PsiPattern pattern && firstElement instanceof PsiExpression) {
-        var kind = hasUnnamed
+        var kind = unnamedAllowed
                    ? JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED
                    : JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS;
         myVisitor.report(kind.create(pattern));
@@ -562,13 +562,13 @@ final class SwitchChecker {
     if (firstElement instanceof PsiPattern) {
       PsiCaseLabelElement nonPattern = ContainerUtil.find(elements, e -> !(e instanceof PsiPattern));
       if (nonPattern != null) {
-        var kind = hasUnnamed
+        var kind = unnamedAllowed
                    ? JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED
                    : JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS;
         myVisitor.report(kind.create(nonPattern));
         return true;
       }
-      if (!hasUnnamed) {
+      if (!unnamedAllowed) {
         myVisitor.report(JavaErrorKinds.SWITCH_LABEL_MULTIPLE_PATTERNS.create(elements[1]));
         return true;
       }
