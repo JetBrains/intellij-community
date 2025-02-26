@@ -1059,6 +1059,13 @@ public final class ConfigImportHelper {
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.fetchBrokenPlugins(newConfigDir);
     @Nullable PluginLoadingResult oldIdeLoadingResult = null;
     try {
+      /* FIXME
+       * in production, bundledPluginPath from the options is always null, it is set only in tests.
+       * in tests, however, the behaviour is different from production, see com.intellij.ide.plugins.PluginDescriptorLoader.loadPluginDescriptorsImpl
+       * there is isUnitTestMode check that shortcuts the execution
+       * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
+       * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
+       */
       oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
     }
