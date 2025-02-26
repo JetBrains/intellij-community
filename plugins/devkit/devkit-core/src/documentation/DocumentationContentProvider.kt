@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.openapi.application.PathManager
@@ -17,10 +17,14 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
-import java.io.File
 import java.net.SocketTimeoutException
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -74,8 +78,8 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     }
   }
 
-  private fun getCachedFile(relativeCachePath: String): File {
-    return PathManager.getSystemDir().resolve("devkit/$relativeCachePath").toFile()
+  private fun getCachedFile(relativeCachePath: String): Path {
+    return PathManager.getSystemDir().resolve("devkit/$relativeCachePath")
   }
 
   fun downloadContentAsync(coordinates: DocumentationDataCoordinates) {
@@ -86,7 +90,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
       try {
         val yamlContent = request.readString()
         getCachedFile(coordinates.localPath).run {
-          parentFile.run { if (!exists()) mkdirs() }
+          parent.run { if (!exists()) createDirectories() }
           writeText(yamlContent)
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
