@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration
 
 @Internal
 interface TaskSupport {
@@ -22,6 +23,7 @@ interface TaskSupport {
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
+    modalWindowDelay: Duration,
     action: suspend CoroutineScope.() -> T,
   ): T
 
@@ -29,6 +31,7 @@ interface TaskSupport {
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
+    modalWindowDelay: Duration,
     action: suspend CoroutineScope.() -> T,
   ): T
 }
