@@ -1319,6 +1319,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/delegatingFunction.kt");
             }
 
+            @TestMetadata("destructuringEntry.kt")
+            public void testDestructuringEntry() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/destructuringEntry.kt");
+            }
+
             @TestMetadata("enumQualifier.kt")
             public void testEnumQualifier() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/enumQualifier.kt");

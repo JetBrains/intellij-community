@@ -177,6 +177,10 @@ private fun findExpression(element: KtElement): KtExpression? {
         return null
     }
 
+    if (expression is KtDestructuringDeclarationEntry) {
+        return null
+    }
+
     // For cases like 'this@outerClass', don't return the label part
     if (KtPsiUtil.isLabelIdentifierExpression(expression)) {
         expression = PsiTreeUtil.getParentOfType(expression, KtExpression::class.java) ?: return null

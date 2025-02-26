@@ -88,6 +88,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/delegatingFunction.kt");
         }
 
+        @TestMetadata("destructuringEntry.kt")
+        public void testDestructuringEntry() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/destructuringEntry.kt");
+        }
+
         @TestMetadata("enumQualifier.kt")
         public void testEnumQualifier() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/enumQualifier.kt");
