@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -67,8 +67,8 @@ public class UpdateCheckerService {
   static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appStarted() {
-      Application app = ApplicationManager.getApplication();
-      if (!(app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode())) {
+      var app = ApplicationManager.getApplication();
+      if (!(app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode() || AppMode.isRemoteDevHost())) {
         getInstance().appStarted();
       }
     }
@@ -88,8 +88,7 @@ public class UpdateCheckerService {
   private void appStarted() {
     UpdateSettings settings = UpdateSettings.getInstance();
     updateDefaultChannel(settings);
-    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded() ||
-        SystemProperties.getBooleanProperty("ide.force.platform.update.check", false)) {
+    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
       scheduleFirstCheck(settings);
     }
   }
@@ -132,8 +131,7 @@ public class UpdateCheckerService {
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
-    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS ||
-        SystemProperties.getBooleanProperty("ide.force.platform.update.check", false)) {
+    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS) {
       checkUpdates();
     }
     else {
