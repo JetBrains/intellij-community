@@ -7,6 +7,7 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.SharedMemory;
+import com.jetbrains.cef.SharedMemoryCache;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +20,10 @@ import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHandler {
-  private static final int CLEAN_CACHE_TIME_MS = Integer.getInteger("jcef.remote.osr.clean_cache_time_ms", 10*1000); // 10 sec
   private static final boolean FORCE_USE_SOFTWARE_RENDERING;
 
   static {
@@ -36,38 +33,15 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293
   }
 
-  private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
+  private final SharedMemoryCache mySharedMemCache = new SharedMemoryCache();
   private SharedMemory.WithRaster myCurrentFrame;
-  private volatile boolean myIsDisposed = false;
 
   JBCefNativeOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     super(component, screenBoundsProvider);
   }
 
   @Override
-  public synchronized void disposeNativeResources() {
-    if (myIsDisposed)
-      return;
-
-    myIsDisposed = true;
-    mySharedMemCache.clear();
-  }
-
-  private void cleanCacheIfNecessary() {
-    final long timeMs = System.currentTimeMillis();
-    if (mySharedMemCache.size() < 2)
-      return;
-
-    ArrayList<String> toRemove = new ArrayList<>();
-    for (Map.Entry<String, SharedMemory.WithRaster> item: mySharedMemCache.entrySet()) {
-      if (timeMs - item.getValue().lasUsedMs > CLEAN_CACHE_TIME_MS) {
-        toRemove.add(item.getKey());
-      }
-    }
-    for (String name: toRemove) {
-      mySharedMemCache.remove(name);
-    }
-  }
+  public synchronized void disposeNativeResources() {}
 
   @Override
   public void onPaintWithSharedMem(CefBrowser browser,
@@ -77,22 +51,10 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
                                    long sharedMemHandle,
                                    int width,
                                    int height) {
-    SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName);
-    if (mem == null) {
-      cleanCacheIfNecessary();
-      mem = new SharedMemory.WithRaster(sharedMemName, sharedMemHandle);
-      synchronized (this) {
-        // Use synchronization to avoid leak (when disposeNativeRes is called just before putting into cache).
-        if (myIsDisposed)
-          return;
-        mySharedMemCache.put(sharedMemName, mem);
-      }
-    }
-
+    SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName, sharedMemHandle);
     mem.setWidth(width);
     mem.setHeight(height);
     mem.setDirtyRectsCount(dirtyRectsCount);
-    mem.lasUsedMs = System.currentTimeMillis();
 
     if (popup) {
       JBHiDPIScaledImage image = myPopupImage;
