@@ -23,7 +23,15 @@ private class StaticFileHandler : WebServerFileHandler() {
 
   private var ssiProcessor: SsiProcessor? = null
 
-  override fun process(pathInfo: PathInfo, canonicalPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, projectNameIfNotCustomHost: String?, extraHeaders: HttpHeaders): Boolean {
+  override fun process(
+    pathInfo: PathInfo,
+    canonicalPath: CharSequence,
+    project: Project,
+    request: FullHttpRequest,
+    channel: Channel,
+    projectNameIfNotCustomHost: String?,
+    extraHeaders: HttpHeaders,
+  ): Boolean {
     if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
       val ioFile = pathInfo.ioFile ?: pathInfo.file!!.toNioPath()
       val nameSequence = ioFile.fileName.toString()
