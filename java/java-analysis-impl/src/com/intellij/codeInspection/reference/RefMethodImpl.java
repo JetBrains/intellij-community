@@ -31,7 +31,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   public static final int IS_BODY_EMPTY_MASK          = 0b10000_00000000_00000000; // 21st bit
   private static final int IS_ONLY_CALLS_SUPER_MASK   = 0b100000_00000000_00000000; // 22nd bit
   private static final int IS_RETURN_VALUE_USED_MASK  = 0b1000000_00000000_00000000; // 23rd bit
-  private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24rd bit
+  private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24th bit
 
   private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000; // 28th bit
 
@@ -205,6 +205,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public void addDerivedReference(@NotNull RefOverridable reference) {
+    if (isConstructor() || isStatic()) throw new AssertionError("Constructors and static methods cannot have derived references");
     if (reference.getDerivedReferences().contains(this)) return;
     synchronized (this) {
       if (myDerivedReferences == null) {
@@ -329,7 +330,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   }
 
   @Override
-  public void accept(final @NotNull RefVisitor visitor) {
+  public void accept(@NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitMethod(this));
     }
