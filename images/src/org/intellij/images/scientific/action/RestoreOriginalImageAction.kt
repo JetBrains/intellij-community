@@ -5,12 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.intellij.images.editor.ImageEditor
 import org.intellij.images.scientific.ScientificUtils
-import org.intellij.images.ui.ImageComponent
+import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.convertToByteArray
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
-class RGBAction : DumbAwareAction() {
-
+class RestoreOriginalImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -19,18 +21,8 @@ class RGBAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val imageEditor = getImageEditor(e) ?: return
-    val imageComponent = getImageComponent(imageEditor) ?: return
-    val document = imageComponent.document
-    val originalImage = document.value ?: return
-    document.setValue(originalImage) // TODO: restore original image!
-  }
-
-  private fun getImageEditor(e: AnActionEvent): ImageEditor? {
-    return null
-  }
-
-  private fun getImageComponent(imageEditor: ImageEditor): ImageComponent? {
-    return null
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
+    imageFile.setBinaryContent(convertToByteArray(originalImage, imageFile.fileType.defaultExtension))
   }
 }
