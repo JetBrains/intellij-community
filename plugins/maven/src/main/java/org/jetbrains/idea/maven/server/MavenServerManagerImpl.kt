@@ -138,7 +138,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       connector.connect()
     }
     else {
-      if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+      if (!connector.isCompatibleWith(project, jdk, multimoduleDirectory)) {
         MavenLog.LOG.info("[connector] $connector is incompatible, restarting")
         shutdownConnector(connector, false)
         connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk)
@@ -204,12 +204,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
     jdk: Sdk,
     multimoduleDirectory: String,
   ): MavenServerConnector? {
-    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory)
-    val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
     for ((_, value) in myMultimoduleDirToConnectorMap) {
-      if (value.project != project) continue
-      if (Registry.`is`("maven.server.per.idea.project")) return value
-      if (value.isCompatibleWith(jdk, vmOptions, distribution)) {
+      if (value.isCompatibleWith(project, jdk, multimoduleDirectory)) {
         return value
       }
     }
@@ -217,27 +213,21 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return null
   }
 
-  private fun compatibleParameters(
-    project: Project,
-    connector: MavenServerConnector,
-    jdk: Sdk,
-    multimoduleDirectory: String,
-  ): Boolean {
+  private fun MavenServerConnector.isCompatibleWith(project: Project, anotherJdk: Sdk, multimoduleDirectory: String): Boolean {
     if (Registry.`is`("maven.server.per.idea.project")) return true
+    if (this.project != project) return false
+
     val cache = MavenDistributionsCache.getInstance(project)
     val distribution = cache.getMavenDistribution(multimoduleDirectory)
     val vmOptions = cache.getVmOptions(multimoduleDirectory)
-    return connector.isCompatibleWith(jdk, vmOptions, distribution)
-  }
 
-  private fun MavenServerConnector.isCompatibleWith(anotherJdk: Sdk, otherVmOptions: String, distribution: MavenDistribution): Boolean {
     if (!mavenDistribution.compatibleWith(distribution)) {
       return false
     }
     if (!StringUtil.equals(jdk.name, anotherJdk.name)) {
       return false
     }
-    return StringUtil.equals(vmOptions, otherVmOptions)
+    return StringUtil.equals(this.vmOptions, vmOptions)
   }
 
   private fun registerNewConnector(
