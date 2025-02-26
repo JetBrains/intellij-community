@@ -74,7 +74,7 @@ open class MavenModuleBuilderHelper(
           file = root.createChildData(this, MavenConstants.POM_XML)
           root.createChildDirectory(this, MavenConstants.MVN_CONFIG_DIR)
           vcsFileAdder.markFileForAdding(file)
-          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive)
+          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, myParentProject?.mavenId, myParentProject?.file, isInteractive)
         }
         catch (e: IOException) {
           showError(project, e)
