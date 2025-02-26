@@ -26,7 +26,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.time.Duration.Companion.seconds
 
@@ -495,6 +494,18 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         withContext(Dispatchers.EDT) {
           assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
         }
+      }
+    }
+  }
+
+  @Test
+  fun `pure read access in explicit read action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    runWithModalProgressBlocking {
+      ApplicationManager.getApplication().runReadAction {
+        assertFalse(application.isWriteIntentLockAcquired)
+        assertTrue(application.holdsReadLock())
+        assertFalse(application.isWriteAccessAllowed)
+        assertTrue(application.isReadAccessAllowed)
       }
     }
   }

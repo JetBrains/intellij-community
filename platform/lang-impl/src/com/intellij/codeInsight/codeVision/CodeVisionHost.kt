@@ -180,7 +180,8 @@ open class CodeVisionHost(val project: Project) {
   @TestOnly
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
-      ApplicationManager.getApplication().invokeAndWait {
+      // this code is executed under a modal progress anyway, so it will set the data here on EDT due to inherited modality
+      ApplicationManager.getApplication().invokeLater {
         editor.lensContext?.setResults(lenses)
       }
     }
