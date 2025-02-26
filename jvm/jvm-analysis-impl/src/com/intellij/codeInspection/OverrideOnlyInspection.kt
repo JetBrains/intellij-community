@@ -6,17 +6,22 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.getAnchorPsi
 import org.jetbrains.uast.getContainingUMethod
 
 private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.canonicalName!!
@@ -29,16 +34,33 @@ private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.ca
 class OverrideOnlyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
-      ApiUsageUastVisitor.createPsiElementVisitor(OverrideOnlyProcessor(holder))
+      val apiUsageProcessor = OverrideOnlyProcessor(holder)
+      UastVisitorAdapter(OverrideOnlyVisitor(apiUsageProcessor, holder), true)
     }
     else {
       PsiElementVisitor.EMPTY_VISITOR
     }
 
-  private class OverrideOnlyProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
-    private fun PsiMethod.isOverridable(): Boolean {
-      return !hasModifier(JvmModifier.PRIVATE) && !hasModifier(JvmModifier.FINAL) && !hasModifier(JvmModifier.STATIC)
+  private class OverrideOnlyVisitor(
+    apiUsageProcessor: ApiUsageProcessor,
+    private val problemsHolder: ProblemsHolder,
+  ) : ApiUsageUastVisitor(apiUsageProcessor) {
+    override fun visitMethod(method: UMethod): Boolean {
+      val containingClass = method.uastParent as? UClass
+      val hasAnnotation = method.findAnnotation(ANNOTATION_NAME) != null
+      if (hasAnnotation && (containingClass == null || containingClass.isFinal || !method.javaPsi.isOverridable())) {
+        val anchor = method.getAnchorPsi() ?: return true
+        val methodName = HighlightMessageUtil.getSymbolName(method.javaPsi) ?: return true
+        val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.description", methodName)
+        problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
+
+      return true
     }
+  }
+
+  private class OverrideOnlyProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
+
 
     private fun isLibraryElement(method: PsiMethod): Boolean {
       val containingVirtualFile = PsiUtilCore.getVirtualFile(method)
@@ -76,5 +98,8 @@ class OverrideOnlyInspection : LocalInspectionTool() {
       }
     }
   }
+}
 
+private fun PsiMethod.isOverridable(): Boolean {
+  return !hasModifier(JvmModifier.PRIVATE) && !hasModifier(JvmModifier.FINAL) && !hasModifier(JvmModifier.STATIC)
 }
