@@ -4463,6 +4463,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementAdditionalInterface.kt");
         }
 
+        @TestMetadata("letClassImplementFunctionalInterfaceWithReceiver.kt")
+        public void testLetClassImplementFunctionalInterfaceWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementFunctionalInterfaceWithReceiver.kt");
+        }
+
         @TestMetadata("letClassImplementGenericInterface.kt")
         public void testLetClassImplementGenericInterface() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementGenericInterface.kt");

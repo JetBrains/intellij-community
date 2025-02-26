@@ -18672,6 +18672,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/letImplementInterface/letClassImplementAdditionalInterface.kt");
             }
 
+            @TestMetadata("letClassImplementFunctionalInterfaceWithReceiver.kt")
+            public void testLetClassImplementFunctionalInterfaceWithReceiver() throws Exception {
+                runTest("testData/quickfix/typeMismatch/letImplementInterface/letClassImplementFunctionalInterfaceWithReceiver.kt");
+            }
+
             @TestMetadata("letClassImplementGenericInterface.kt")
             public void testLetClassImplementGenericInterface() throws Exception {
                 runTest("testData/quickfix/typeMismatch/letImplementInterface/letClassImplementGenericInterface.kt");

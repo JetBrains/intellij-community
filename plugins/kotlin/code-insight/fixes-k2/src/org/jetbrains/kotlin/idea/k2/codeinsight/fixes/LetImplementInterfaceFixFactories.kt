@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -60,7 +61,8 @@ internal object LetImplementInterfaceFixFactories {
     ): LetImplementInterfaceFix? {
         if (!expectedType.isInterface() ||
             expectedType.containsStarProjections() ||
-            expectedType.expandedSymbol in actualType.allSupertypes.map { it.expandedSymbol }
+            expectedType.expandedSymbol in actualType.allSupertypes.map { it.expandedSymbol } ||
+            expectedType is KaFunctionType && expectedType.hasReceiver
         ) return null
 
         val expressionTypeDeclaration = actualType
