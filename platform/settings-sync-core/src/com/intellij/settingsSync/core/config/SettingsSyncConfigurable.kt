@@ -384,9 +384,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       catch (ex: CancellationException) {
         LOG.info("Login procedure was cancelled")
-        if (LOG.isDebugEnabled) {
-          LOG.info("Login procedure was cancelled", ex)
-        }
+        throw ex
       }
       catch (ex: Throwable) {
         LOG.warn("Error during login", ex)
