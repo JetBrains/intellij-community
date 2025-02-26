@@ -2,12 +2,14 @@
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.makeYaml
+import org.jetbrains.annotations.ApiStatus
 import org.yaml.snakeyaml.Yaml
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class YamlInspectionProfileRaw(
+@ApiStatus.Internal
+class YamlInspectionProfileRaw(
   val baseProfile: String? = null,
   val name: String? = null,
   val groups: List<YamlInspectionGroupRaw> = emptyList(),
@@ -19,13 +21,15 @@ internal class YamlInspectionProfileRaw(
   }
 }
 
-internal class YamlInspectionGroupRaw(
+@ApiStatus.Internal
+class YamlInspectionGroupRaw(
   val groupId: String = "Unknown",
   val inspections: List<String> = emptyList(),
   val groups: List<String> = emptyList()
 )
 
-internal class YamlInspectionConfigRaw(
+@ApiStatus.Internal
+class YamlInspectionConfigRaw(
   val inspection: String? = null,
   val group: String? = null,
   val enabled: Boolean? = null,
