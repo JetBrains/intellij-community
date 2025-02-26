@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
-import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import java.nio.file.Path
@@ -22,7 +22,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
     isRunningFromSources: Boolean,
-    zipFilePool: ZipFilePool,
+    zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     return scope.loadPluginDescriptorsImpl(
@@ -30,7 +30,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
       mainClassLoader = mainClassLoader,
-      zipFilePool = zipFilePool,
+      zipPool = zipPool,
       customPluginDir = customPluginDir,
       bundledPluginDir = bundledPluginDir,
     )

@@ -21,7 +21,7 @@ import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
-import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -74,7 +74,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
     isRunningFromSources: Boolean,
-    zipFilePool: ZipFilePool,
+    zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
@@ -86,15 +86,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result)
-    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipFilePool))
-    result.addAll(loadBundledPluginDescriptors(scope, context, zipFilePool))
+    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool))
+    result.addAll(loadBundledPluginDescriptors(scope, context, zipPool))
     return result
   }
 
   private fun loadBundledPluginDescriptors(
     scope: CoroutineScope,
     context: DescriptorListLoadingContext,
-    zipFilePool: ZipFilePool,
+    zipFilePool: ZipEntryResolverPool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     val mainGroupModulesSet = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor.moduleId }
     val mainGroupResourceRootSet = productModules.mainModuleGroup.includedModules.flatMapTo(HashSet()) { it.moduleDescriptor.resourceRootPaths }
@@ -123,7 +123,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     scope: CoroutineScope,
     customPluginDir: Path,
     context: DescriptorListLoadingContext,
-    zipFilePool: ZipFilePool,
+    zipFilePool: ZipEntryResolverPool,
   ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     if (!Files.isDirectory(customPluginDir)) {
       return emptyList()
@@ -155,7 +155,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
                                                               repositoryPaths: List<Path>,
                                                               context: DescriptorListLoadingContext,
-                                                              zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+                                                              zipFilePool: ZipEntryResolverPool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     val repositoriesByPaths = scope.async {
       val repositoriesByPaths = repositoryPaths.associateWith {
         try {
@@ -208,7 +208,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   private fun loadPluginDescriptorFromRuntimeModule(
     pluginModuleGroup: PluginModuleGroup,
     context: DescriptorListLoadingContext,
-    zipFilePool: ZipFilePool,
+    zipFilePool: ZipEntryResolverPool,
     serviceModuleMapping: ServiceModuleMapping?,
     mainGroupResourceRootSet: Set<Path>,
     isBundled: Boolean,

@@ -28,7 +28,7 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -372,7 +372,7 @@ object PluginManagerCore {
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {
     scheduleDescriptorLoading(
       coroutineScope = coroutineScope,
-      zipFilePoolDeferred = CompletableDeferred(NonShareableJavaZipFilePool()),
+      zipPoolDeferred = CompletableDeferred(NonShareableJavaZipFilePool()),
       mainClassLoaderDeferred = CompletableDeferred(PluginManagerCore::class.java.classLoader),
       logDeferred = null,
     )
@@ -382,14 +382,14 @@ object PluginManagerCore {
   @Synchronized
   fun scheduleDescriptorLoading(
     coroutineScope: CoroutineScope,
-    zipFilePoolDeferred: Deferred<ZipFilePool>,
+    zipPoolDeferred: Deferred<ZipEntryResolverPool>,
     mainClassLoaderDeferred: Deferred<ClassLoader>?,
     logDeferred: Deferred<Logger>?,
   ): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {
       result = coroutineScope.scheduleLoading(
-        zipFilePoolDeferred = zipFilePoolDeferred,
+        zipPoolDeferred = zipPoolDeferred,
         mainClassLoaderDeferred = mainClassLoaderDeferred,
         logDeferred = logDeferred,
       )

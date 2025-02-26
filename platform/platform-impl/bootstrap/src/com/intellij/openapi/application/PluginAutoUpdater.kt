@@ -70,13 +70,13 @@ object PluginAutoUpdater {
     val autoupdatesDir = getAutoUpdateDirPath()
 
     val currentDescriptors = span("loading existing descriptors") {
-      val pool = ZipFilePoolImpl()
-      val result = loadDescriptors(
-        CompletableDeferred(pool),
-        CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader)
-      )
-      pool.clear()
-      result.second
+      ZipFilePoolImpl().use { pool ->
+        val result = loadDescriptors(
+          CompletableDeferred(pool),
+          CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader)
+        )
+        result.second
+      }
     }
     // shadowing intended
     val updates = updates.filter { (id, _) ->

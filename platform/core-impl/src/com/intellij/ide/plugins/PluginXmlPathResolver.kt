@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
@@ -10,7 +10,7 @@ import java.nio.file.Path
 import java.util.*
 
 @ApiStatus.Internal
-class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val pool: ZipFilePool?) : PathResolver {
+class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val pool: ZipEntryResolverPool?) : PathResolver {
   companion object {
     // don't use Kotlin emptyList here
     @JvmField
@@ -141,7 +141,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     readInto: RawPluginDescriptor,
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
-    pool: ZipFilePool,
+    pool: ZipEntryResolverPool,
     relativePath: String,
     includeBase: String?,
   ): Boolean {
