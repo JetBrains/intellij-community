@@ -101,9 +101,13 @@ internal class IdeProjectFrameAllocator(
     coroutineScope {
       val job = currentCoroutineContext().job
 
-      async(CoroutineName("project frame creating")) {
+      launch(CoroutineName("project frame creating")) {
         val loadingState = MutableLoadingState(done = job)
         createFrameManager(loadingState)
+      }.invokeOnCompletion { cause ->
+        if (cause is CancellationException) {
+          job.cancel(cause)
+        }
       }
 
       launch {
