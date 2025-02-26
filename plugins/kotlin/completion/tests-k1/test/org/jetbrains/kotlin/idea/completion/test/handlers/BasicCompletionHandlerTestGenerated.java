@@ -789,6 +789,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/override/AfterValKeywordInConstructorParameter.kt");
         }
 
+        @TestMetadata("ContextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../testData/handlers/basic/override/ContextReceiver.kt");
+        }
+
         @TestMetadata("ExpectClassValOverride.kt")
         public void testExpectClassValOverride() throws Exception {
             runTest("../testData/handlers/basic/override/ExpectClassValOverride.kt");
