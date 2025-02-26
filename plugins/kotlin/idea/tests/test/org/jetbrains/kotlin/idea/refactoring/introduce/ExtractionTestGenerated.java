@@ -4683,6 +4683,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceLambdaParameter/lambdaParamWithDefaultValue.kt");
             }
 
+            @TestMetadata("noTypeParameters.kt")
+            public void testNoTypeParameters() throws Exception {
+                runTest("testData/refactoring/introduceLambdaParameter/noTypeParameters.kt");
+            }
+
             @TestMetadata("suspendCalls.kt")
             public void testSuspendCalls() throws Exception {
                 runTest("testData/refactoring/introduceLambdaParameter/suspendCalls.kt");

@@ -821,6 +821,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/lambdaParamWithDefaultValue.kt");
             }
 
+            @TestMetadata("noTypeParameters.kt")
+            public void testNoTypeParameters() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/noTypeParameters.kt");
+            }
+
             @TestMetadata("suspendCalls.kt")
             public void testSuspendCalls() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/suspendCalls.kt");
