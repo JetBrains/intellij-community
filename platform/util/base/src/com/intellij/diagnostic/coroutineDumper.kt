@@ -13,10 +13,6 @@ import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.io.BufferedOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -52,13 +48,10 @@ fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, ded
     if (!isCoroutineDumpEnabled()) {
       return null
     }
-    val charset = StandardCharsets.UTF_8.name()
-    val outputStream = ByteArrayOutputStream()
-    PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
+    return buildString {
       val jobTree = jobTrees(scope).toList()
-      dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
+      dumpCoroutines(jobTree, out = this, stripDump, deduplicateTrees)
     }
-    return outputStream.toString(charset)
   } catch (e: Throwable) {
     // if there is an unexpected exception, we won't be able to provide meaningful information anyway,
     // but the exception should not prevent other diagnostic tools from collecting data
