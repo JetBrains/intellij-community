@@ -7,17 +7,13 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.net.NetUtils
@@ -25,8 +21,6 @@ import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.MavenDisposable
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.indices.MavenIndices
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager.Companion.getInstance
 import org.jetbrains.idea.maven.project.*
@@ -35,6 +29,8 @@ import org.jetbrains.idea.maven.server.MavenServerManager.MavenServerConnectorFa
 import org.jetbrains.idea.maven.server.MavenServerManagerEx.Companion.stopConnectors
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
+import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -130,8 +126,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
   private fun doGetConnector(project: Project, workingDirectory: String): MavenServerConnector {
     val multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory)
-    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
-    val jdk = getJdk(project, settings)
+    val jdk = getJdkForImporter(project)
 
     var connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk)
     if (connector.isNew()) {
@@ -200,23 +195,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
       return connector
     }
-  }
-
-  private fun MavenServerConnector.isCompatibleWith(project: Project, anotherJdk: Sdk, multimoduleDirectory: String): Boolean {
-    if (Registry.`is`("maven.server.per.idea.project")) return true
-    if (this.project != project) return false
-
-    val cache = MavenDistributionsCache.getInstance(project)
-    val distribution = cache.getMavenDistribution(multimoduleDirectory)
-    val vmOptions = cache.getVmOptions(multimoduleDirectory)
-
-    if (!mavenDistribution.compatibleWith(distribution)) {
-      return false
-    }
-    if (!StringUtil.equals(jdk.name, anotherJdk.name)) {
-      return false
-    }
-    return StringUtil.equals(this.vmOptions, vmOptions)
   }
 
   private fun registerNewConnector(
@@ -485,28 +463,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
         }
         return null
       }
-
-    private fun getJdk(project: Project, settings: MavenWorkspaceSettings): Sdk {
-      val jdkForImporterName = settings.importingSettings.jdkForImporter
-      var jdk: Sdk
-      try {
-        jdk = MavenUtil.getJdk(project, jdkForImporterName)
-      }
-      catch (e: ExternalSystemJdkException) {
-        jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK)
-        MavenProjectsManager.getInstance(project).syncConsole.addWarning(SyncBundle.message("importing.jdk.changed"),
-                                                                         SyncBundle.message("importing.jdk.changed.description",
-                                                                                            jdkForImporterName, jdk.name)
-        )
-      }
-      if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
-        return jdk
-      }
-      else {
-        MavenLog.LOG.info("Selected jdk [" + jdk.name + "] is not JDK1.8+ Will use internal jdk instead")
-        return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
-      }
-    }
 
     private val eventSpyPathForLocalBuild: Path
       get() {
