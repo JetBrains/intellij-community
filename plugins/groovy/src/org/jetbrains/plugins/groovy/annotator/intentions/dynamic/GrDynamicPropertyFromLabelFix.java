@@ -17,12 +17,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 
 import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
-public class DynamicPropertyFromLabelFix extends DynamicPropertyFix {
+public class GrDynamicPropertyFromLabelFix extends DynamicPropertyFix {
 
   private final SmartPsiElementPointer<GrArgumentLabel> myLabelPointer;
   private final SmartPsiElementPointer<PsiClass> myTargetClassPointer;
 
-  public DynamicPropertyFromLabelFix(@NotNull GrArgumentLabel argumentLabel, @NotNull PsiClass targetClass) {
+  public GrDynamicPropertyFromLabelFix(@NotNull GrArgumentLabel argumentLabel, @NotNull PsiClass targetClass) {
     myLabelPointer = createSmartPointer(argumentLabel);
     myTargetClassPointer = createSmartPointer(targetClass);
   }

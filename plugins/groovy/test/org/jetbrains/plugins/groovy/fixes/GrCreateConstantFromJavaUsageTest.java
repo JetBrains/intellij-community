@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
 
-public class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
+public class GrCreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
   @Override
   public final String getBasePath() {
     return TestUtils.getTestDataPath() + "fixes/createConstantFromJava/" + getTestName(true) + "/";

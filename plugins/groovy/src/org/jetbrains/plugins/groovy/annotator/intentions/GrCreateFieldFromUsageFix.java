@@ -16,11 +16,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 
 import java.util.List;
 
-public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
+public class GrCreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
   private final @NotNull String myReferenceName;
 
-  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, @NotNull String referenceName) {
+  public GrCreateFieldFromUsageFix(GrReferenceExpression refExpression, @NotNull String referenceName) {
     super(refExpression);
     myReferenceName = referenceName;
   }

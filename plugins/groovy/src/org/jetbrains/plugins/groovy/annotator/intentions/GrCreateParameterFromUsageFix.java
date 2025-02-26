@@ -38,11 +38,11 @@ import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMET
 /**
  * @author Max Medvedev
  */
-public class CreateParameterFromUsageFix extends Intention implements MethodOrClosureScopeChooser.JBPopupOwner {
+public class GrCreateParameterFromUsageFix extends Intention implements MethodOrClosureScopeChooser.JBPopupOwner {
   private final String myName;
   private JBPopup myEnclosingMethodsPopup = null;
 
-  public CreateParameterFromUsageFix(GrReferenceExpression ref) {
+  public GrCreateParameterFromUsageFix(GrReferenceExpression ref) {
     myName = ref.getReferenceName();
   }
 

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
-public class ReplaceWithImportFix extends PsiUpdateModCommandQuickFix {
+public class GrReplaceWithImportFix extends PsiUpdateModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(UnnecessaryQualifiedReferenceInspection.class);
 
   @Override

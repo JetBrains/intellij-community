@@ -31,13 +31,13 @@ import java.util.Properties;
 
 import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
-public class AddMethodFix extends GroovyFix {
-  private static final Logger LOG = Logger.getInstance(AddMethodFix.class);
+public class GrAddMethodFix extends GroovyFix {
+  private static final Logger LOG = Logger.getInstance(GrAddMethodFix.class);
   private final String myMethodName;
   private final String myClassName;
   private final SmartPsiElementPointer<GrTypeDefinition> myPsiClassPointer;
 
-  public AddMethodFix(@NotNull String methodName, @NotNull GrTypeDefinition aClass) {
+  public GrAddMethodFix(@NotNull String methodName, @NotNull GrTypeDefinition aClass) {
     myMethodName = methodName;
     myClassName = aClass.getName();
     myPsiClassPointer = createSmartPointer(aClass);
@@ -50,7 +50,7 @@ public class AddMethodFix extends GroovyFix {
       return null;
     }
     GrTypeDefinition copy = PsiTreeUtil.findSameElementInCopy(definition, target);
-    return new AddMethodFix(myMethodName, copy);
+    return new GrAddMethodFix(myMethodName, copy);
   }
 
   @Override

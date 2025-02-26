@@ -10,98 +10,64 @@ import org.junit.Assert;
 
 import java.util.List;
 
-public class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
+public class GrCreateEnumConstantFromJavaUsageTest extends GrHighlightingTestBase {
   private static final String BEFORE = "Before.groovy";
   private static final String AFTER = "After.groovy";
   private static final String JAVA = "Area.java";
 
   @Override
   public final String getBasePath() {
-    return TestUtils.getTestDataPath() + "fixes/createFieldFromJava/" + getTestName(true) + "/";
+    return TestUtils.getTestDataPath() + "fixes/createEnumConstantFromUsage/" + getTestName(true) + "/";
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.configureByFiles(JAVA, BEFORE);
-    myFixture.enableInspections(getCustomInspections());
+    getFixture().configureByFiles(JAVA, BEFORE);
+    getFixture().enableInspections(getCustomInspections());
   }
 
   private void doTest() {
-    List<IntentionAction> fixes = myFixture.filterAvailableIntentions("Create field");
-    Assert.assertFalse(fixes.isEmpty());
+    List<IntentionAction> fixes = myFixture.filterAvailableIntentions("Create enum constant");
+    Assert.assertEquals(1, fixes.size());
     myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(BEFORE, AFTER, true);
-  }
-
-  public void testArrayBraces() {
-    doTest();
   }
 
   public void testSimple() {
     doTest();
   }
 
-  public void testUppercaseField() {
+  public void testSimple2() {
     doTest();
   }
 
-  public void testExpectedTypes() {
+  public void testEmptyEnum() {
     doTest();
   }
 
-  public void testFromEquals() {
+  public void testEmptyEnumWithMethods() {
     doTest();
   }
 
-  public void testFromEqualsToPrimitiveType() {
+  public void testWithConstructorArguments() {
     doTest();
   }
 
-  public void testInnerGeneric() {
+  public void testWithStaticImport() {
     doTest();
   }
 
-  public void testInnerGenericArray() {
+  public void testWithSwitch() {
     doTest();
   }
 
-  public void testMultipleTypes() {
+  public void testWithSwitch2() {
     doTest();
   }
 
-  public void testMultipleTypes2() {
-    doTest();
-  }
-
-  public void testParametricMethod() {
-    doTest();
-  }
-
-  public void testGroovyInheritor() {
-    doTest();
-  }
-
-  public void testJavaInheritor() {
-    doTest();
-  }
-
-  public void testTypeArgs() {
-    doTest();
-  }
-
-  public void testScript() {
-    doTest();
-  }
-
-  public void testSortByRelevance() {
-    getFixture().addClass("""
-    public class Foo {
-      public void put(Object key, Object value) {
-      }
-    }
-    """);
+  public void testWithVarargs() {
     doTest();
   }
 }

@@ -21,11 +21,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
-public class AddClassToExtendsFix extends GroovyFix {
+public class GrAddClassToExtendsFix extends GroovyFix {
   private final SmartPsiElementPointer<GrTypeDefinition> myPsiClassPointer;
   private final String myInterfaceName;
 
-  public AddClassToExtendsFix(@NotNull GrTypeDefinition psiClass, @NotNull String interfaceName) {
+  public GrAddClassToExtendsFix(@NotNull GrTypeDefinition psiClass, @NotNull String interfaceName) {
     myPsiClassPointer = createSmartPointer(psiClass);
     myInterfaceName = interfaceName;
   }
@@ -37,7 +37,7 @@ public class AddClassToExtendsFix extends GroovyFix {
       return null;
     }
     GrTypeDefinition copy = PsiTreeUtil.findSameElementInCopy(element, target);
-    return new AddClassToExtendsFix(copy, myInterfaceName);
+    return new GrAddClassToExtendsFix(copy, myInterfaceName);
   }
 
   @Override
@@ -82,7 +82,7 @@ public class AddClassToExtendsFix extends GroovyFix {
 
 
       final GrCodeReferenceElement _ref =
-        factory.createCodeReference(myInterfaceName + (addTypeParam ? "<" + AddMethodFix.generateTypeText(psiClass) + ">" : ""));
+        factory.createCodeReference(myInterfaceName + (addTypeParam ? "<" + GrAddMethodFix.generateTypeText(psiClass) + ">" : ""));
       final GrCodeReferenceElement ref = (GrCodeReferenceElement)list.add(_ref);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
     }

@@ -24,11 +24,11 @@ import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 /**
  * @author Maxim.Medvedev
  */
-public class CreateFieldFromConstructorLabelFix extends GroovyFix {
+public class GrCreateFieldFromConstructorLabelFix extends GroovyFix {
   private final CreateFieldFix myFix;
   private final SmartPsiElementPointer<GrNamedArgument> myNamedArgumentPointer;
 
-  public CreateFieldFromConstructorLabelFix(@NotNull GrTypeDefinition targetClass, @NotNull GrNamedArgument namedArgument) {
+  public GrCreateFieldFromConstructorLabelFix(@NotNull GrTypeDefinition targetClass, @NotNull GrNamedArgument namedArgument) {
     myFix = new CreateFieldFix(targetClass);
     myNamedArgumentPointer = createSmartPointer(namedArgument);
   }

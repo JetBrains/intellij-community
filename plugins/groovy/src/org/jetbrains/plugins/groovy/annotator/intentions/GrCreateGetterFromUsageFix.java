@@ -5,28 +5,24 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
  */
-public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implements LowPriorityAction {
-  public CreateSetterFromUsageFix(@NotNull GrReferenceExpression refExpression) {
+public class GrCreateGetterFromUsageFix extends GrCreateMethodFromUsageFix implements LowPriorityAction {
+  public GrCreateGetterFromUsageFix(@NotNull GrReferenceExpression refExpression) {
     super(refExpression);
   }
 
   @Override
   protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
-    return new TypeConstraint[]{SubtypeConstraint.create(PsiTypes.voidType())};
+    return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
   @Override
@@ -35,22 +31,16 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implement
     if (expr == null) {
       return null;
     }
-    return new CreateSetterFromUsageFix(expr);
+    return new GrCreateGetterFromUsageFix(expr);
   }
 
   @Override
   protected PsiType[] getArgumentTypes() {
-    final GrReferenceExpression ref = getRefExpr();
-    assert PsiUtil.isLValue(ref);
-    PsiType initializer = TypeInferenceHelper.getInitializerTypeFor(ref);
-    if (initializer == null || initializer == PsiTypes.nullType()) {
-      initializer = TypesUtil.getJavaLangObject(ref);
-    }
-    return new PsiType[]{initializer};
+    return PsiType.EMPTY_ARRAY;
   }
 
   @Override
   protected @NotNull String getMethodName() {
-    return GroovyPropertyUtils.getSetterName(getRefExpr().getReferenceName());
+    return GroovyPropertyUtils.getGetterNameNonBoolean(getRefExpr().getReferenceName());
   }
 }

@@ -10,7 +10,7 @@ import org.junit.Assert;
 
 import java.util.List;
 
-public class CreatePropertyFromJavaUsageTest extends GrHighlightingTestBase {
+public class GrCreatePropertyFromJavaUsageTest extends GrHighlightingTestBase {
   private static final String BEFORE = "Before.groovy";
   private static final String AFTER = "After.groovy";
   private static final String JAVA = "Area.java";

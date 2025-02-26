@@ -10,7 +10,7 @@ import org.junit.Assert;
 
 import java.util.List;
 
-public class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
+public class GrCreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
   @Override
   public final String getBasePath() {
     return TestUtils.getTestDataPath() + "fixes/createMethodFromJava/" + getTestName(true) + "/";
