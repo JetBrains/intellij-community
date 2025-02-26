@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import org.intellij.images.editor.ImageDocument
+import org.intellij.images.editor.ImageFileEditor
 import org.intellij.images.scientific.ScientificUtils
 import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.convertToByteArray
@@ -24,7 +26,9 @@ class InvertChannelsAction : DumbAwareAction() {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val invertedImage = applyInvertChannels(originalImage)
-    imageFile.setBinaryContent(convertToByteArray(invertedImage, imageFile.fileType.defaultExtension))
+    //val editor = e.getData(IMAGE_DOCUMENT_DATA_KEY ) TODO: get editor?
+    //val document = (editor as ImageFileEditor).imageEditor.document as ImageDocument
+    //document.value = invertedImage
   }
 
 
