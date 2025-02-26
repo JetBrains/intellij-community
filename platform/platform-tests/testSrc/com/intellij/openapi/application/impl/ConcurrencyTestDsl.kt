@@ -37,12 +37,22 @@ class ConcurrencyDslShowcase {
       assertEquals(counter.getAndIncrement(), 3)
     }
   }
+
+  @Test
+  fun `same checkpoint`() = concurrencyTest {
+    launch {
+      checkpoint(1)
+    }
+    launch {
+      checkpoint(1)
+    }
+  }
 }
 
 
 // todo: Revise interface when context parameters are released
 interface ConcurrencyTestDsl : CoroutineScope {
-  fun checkpoint(step: Int, slightDelay: Boolean = false)
+  fun checkpoint(step: Int)
   fun setDebug(isEnabled: Boolean)
 }
 
@@ -57,7 +67,7 @@ private class ConcurrencyTestDslImpl(start: Int, scope: CoroutineScope) : Concur
     debug.set(isEnabled)
   }
 
-  override fun checkpoint(step: Int, slightDelay: Boolean) {
+  override fun checkpoint(step: Int) {
     val currentStepValue = currentStep.get()
     if (step < currentStepValue) {
       return
@@ -68,20 +78,23 @@ private class ConcurrencyTestDslImpl(start: Int, scope: CoroutineScope) : Concur
         println("[%-12s] Checkpoint $step reached! Proceeding further".format(duration))
       }
       val newStep = currentStep.incrementAndGet()
-      if (slightDelay) {
-        Thread.sleep(100)
-      }
-      checkpointMarks.getOrPut(newStep) { Job(coroutineContext.job) }.complete()
+      val newJob = Job(coroutineContext.job)
+      val insertedJob = checkpointMarks.getOrPut(newStep) { newJob }
+      newJob.complete()
+      insertedJob.complete()
     }
     else {
       if (debug.get()) {
         val duration = TimeSource.Monotonic.markNow() - mark
         println("[%-12s] Waiting on checkpoint $step...".format(duration))
       }
-      checkpointMarks.getOrPut(step) { Job(coroutineContext.job) }.asCompletableFuture().join()
-      if (slightDelay) {
-        Thread.sleep(100)
+      val newJob = Job(coroutineContext.job)
+      val insertedJob = checkpointMarks.getOrPut(step) { newJob }
+      if (newJob != insertedJob) {
+        // protection against two threads waiting on the same checkpoint
+        newJob.complete()
       }
+      insertedJob.asCompletableFuture().join()
       checkpoint(step)
     }
   }
