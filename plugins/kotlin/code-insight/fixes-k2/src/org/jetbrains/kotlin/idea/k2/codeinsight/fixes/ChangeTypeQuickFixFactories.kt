@@ -15,11 +15,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -190,6 +187,8 @@ object ChangeTypeQuickFixFactories {
         expectedType: KaType
     ): UpdateTypeQuickFix<KtCallableDeclaration>? {
         val callable = resolvedCall.successfulFunctionCallOrNull()?.symbol ?: return null
+        // We can't change the constructor type
+        if (callable is KaConstructorSymbol || callable is KaSamConstructorSymbol) return null
         if (!callable.isSafeForChangeTypeFix()) return null
         val calledFunction = callable.psi as? KtCallableDeclaration ?: return null
         return UpdateTypeQuickFix(calledFunction, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType))
