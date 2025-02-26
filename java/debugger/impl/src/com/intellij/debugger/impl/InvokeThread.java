@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -149,7 +149,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     if (currentRequest != threadRequest) {
       String message =
         "Expected worker request " + threadRequest + " instead of " + currentRequest + " closed=" + thread.myEvents.isClosed();
-      LOG.error(message, new IllegalStateException(message));
+      reportCommandError(new IllegalStateException(message)); // do not throw AssertionError in tests, we need to return false here
       return false;
     }
     return true;
