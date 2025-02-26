@@ -6,6 +6,8 @@ package org.jetbrains.bazel.jvm.jps.state
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.VarBinaryVector
@@ -58,7 +60,7 @@ fun loadBuildState(
   relativizer: PathRelativizer,
   allocator: RootAllocator,
   sourceFileToDigest: Map<Path, ByteArray>,
-): LoadSourceFileStateResult? {
+): SourceFileStateResult? {
   return loadBuildState(
     buildStateFile = buildStateFile,
     relativizer = relativizer,
@@ -76,7 +78,7 @@ fun loadBuildState(
   sourceFileToDigest: Map<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer?,
   parentSpan: Span?,
-): LoadSourceFileStateResult? {
+): SourceFileStateResult? {
   readArrowFile(buildStateFile, allocator, parentSpan) { fileReader ->
     if (targetDigests != null) {
       val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
@@ -85,7 +87,7 @@ fun loadBuildState(
           throw IOException(rebuildRequested)
         }
         else {
-          return LoadSourceFileStateResult(
+          return SourceFileStateResult(
             rebuildRequested = rebuildRequested,
             map = createInitialSourceMap(sourceFileToDigest),
             changedOrAddedFiles = emptyList(),
@@ -114,7 +116,7 @@ fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, Sou
   return result
 }
 
-fun saveBuildState(
+suspend fun saveBuildState(
   buildStateFile: Path,
   list: Array<SourceDescriptor>,
   relativizer: PathRelativizer,
@@ -162,11 +164,13 @@ fun saveBuildState(
 
     root.setRowCount(rowIndex)
 
-    writeVectorToFile(buildStateFile, root, metadata)
+    withContext(Dispatchers.IO) {
+      writeVectorToFile(buildStateFile, root, metadata)
+    }
   }
 }
 
-data class LoadSourceFileStateResult(
+data class SourceFileStateResult(
   @JvmField val rebuildRequested: String?,
 
   @JvmField val map: Map<Path, SourceDescriptor>,
@@ -185,7 +189,7 @@ private fun doLoad(
   actualDigestMap: Map<Path, ByteArray>,
   relativizer: PathRelativizer,
   parentSpan: Span?,
-): LoadSourceFileStateResult {
+): SourceFileStateResult {
   val sourceFileVector = root.getVector(sourceFileField) as VarCharVector
   val digestVector = root.getVector(digestField) as VarBinaryVector
   val isChangedVector = root.getVector(isChangedField) as BitVector
@@ -258,5 +262,5 @@ private fun doLoad(
     changedFiles.addAll(newFiles.keys)
   }
 
-  return LoadSourceFileStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
+  return SourceFileStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
 }

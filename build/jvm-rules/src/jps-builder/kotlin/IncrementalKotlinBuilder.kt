@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.concat
 import org.jetbrains.bazel.jvm.emptyList
@@ -27,6 +28,7 @@ import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.bazel.jvm.linkedSet
+import org.jetbrains.bazel.jvm.span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaBuilderUtil.registerFilesToCompile
@@ -115,6 +117,7 @@ internal class IncrementalKotlinBuilder(
   private val jpsTarget: BazelModuleBuildTarget,
   private val isRebuild: Boolean,
   private val span: Span,
+  private val tracer: Tracer,
 ) : BazelTargetBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun getPresentableName() = "Kotlin Builder"
 
@@ -209,18 +212,20 @@ internal class IncrementalKotlinBuilder(
     val kotlinContext = getKotlinCompileContext(context)
     val kotlinTarget = kotlinContext.targetsIndex.byJpsTarget.get(jpsTarget) ?: return ModuleLevelBuilder.ExitCode.OK
     val fsOperations = BazelKotlinFsOperationsHelper(context = context, chunk = chunk)
-    val proposedExitCode = doBuild(
-      chunk = chunk,
-      representativeTarget = kotlinTarget,
-      context = context,
-      dirtyFilesHolder = dirtyFilesHolder,
-      messageCollector = MessageCollectorAdapter(context, span, kotlinTarget),
-      outputConsumer = outputConsumer,
-      fsOperations = fsOperations,
-      kotlinContext = kotlinContext,
-      outputSink = outputSink,
-    )
-
+    val proposedExitCode = tracer.span("compile kotlin") { span ->
+      doBuild(
+        chunk = chunk,
+        representativeTarget = kotlinTarget,
+        context = context,
+        dirtyFilesHolder = dirtyFilesHolder,
+        messageCollector = MessageCollectorAdapter(context, span, kotlinTarget),
+        outputConsumer = outputConsumer,
+        fsOperations = fsOperations,
+        kotlinContext = kotlinContext,
+        outputSink = outputSink,
+        span = span,
+      )
+    }
     val actualExitCode = if (proposedExitCode == ModuleLevelBuilder.ExitCode.OK && fsOperations.hasMarkedDirty) {
       ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED
     }
@@ -241,6 +246,7 @@ internal class IncrementalKotlinBuilder(
     fsOperations: BazelKotlinFsOperationsHelper,
     kotlinContext: KotlinCompileContext,
     outputSink: OutputSink,
+    span: Span,
   ): ExitCode {
     val kotlinChunk = kotlinContext.getChunk(chunk)!!
     if (!kotlinChunk.isEnabled) {
@@ -445,7 +451,7 @@ private suspend fun doCompileModuleChunk(
 
   if (targetDirtyFiles != null) {
     val allDirtyFiles = targetDirtyFiles.dirty.keys
-    if (span.isRecording) {
+    if (!context.scope.isRebuild && span.isRecording) {
       span.addEvent("compiling files", Attributes.of(AttributeKey.stringArrayKey("allDirtyFiles"), allDirtyFiles.map { it.path }))
     }
     registerFilesToCompile(context, allDirtyFiles)

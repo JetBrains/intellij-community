@@ -2,6 +2,7 @@
 
 package org.jetbrains.bazel.jvm.jps.test
 
+import kotlinx.coroutines.runBlocking
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.jps.state.PathRelativizer
 import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
@@ -17,7 +18,9 @@ internal object BuildStateTest {
   @OptIn(ExperimentalPathApi::class)
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    testSerialization()
+    runBlocking {
+      testSerialization()
+    }
   }
 }
 
@@ -27,7 +30,7 @@ private val relativizer = object : PathRelativizer {
   override fun toAbsoluteFile(path: String): Path = Path.of(path)
 }
 
-internal fun testSerialization() {
+internal suspend fun testSerialization() {
   val random = Random(42)
   val sourceDescriptors = Array(random.nextInt(100, 20_000)) {
     SourceDescriptor(

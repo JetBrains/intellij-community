@@ -3,41 +3,36 @@
 
 package org.jetbrains.bazel.jvm.jps
 
-import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelPathTypeAwareRelativizer
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
-import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
-import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
+import org.jetbrains.bazel.jvm.jps.impl.createJpsProjectDescriptor
 import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.output.createOutputSink
 import org.jetbrains.bazel.jvm.jps.output.writeJarAndAbi
+import org.jetbrains.bazel.jvm.jps.state.DependencyStateResult
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
-import org.jetbrains.bazel.jvm.jps.state.LoadSourceFileStateResult
+import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
@@ -47,16 +42,15 @@ import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
-import org.jetbrains.jps.builders.logging.BuildLoggingManager
-import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.RebuildRequestedException
-import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.coroutineContext
 
@@ -163,6 +157,15 @@ suspend fun buildUsingJps(
   )
 
   val isIncrementalCompilation = args.boolFlag(JvmBuilderFlags.INCREMENTAL) || forceIncremental
+  if (isDebugEnabled) {
+    parentSpan.setAttribute("isIncrementalCompilation", isIncrementalCompilation)
+    parentSpan.setAttribute("outJar", outJar.toString())
+    parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
+    for (kind in TargetConfigurationDigestProperty.entries) {
+      parentSpan.setAttribute(kind.name, targetDigests.get(kind))
+    }
+  }
+
   if (!isIncrementalCompilation) {
     return nonIncrementalBuildUsingJps(
       log = log,
@@ -176,24 +179,14 @@ suspend fun buildUsingJps(
     )
   }
 
-  if (isDebugEnabled) {
-    parentSpan.setAttribute("outJar", outJar.toString())
-    parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
-    for (kind in TargetConfigurationDigestProperty.entries) {
-      parentSpan.setAttribute(kind.name, targetDigests.get(kind))
-    }
-  }
-
-  // if output jar doesn't exist, make sure that we do not to use existing cache -
-  // set `isRebuild` to true and clear caches in this case
-  var isRebuild = validateFileExistence(outJar = outJar, abiJar = abiJar, dataDir = dataDir)
+  var rebuildReason = validateFileExistence(outJar = outJar, abiJar = abiJar, cacheDir = dataDir)
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val depStateStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
   val classPath = moduleTarget.module.container.getChild(BazelConfigurationHolder.KIND).classPath
-  val sourceAndDepState = if (isRebuild) {
-    null
-  }
-  else {
+
+  val buildState: SourceFileStateResult?
+  val depState: DependencyStateResult?
+  if (rebuildReason == null) {
     val state = tracer.span("load and check state") {
       computeBuildState(
         buildStateFile = buildStateFile,
@@ -209,46 +202,65 @@ suspend fun buildUsingJps(
         parentSpan = it,
       )
     }
-    if (state == null) {
-      isRebuild = true
-      FileUtilRt.deleteRecursively(dataDir)
+    if (state.rebuildRequested == null) {
+      buildState = state.sourceFileState
+      depState = state.dependencyState
     }
-    state
+    else {
+      rebuildReason = state.rebuildRequested
+      buildState = null
+      depState = null
+    }
+  }
+  else {
+    buildState = null
+    depState = null
   }
 
-  val buildState = sourceAndDepState?.first
-  val depState = sourceAndDepState?.second
-  var exitCode = initAndBuild(
-    compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
-    requestLog = log,
-    dataDir = dataDir,
-    targetDigests = targetDigests,
-    moduleTarget = moduleTarget,
-    outJar = outJar,
-    abiJar = abiJar,
-    relativizer = relativizer,
-    jpsModel = jpsModel,
-    dataManager = BazelBuildDataProvider(
-      relativizer = typeAwareRelativizer,
-      sourceToDescriptor = buildState?.map ?: createInitialSourceMap(sourceFileToDigest),
-      storeFile = buildStateFile,
-      allocator = allocator,
-      isCleanBuild = isRebuild,
-      libRootManager = DependencyStateStorage(
-        actualDependencyFileToDigest = dependencyFileToDigest,
-        storageFile = depStateStorageFile,
-        fileToDigest = depState?.map ?: hashMap(classPath.size),
-        classpath = classPath,
+  val isRebuild = rebuildReason != null
+  if (isRebuild) {
+    log.out.appendLine("rebuild reason: $rebuildReason")
+  }
+
+  var exitCode = try {
+    initAndBuild(
+      rebuildReason = rebuildReason,
+      compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
+      requestLog = log,
+      dataDir = dataDir,
+      targetDigests = targetDigests,
+      moduleTarget = moduleTarget,
+      outJar = outJar,
+      abiJar = abiJar,
+      relativizer = relativizer,
+      jpsModel = jpsModel,
+      dataManager = BazelBuildDataProvider(
+        relativizer = typeAwareRelativizer,
+        sourceToDescriptor = buildState?.map ?: createInitialSourceMap(sourceFileToDigest),
+        storeFile = buildStateFile,
+        allocator = allocator,
+        isCleanBuild = isRebuild,
+        libRootManager = DependencyStateStorage(
+          actualDependencyFileToDigest = dependencyFileToDigest,
+          storageFile = depStateStorageFile,
+          fileToDigest = depState?.map ?: hashMap(classPath.size),
+          classpath = classPath,
+        ),
       ),
-    ),
-    buildState = buildState,
-    parentSpan = parentSpan,
-    isDebugEnabled = isDebugEnabled,
-  )
+      buildState = buildState,
+      isDebugEnabled = isDebugEnabled,
+    )
+  }
+  catch (e: RebuildRequestedException) {
+    parentSpan.recordException(e)
+    rebuildReason = e.cause!!.message
+    -1
+  }
 
   if (exitCode == -1) {
     log.resetState()
     exitCode = initAndBuild(
+      rebuildReason = rebuildReason,
       compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = true),
       requestLog = log,
       dataDir = dataDir,
@@ -272,7 +284,6 @@ suspend fun buildUsingJps(
         ),
       ),
       buildState = null,
-      parentSpan = parentSpan,
       isDebugEnabled = isDebugEnabled,
     )
   }
@@ -280,79 +291,7 @@ suspend fun buildUsingJps(
   return exitCode
 }
 
-private suspend fun nonIncrementalBuildUsingJps(
-  baseDir: Path,
-  args: ArgMap<JvmBuilderFlags>,
-  isDebugEnabled: Boolean,
-  parentSpan: Span,
-  tracer: Tracer,
-  log: RequestLog,
-  jpsModel: JpsModel,
-  moduleTarget: BazelModuleBuildTarget,
-): Int {
-  val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
-  val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
-  if (isDebugEnabled) {
-    parentSpan.setAttribute("outJar", outJar.toString())
-    parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
-  }
-
-  val projectDescriptor = ProjectDescriptor(
-    /* model = */ jpsModel,
-    /* fsState = */ BuildFSState(/* alwaysScanFS = */ true),
-    /* dataManager = */
-    null,
-    /* loggingManager = */ BuildLoggingManager.DEFAULT,
-    /* moduleExcludeIndex = */ NoopModuleExcludeIndex,
-    /* buildTargetIndex = */ BazelBuildTargetIndex(moduleTarget),
-    /* buildRootIndex = */ BazelBuildRootIndex(moduleTarget),
-    /* ignoredFileIndex = */ NoopIgnoredFileIndex,
-  )
-
-  val context = BazelCompileContext(
-    scope = BazelCompileScope(isIncrementalCompilation = false, isRebuild = true),
-    projectDescriptor = projectDescriptor,
-    delegateMessageHandler = log,
-    coroutineContext = coroutineContext,
-  )
-
-  // non-incremental build - oldJar is always as null (no need to copy old unchanged files)
-  createOutputSink(oldJar = null, oldAbiJar = null, withAbi = abiJar != null).use { outputSink ->
-    val exitCode = tracer.spanBuilder("compile").use { span ->
-      val builders = arrayOf(
-        createJavaBuilder(
-          tracer = tracer,
-          isDebugEnabled = isDebugEnabled,
-          out = log.out,
-          javaFileCount = moduleTarget.javaFileCount,
-          isIncremental = false,
-        ),
-        //NotNullInstrumentingBuilder(),
-        NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span),
-      ).filterNotNull().toTypedArray()
-      builders.sortBy { it.category.ordinal }
-
-      JpsTargetBuilder(
-        log = log,
-        dataManager = null,
-        tracer = tracer,
-      ).build(
-        context = context,
-        moduleTarget = moduleTarget,
-        builders = builders,
-        buildState = null,
-        outputSink = outputSink,
-        parentSpan = span,
-      )
-    }
-    if (exitCode == 0) {
-      writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = null)
-    }
-    return exitCode
-  }
-}
-
-private fun createJavaBuilder(
+internal fun createJavaBuilder(
   tracer: Tracer,
   isIncremental: Boolean,
   isDebugEnabled: Boolean,
@@ -369,6 +308,7 @@ private fun createJavaBuilder(
 }
 
 private suspend fun initAndBuild(
+  rebuildReason: String?,
   compileScope: BazelCompileScope,
   requestLog: RequestLog,
   dataDir: Path,
@@ -379,34 +319,40 @@ private suspend fun initAndBuild(
   relativizer: PathRelativizerService,
   jpsModel: JpsModel,
   dataManager: BazelBuildDataProvider,
-  buildState: LoadSourceFileStateResult?,
-  parentSpan: Span,
+  buildState: SourceFileStateResult?,
   isDebugEnabled: Boolean,
 ): Int {
   val isRebuild = compileScope.isRebuild
   val tracer = requestLog.tracer
   val storageInitializer = StorageInitializer(dataDir)
-  val projectDescriptor = tracer.span("init storage") { span ->
-    if (isRebuild) {
-      storageInitializer.clearAndInit(span)
-    }
+  var storageClosed = false
+  val buildDataManager = tracer.spanBuilder("init storage")
+    .setAttribute("isRebuild", isRebuild)
+    .setAttribute("rebuildReason", rebuildReason ?: "")
+    .use { span ->
+      if (isRebuild) {
+        storageInitializer.clearAndInit(span)
+      }
 
-    storageInitializer.createProjectDescriptor(
-      jpsModel = jpsModel,
-      moduleTarget = moduleTarget,
-      relativizer = relativizer,
-      buildDataProvider = dataManager,
-      requestLog = requestLog,
-      span = parentSpan,
-    )
-  }
+      storageInitializer.createBuildDataManager(
+        jpsModel = jpsModel,
+        moduleTarget = moduleTarget,
+        relativizer = relativizer,
+        buildDataProvider = dataManager,
+        requestLog = requestLog,
+        span = span,
+      )
+    }
   try {
     val context = BazelCompileContext(
       scope = compileScope,
-      projectDescriptor = projectDescriptor,
+      projectDescriptor = createJpsProjectDescriptor(jpsModel = jpsModel, moduleTarget = moduleTarget, dataManager = buildDataManager),
       delegateMessageHandler = requestLog,
       coroutineContext = coroutineContext,
     )
+
+    val cachedJar = dataDir.resolve(outJar.fileName)
+    val cachedAbiJar = abiJar?.let { dataDir.resolve(it.fileName) }
 
     val oldJar: Path?
     val oldAbiJar: Path?
@@ -415,8 +361,8 @@ private suspend fun initAndBuild(
       oldAbiJar = null
     }
     else {
-      oldJar = outJar.takeIf { Files.exists(it) }
-      oldAbiJar = if (oldJar == null) null else abiJar?.takeIf { Files.exists(it) }
+      oldJar = cachedJar.takeIf { Files.exists(it) }
+      oldAbiJar = if (cachedJar == null || cachedAbiJar == null) null else cachedAbiJar.takeIf { Files.exists(it) }
     }
 
     createOutputSink(oldJar = oldJar, oldAbiJar = oldAbiJar, withAbi = abiJar != null).use { outputSink ->
@@ -424,7 +370,13 @@ private suspend fun initAndBuild(
         .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
         .use { span ->
           val builders = arrayOf(
-            IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = dataManager, jpsTarget = moduleTarget),
+            IncrementalKotlinBuilder(
+              isRebuild = isRebuild,
+              span = span,
+              dataManager = dataManager,
+              jpsTarget = moduleTarget,
+              tracer = tracer,
+            ),
             // If not rebuilding, we still need to create a JavaBuilder even if there are no Java files,
             // as there might be some old ones cached (so, we have to update incremental cache).
             if (isRebuild && moduleTarget.javaFileCount == 0) {
@@ -460,22 +412,23 @@ private suspend fun initAndBuild(
         }
 
       try {
-        coroutineScope {
+        tracer.span("postBuild") { span ->
           postBuild(
+            buildDataManager = buildDataManager,
             success = exitCode == 0,
             moduleTarget = moduleTarget,
             outJar = outJar,
             abiJar = abiJar,
+            cachedJar = cachedJar,
+            cachedAbiJar = cachedAbiJar,
             context = context,
             targetDigests = targetDigests,
             buildDataProvider = dataManager,
             requestLog = requestLog,
             outputSink = outputSink,
-            // We remove `outJar` if a rebuild is detected as necessary.
-            // Therefore, the `Files.exists` condition is enough.
-            // However, it is still better to avoid unnecessary I/O calls.
-            parentSpan = parentSpan,
+            parentSpan = span,
           )
+          storageClosed = true
         }
       }
       catch (e: CancellationException) {
@@ -484,7 +437,8 @@ private suspend fun initAndBuild(
       catch (e: Throwable) {
         // in case of error during packaging - clear build
         try {
-          projectDescriptor.release()
+          buildDataManager.close()
+          storageClosed = true
         }
         finally {
           storageInitializer.clearStorage()
@@ -495,12 +449,10 @@ private suspend fun initAndBuild(
       return exitCode
     }
   }
-  catch (e: RebuildRequestedException) {
-    parentSpan.recordException(e)
-    return -1
-  }
   finally {
-    projectDescriptor.release()
+    if (!storageClosed) {
+      buildDataManager.close()
+    }
   }
 }
 
@@ -511,6 +463,8 @@ private fun CoroutineScope.postBuild(
   moduleTarget: BazelModuleBuildTarget,
   outJar: Path,
   abiJar: Path?,
+  cachedJar: Path,
+  cachedAbiJar: Path?,
   context: BazelCompileContext,
   targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
@@ -518,22 +472,24 @@ private fun CoroutineScope.postBuild(
   success: Boolean,
   outputSink: OutputSink,
   parentSpan: Span,
+  buildDataManager: BuildDataManager,
 ) {
-  val dataManager = context.projectDescriptor.dataManager
   val sourceDescriptors = buildDataProvider.getFinalList()
   launch(CoroutineName("save caches")) {
-    dataManager.flush(/* memoryCachesOnly = */ false)
-
-    ensureActive()
+    withContext(Dispatchers.IO) {
+      buildDataManager.close()
+    }
 
     if (success) {
       // if success, then must be no changed files in the list
-      val changedFiles = sourceDescriptors.filter { it.isChanged }
-      require(changedFiles.isEmpty()) {
-        "Compiled successfully, but still there are changed files: $changedFiles"
+      val changedFiles = sourceDescriptors.asSequence().filter { it.isChanged }
+      require(changedFiles.none()) {
+        "Compiled successfully, but still there are changed files: ${changedFiles.toList()}"
       }
     }
+  }
 
+  launch {
     saveBuildState(
       buildStateFile = buildDataProvider.storeFile,
       list = sourceDescriptors,
@@ -541,26 +497,36 @@ private fun CoroutineScope.postBuild(
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
+  }
+  launch {
     buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer.sourceRelativizer)
   }
 
-  if (outputSink.isChanged || context.scope.isRebuild) {
-    launch {
+  launch {
+    if (outputSink.isChanged || context.scope.isRebuild) {
       writeJarAndAbi(
         tracer = requestLog.tracer,
         outputSink = outputSink,
-        outJar = outJar,
-        abiJar = abiJar,
+        outJar = cachedJar,
+        abiJar = cachedAbiJar,
         sourceDescriptors = sourceDescriptors,
       )
     }
-  }
-  else {
-    parentSpan.addEvent("no changes detected, no output JAR will be produced")
+    else {
+      parentSpan.addEvent("no changes detected, no output JAR will be produced")
+    }
+
+    // copy to output
+    withContext(Dispatchers.IO) {
+      Files.copy(cachedJar, outJar, StandardCopyOption.REPLACE_EXISTING)
+      if (abiJar != null) {
+        Files.copy(cachedAbiJar, abiJar, StandardCopyOption.REPLACE_EXISTING)
+      }
+    }
   }
 
   launch(CoroutineName("report build state")) {
-    dataManager.reportUnhandledRelativizerPaths()
+    buildDataManager.reportUnhandledRelativizerPaths()
     if (context.projectDescriptor.fsState.hasUnprocessedChanges(context, moduleTarget)) {
       parentSpan.addEvent("Some files were changed during the build. Additional compilation may be required.")
     }

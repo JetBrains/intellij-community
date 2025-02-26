@@ -7,6 +7,7 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-coroutines-core",
         "@lib//:fastutil-min",
         "@lib//:opentelemetry",
         "//src/worker-util",

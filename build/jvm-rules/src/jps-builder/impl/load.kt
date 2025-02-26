@@ -34,28 +34,32 @@ private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
   override fun getTargetDataRoot(targetType: BuildTargetType<*>, targetId: String): Path = dir
 }
 
-internal fun createJpsProjectDescriptor(
+internal fun createDataManager(
   dataStorageRoot: Path,
-  fsState: BuildFSState,
-  jpsModel: JpsModel,
-  moduleTarget: BazelModuleBuildTarget,
   relativizer: PathRelativizerService,
   buildDataProvider: BazelBuildDataProvider,
   requestLog: RequestLog,
-): ProjectDescriptor {
+): BuildDataManager {
   val containerFactory = BazelPersistentMapletFactory(dataStorageRoot.resolve("mappings-graph"))
-
-  val dataManager = BuildDataManager(
+  return BuildDataManager(
     dataPaths = BazelBuildDataPaths(dataStorageRoot),
     targetsState = BuildTargetsState(BazelBuildTargetStateManager),
     relativizer = relativizer,
     dataManager = buildDataProvider,
     containerFactory = containerFactory,
-    span = requestLog.parentSpan,
   )
+}
+
+internal fun createJpsProjectDescriptor(
+  dataManager: BuildDataManager,
+  jpsModel: JpsModel,
+  moduleTarget: BazelModuleBuildTarget,
+): ProjectDescriptor {
   return ProjectDescriptor(
     /* model = */ jpsModel,
-    /* fsState = */ fsState,
+    // alwaysScanFS doesn't matter, we use our own version of `BuildOperations.ensureFSStateInitialized`,
+    // see `JpsProjectBuilder.ensureFsStateInitialized`
+    /* fsState = */ BuildFSState(/* alwaysScanFS = */ true),
     /* dataManager = */ dataManager,
     /* loggingManager = */ BuildLoggingManager.DEFAULT,
     /* moduleExcludeIndex = */ NoopModuleExcludeIndex,

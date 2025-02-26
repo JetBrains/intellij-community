@@ -1,6 +1,6 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.jps
 
-import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
@@ -8,8 +8,8 @@ import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateResult
-import org.jetbrains.bazel.jvm.jps.state.LoadSourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.PathRelativizer
+import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.loadDependencyState
@@ -20,36 +20,25 @@ import java.nio.file.Path
 // if more than 50% files were changed, perform a full rebuild
 private const val thresholdPercentage = 0.5
 
-internal fun validateFileExistence(outJar: Path, abiJar: Path?, dataDir: Path): Boolean {
-  when {
-    Files.notExists(outJar) -> {
-      FileUtilRt.deleteRecursively(dataDir)
-      if (abiJar != null) {
-        Files.deleteIfExists(abiJar)
-      }
-      return true
+// if output jar doesn't exist, make sure that we do not to use existing cache -
+// set `isRebuild` to true and clear caches in this case
+internal fun validateFileExistence(outJar: Path, abiJar: Path?, cacheDir: Path): String? {
+  return when {
+    !Files.isDirectory(cacheDir) -> "cache dir doesn't exist"
+    Files.notExists(cacheDir.resolve(outJar.fileName)) -> "cached output jar doesn't exist"
+    abiJar != null && Files.notExists(cacheDir.resolve(abiJar.fileName)) -> {
+      "cached output JAR exists but not ABI JAR - something wrong, or we enabled ABI JARs"
     }
-
-    !Files.isDirectory(dataDir) -> {
-      Files.deleteIfExists(outJar)
-      if (abiJar != null) {
-        Files.deleteIfExists(abiJar)
-      }
-      return true
-    }
-
-    abiJar != null && Files.notExists(abiJar) -> {
-      // output JAR exists but not abi? something wrong, or we enabled ABI jars, let's rebuild
-      FileUtilRt.deleteRecursively(dataDir)
-      Files.deleteIfExists(outJar)
-      return true
-    }
-
-    else -> {
-      return false
-    }
+    else -> null
   }
 }
+
+internal data class BuildStateResult(
+  @JvmField val sourceFileState: SourceFileStateResult?,
+  @JvmField val dependencyState: DependencyStateResult?,
+
+  @JvmField val rebuildRequested: String?,
+)
 
 internal suspend fun computeBuildState(
   buildStateFile: Path,
@@ -63,31 +52,33 @@ internal suspend fun computeBuildState(
   log: RequestLog,
   tracer: Tracer,
   classPath: Array<Path>,
-): Pair<LoadSourceFileStateResult, DependencyStateResult>? {
-  val buildState = loadBuildState(
+): BuildStateResult {
+  val sourceFileStateResult = loadBuildState(
     buildStateFile = buildStateFile,
     relativizer = sourceRelativizer,
     allocator = allocator,
     sourceFileToDigest = sourceFileToDigest,
     targetDigests = targetDigests,
     parentSpan = parentSpan,
-  ) ?: return null
+  ) ?: return BuildStateResult(null, null, "no source file state")
 
-  buildState.rebuildRequested?.let {
-    parentSpan.setAttribute("rebuildRequested", it)
-    return null
+  sourceFileStateResult.rebuildRequested?.let {
+    return BuildStateResult(null, null, it)
   }
 
-  if (!forceIncremental && checkIsFullRebuildRequired(
-      buildState = buildState,
+  if (!forceIncremental) {
+    val reason = checkIsFullRebuildRequired(
+      buildState = sourceFileStateResult,
       log = log,
       sourceFileCount = sourceFileToDigest.size,
       parentSpan = parentSpan,
-    )) {
-    return null
+    )
+    if (reason != null) {
+      return BuildStateResult(null, null, reason)
+    }
   }
 
-  val depState = tracer.span("load and check dependency state") { span ->
+  return tracer.span("load and check dependency state") { span ->
     val result = loadDependencyState(
       storageFile = depStateStorageFile,
       allocator = allocator,
@@ -95,27 +86,29 @@ internal suspend fun computeBuildState(
       span = span,
     )
     if (result != null && classPath.size != result.size) {
-      span.addEvent("class path size (${classPath.size}) and dependency file size (${result.size}) must be equal")
-      null
+      BuildStateResult(null, null, "class path size (${classPath.size}) and dependency file size (${result.size}) must be equal")
     }
     else {
-      result ?: hashMap(classPath.size)
+      BuildStateResult(
+        sourceFileState = sourceFileStateResult,
+        dependencyState = DependencyStateResult(result ?: hashMap(classPath.size)),
+        rebuildRequested = null,
+      )
     }
-  } ?: return null
-
-  return buildState to DependencyStateResult(depState)
+  }
 }
 
 private fun checkIsFullRebuildRequired(
-  buildState: LoadSourceFileStateResult,
+  buildState: SourceFileStateResult,
   log: RequestLog,
   sourceFileCount: Int,
   parentSpan: Span,
-): Boolean {
+): String? {
   val incrementalEffort = buildState.changedOrAddedFiles.size + buildState.deletedFiles.size
   val rebuildThreshold = sourceFileCount * thresholdPercentage
   val forceFullRebuild = incrementalEffort >= rebuildThreshold
-  log.out.appendLine("incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild")
+  val reason = "incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild"
+  log.out.appendLine(reason)
 
   if (parentSpan.isRecording) {
     // do not use toRelative - print as is to show the actual path
@@ -126,5 +119,5 @@ private fun checkIsFullRebuildRequired(
     parentSpan.setAttribute("rebuildThreshold", rebuildThreshold)
     parentSpan.setAttribute("forceFullRebuild", forceFullRebuild)
   }
-  return forceFullRebuild
+  return if (forceFullRebuild) reason else null
 }

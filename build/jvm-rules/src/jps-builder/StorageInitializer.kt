@@ -10,10 +10,9 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
-import org.jetbrains.bazel.jvm.jps.impl.createJpsProjectDescriptor
-import org.jetbrains.jps.cmdline.ProjectDescriptor
-import org.jetbrains.jps.incremental.fs.BuildFSState
+import org.jetbrains.bazel.jvm.jps.impl.createDataManager
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsModel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -26,22 +25,19 @@ internal class StorageInitializer(private val dataDir: Path) {
     Files.createDirectories(dataDir)
   }
 
-  fun createProjectDescriptor(
+  fun createBuildDataManager(
     jpsModel: JpsModel,
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
     buildDataProvider: BazelBuildDataProvider,
     requestLog: RequestLog,
     span: Span,
-  ): ProjectDescriptor {
+  ): BuildDataManager {
     try {
-      return createJpsProjectDescriptor(
+      return createDataManager(
         dataStorageRoot = dataDir,
         // alwaysScanFS doesn't matter, we use our own version of `BuildOperations.ensureFSStateInitialized`,
         // see `JpsProjectBuilder.ensureFsStateInitialized`
-        fsState = BuildFSState(/* alwaysScanFS = */ true),
-        jpsModel = jpsModel,
-        moduleTarget = moduleTarget,
         relativizer = relativizer,
         buildDataProvider = buildDataProvider,
         requestLog = requestLog,
@@ -58,7 +54,7 @@ internal class StorageInitializer(private val dataDir: Path) {
 
     clearStorage()
 
-    return createProjectDescriptor(
+    return createBuildDataManager(
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
       relativizer = relativizer,
@@ -71,10 +67,6 @@ internal class StorageInitializer(private val dataDir: Path) {
   fun clearStorage() {
     wasCleared = true
     // todo rename and store
-    deleteDirs()
-  }
-
-  private fun deleteDirs() {
     FileUtilRt.deleteRecursively(dataDir)
   }
 }

@@ -4,6 +4,8 @@
 package org.jetbrains.bazel.jvm.jps.state
 
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VarBinaryVector
 import org.apache.arrow.vector.VarCharVector
@@ -56,7 +58,6 @@ class DependencyStateStorage(
 ) {
   private var isChanged = false
 
-  @Synchronized
   fun checkState(): List<Path> {
     val changedOrAdded = ArrayList<Path>()
     for (file in classpath) {
@@ -72,37 +73,39 @@ class DependencyStateStorage(
     return changedOrAdded
   }
 
-  @Synchronized
-  fun saveState(allocator: RootAllocator, relativizer: PathRelativizer) {
+  suspend fun saveState(allocator: RootAllocator, relativizer: PathRelativizer) {
     if (!isChanged) {
       return
     }
 
     if (fileToDigest.isEmpty()) {
       Files.deleteIfExists(storageFile)
+      isChanged = false
+      return
     }
-    else {
-      VectorSchemaRoot.create(depDescriptorSchema, allocator).use { root ->
-        val sortedKeys = fileToDigest.keys.sorted()
 
-        val depFileVector = root.getVector(depFileField) as VarCharVector
-        val digestVector = root.getVector(digestField) as VarBinaryVector
+    VectorSchemaRoot.create(depDescriptorSchema, allocator).use { root ->
+      val sortedKeys = fileToDigest.keys.sorted()
 
-        depFileVector.setInitialCapacity(sortedKeys.size, 100.0)
-        depFileVector.allocateNew(sortedKeys.size)
+      val depFileVector = root.getVector(depFileField) as VarCharVector
+      val digestVector = root.getVector(digestField) as VarBinaryVector
 
-        digestVector.setInitialCapacity(sortedKeys.size, 56.0)
-        digestVector.allocateNew(sortedKeys.size)
-        var rowIndex = 0
-        for (key in sortedKeys) {
-          val digest = fileToDigest.get(key)!!
+      depFileVector.setInitialCapacity(sortedKeys.size, 100.0)
+      depFileVector.allocateNew(sortedKeys.size)
 
-          depFileVector.setSafe(rowIndex, relativizer.toRelative(key).toByteArray())
-          digestVector.setSafe(rowIndex, digest)
+      digestVector.setInitialCapacity(sortedKeys.size, 56.0)
+      digestVector.allocateNew(sortedKeys.size)
+      var rowIndex = 0
+      for (key in sortedKeys) {
+        val digest = fileToDigest.get(key)!!
 
-          rowIndex++
-        }
-        root.setRowCount(rowIndex)
+        depFileVector.setSafe(rowIndex, relativizer.toRelative(key).toByteArray())
+        digestVector.setSafe(rowIndex, digest)
+
+        rowIndex++
+      }
+      root.setRowCount(rowIndex)
+      withContext(Dispatchers.IO) {
         writeVectorToFile(file = storageFile, root = root, metadata = emptyMap())
       }
     }

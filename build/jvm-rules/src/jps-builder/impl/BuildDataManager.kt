@@ -2,7 +2,6 @@
 
 package org.jetbrains.jps.incremental.storage
 
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.impl.BazelPersistentMapletFactory
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
@@ -21,11 +20,9 @@ import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.NodeSourcePathMapper
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
-import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph
 import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager.Companion.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY
-import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -42,7 +39,6 @@ class BuildDataManager internal constructor(
   val relativizer: PathRelativizerService,
   private val dataManager: BuildDataProvider,
   containerFactory: BazelPersistentMapletFactory,
-  span: Span,
 ) {
   private val depGraph: DependencyGraph
   private val depGraphPathMapper: NodeSourcePathMapper
@@ -51,10 +47,9 @@ class BuildDataManager internal constructor(
 
   init {
     try {
-      val delegate = LoggingDependencyGraph(DependencyGraphImpl(containerFactory)) { span.addEvent(it) }
-      depGraph = SynchronizedDependencyGraph(delegate)
+      depGraph = SynchronizedDependencyGraph(DependencyGraphImpl(containerFactory))
     }
-    catch (e: IOException) {
+    catch (e: Throwable) {
       try {
         close()
       }
@@ -176,7 +171,7 @@ class BuildDataManager internal constructor(
   }
 }
 
-private class SynchronizedDependencyGraph(private val delegate: LoggingDependencyGraph) : DependencyGraph {
+private class SynchronizedDependencyGraph(private val delegate: DependencyGraph) : DependencyGraph {
   private val lock = ReentrantReadWriteLock()
 
   override fun createDelta(sourcesToProcess: Iterable<NodeSource?>?, deletedSources: Iterable<NodeSource?>?, isSourceOnly: Boolean): Delta? {
