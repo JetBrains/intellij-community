@@ -29,7 +29,7 @@ internal class ErrorMarker(
 
   override fun getEndOffset(): Int = getStartOffset()
 
-  override fun getTokenType(): SyntaxElementType = SyntaxTokenTypes.ERROR_ELEMENT
+  override fun getNodeType(): SyntaxElementType = SyntaxTokenTypes.ERROR_ELEMENT
 
   override fun getEndTokenIndex(): Int = startIndex
 

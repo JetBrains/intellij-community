@@ -183,7 +183,7 @@ interface SyntaxTreeBuilder {
     /**
      * The token type of this production
      */
-    fun getTokenType(): SyntaxElementType
+    fun getNodeType(): SyntaxElementType
 
     /**
      * The start offset of the production in the char sequence

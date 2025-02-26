@@ -169,7 +169,7 @@ internal class MarkerProduction(
       val m = getDoneMarkerAt(i)
       if (m != null && m.getStartTokenIndex() <= pivot.getStartTokenIndex() && indexOf(m) < pivotIndex) {
         throw AssertionError(
-          "There's a marker of type '${m.getTokenType()}' that starts before and finishes after the current marker. See cause for its allocation trace.",
+          "There's a marker of type '${m.getNodeType()}' that starts before and finishes after the current marker. See cause for its allocation trace.",
           myOptionalData.getAllocationTrace(m)
         )
       }

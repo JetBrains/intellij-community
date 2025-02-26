@@ -153,7 +153,7 @@ internal class PsiSyntaxBuilderImpl(
     }
     return CompositeNode(
       markerId = markedId,
-      myType = tokenConverter.convertNotNull(productionMarker.getTokenType()),
+      myType = tokenConverter.convertNotNull(productionMarker.getNodeType()),
       startIndex = productionMarker.getStartTokenIndex(),
       myEndIndex = productionMarker.getEndTokenIndex(),
       data = nodeData,

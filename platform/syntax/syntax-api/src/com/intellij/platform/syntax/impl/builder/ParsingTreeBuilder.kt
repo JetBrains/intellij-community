@@ -299,7 +299,7 @@ internal class ParsingTreeBuilder(
     }
 
     val doneLexeme = before?.getStartTokenIndex() ?: myCurrentLexeme
-    if (whitespaceOrCommentBindingPolicy.isLeftBound(marker.getTokenType()) && isEmpty(marker.getStartTokenIndex(), doneLexeme)) {
+    if (whitespaceOrCommentBindingPolicy.isLeftBound(marker.getNodeType()) && isEmpty(marker.getStartTokenIndex(), doneLexeme)) {
       marker.setCustomEdgeTokenBinders(WhitespacesBinders.defaultRightBinder(), null)
     }
     marker.endIndex = doneLexeme
@@ -354,7 +354,7 @@ internal class ParsingTreeBuilder(
     if (rootMarker.getEndTokenIndex() < lexemeCount) {
       val missed = arrayOfNulls<SyntaxElementType>(this.lexemeCount - rootMarker.getEndTokenIndex())
       result.copyTokenTypesToArray(missed, rootMarker.getEndTokenIndex(), 0, missed.size)
-      logger.error("Tokens ${missed.contentToString()} are outside of root element \"${rootMarker.getTokenType()}\".",
+      logger.error("Tokens ${missed.contentToString()} are outside of root element \"${rootMarker.getNodeType()}\".",
                    Attachment("outsideTokensFragment.txt", text.toString()))
     }
 

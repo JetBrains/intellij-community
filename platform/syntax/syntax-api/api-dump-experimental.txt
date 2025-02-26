@@ -94,9 +94,9 @@
 - a:getEndOffset():I
 - a:getEndTokenIndex():I
 - a:getErrorMessage():java.lang.String
+- a:getNodeType():com.intellij.platform.syntax.SyntaxElementType
 - a:getStartOffset():I
 - a:getStartTokenIndex():I
-- a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
 - a:isCollapsed():Z
 - a:isErrorMarker():Z
 *f:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
