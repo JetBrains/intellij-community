@@ -685,6 +685,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Helpers
   //
 
+  @ApiStatus.Internal
   @Override
   public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
     return myPrevNextDifferenceIterable;

@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.util;
+package com.intellij.diff.tools.util
 
-public interface PrevNextDifferenceIterable {
-  boolean canGoPrev();
+import org.jetbrains.annotations.ApiStatus
 
-  boolean canGoNext();
+@ApiStatus.Internal
+interface PrevNextDifferenceIterable {
+  fun canGoPrev(): Boolean
 
-  void goPrev();
+  fun canGoNext(): Boolean
 
-  void goNext();
+  fun goPrev()
+
+  fun goNext()
 }

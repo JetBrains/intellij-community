@@ -437,7 +437,6 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - isDisposed():Z
 - p:isNavigationEnabled():Z
 - p:isWindowFocused():Z
-- s:notifyMessage(com.intellij.openapi.actionSystem.AnActionEvent,javax.swing.JComponent,Z):V
 - p:onDispose():V
 - putContextUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - p:reloadRequest():V
@@ -449,36 +448,27 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - updateRequest(Z):V
 - a:updateRequest(Z,com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):V
 - p:updateToolOrderSettings(java.util.List):V
-pc:com.intellij.diff.impl.DiffRequestProcessor$MyNextChangeAction
+pa:com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.diff.impl.DiffRequestProcessor):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+pc:com.intellij.diff.impl.DiffRequestProcessor$MyNextChangeAction
+- com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
+- <init>(com.intellij.diff.impl.DiffRequestProcessor):V
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyNextDifferenceAction
-- com.intellij.diff.actions.impl.NextDifferenceAction
+- com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyOpenInEditorAction
 - com.intellij.diff.actions.impl.OpenInEditorAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyPrevChangeAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
+- com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyPrevDifferenceAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
+- com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.diff.impl.DiffRequestProcessorListener
 - java.util.EventListener
 - a:onViewerChanged():V
@@ -796,7 +786,6 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - getContents():java.util.List
 - p:getCurrentChange():com.intellij.diff.tools.fragmented.UnifiedDiffChange
 - getDiffChanges():java.util.List
-- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - getDocument(com.intellij.diff.util.Side):com.intellij.openapi.editor.Document
 - getEditor():com.intellij.openapi.editor.ex.EditorEx
 - getEditors():java.util.List
@@ -936,7 +925,6 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:createUi(com.intellij.diff.tools.simple.SimpleDiffChange):com.intellij.diff.tools.simple.SimpleDiffChangeUi
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
 - getDiffChanges():java.util.List
-- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - getFoldingModel():com.intellij.diff.tools.util.FoldingModelSupport
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - getModifierProvider():com.intellij.diff.tools.util.KeyboardModifierListener
@@ -1073,7 +1061,6 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - pa:getChanges():java.util.List
 - getChangesCount():I
 - getConflictsCount():I
-- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - pa:getDividerPaintable(com.intellij.diff.util.Side):com.intellij.diff.util.DiffDividerDrawUtil$DividerPaintable
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - p:getSelectedChange(com.intellij.diff.util.ThreeSide):com.intellij.diff.tools.simple.ThreesideDiffChangeBase
@@ -1151,7 +1138,6 @@ com.intellij.diff.tools.util.DiffDataKeys
 - sf:MERGE_VIEWER:com.intellij.openapi.actionSystem.DataKey
 - sf:NAVIGATABLE:com.intellij.openapi.actionSystem.DataKey
 - sf:NAVIGATABLE_ARRAY:com.intellij.openapi.actionSystem.DataKey
-- sf:PREV_NEXT_DIFFERENCE_ITERABLE:com.intellij.openapi.actionSystem.DataKey
 - sf:WRAPPING_DIFF_VIEWER:com.intellij.openapi.actionSystem.DataKey
 f:com.intellij.diff.tools.util.DiffNotifications
 - sf:INSTANCE:com.intellij.diff.tools.util.DiffNotifications
@@ -1244,13 +1230,7 @@ c:com.intellij.diff.tools.util.KeyboardModifierListener
 - isCtrlPressed():Z
 - isShiftPressed():Z
 - onModifiersChanged():V
-com.intellij.diff.tools.util.PrevNextDifferenceIterable
-- a:canGoNext():Z
-- a:canGoPrev():Z
-- a:goNext():V
-- a:goPrev():V
 a:com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
-- com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - <init>():V
 - canGoNext():Z
 - canGoPrev():Z

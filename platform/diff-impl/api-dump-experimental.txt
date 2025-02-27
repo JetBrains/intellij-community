@@ -18,7 +18,6 @@
 - a:iterateBlocks():java.lang.Iterable
 *f:com.intellij.diff.tools.combined.BlockState
 - com.intellij.diff.tools.combined.BlockOrder
-- com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - <init>(java.util.List,com.intellij.diff.tools.combined.CombinedBlockId):V
 - f:addListener(com.intellij.diff.tools.combined.BlockStateListener,com.intellij.openapi.Disposable):V
 - canGoNext():Z
