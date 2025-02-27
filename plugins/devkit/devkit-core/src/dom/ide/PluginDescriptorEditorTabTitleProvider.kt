@@ -12,12 +12,13 @@ import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 internal class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
 
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    if (PluginManagerCore.PLUGIN_XML != file.name ||
-        DumbService.isDumb(project)) {
-      return null
-    }
+    if (PluginManagerCore.PLUGIN_XML != file.name) return null
 
     val pluginId = ReadAction.compute<String?, Throwable> {
+      if (DumbService.isDumb(project)) {
+        return@compute null
+      }
+
       PluginIdDependenciesIndex.getPluginId(project, file)
     } ?: return null
 
