@@ -135,12 +135,12 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
 
     reader.consumeChildElements { localName ->
       when (localName) {
-        "id" -> descriptor.id = getNullifiedContent(reader)
-        "name" -> descriptor.name = getNullifiedContent(reader)
-        "version" -> descriptor.version = getNullifiedContent(reader)
-        "description" -> descriptor.description = getNullifiedContent(reader)
-        "idea-version" -> readIdeaVersion(reader, descriptor)
-        "product-descriptor" -> readProduct(reader, descriptor)
+        PluginXmlConst.ID_ELEM -> descriptor.id = getNullifiedContent(reader)
+        PluginXmlConst.NAME_ELEM -> descriptor.name = getNullifiedContent(reader)
+        PluginXmlConst.VERSION_ELEM -> descriptor.version = getNullifiedContent(reader)
+        PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
+        PluginXmlConst.IDEA_VERSION_ELEM -> readIdeaVersion(reader, descriptor)
+        PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
         else -> reader.skipElement()
       }
       assert(reader.isEndElement)
@@ -208,7 +208,7 @@ private fun readRootElementChild(
   includeBase: String?,
 ) {
   when (localName) {
-    "id" -> {
+    PluginXmlConst.ID_ELEM -> {
       when {
         descriptor.id == null -> {
           descriptor.id = getNullifiedContent(reader)
@@ -223,9 +223,9 @@ private fun readRootElementChild(
         }
       }
     }
-    "name" -> descriptor.name = getNullifiedContent(reader)
-    "category" -> descriptor.category = getNullifiedContent(reader)
-    "version" -> {
+    PluginXmlConst.NAME_ELEM -> descriptor.name = getNullifiedContent(reader)
+    PluginXmlConst.CATEGORY_ELEM -> descriptor.category = getNullifiedContent(reader)
+    PluginXmlConst.VERSION_ELEM -> {
       // kotlin includes compiler.xml that due to some reasons duplicates a version
       if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         descriptor.version = getNullifiedContent(reader)
@@ -234,11 +234,11 @@ private fun readRootElementChild(
         reader.skipElement()
       }
     }
-    "description" -> descriptor.description = getNullifiedContent(reader)
-    "change-notes" -> descriptor.changeNotes = getNullifiedContent(reader)
-    "resource-bundle" -> descriptor.resourceBundleBaseName = getNullifiedContent(reader)
-    "product-descriptor" -> readProduct(reader, descriptor)
-    "module" -> {
+    PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
+    PluginXmlConst.CHANGE_NOTES_ELEM -> descriptor.changeNotes = getNullifiedContent(reader)
+    PluginXmlConst.RESOURCE_BUNDLE_ELEM -> descriptor.resourceBundleBaseName = getNullifiedContent(reader)
+    PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
+    PluginXmlConst.MODULE_ELEM -> {
       findAttributeValue(reader, "value")?.let { moduleName ->
         if (descriptor.pluginAliases == null) {
           descriptor.pluginAliases = ArrayList()
@@ -247,17 +247,17 @@ private fun readRootElementChild(
       }
       reader.skipElement()
     }
-    "idea-version" -> readIdeaVersion(reader, descriptor)
-    "vendor" -> {
+    PluginXmlConst.IDEA_VERSION_ELEM -> readIdeaVersion(reader, descriptor)
+    PluginXmlConst.VENDOR_ELEM -> {
       for (i in 0 until reader.attributeCount) {
         when (reader.getAttributeLocalName(i)) {
-          "email" -> descriptor.vendorEmail = getNullifiedAttributeValue(reader, i)
-          "url" -> descriptor.vendorUrl = getNullifiedAttributeValue(reader, i)
+          PluginXmlConst.VENDOR_EMAIL_ATTR -> descriptor.vendorEmail = getNullifiedAttributeValue(reader, i)
+          PluginXmlConst.VENDOR_URL_ATTR -> descriptor.vendorUrl = getNullifiedAttributeValue(reader, i)
         }
       }
       descriptor.vendor = getNullifiedContent(reader)
     }
-    "incompatible-with" -> {
+    PluginXmlConst.INCOMPATIBLE_WITH_ELEM -> {
       getNullifiedContent(reader)?.let {
         if (descriptor.incompatibilities == null) {
           descriptor.incompatibilities = ArrayList()
@@ -266,15 +266,15 @@ private fun readRootElementChild(
       }
     }
 
-    "application-components" -> readComponents(reader, descriptor.appContainerDescriptor)
-    "project-components" -> readComponents(reader, descriptor.projectContainerDescriptor)
-    "module-components" -> readComponents(reader, descriptor.moduleContainerDescriptor)
+    PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)
+    PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, descriptor.projectContainerDescriptor)
+    PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, descriptor.moduleContainerDescriptor)
 
-    "applicationListeners" -> readListeners(reader, descriptor.appContainerDescriptor)
-    "projectListeners" -> readListeners(reader, descriptor.projectContainerDescriptor)
+    PluginXmlConst.APPLICATION_LISTENERS_ELEM -> readListeners(reader, descriptor.appContainerDescriptor)
+    PluginXmlConst.PROJECT_LISTENERS_ELEM -> readListeners(reader, descriptor.projectContainerDescriptor)
 
-    "extensions" -> readExtensions(reader, descriptor, readContext.interner)
-    "extensionPoints" -> readExtensionPoints(
+    PluginXmlConst.EXTENSIONS_ELEM -> readExtensions(reader, descriptor, readContext.interner)
+    PluginXmlConst.EXTENSION_POINTS_ELEM -> readExtensionPoints(
       reader = reader,
       descriptor = descriptor,
       readContext = readContext,
@@ -283,14 +283,14 @@ private fun readRootElementChild(
       includeBase = includeBase,
     )
 
-    "content" -> readContent(reader, descriptor, readContext)
-    "dependencies" -> readDependencies(reader, descriptor, readContext.interner)
+    PluginXmlConst.CONTENT_ELEM -> readContent(reader, descriptor, readContext)
+    PluginXmlConst.DEPENDENCIES_ELEM-> readDependencies(reader, descriptor, readContext.interner)
 
-    "depends" -> readOldDepends(reader, descriptor)
+    PluginXmlConst.DEPENDS_ELEM -> readOldDepends(reader, descriptor)
 
-    "actions" -> readActions(descriptor, reader, readContext)
+    PluginXmlConst.ACTIONS_ELEM -> readActions(descriptor, reader, readContext)
 
-    "include" -> readInclude(
+    PluginXmlConst.INCLUDE_ELEM -> readInclude(
       reader = reader,
       readInto = descriptor,
       readContext = readContext,
@@ -299,11 +299,11 @@ private fun readRootElementChild(
       includeBase = includeBase,
       allowedPointer = PluginXmlConst.DEFAULT_XPOINTER_VALUE,
     )
-    "helpset" -> {
+    PluginXmlConst.HELPSET_ELEM -> {
       // deprecated and not used element
       reader.skipElement()
     }
-    "locale" -> {
+    PluginXmlConst.LOCALE_ELEM -> {
       // not used in descriptor
       reader.skipElement()
     }
