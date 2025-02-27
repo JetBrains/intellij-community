@@ -20,13 +20,20 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     @JvmField
     val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(pluginJarFiles = Collections.emptyList(), pool = null)
 
-    fun toLoadPath(relativePath: String, base: String? = null): String {
+    /**
+     * By default, plugin.xml resides in the /META-INF/ directory, and it serves as a default for `currentDir`
+     *
+     * `intellij.*` and `kotlin.*` relative paths are treated as references to module XMLs which reside in resource root rather than in META-INF.
+     *
+     * Returned path does _not_ have leading '/' to use it in classloader's getResource
+     */
+    fun toLoadPath(relativePath: String, baseDir: String? = null): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
         relativePath.startsWith("intellij.")
         // TODO to be removed after KTIJ-29799
         || relativePath.startsWith("kotlin.") -> relativePath
-        else -> (base ?: "META-INF") + '/' + relativePath
+        else -> (baseDir ?: "META-INF") + '/' + relativePath
       }
     }
 
