@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
@@ -15,6 +15,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.externalSystem.testFramework.toDataNode
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.Function
@@ -70,12 +71,20 @@ abstract class ExternalSystemModuleDataIndexTestCase {
     }
   }
 
-  fun importData(projectDataBuilder: ProjectDataBuilder) {
-    val projectNode = projectDataBuilder.toDataNode()
-    val systemId = projectNode.data.owner
-    val projectPath = projectNode.data.linkedExternalProjectPath
-    val projectInfo = InternalExternalProjectInfo(systemId, projectPath, projectNode)
-    ProjectDataManagerImpl.getInstance().updateExternalProjectData(project, projectInfo)
-    ProjectDataManager.getInstance().importData(projectNode, project)
+  fun createDataStorage(vararg projectDataBuilders: ProjectDataBuilder): ExternalProjectsDataStorage {
+    return mock<ExternalProjectsDataStorage>().also {
+      for (projectDataBuilder in projectDataBuilders) {
+        val projectNode = projectDataBuilder.toDataNode()
+        val systemId = projectNode.data.owner
+        val projectPath = projectNode.data.linkedExternalProjectPath
+        val projectInfo = InternalExternalProjectInfo(systemId, projectPath, projectNode)
+        whenever(it.list(projectNode.data.owner)).thenReturn(listOf(projectInfo))
+      }
+    }
+  }
+
+  companion object {
+
+    val ENTITY_SOURCE = object : EntitySource {}
   }
 }
