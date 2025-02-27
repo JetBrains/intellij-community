@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlags;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +37,24 @@ public class RegExpInspectionConfigurationCellRenderer extends ColoredListCellRe
     else {
       append(shortenTextWithEllipsis(regExp, 100, 0, true), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append("/", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
+    if (value.flags != 0) {
+      var hasFlags = false;
+      for (RegExpFlags flag: RegExpFlags.values()) {
+        if (flag.mnemonic != null && (value.flags & flag.id) != 0) {
+          hasFlags = true;
+          append(flag.mnemonic.toString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
+      }
+      if ((value.flags & RegExpFlags.LITERAL.id) != 0) {
+        //noinspection HardCodedStringLiteral
+        append((hasFlags ? ", " : "") + "literal", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        hasFlags = true;
+      }
+      if ((value.flags & RegExpFlags.CANON_EQ.id) != 0) {
+        //noinspection HardCodedStringLiteral
+        append((hasFlags ? ", " : "") + " canon_eq", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
     }
     setEnabled(list.isEnabled());
   }

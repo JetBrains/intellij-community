@@ -6,6 +6,7 @@ import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -23,7 +24,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
 import org.intellij.lang.regexp.RegExpFileType
 import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.InspectionPattern
+import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlags
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -282,24 +283,27 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
   }
 
 
-  private inner class SelectRegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.options"), Presentation.NULL_STRING, LayeredIcon.GEAR_WITH_DROPDOWN) {
+  private inner class SelectRegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.flags"), Presentation.NULL_STRING, LayeredIcon.GEAR_WITH_DROPDOWN) {
     val myGroup: ActionGroup = DefaultActionGroup().apply {
-      RegExpInspectionConfiguration.RegExpFlags.entries.forEach { add(createToggleFlagAction(it)) }
+      RegExpFlags.entries.forEach { add(ToggleFlagAction(it)) }
       isPopup = true
     }
-    var listPopup: ListPopup? = null
 
     override fun actionPerformed(e: AnActionEvent) {
-      listPopup = JBPopupFactory.getInstance()
-        .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.options"), myGroup, e.dataContext, false, null, 10)
-      listPopup?.showUnderneathOf(filterButton)
+      JBPopupFactory.getInstance()
+        .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.flags"), myGroup, e.dataContext, false, null, 10)
+        .showUnderneathOf(filterButton)
     }
   }
 
   private inner class ToggleFlagAction(
-    val flag: RegExpInspectionConfiguration.RegExpFlags,
-    text: @NlsActions.ActionText String?,
-  ) : ToggleAction(text) {
+    val flag: RegExpFlags,
+  ) : ToggleAction(flag.text) {
+
+    init {
+      templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, flag.mnemonic?.toString())
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isSelected(e: AnActionEvent): Boolean {
@@ -309,20 +313,6 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if ((flags and flag.id != 0) == state) return
       flags = flags xor flag.id
-    }
-  }
-
-  private fun createToggleFlagAction(flag: RegExpInspectionConfiguration.RegExpFlags): ToggleFlagAction {
-    return when (flag) {
-      RegExpInspectionConfiguration.RegExpFlags.UNIX_LINES -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.unix.lines"))
-      RegExpInspectionConfiguration.RegExpFlags.CASE_INSENSITIVE -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.case.insensitive"))
-      RegExpInspectionConfiguration.RegExpFlags.COMMENTS -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.comments"))
-      RegExpInspectionConfiguration.RegExpFlags.MULTILINE -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.multiline"))
-      RegExpInspectionConfiguration.RegExpFlags.LITERAL -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.literal"))
-      RegExpInspectionConfiguration.RegExpFlags.DOTALL -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.dotall"))
-      RegExpInspectionConfiguration.RegExpFlags.UNICODE_CASE -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.unicode.case"))
-      RegExpInspectionConfiguration.RegExpFlags.CANON_EQ -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.canonical.equivalence"))
-      RegExpInspectionConfiguration.RegExpFlags.UNICODE_CHARACTER_CLASS -> ToggleFlagAction(flag, RegExpBundle.message("regexp.dialog.flag.unicode.character.class"))
     }
   }
 }
