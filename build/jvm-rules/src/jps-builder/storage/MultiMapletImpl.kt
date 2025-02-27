@@ -5,8 +5,10 @@ package org.jetbrains.bazel.jvm.jps.storage
 
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
+import com.intellij.util.io.PersistentHashMapValueStorage
 import com.intellij.util.io.PersistentMapBase
 import com.intellij.util.io.PersistentMapBuilder
+import com.intellij.util.io.PersistentMapImpl
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.dependency.MultiMaplet
 import java.io.DataInput
@@ -15,10 +17,12 @@ import java.io.DataOutput
 import java.nio.file.Path
 import kotlin.math.absoluteValue
 
-internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
+private val phmCreationOptions = PersistentHashMapValueStorage.CreationTimeOptions(false, false, false, false)
+
+internal class MultiMapletImpl<K : Any, V : Any>(
   mapFile: Path,
   keyDescriptor: KeyDescriptor<K>,
-  private val valueExternalizer: DataExternalizer<V>,
+  private val valueExternalizer: GraphDataExternalizer<V>,
 ) : MultiMaplet<K, V> {
   private val map: PersistentMapBase<K, Set<V>>
 
@@ -26,8 +30,9 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
     val builder = PersistentMapBuilder.newBuilder(mapFile, keyDescriptor, object : DataExternalizer<Set<V>> {
       override fun save(out: DataOutput, data: Set<V>) {
         out.writeInt(data.size)
+        val o = valueExternalizer.wrapOutput(out)
         for (value in data) {
-          valueExternalizer.save(out, value)
+          valueExternalizer.externalizer.save(o, value)
         }
       }
 
@@ -54,7 +59,7 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
         return result
       }
     })
-    map = builder.buildImplementation()
+    map = PersistentMapImpl(builder, phmCreationOptions)
   }
 
   override fun containsKey(key: K): Boolean {
@@ -95,7 +100,7 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
   override fun appendValue(key: K, value: V) {
     map.appendData(key) { out ->
       out.writeInt(1)
-      valueExternalizer.save(out, value)
+      valueExternalizer.externalizer.save(valueExternalizer.wrapOutput(out), value)
     }
   }
 
@@ -107,8 +112,9 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
 
     map.appendData(key) { out ->
       out.writeInt(size)
+      val o = valueExternalizer.wrapOutput(out)
       for (v in values) {
-        valueExternalizer.save(out, v)
+        valueExternalizer.externalizer.save(o, v)
       }
     }
   }
@@ -116,7 +122,7 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
   override fun removeValue(key: K, value: V) {
     map.appendData(key) { out ->
       out.writeInt(-1)
-      valueExternalizer.save(out, value)
+      valueExternalizer.externalizer.save(valueExternalizer.wrapOutput(out), value)
     }
   }
 
@@ -128,8 +134,9 @@ internal class DurablePersistentMultiMaplet<K : Any, V : Any>(
 
     map.appendData(key) { out ->
       out.writeInt(-size)
+      val o = valueExternalizer.wrapOutput(out)
       for (v in values) {
-        valueExternalizer.save(out, v)
+        valueExternalizer.externalizer.save(o, v)
       }
     }
   }
