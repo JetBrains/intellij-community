@@ -152,34 +152,28 @@ class PluginSetLoadingTest {
   }
 
   @Test
-  fun `until build is honored only if it targets 242 and earlier`() {
+  fun `until build is honored only if it targets 243 and earlier`() {
     fun addDescriptor(build: String) = writeDescriptor("p$build", """
-      <idea-plugin>
+    <idea-plugin>
       <id>p$build</id>
       <version>1.0</version>
       <idea-version since-build="$build" until-build="$build.100"/>
-      </idea-plugin>
+    </idea-plugin>
     """.trimIndent())
-    addDescriptor("242")
+
     addDescriptor("243")
     addDescriptor("251")
+    addDescriptor("252")
     addDescriptor("261")
 
-    assertEnabledPluginsSetEquals(listOf("p242")) { buildNumber = "242.10" }
     assertEnabledPluginsSetEquals(listOf("p243")) { buildNumber = "243.10" }
-    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
-    assertEnabledPluginsSetEquals(listOf("p243", "p251", "p261")) { buildNumber = "261.200" }
+    assertEnabledPluginsSetEquals(listOf("p251")) { buildNumber = "251.10" }
+    assertEnabledPluginsSetEquals(listOf("p251", "p252")) { buildNumber = "252.200" }
+    assertEnabledPluginsSetEquals(listOf("p251", "p252", "p261")) { buildNumber = "261.200" }
   }
 
   @Test
   fun `broken plugins is honored while until build is not`() {
-    writeDescriptor("p243", """
-      <idea-plugin>
-      <id>p243</id>
-      <version>1.0</version>
-      <idea-version since-build="243" until-build="243.100"/>
-      </idea-plugin>
-    """.trimIndent())
     writeDescriptor("p251", """
       <idea-plugin>
       <id>p251</id>
@@ -187,15 +181,22 @@ class PluginSetLoadingTest {
       <idea-version since-build="251" until-build="251.100"/>
       </idea-plugin>
     """.trimIndent())
+    writeDescriptor("p252", """
+      <idea-plugin>
+      <id>p252</id>
+      <version>1.0</version>
+      <idea-version since-build="252" until-build="252.100"/>
+      </idea-plugin>
+    """.trimIndent())
 
-    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
-    assertEnabledPluginsSetEquals(listOf("p251")) {
-      buildNumber = "251.200"
-      withBrokenPlugin("p243", "1.0")
-    }
-    assertEnabledPluginsSetEquals(listOf("p243")) {
-      buildNumber = "251.200"
+    assertEnabledPluginsSetEquals(listOf("p251", "p252")) { buildNumber = "252.200" }
+    assertEnabledPluginsSetEquals(listOf("p252")) {
+      buildNumber = "252.200"
       withBrokenPlugin("p251", "1.0")
+    }
+    assertEnabledPluginsSetEquals(listOf("p251")) {
+      buildNumber = "252.200"
+      withBrokenPlugin("p252", "1.0")
     }
   }
 
@@ -209,6 +210,7 @@ class PluginSetLoadingTest {
     val pluginSet = PluginSetTestBuilder(pluginDirPath).apply(builder).build()
     assertThat(pluginSet.enabledPlugins)
       .hasSize(enabledIds.size)
-    assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactlyInAnyOrderElementsOf(enabledIds)
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString })
+      .containsExactlyInAnyOrderElementsOf(enabledIds)
   }
 }
