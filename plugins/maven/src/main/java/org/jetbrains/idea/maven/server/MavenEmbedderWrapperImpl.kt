@@ -13,6 +13,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
+import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
 import java.nio.file.Path
 import java.rmi.RemoteException
 import kotlin.io.path.absolutePathString
@@ -96,6 +98,11 @@ internal class MavenEmbedderWrapperImpl(
     val mavenConfig = settings.mavenConfig ?: return null
     val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS) ?: return null
     return Path.of(filePath)
+  }
+
+  override fun isCompatibleWith(project: Project, multiModuleDirectory: String): Boolean {
+    val jdk = getJdkForImporter(project)
+    return myConnector?.isCompatibleWith(project, jdk, multiModuleDirectory) ?: false
   }
 
   @Synchronized
