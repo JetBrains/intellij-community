@@ -677,8 +677,8 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
           var value: String? = null
           for (i in 0 until reader.attributeCount) {
             when (reader.getAttributeLocalName(i)) {
-              "name" -> name = getNullifiedAttributeValue(reader, i)
-              "value" -> value = getNullifiedAttributeValue(reader, i)
+              PluginXmlConst.COMPONENT_OPTION_NAME_ATTR -> name = getNullifiedAttributeValue(reader, i)
+              PluginXmlConst.COMPONENT_OPTION_VALUE_ATTR -> value = getNullifiedAttributeValue(reader, i)
             }
           }
 
@@ -686,8 +686,8 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 
           if (name != null && value != null) {
             when {
-              name == "os" -> os = readOs(value)
-              name == "overrides" -> overrides = value.toBoolean()
+              name == PluginXmlConst.COMPONENT_OPTION_NAME_OS_VALUE -> os = readOs(value)
+              name == PluginXmlConst.COMPONENT_OPTION_NAME_OVERRIDES_VALUE -> overrides = value.toBoolean()
               options == null -> {
                 options = Collections.singletonMap(name, value)
               }

@@ -115,6 +115,10 @@ object PluginXmlConst {
   const val COMPONENT_IMPLEMENTATION_CLASS_ELEM: String = "implementation-class"
   const val COMPONENT_HEADLESS_IMPLEMENTATION_CLASS_ELEM: String = "headless-implementation-class"
   const val COMPONENT_OPTION_ELEM: String = "option"
+  const val COMPONENT_OPTION_NAME_ATTR: String = "name"
+  const val COMPONENT_OPTION_NAME_OS_VALUE: String = "os"
+  const val COMPONENT_OPTION_NAME_OVERRIDES_VALUE: String = "overrides"
+  const val COMPONENT_OPTION_VALUE_ATTR: String = "value"
 
   const val INCLUDE_ELEM: String = "include"
   const val DEFAULT_XPOINTER_VALUE: String = "xpointer(/idea-plugin/*)"
