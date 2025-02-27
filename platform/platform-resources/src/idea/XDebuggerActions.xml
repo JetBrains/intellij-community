@@ -82,7 +82,7 @@
       <reference ref="Rerun"/>
       <reference ref="Stop"/>
       <separator/>
-      <reference ref="Resume"/>
+      <reference ref="Resume.Ref"/>
       <reference ref="Pause"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
@@ -108,7 +108,7 @@
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
       <separator/>
-      <reference ref="Resume"/>
+      <reference ref="Resume.Ref"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>
       <separator/>

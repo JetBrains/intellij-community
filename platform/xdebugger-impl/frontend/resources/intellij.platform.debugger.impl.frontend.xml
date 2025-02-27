@@ -65,6 +65,9 @@
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
     </action>
+    <action id="Resume" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendResumeAction" icon="AllIcons.Actions.Resume">
+      <add-to-group group-id="Resume.Ref"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>

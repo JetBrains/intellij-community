@@ -99,6 +99,7 @@
     <!--endregion-->
 
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
+    <group id="Resume.Ref"/>
     <group id="DebugMainMenu">
       <separator/>
       <group id="DebuggingActionsGroup" popup="true">
@@ -114,7 +115,7 @@
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.ForceRunToCursor"/>
         <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
-        <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
+        <reference ref="Resume.Ref"/>
         <separator/>
         <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="AllIcons.Debugger.EvaluateExpression"/>
         <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
@@ -184,7 +185,7 @@
     <!--region TouchBar -->
     <group id="TouchBarDebug">
       <reference ref="Rerun"/>
-      <reference ref="Resume"/>
+      <reference ref="Resume.Ref"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>
       <!--suppress PluginXmlI18n, PluginXmlCapitalization -->

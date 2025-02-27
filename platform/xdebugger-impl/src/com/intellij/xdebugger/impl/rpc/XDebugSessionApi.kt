@@ -26,6 +26,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
 
+  suspend fun resume(sessionId: XDebugSessionId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {

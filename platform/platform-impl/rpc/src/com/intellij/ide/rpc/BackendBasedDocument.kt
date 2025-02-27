@@ -121,7 +121,17 @@ class BackendDocumentBindBuilder {
 @ApiStatus.Internal
 @ConsistentCopyVisibility
 @Serializable
-data class FrontendDocumentId internal constructor(val uid: UID)
+data class FrontendDocumentId internal constructor(val uid: UID) {
+  companion object {
+    @ApiStatus.Internal
+      /**
+       * Should be used only for deserialization!
+       */
+    fun fromString(encoded: String): FrontendDocumentId {
+      return FrontendDocumentId(UID.fromString(encoded))
+    }
+  }
+}
 
 @ApiStatus.Internal
 @ConsistentCopyVisibility

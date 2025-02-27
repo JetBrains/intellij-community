@@ -1,18 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.actions
+package com.intellij.platform.debugger.impl.frontend.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.xdebugger.impl.actions.PauseAction
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import java.awt.event.KeyEvent
 
-@Deprecated("Don't use this action directly, implement your own instead by using XDebugSession.resume")
-@ApiStatus.ScheduledForRemoval
-open class ResumeAction : DumbAwareAction() {
+private class FrontendResumeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     if (PauseAction.isPauseResumeMerged()) {
       e.presentation.isEnabledAndVisible = isEnabled(e)
@@ -28,7 +24,7 @@ open class ResumeAction : DumbAwareAction() {
     if (project == null) {
       return false
     }
-    val session = DebuggerUIUtil.getSession(e) as XDebugSessionImpl?
+    val session = e.frontendDebuggerSession
     if (session != null && !session.isStopped) {
       return !session.isReadOnly && session.isPaused
     }
@@ -41,9 +37,9 @@ open class ResumeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val session = DebuggerUIUtil.getSession(e) ?: return
-    performDebuggerAction(e) {
-      session.resume()
+    val session = e.frontendDebuggerSession ?: return
+    performDebuggerActionAsync(e) {
+      XDebugSessionApi.getInstance().resume(session.id)
     }
   }
 }

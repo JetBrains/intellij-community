@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
@@ -71,6 +70,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
       backendDocument.bindToFrontend(frontendDocumentId)
+    }
+  }
+
+  override suspend fun resume(sessionId: XDebugSessionId) {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
+    withContext(Dispatchers.EDT) {
+      sessionEntity.session.resume()
     }
   }
 }

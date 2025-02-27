@@ -24,11 +24,11 @@ internal class FrontendXDebuggerSession(
   sessionDto: XDebugSessionDto,
 ) {
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
-  private val sessionId = sessionDto.id
+  val id = sessionDto.id
 
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
     channelFlow {
-      XDebugSessionApi.getInstance().currentEvaluator(sessionId).collectLatest { evaluatorDto ->
+      XDebugSessionApi.getInstance().currentEvaluator(id).collectLatest { evaluatorDto ->
         if (evaluatorDto == null) {
           send(null)
           return@collectLatest
@@ -43,7 +43,7 @@ internal class FrontendXDebuggerSession(
 
   val sourcePosition: StateFlow<XSourcePosition?> =
     channelFlow {
-      XDebugSessionApi.getInstance().currentSourcePosition(sessionId).collectLatest { sourcePositionDto ->
+      XDebugSessionApi.getInstance().currentSourcePosition(id).collectLatest { sourcePositionDto ->
         if (sourcePositionDto == null) {
           send(null)
           return@collectLatest
@@ -57,7 +57,7 @@ internal class FrontendXDebuggerSession(
 
   private val sessionState: StateFlow<XDebugSessionState> =
     channelFlow {
-      XDebugSessionApi.getInstance().currentSessionState(sessionId).collectLatest { sessionState ->
+      XDebugSessionApi.getInstance().currentSessionState(id).collectLatest { sessionState ->
         send(sessionState)
       }
     }.stateIn(cs, SharingStarted.Eagerly, XDebugSessionState(false, false, false))
@@ -72,7 +72,7 @@ internal class FrontendXDebuggerSession(
     get() = sessionState.value.isReadOnly
 
   val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
-                                                  ?: FrontendXDebuggerEditorsProvider(sessionId, sessionDto.editorsProviderDto.fileTypeId)
+                                                  ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
 
   val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 }
