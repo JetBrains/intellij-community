@@ -35,7 +35,13 @@ internal class WorkspaceFileIndexDataImpl(
   private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
   
-  /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
+  /** These maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded]
+   * [VirtualFile] is used as a key instead of [VirtualFileUrl] primarily for performance and memory efficiency.
+   * Using VirtualFile allows for fast HashMap lookups in getFileInfo (which is requested via for example [com.intellij.openapi.roots.FileIndex.isInContent])
+   * Also, we would need to convert all virtual files to urls but all created instances of VirtualFileUrl are retained indefinitely which will
+   * lead to memory leak. Maybe it is possible to implement lightweight [VirtualFileUrl] but it's not clear how to then implement efficient
+   * equals and hashCode.
+   */
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection> = CollectionFactory.createSmallMemoryFootprintMap()
   private val fileSetsByPackagePrefix = PackagePrefixStorage()
 
