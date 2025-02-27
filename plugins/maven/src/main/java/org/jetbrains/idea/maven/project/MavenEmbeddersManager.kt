@@ -37,6 +37,12 @@ class MavenEmbeddersManager(private val project: Project) {
     var result = myPool[key]
     val alwaysOnline = kind === FOR_DOWNLOAD
 
+    if (result != null && !result.isCompatibleWith(project, multiModuleProjectDirectory)) {
+      myPool.remove(key)
+      myEmbeddersInUse.remove(result)
+      result = null
+    }
+
     if (result == null) {
       result = createEmbedder(embedderDir, alwaysOnline)
       myPool[key] = result
