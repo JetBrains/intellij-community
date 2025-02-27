@@ -23,6 +23,7 @@ object PluginXmlConst {
   const val PRODUCT_DESCRIPTOR_ELEM: String = "product-descriptor"
   const val PRODUCT_DESCRIPTOR_CODE_ATTR: String = "code"
   const val PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR: String = "release-date"
+  const val PRODUCT_DESCRIPTOR_RELEASE_DATE_PLACEHOLDER_VALUE: String = "__DATE__"
   const val PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR: String = "release-version"
   const val PRODUCT_DESCRIPTOR_OPTIONAL_ATTR: String = "optional"
 
@@ -154,4 +155,10 @@ object PluginXmlConst {
   const val FQN_PROJECT_SERVICE: String = "com.intellij.projectService"
   const val FQN_MODULE_SERVICE: String = "com.intellij.moduleService"
   const val FQN_POST_STARTUP_ACTIVITY: String = "com.intellij.postStartupActivity"
+
+  const val OS_MAC_VALUE: String = "mac"
+  const val OS_LINUX_VALUE: String = "linux"
+  const val OS_WINDOWS_VALUE: String = "windows"
+  const val OS_UNIX_VALUE: String = "unix"
+  const val OS_FREEBSD_VALUE: String = "freebsd"
 }

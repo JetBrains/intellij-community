@@ -935,7 +935,7 @@ private val LOG: Logger
   get() = PluginManagerCore.logger
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
-  if (dateString.isEmpty() || dateString == "__DATE__") {
+  if (dateString.isEmpty() || dateString == PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_PLACEHOLDER_VALUE) {
     return null
   }
 
@@ -991,11 +991,11 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
 
 private fun readOs(value: String): ExtensionDescriptor.Os {
   return when (value) {
-    "mac" -> ExtensionDescriptor.Os.mac
-    "linux" -> ExtensionDescriptor.Os.linux
-    "windows" -> ExtensionDescriptor.Os.windows
-    "unix" -> ExtensionDescriptor.Os.unix
-    "freebsd" -> ExtensionDescriptor.Os.freebsd
+    PluginXmlConst.OS_MAC_VALUE -> ExtensionDescriptor.Os.mac
+    PluginXmlConst.OS_LINUX_VALUE -> ExtensionDescriptor.Os.linux
+    PluginXmlConst.OS_WINDOWS_VALUE -> ExtensionDescriptor.Os.windows
+    PluginXmlConst.OS_UNIX_VALUE -> ExtensionDescriptor.Os.unix
+    PluginXmlConst.OS_FREEBSD_VALUE -> ExtensionDescriptor.Os.freebsd
     else -> throw IllegalArgumentException("Unknown OS: $value")
   }
 }
