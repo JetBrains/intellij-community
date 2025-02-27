@@ -1154,7 +1154,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                         DomElementAnnotationHolder holder) {
     if (templateText.equals(domValue.getValue())) {
       if (isNewlyGenerated(project)) {
-        holder.createProblem(domValue, HighlightSeverity.WEAK_WARNING, DevKitBundle.message("inspections.plugin.xml.do.not.use.template.text", templateText));
+        holder.createProblem(domValue, ProblemHighlightType.WEAK_WARNING,
+                             DevKitBundle.message("inspections.plugin.xml.do.not.use.template.text", templateText),
+                             null);
       }
       else {
         holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.do.not.use.template.text", templateText));
@@ -1173,7 +1175,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     String text = domValue.getStringValue();
     if (text != null && StringUtil.containsIgnoreCase(text, containsText)) {
       if (isNewlyGenerated(project)) {
-        holder.createProblem(domValue, HighlightSeverity.WEAK_WARNING, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", containsText));
+        holder.createProblem(domValue, ProblemHighlightType.WEAK_WARNING,
+                             DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", containsText),
+                             null);
       }
       else {
         holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", containsText));
