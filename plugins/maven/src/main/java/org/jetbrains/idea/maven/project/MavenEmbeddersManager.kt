@@ -13,9 +13,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class MavenEmbeddersManager(private val myProject: Project) {
+class MavenEmbeddersManager(private val project: Project) {
   private val myPool: MutableMap<Pair<Key<*>, String>, MavenEmbedderWrapper> = ContainerUtil.createSoftValueMap<Pair<Key<*>, String>, MavenEmbedderWrapper>()
-  private val myEmbeddersInUse: MutableSet<MavenEmbedderWrapper?> = HashSet<MavenEmbedderWrapper?>()
+  private val myEmbeddersInUse: MutableSet<MavenEmbedderWrapper> = HashSet<MavenEmbedderWrapper>()
 
   @Synchronized
   fun reset() {
@@ -24,26 +24,26 @@ class MavenEmbeddersManager(private val myProject: Project) {
 
   // used in third-party plugins
   @Synchronized
-  fun getEmbedder(mavenProject: MavenProject, kind: Key<*>?): MavenEmbedderWrapper {
+  fun getEmbedder(mavenProject: MavenProject, kind: Key<*>): MavenEmbedderWrapper {
     val baseDir = getBaseDir(mavenProject.directoryFile).toString()
     return getEmbedder(kind, baseDir)
   }
 
   @Synchronized
-  fun getEmbedder(kind: Key<*>?, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
+  fun getEmbedder(kind: Key<*>, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
     val embedderDir = guessExistingEmbedderDir(multiModuleProjectDirectory)
 
     val key = Pair.create<Key<*>, String>(kind, embedderDir)
-    var result = myPool.get(key)
+    var result = myPool[key]
     val alwaysOnline = kind === FOR_DOWNLOAD
 
     if (result == null) {
       result = createEmbedder(embedderDir, alwaysOnline)
-      myPool.put(key, result)
+      myPool[key] = result
     }
 
     if (myEmbeddersInUse.contains(result)) {
-      MavenLog.LOG.warn("embedder " + key + " is already used")
+      MavenLog.LOG.warn("embedder $key is already used")
       return createEmbedder(embedderDir, alwaysOnline)
     }
 
@@ -55,7 +55,7 @@ class MavenEmbeddersManager(private val myProject: Project) {
     var dir: String? = multiModuleProjectDirectory
     if (dir!!.isBlank()) {
       MavenLog.LOG.warn("Maven project directory is blank. Using project base path")
-      dir = myProject.getBasePath()
+      dir = project.getBasePath()
     }
     if (null == dir || dir.isBlank()) {
       MavenLog.LOG.warn("Maven project directory is blank. Using tmp dir")
@@ -65,17 +65,17 @@ class MavenEmbeddersManager(private val myProject: Project) {
     var path: Path? = originalPath
     while (null != path && !Files.exists(path)) {
       MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path))
-      path = path.getParent()
+      path = path.parent
     }
     if (null == path) {
-      MavenLog.LOG.warn("Could not determine maven project directory: " + multiModuleProjectDirectory)
+      MavenLog.LOG.warn("Could not determine maven project directory: $multiModuleProjectDirectory")
       return originalPath.toString()
     }
     return path.toString()
   }
 
   private fun createEmbedder(multiModuleProjectDirectory: String, alwaysOnline: Boolean): MavenEmbedderWrapper {
-    return getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory)
+    return getInstance().createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
   }
 
   @Synchronized
@@ -105,7 +105,7 @@ class MavenEmbeddersManager(private val myProject: Project) {
   @Synchronized
   private fun releasePooledEmbedders(includeInUse: Boolean) {
     for (each in myPool.keys) {
-      val embedder = myPool.get(each)
+      val embedder = myPool[each]
       if (embedder == null) continue  // collected
 
       if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue
