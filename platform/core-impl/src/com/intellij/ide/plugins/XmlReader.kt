@@ -859,9 +859,9 @@ private fun readInclude(
   var pointer: String? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "href" -> path = getNullifiedAttributeValue(reader, i)
-      "xpointer" -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
-      "includeIf" -> {
+      PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
+      PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
         checkConditionalIncludeIsSupported("includeIf", readInto)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value != "true") {
@@ -869,7 +869,7 @@ private fun readInclude(
           return
         }
       }
-      "includeUnless" -> {
+      PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
         checkConditionalIncludeIsSupported("includeUnless", readInto)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value == "true") {
@@ -890,7 +890,7 @@ private fun readInclude(
   }
 
   var isOptional = false
-  reader.consumeChildElements("fallback") {
+  reader.consumeChildElements(PluginXmlConst.INCLUDE_FALLBACK_ELEM) {
     isOptional = true
     reader.skipElement()
   }

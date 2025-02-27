@@ -65,7 +65,6 @@ object PluginXmlConst {
   const val DEPENDENCIES_PLUGIN_ELEM: String = "plugin"
   const val DEPENDENCIES_PLUGIN_ID_ATTR: String = "id"
 
-
   const val INCOMPATIBLE_WITH_ELEM: String = "incompatible-with"
 
   const val ACTIONS_ELEM: String = "actions"
@@ -135,6 +134,12 @@ object PluginXmlConst {
   const val COMPONENT_OPTION_VALUE_ATTR: String = "value"
 
   const val INCLUDE_ELEM: String = "include"
+  const val INCLUDE_HREF_ATTR: String = "href"
+  const val INCLUDE_XPOINTER_ATTR: String = "xpointer"
+  const val INCLUDE_INCLUDE_IF_ATTR: String = "includeIf"
+  const val INCLUDE_INCLUDE_UNLESS_ATTR: String = "includeUnless"
+  const val INCLUDE_FALLBACK_ELEM: String = "fallback"
+
   const val DEFAULT_XPOINTER_VALUE: String = "xpointer(/idea-plugin/*)"
   const val XINCLUDE_NAMESPACE_URI: String = "http://www.w3.org/2001/XInclude"
 
