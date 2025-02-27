@@ -53,6 +53,8 @@ class EelTargetType : TargetEnvironmentType<EelTargetEnvironmentRequest.Configur
   override val displayName: String = TARGET_TYPE_NAME
   override val icon: Icon = EMPTY_ICON
 
+  override fun isSystemCompatible(): Boolean = false
+
   override fun createEnvironmentRequest(project: Project?, config: EelTargetEnvironmentRequest.Configuration): TargetEnvironmentRequest {
     return EelTargetEnvironmentRequest(config)
   }
