@@ -59,7 +59,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
 
-public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
+public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass, PyPossibleClassMember {
   public static class MROException extends Exception {
     public MROException(String s) {
       super(s);
@@ -1340,6 +1340,19 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public String toString() {
     return "PyClass: " + getName();
+  }
+
+  @Override
+  @Nullable
+  public PyClass getContainingClass() {
+    PsiElement parent = getParent();
+    while (parent != null) {
+      if (parent instanceof PyClass) {
+        return (PyClass)parent;
+      }
+      parent = parent.getParent();
+    }
+    return null;
   }
 
   @Override
