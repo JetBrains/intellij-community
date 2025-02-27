@@ -257,8 +257,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().settingsChanged();
   }
 
-  @ApiStatus.Internal
-  public Deferred<@NotNull XDebugSessionEntity> getEntity() {
+  Deferred<@NotNull XDebugSessionEntity> getEntity() {
     return myEntity;
   }
 
