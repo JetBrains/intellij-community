@@ -715,7 +715,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 
 private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
   reader.consumeChildElements { elementName ->
-    if (elementName != "module") {
+    if (elementName != PluginXmlConst.CONTENT_MODULE_ELEM) {
       reader.skipElement()
       throw RuntimeException("Unknown content item type: $elementName")
     }
@@ -725,18 +725,18 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     var os: ExtensionDescriptor.Os? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
-        "loading" -> {
+        PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
+        PluginXmlConst.CONTENT_MODULE_LOADING_ATTR -> {
           val loading = reader.getAttributeValue(i)
           loadingRule = when (loading) {
-            "optional" -> ModuleLoadingRule.OPTIONAL
-            "required" -> ModuleLoadingRule.REQUIRED
-            "embedded" -> ModuleLoadingRule.EMBEDDED
-            "on-demand" -> ModuleLoadingRule.ON_DEMAND
+            PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> ModuleLoadingRule.OPTIONAL
+            PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> ModuleLoadingRule.REQUIRED
+            PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> ModuleLoadingRule.EMBEDDED
+            PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> ModuleLoadingRule.ON_DEMAND
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
-        "os" -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.CONTENT_MODULE_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
       }
     }
 
