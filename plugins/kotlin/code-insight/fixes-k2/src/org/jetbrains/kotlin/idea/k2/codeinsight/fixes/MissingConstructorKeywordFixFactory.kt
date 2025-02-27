@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.quickfix.MissingConstructorKeywordFix
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-object MissingConstructorKeywordFixFactory {
+internal object MissingConstructorKeywordFixFactory {
     val missingConstructorFix = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MissingConstructorKeyword ->
         val element = diagnostic.psi.getNonStrictParentOfType<KtPrimaryConstructor>() ?: return@ModCommandBased emptyList()
         listOf(MissingConstructorKeywordFix(element))

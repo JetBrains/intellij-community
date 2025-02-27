@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
  * ```
  */
 
-object ChangeSuperTypeListEntryTypeArgumentFixFactory {
+internal object ChangeSuperTypeListEntryTypeArgumentFixFactory {
     val changeSuperTypeListEntryTypeArgumentReturnTypeFixFactory = changeSuperTypeListEntry<ReturnTypeMismatchOnOverride>()
 
     val changeSuperTypeListEntryTypeArgumentPropertyTypeFixFactory = changeSuperTypeListEntry<PropertyTypeMismatchOnOverride>()

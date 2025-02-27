@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object ChangeVisibilityFixFactories {
+internal object ChangeVisibilityFixFactories {
 
     private data class ElementContext(
         val elementName: String,

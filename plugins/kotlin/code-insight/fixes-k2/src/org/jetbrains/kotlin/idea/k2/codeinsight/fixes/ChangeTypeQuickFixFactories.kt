@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-object ChangeTypeQuickFixFactories {
+internal object ChangeTypeQuickFixFactories {
     enum class TargetType {
         CURRENT_DECLARATION,
         BASE_DECLARATION,

@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
-object DeprecationFixFactory {
+internal object DeprecationFixFactory {
     val deprecatedWarning = IntentionBased { diagnostics: KaFirDiagnostic.Deprecation ->
         val kaSymbol = diagnostics.reference as? KaDeclarationSymbol ?: return@IntentionBased emptyList()
         createDeprecation(kaSymbol, diagnostics.psi)

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 
-object AddLateInitFactory {
+internal object AddLateInitFactory {
 
     val addLateInitFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeAbstract ->
         val property: KtProperty = diagnostic.psi

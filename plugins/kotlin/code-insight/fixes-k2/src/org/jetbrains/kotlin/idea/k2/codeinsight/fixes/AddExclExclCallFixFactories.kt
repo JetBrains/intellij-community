@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
@@ -15,15 +15,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object AddExclExclCallFixFactories {
 
-    val unsafeCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
+    val unsafeCallFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnsafeCall> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeInfixCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
+    val unsafeInfixCallFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnsafeInfixCall> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeOperatorCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
+    val unsafeOperatorCallFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnsafeOperatorCall> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
@@ -90,9 +90,8 @@ object AddExclExclCallFixFactories {
     }
 
     @OptIn(KaExperimentalApi::class)
-    val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
-        val expression = diagnostic.psi as? KtExpression
-            ?: return@IntentionBased emptyList()
+    val iteratorOnNullableFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorOnNullable> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
+        val expression = diagnostic.psi
         val type = expression.expressionType
             ?: return@IntentionBased emptyList()
         if (!type.canBeNull)

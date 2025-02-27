@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix
 
-object UnresolvedInvocationQuickFixFactories {
+internal object UnresolvedInvocationQuickFixFactories {
 
     val changeToPropertyAccessQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.FunctionExpected ->
         val expression = UnresolvedInvocationQuickFix.findAcceptableParentCallExpression(diagnostic.psi)

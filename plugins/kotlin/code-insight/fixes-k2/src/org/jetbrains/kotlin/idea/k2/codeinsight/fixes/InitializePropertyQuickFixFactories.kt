@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-object InitializePropertyQuickFixFactories {
+internal object InitializePropertyQuickFixFactories {
 
     private data class PropertyContext(
         val defaultInitializer: String,

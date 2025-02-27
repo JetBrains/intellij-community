@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-object MakeSuperTypeOpenFixFactory {
+internal object MakeSuperTypeOpenFixFactory {
 
     val makeSuperTypeOpenFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.FinalSupertype ->
         createQuickFixes(diagnostic)

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-object ReplaceJvmFieldWithConstFixFactory {
+internal object ReplaceJvmFieldWithConstFixFactory {
     private fun KaSession.createQuickFix(annotation: KtAnnotationEntry): ReplaceJvmFieldWithConstFix? {
         val property = annotation.getParentOfType<KtProperty>(false) ?: return null
         val initializer = property.initializer ?: return null
