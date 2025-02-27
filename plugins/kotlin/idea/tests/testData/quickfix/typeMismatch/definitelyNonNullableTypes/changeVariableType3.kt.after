@@ -1,0 +1,13 @@
+// "Change type of 'z' to 'T & Any'" "true"
+// LANGUAGE_VERSION: 1.8
+package a
+
+fun <T1> foo(x: T1 & Any) {}
+
+fun <T> bar(x: T & Any) {
+    val z: T & Any = x
+    foo(z)
+}
+// IGNORE_K2
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

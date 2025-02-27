@@ -18560,6 +18560,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType2.kt");
             }
 
+            @TestMetadata("changeVariableType3.kt")
+            public void testChangeVariableType3() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType3.kt");
+            }
+
             @TestMetadata("explicitCast1.kt")
             public void testExplicitCast1() throws Exception {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/explicitCast1.kt");
