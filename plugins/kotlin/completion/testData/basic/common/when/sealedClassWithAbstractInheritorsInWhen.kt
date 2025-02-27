@@ -8,7 +8,6 @@ abstract class CCCC: SEALED()
 
 class SomeClass
 
-
 fun foo(e: SEALED) {
     when (e) {
         <caret>
@@ -18,5 +17,6 @@ fun foo(e: SEALED) {
 // EXIST: is AAAA
 // EXIST: BBBB
 // EXIST: is CCCC
+// EXIST: SEALED
 // EXIST: { lookupString: "else -> "}
 // EXIST: is SomeClass

@@ -139,7 +139,11 @@ internal object Completions {
             is KotlinWithSubjectEntryPositionContext -> {
                 FirWhenWithSubjectConditionContributor(parameters, sink)
                     .complete(positionContext, weighingContext)
-                FirCallableCompletionContributor(parameters, sink, priority = 1)
+                FirClassifierCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirPackageCompletionContributor(parameters, sink, priority = 2)
+                    .complete(positionContext, weighingContext)
+                FirCallableCompletionContributor(parameters, sink, priority = 3)
                     .complete(positionContext, weighingContext)
             }
 

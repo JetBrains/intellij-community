@@ -15,4 +15,5 @@ fun foo(e: NON_SEALED) {
 // EXIST: { lookupString: "is AAAA", tailText: "<*, *> -> " }
 // EXIST: BBBB
 // EXIST: { lookupString: "is CCCC", tailText: "<*> -> " }
+// EXIST: NON_SEALED
 // EXIST: { lookupString: "else -> "}

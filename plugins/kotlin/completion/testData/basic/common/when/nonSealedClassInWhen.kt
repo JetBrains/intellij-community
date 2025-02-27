@@ -19,6 +19,7 @@ fun foo(e: SEALED) {
 // EXIST: is AAAA
 // EXIST: BBBB
 // EXIST: is CCCC
+// EXIST: SEALED
 // EXIST: is SomeClass
 // EXIST: SomeObject
 // EXIST: { lookupString: "else -> "}

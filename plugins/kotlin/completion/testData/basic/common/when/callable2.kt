@@ -15,4 +15,6 @@ fun test(s: Sealed) {
 // WITH_ORDER
 // EXIST: is A
 // EXIST: is B
+// EXIST: { lookupString: "else -> "}
+// EXIST: Sealed
 // EXIST: sealedConstant

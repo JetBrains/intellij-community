@@ -16,5 +16,6 @@ fun foo(e: SEALED) {
 // EXIST: is AAAA
 // EXIST: BBBB
 // EXIST: is CCCC
+// EXIST: SEALED
 // EXIST: { lookupString: "else -> "}
 // FIR_COMPARISON
