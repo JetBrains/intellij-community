@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.SwitchExhaustivenessState.*;
@@ -61,14 +61,15 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         Collections.addAll(elementsToCheckCompleteness, labelElementList.getElements());
       }
     }
-    if (needToCheckCompleteness(elementsToCheckCompleteness)) {
-      if (checkRedundantDefaultBranch(elementsToCheckCompleteness, errorSink)) return;
+    if (ExpressionUtil.isEnhancedSwitch(myBlock)) {
+      if (checkRedundantDefaultBranch(errorSink)) return;
+      if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(myBlock) != null) return;
+      if (JavaPsiSwitchUtil.findDefaultElement(myBlock) != null) return;
       checkCompleteness(elementsToCheckCompleteness, errorSink);
     }
   }
 
-  private boolean checkRedundantDefaultBranch(@NotNull List<? extends PsiCaseLabelElement> elements,
-                                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+  private boolean checkRedundantDefaultBranch(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
     PsiCaseLabelElement elementCoversType = JavaPsiSwitchUtil.getUnconditionalPatternLabel(myBlock);
     PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(myBlock);
@@ -86,7 +87,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     }
     //default (or unconditional), TRUE and FALSE cannot be together
     if ((defaultElement != null || elementCoversType != null) && 
-        mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && JavaPsiSwitchUtil.hasTrueAndFalse(myBlock)) {
+        JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(myBlock)) {
       if (defaultElement != null) {
         HighlightInfo.Builder defaultInfo =
           createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
@@ -108,7 +109,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
   private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements,
                                  @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (isExhaustiveForSwitchSelectorPrimitiveWrapper(elements)) return;
-    if (mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && hasTrueAndFalse(elements)) return;
+    if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(myBlock)) return;
     //enums are final; checking intersections are not needed
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(mySelectorType));
     if (selectorClass != null && mySelectorKind == JavaPsiSwitchUtil.SelectorKind.ENUM) {
@@ -148,14 +149,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
       errorSink.accept(completenessInfoForSwitch);
     }
-  }
-
-  private static boolean hasTrueAndFalse(@NotNull List<? extends PsiCaseLabelElement> elements) {
-    Set<Object> constants = elements.stream()
-      .filter(e -> e instanceof PsiExpression expression && PsiTypes.booleanType().equals(expression.getType()))
-      .map(e -> evaluateConstant(e))
-      .collect(Collectors.toSet());
-    return constants.contains(Boolean.TRUE) && constants.contains(Boolean.FALSE);
   }
 
   private boolean isExhaustiveForSwitchSelectorPrimitiveWrapper(@NotNull List<? extends PsiCaseLabelElement> elements) {
@@ -288,14 +281,14 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
       .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
     if (labelElements.isEmpty()) return UNEVALUATED;
-    boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
+    boolean needToCheckCompleteness = ExpressionUtil.isEnhancedSwitch(switchBlock);
     boolean isEnumSelector = switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.ENUM;
     AtomicBoolean reported = new AtomicBoolean();
     if (switchModel instanceof PatternsInSwitchBlockHighlightingModel patternsInSwitchModel) {
       if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) {
         return EXHAUSTIVE_WITH_UNCONDITIONAL;
       }
-      if (switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && hasTrueAndFalse(labelElements)) {
+      if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(switchBlock)) {
         return EXHAUSTIVE_WITH_UNCONDITIONAL;
       }
       if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;

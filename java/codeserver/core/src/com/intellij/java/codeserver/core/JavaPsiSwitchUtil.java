@@ -315,9 +315,18 @@ public final class JavaPsiSwitchUtil {
     return null;
   }
 
-  public static boolean hasTrueAndFalse(@NotNull PsiSwitchBlock block) {
+  /**
+   * @param block block to check
+   * @return true if this switch block is a boolean switch that contains both true and false branches.
+   * All unrelated branches or duplicate branches are ignored.
+   */
+  public static boolean isBooleanSwitchWithTrueAndFalse(@NotNull PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return false;
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return false;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null || getSwitchSelectorKind(selector.getType()) != SelectorKind.BOOLEAN) return false;
 
     PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(block.getProject()).getConstantEvaluationHelper();
     boolean hasTrue = false, hasFalse = false;
