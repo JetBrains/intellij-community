@@ -36,6 +36,14 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
       uvCli.runUv(cwd, *initArgs.toTypedArray())
         .onFailure { return Result.failure(it) }
+
+      // TODO: ask for an uv option not to create
+      val hello = cwd.resolve("hello.py").takeIf { it.exists() }
+      hello?.delete()
+
+      // called main.py in later versions
+      val main = cwd.resolve("main.py").takeIf { it.exists() }
+      main?.delete()
     }
 
     val venvArgs = mutableListOf("venv")
@@ -43,9 +51,10 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     uvCli.runUv(cwd, *venvArgs.toTypedArray())
       .onFailure { return Result.failure(it) }
 
-    // TODO: ask for an uv option not to create
-    val hello = cwd.resolve("hello.py").takeIf { it.exists() }
-    hello?.delete()
+    if (!init) {
+      uvCli.runUv(cwd, "sync")
+        .onFailure { return Result.failure(it) }
+    }
 
     val path = VirtualEnvReader.Instance.findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     if (path == null) {
