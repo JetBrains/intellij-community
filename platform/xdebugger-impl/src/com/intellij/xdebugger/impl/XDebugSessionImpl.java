@@ -196,6 +196,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     return descriptor;
   }
 
+  @ApiStatus.Internal
+  public @Nullable RunContentDescriptor getRunContentDescriptorIfInitialized() {
+    return myRunContentDescriptor;
+  }
+
   private boolean isTabInitialized() {
     return myTabInitDataFlow.getValue() != null && (XDebugSessionProxy.useFeProxy() || mySessionTab != null);
   }

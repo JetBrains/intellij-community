@@ -294,6 +294,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
           }
           detachFromSession();
         });
+
+        if (!myProject.isDisposed() &&
+            !ApplicationManager.getApplication().isUnitTestMode() &&
+            XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
+          RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                  getRunContentDescriptor());
+        }
       }
 
       @Override
