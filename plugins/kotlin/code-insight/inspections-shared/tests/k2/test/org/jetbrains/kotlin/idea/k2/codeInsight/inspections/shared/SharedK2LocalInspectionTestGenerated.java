@@ -1590,6 +1590,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantOverride/classAndInterface.kt");
         }
 
+        @TestMetadata("contextParameters.kt")
+        public void testContextParameters() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/contextParameters.kt");
+        }
+
         @TestMetadata("dataClass.kt")
         public void testDataClass() throws Exception {
             runTest("../testData/inspectionsLocal/redundantOverride/dataClass.kt");

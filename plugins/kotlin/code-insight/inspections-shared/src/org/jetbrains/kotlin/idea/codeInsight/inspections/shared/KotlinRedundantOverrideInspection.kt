@@ -44,7 +44,8 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
         namedFunctionVisitor(fun(function) {
             val funKeyword = function.funKeyword ?: return
             val modifierList = function.modifierList ?: return
-            if (!modifierList.hasModifier(OVERRIDE_KEYWORD)) return
+            val overrideKeyword = modifierList.getModifier(OVERRIDE_KEYWORD)
+            if (overrideKeyword == null) return
             if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
             if (KotlinPsiHeuristics.hasNonSuppressAnnotations(function)) return
 
@@ -99,7 +100,8 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
                     return
                 }
             }
-            val range = TextRange(modifierList.startOffsetInParent, funKeyword.endOffset - function.startOffset)
+
+            val range = TextRange(overrideKeyword.startOffset, funKeyword.endOffset).shiftLeft(function.startOffset)
             val descriptor = holder.manager.createProblemDescriptor(
                 function,
                 range,
