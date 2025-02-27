@@ -20,11 +20,6 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     @JvmField
     val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(pluginJarFiles = Collections.emptyList(), pool = null)
 
-    internal fun getParentPath(path: String): String {
-      val end = path.lastIndexOf('/')
-      return if (end == -1) "" else path.substring(0, end)
-    }
-
     fun toLoadPath(relativePath: String, base: String? = null): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
