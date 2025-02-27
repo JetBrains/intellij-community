@@ -31,11 +31,6 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
-@ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
-@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
-
-private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
-
 /**
  * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
  */
@@ -161,11 +156,11 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
 private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PACKAGE_ATTRIBUTE -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
       "url" -> descriptor.url = getNullifiedAttributeValue(reader, i)
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
-      IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "dependent-on-core" -> descriptor.isDependentOnCoreClassLoader = reader.getAttributeAsBoolean(i)
       "separate-jar" -> descriptor.isSeparateJar = reader.getAttributeAsBoolean(i)
@@ -302,7 +297,7 @@ private fun readRootElementChild(
       pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
       dataLoader = dataLoader,
       includeBase = includeBase,
-      allowedPointer = defaultXPointerValue,
+      allowedPointer = PluginXmlConst.DEFAULT_XPOINTER_VALUE,
     )
     "helpset" -> {
       // deprecated and not used element
