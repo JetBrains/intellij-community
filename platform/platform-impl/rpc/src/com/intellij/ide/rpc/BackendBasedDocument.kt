@@ -119,12 +119,14 @@ class BackendDocumentBindBuilder {
 }
 
 @ApiStatus.Internal
+@ConsistentCopyVisibility
 @Serializable
-data class FrontendDocumentId(val uid: UID)
+data class FrontendDocumentId internal constructor(val uid: UID)
 
 @ApiStatus.Internal
+@ConsistentCopyVisibility
 @Serializable
-data class BackendDocumentId(val uid: UID)
+data class BackendDocumentId internal constructor(val uid: UID)
 
 
 @ApiStatus.Internal
