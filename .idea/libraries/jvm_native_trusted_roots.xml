@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jvm-native-trusted-roots" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.nativecerts:jvm-native-trusted-roots:1.0.21">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.nativecerts:jvm-native-trusted-roots:1.0.23">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.21/jvm-native-trusted-roots-1.0.21.jar">
-          <sha256sum>9501d16ed256fa0db804e54e4d46732f1dceceae37f8590bec51032d3415496f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.23/jvm-native-trusted-roots-1.0.23.jar">
+          <sha256sum>204c4665fc54a1292ef124c4d27311876ebf434c633b2658bbfc3b892895a3b2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.21/jvm-native-trusted-roots-1.0.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.23/jvm-native-trusted-roots-1.0.23.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.21/jvm-native-trusted-roots-1.0.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.23/jvm-native-trusted-roots-1.0.23-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
