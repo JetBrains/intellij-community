@@ -34,26 +34,6 @@ import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
 
-@ApiStatus.Internal
-fun readModuleDescriptor(
-  input: ByteArray,
-  readContext: ReadModuleContext,
-  pathResolver: PathResolver,
-  dataLoader: DataLoader,
-  includeBase: String?,
-  readInto: RawPluginDescriptor?,
-  locationSource: String?,
-): RawPluginDescriptor {
-  return readModuleDescriptor(
-    reader = createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource),
-    readContext = readContext,
-    dataLoader = dataLoader,
-    pathResolver = pathResolver,
-    includeBase = includeBase,
-    readInto = readInto,
-  )
-}
-
 internal fun readModuleDescriptor(
   reader: XMLStreamReader2,
   readContext: ReadModuleContext,

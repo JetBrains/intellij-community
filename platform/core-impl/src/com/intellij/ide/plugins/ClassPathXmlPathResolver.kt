@@ -72,15 +72,10 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return readModuleDescriptor(
-      input = resource,
-      readContext = readContext,
-      pathResolver = this,
-      dataLoader = dataLoader,
-      includeBase = null,
-      readInto = readInto,
-      locationSource = dataLoader.toString(),
-    )
+    return PluginXmlStreamReader(readContext, dataLoader, this, null, readInto).let {
+      it.consume(resource, dataLoader.toString())
+      it.getRawPluginDescriptor()
+    }
   }
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {

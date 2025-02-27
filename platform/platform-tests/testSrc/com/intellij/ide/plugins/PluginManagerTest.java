@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.plugins.parser.RawPluginDescriptor;
-import com.intellij.ide.plugins.parser.ReadModuleContext;
-import com.intellij.ide.plugins.parser.XmlReader;
+import com.intellij.ide.plugins.parser.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
@@ -316,7 +314,9 @@ public class PluginManagerTest {
             var url = Objects.requireNonNull(child.getAttributeValue("url"));
             if (url.endsWith("/" + relativePath)) {
               try {
-                return XmlReader.readModuleDescriptor(elementAsBytes(child), readContext, this, dataLoader, null, readInto, null);
+                var reader = new PluginXmlStreamReader(readContext, dataLoader, this, null, readInto);
+                PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
+                return reader.getRawPluginDescriptor();
               }
               catch (XMLStreamException e) {
                 throw new RuntimeException(e);

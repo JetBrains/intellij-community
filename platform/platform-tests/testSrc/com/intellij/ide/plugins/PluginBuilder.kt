@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginXmlConst
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.readModuleDescriptor
+import com.intellij.ide.plugins.parser.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
@@ -339,18 +336,15 @@ class PluginBuilder private constructor() {
 }
 
 @TestOnly
-fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor = readModuleDescriptor(
-  input,
-  object : ReadModuleContext {
+fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
+  return PluginXmlStreamReader(readContext = object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-  },
-  PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-  object : DataLoader {
+  }, dataLoader = object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
-  },
-  includeBase = null,
-  readInto = null,
-  locationSource = null,
-)
+  }, pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, includeBase = null, readInto = null).let {
+    it.consume(input, null)
+    it.getRawPluginDescriptor()
+  }
+}
