@@ -110,7 +110,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final CoroutineScope myCoroutineScope;
   private final @Nullable ExecutionEnvironment myEnvironment;
   private final MutableStateFlow<Boolean> myStopped = createMutableStateFlow(false);
-  private boolean myPauseActionSupported;
+  private final MutableStateFlow<Boolean> myPauseActionSupported = createMutableStateFlow(false);
   private final MutableStateFlow<Boolean> myReadOnly = createMutableStateFlow(false);
   private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<>();
@@ -192,7 +192,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void setPauseActionSupported(final boolean isSupported) {
-    myPauseActionSupported = isSupported;
+    myPauseActionSupported.setValue(isSupported);
   }
 
 
@@ -255,8 +255,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myEnvironment != null ? myEnvironment.getRunProfile() : null;
   }
 
-  public boolean isPauseActionSupported() {
+  public StateFlow<Boolean> isPauseActionSupportedState() {
     return myPauseActionSupported;
+  }
+
+  public boolean isPauseActionSupported() {
+    return myPauseActionSupported.getValue();
   }
 
   @Override

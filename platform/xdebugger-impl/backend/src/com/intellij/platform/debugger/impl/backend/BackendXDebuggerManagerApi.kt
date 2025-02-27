@@ -15,6 +15,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionState
 import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
@@ -42,7 +43,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       val entity = currentSession.entity.await()
       val editorsProvider = currentSession.debugProcess.editorsProvider
       val fileTypeId = editorsProvider.fileType.name
-      XDebugSessionDto(entity.sessionId, XDebuggerEditorsProviderDto(fileTypeId, editorsProvider))
+      val initialSessionState = XDebugSessionState(
+        currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported
+      )
+      XDebugSessionDto(entity.sessionId, XDebuggerEditorsProviderDto(fileTypeId, editorsProvider), initialSessionState)
     }
   }
 

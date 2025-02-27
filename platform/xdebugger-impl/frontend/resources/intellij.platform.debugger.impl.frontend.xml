@@ -68,6 +68,9 @@
     <action id="Resume" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendResumeAction" icon="AllIcons.Actions.Resume">
       <add-to-group group-id="Resume.Ref"/>
     </action>
+    <action id="Pause" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendPauseAction" icon="AllIcons.Actions.Pause">
+      <add-to-group group-id="Pause.Ref"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>

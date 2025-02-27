@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
 
+/**
+ * @deprecated Don't use this action directly, implement your own instead by using XDebugSession.pause
+ */
+@Deprecated(forRemoval = true)
 public class PauseAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

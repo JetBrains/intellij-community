@@ -58,8 +58,10 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
     val session = sessionEntity.session as XDebugSessionImpl
 
-    return combine(session.isPausedState, session.isStoppedState, session.isReadOnlyState) { isPaused, isStopped, isReadOnly ->
-      XDebugSessionState(isPaused, isStopped, isReadOnly)
+    return combine(
+      session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState
+    ) { isPaused, isStopped, isReadOnly, isPauseActionSupported ->
+      XDebugSessionState(isPaused, isStopped, isReadOnly, isPauseActionSupported)
     }
   }
 
@@ -77,6 +79,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
     withContext(Dispatchers.EDT) {
       sessionEntity.session.resume()
+    }
+  }
+
+  override suspend fun pause(sessionId: XDebugSessionId) {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
+    withContext(Dispatchers.EDT) {
+      sessionEntity.session.pause()
     }
   }
 }

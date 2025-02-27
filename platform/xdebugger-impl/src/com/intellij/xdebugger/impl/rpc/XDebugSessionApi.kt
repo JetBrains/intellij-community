@@ -28,6 +28,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun resume(sessionId: XDebugSessionId)
 
+  suspend fun pause(sessionId: XDebugSessionId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {
@@ -45,6 +47,7 @@ data class XDebugSessionId(val id: UID)
 data class XDebugSessionDto(
   val id: XDebugSessionId,
   val editorsProviderDto: XDebuggerEditorsProviderDto,
+  val initialSessionState: XDebugSessionState
 )
 
 @ApiStatus.Internal
@@ -53,6 +56,7 @@ data class XDebugSessionState(
   val isPaused: Boolean,
   val isStopped: Boolean,
   val isReadOnly: Boolean,
+  val isPauseActionSupported: Boolean,
 )
 
 @ApiStatus.Internal

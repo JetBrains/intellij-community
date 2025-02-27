@@ -25,7 +25,6 @@ internal class FrontendXDebuggerSession(
 ) {
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   val id = sessionDto.id
-
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
     channelFlow {
       XDebugSessionApi.getInstance().currentEvaluator(id).collectLatest { evaluatorDto ->
@@ -60,7 +59,7 @@ internal class FrontendXDebuggerSession(
       XDebugSessionApi.getInstance().currentSessionState(id).collectLatest { sessionState ->
         send(sessionState)
       }
-    }.stateIn(cs, SharingStarted.Eagerly, XDebugSessionState(false, false, false))
+    }.stateIn(cs, SharingStarted.Eagerly, sessionDto.initialSessionState)
 
   val isStopped: Boolean
     get() = sessionState.value.isStopped
@@ -70,6 +69,9 @@ internal class FrontendXDebuggerSession(
 
   val isReadOnly: Boolean
     get() = sessionState.value.isReadOnly
+
+  val isPauseActionSupported: Boolean
+    get() = sessionState.value.isPauseActionSupported
 
   val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
                                                   ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)

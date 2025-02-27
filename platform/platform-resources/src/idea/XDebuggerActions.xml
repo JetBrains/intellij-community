@@ -83,7 +83,7 @@
       <reference ref="Stop"/>
       <separator/>
       <reference ref="Resume.Ref"/>
-      <reference ref="Pause"/>
+      <reference ref="Pause.Ref"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
@@ -109,7 +109,7 @@
     <group id="XDebugger.ToolWindow.LeftToolbar">
       <separator/>
       <reference ref="Resume.Ref"/>
-      <reference ref="Pause"/>
+      <reference ref="Pause.Ref"/>
       <reference ref="Stop"/>
       <separator/>
       <reference ref="ViewBreakpoints"/>
