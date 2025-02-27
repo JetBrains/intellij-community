@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XMarkObjectActionHandler.Companion.performMarkObject
@@ -74,8 +73,7 @@ private class FrontendMarkObjectAction : AnAction(), ActionRemoteBehaviorSpecifi
   }
 
   private fun getMarkers(e: AnActionEvent): XValueMarkers<FrontendXValue, XValueMarkerId>? {
-    val project = e.project ?: return null
-    return FrontendXDebuggerManager.getInstance(project).currentSession.value?.valueMarkers
+    return e.frontendDebuggerSession?.valueMarkers
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

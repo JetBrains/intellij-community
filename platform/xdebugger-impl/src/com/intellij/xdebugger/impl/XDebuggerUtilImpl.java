@@ -530,7 +530,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     reshowInlayRunToCursor(e);
   }
 
-  private static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {
+  public static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {
     if (!(e.getInputEvent() instanceof MouseEvent)) {
       return;
     }
