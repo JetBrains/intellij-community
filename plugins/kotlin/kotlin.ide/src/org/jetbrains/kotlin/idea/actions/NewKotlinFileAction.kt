@@ -9,6 +9,7 @@ import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
+import com.intellij.ide.fileTemplates.impl.BundledFileTemplate
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -251,12 +253,29 @@ private val FQNAME_SEPARATORS: CharArray = charArrayOf('/', '\\', '.')
 
 internal fun createFileFromTemplateWithStat(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
     KotlinJ2KOnboardingFUSCollector.logFirstKtFileCreated(dir.project) // implementation checks if it is actually the first
-    KotlinCreateFileFUSCollector.logFileTemplate(template.name)
+    KotlinCreateFileFUSCollector.logFileTemplate(template.correctName())
     return createKotlinFileFromTemplate(name, template, dir)
 }
 
+/*
+    Kotlin Script file templates have '.kts' extension instead of ".main.kts" or ".gradle.kts"
+    That leads to incorrect template naming such as 'Kotlin Script MainKts.main'
+    //TODO enumify template names
+ */
+private fun FileTemplate.correctName(): @NlsSafe String {
+    if (this !is BundledFileTemplate) return name
+    if (extension != "kts") return name
+
+    return when (qualifiedName) {
+        "Kotlin Script MainKts.main.kts" -> "Kotlin Script MainKts"
+        "Kotlin Script Gradle.gradle.kts" -> "Kotlin Script Gradle"
+        else -> name
+    }
+}
+
 fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-    val directorySeparators = when (template.name) {
+    val correctName = template.correctName()
+    val directorySeparators = when (correctName) {
         "Kotlin File" -> FILE_SEPARATORS
         "Kotlin Worksheet" -> FILE_SEPARATORS
         "Kotlin Script" -> FILE_SEPARATORS
@@ -270,7 +289,7 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
     val service = DumbService.getInstance(dir.project)
     return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
         val adjustedDir =
-            if (KotlinScriptFileTemplate.entries.any { it.fileName == template.name }) {
+            if (KotlinScriptFileTemplate.entries.any { it.fileName == correctName }) {
                 targetDir
             } else {
                 CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
