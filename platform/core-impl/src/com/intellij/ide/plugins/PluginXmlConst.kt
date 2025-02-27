@@ -19,7 +19,13 @@ object PluginXmlConst {
   const val ID_ELEM: String = "id"
   const val NAME_ELEM: String = "name"
   const val VERSION_ELEM: String = "version"
+
   const val PRODUCT_DESCRIPTOR_ELEM: String = "product-descriptor"
+  const val PRODUCT_DESCRIPTOR_CODE_ATTR: String = "code"
+  const val PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR: String = "release-date"
+  const val PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR: String = "release-version"
+  const val PRODUCT_DESCRIPTOR_OPTIONAL_ATTR: String = "optional"
+
 
   const val IDEA_VERSION_ELEM: String = "idea-version"
   const val IDEA_VERSION_SINCE_ATTR: String = "since-build"

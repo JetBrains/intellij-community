@@ -629,9 +629,9 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
 private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "code" -> descriptor.productCode = getNullifiedAttributeValue(reader, i)
-      "release-date" -> descriptor.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
-      "release-version" -> {
+      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> descriptor.productCode = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR -> descriptor.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
+      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> {
         try {
           descriptor.releaseVersion = reader.getAttributeAsInt(i)
         }
@@ -639,7 +639,7 @@ private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescripto
           descriptor.releaseVersion = 0
         }
       }
-      "optional" -> descriptor.isLicenseOptional = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> descriptor.isLicenseOptional = reader.getAttributeAsBoolean(i)
     }
   }
   reader.skipElement()
