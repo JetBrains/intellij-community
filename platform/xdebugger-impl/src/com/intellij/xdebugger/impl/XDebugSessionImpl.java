@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.process.ProcessEvent;
@@ -43,15 +42,21 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo;
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo;
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -59,10 +64,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.flow.FlowKt;
-import kotlinx.coroutines.flow.MutableStateFlow;
-import kotlinx.coroutines.flow.StateFlow;
-import kotlinx.coroutines.flow.StateFlowKt;
+import kotlinx.coroutines.flow.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +74,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
@@ -103,6 +104,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private XValueMarkers<?, ?> myValueMarkers;
   private final @Nls String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
+  private @Nullable RunContentDescriptor myRunContentDescriptor;
   private final @NotNull XDebugSessionData mySessionData;
   private final AtomicReference<Pair<XBreakpoint<?>, XSourcePosition>> myActiveNonLineBreakpoint = new AtomicReference<>();
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
@@ -112,7 +114,8 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final MutableStateFlow<Boolean> myStopped = createMutableStateFlow(false);
   private final MutableStateFlow<Boolean> myPauseActionSupported = createMutableStateFlow(false);
   private final MutableStateFlow<Boolean> myReadOnly = createMutableStateFlow(false);
-  private final AtomicBoolean myShowTabOnSuspend;
+  private final boolean myShowToolWindowOnSuspendOnly;
+  private final MutableStateFlow<@Nullable XDebuggerSessionTabAbstractInfo> myTabInitDataFlow = CoroutineUtilsKt.createMutableStateFlow(null);
   private final List<AnAction> myRestartActions = new SmartList<>();
   private final List<AnAction> myExtraStopActions = new SmartList<>();
   private final List<AnAction> myExtraActions = new SmartList<>();
@@ -135,14 +138,14 @@ public final class XDebugSessionImpl implements XDebugSession {
                            @NotNull XDebuggerManagerImpl debuggerManager,
                            @NotNull @Nls String sessionName,
                            @Nullable Icon icon,
-                           boolean showTabOnSuspend,
+                           boolean showToolWindowOnSuspendOnly,
                            @Nullable RunContentDescriptor contentToReuse) {
     myCoroutineScope = CoroutineScopeKt.childScope(debuggerManager.getCoroutineScope(), "XDebugSession " + sessionName,
                                                    EmptyCoroutineContext.INSTANCE, true);
     myEnvironment = environment;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
-    myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
+    myShowToolWindowOnSuspendOnly = showToolWindowOnSuspendOnly;
     myProject = debuggerManager.getProject();
     myExecutionPointManager = debuggerManager.getExecutionPointManager();
     ValueLookupManagerController.getInstance(myProject).startListening();
@@ -174,19 +177,28 @@ public final class XDebugSessionImpl implements XDebugSession {
     return mySessionName;
   }
 
+  @ApiStatus.Internal
+  public Flow<@Nullable XDebuggerSessionTabAbstractInfo> getTabInitDataFlow() {
+    return myTabInitDataFlow;
+  }
+
   @Override
   public @NotNull RunContentDescriptor getRunContentDescriptor() {
-    assertSessionTabInitialized();
-    //noinspection ConstantConditions
-    return mySessionTab.getRunContentDescriptor();
+    RunContentDescriptor descriptor = myRunContentDescriptor;
+    LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!");
+    return descriptor;
+  }
+
+  private boolean isTabInitialized() {
+    return myTabInitDataFlow.getValue() != null && (XDebugSessionProxy.useFeProxy() || mySessionTab != null);
   }
 
   private void assertSessionTabInitialized() {
-    if (myShowTabOnSuspend.get()) {
+    if (myShowToolWindowOnSuspendOnly && !isTabInitialized()) {
       LOG.error("Debug tool window isn't shown yet because debug process isn't suspended");
     }
     else {
-      LOG.assertTrue(mySessionTab != null, "Debug tool window not initialized yet!");
+      LOG.assertTrue(isTabInitialized(), "Debug tool window not initialized yet!");
     }
   }
 
@@ -362,8 +374,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     });
     //todo make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
-    if (!myShowTabOnSuspend.get()) {
-      initSessionTab(contentToReuse);
+    if (!myShowToolWindowOnSuspendOnly) {
+      initSessionTab(contentToReuse, false);
     }
   }
 
@@ -399,14 +411,18 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public @Nullable XDebugSessionTab getSessionTab() {
+    if (XDebugSessionProxy.useFeProxy()) {
+      LOG.error("Debug tab should not be used in split mode from XDebugSession");
+    }
     return mySessionTab;
   }
 
   @Override
   public RunnerLayoutUi getUI() {
     assertSessionTabInitialized();
-    assert mySessionTab != null;
-    return mySessionTab.getUi();
+    XDebugSessionTab sessionTab = getSessionTab();
+    assert sessionTab != null;
+    return sessionTab.getUi();
   }
 
   @Override
@@ -414,9 +430,35 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
   }
 
-  private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
-    mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
-    myDebugProcess.sessionInitialized();
+  private void initSessionTab(@Nullable RunContentDescriptor contentToReuse, boolean shouldShowTab) {
+    boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(getDebugProcess());
+    boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(getDebugProcess());
+
+    if (XDebugSessionProxy.useFeProxy()) {
+      XDebuggerSessionTabInfo tabInfo = new XDebuggerSessionTabInfo(myIcon, forceNewDebuggerUi, withFramesCustomization, shouldShowTab,
+                                                                    contentToReuse, myEnvironment);
+      if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
+        myRunContentDescriptor = contentToReuse != null
+                                 ? contentToReuse
+                                 // This is a mock descriptor used in backend only
+                                 : new RunContentDescriptor(myConsoleView, getDebugProcess().getProcessHandler(), new JLabel(),
+                                                            getSessionName(), myIcon, null);
+        myDebugProcess.sessionInitialized();
+      }
+    }
+    else {
+      if (myTabInitDataFlow.getValue() != null) return;
+      XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this);
+      XDebugSessionTab tab = XDebugSessionTab.create(proxy, myIcon, myEnvironment, contentToReuse,
+                                                     forceNewDebuggerUi, withFramesCustomization);
+      if (myTabInitDataFlow.compareAndSet(null, new XDebuggerSessionTabInfoNoInit(tab))) {
+        tabInitialized(tab);
+        myDebugProcess.sessionInitialized();
+        if (shouldShowTab) {
+          tab.showTab();
+        }
+      }
+    }
     addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
@@ -448,6 +490,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     return mySessionData;
   }
 
+  @ApiStatus.Internal
+  public void tabInitialized(@NotNull XDebugSessionTab sessionTab) {
+    mySessionTab = sessionTab;
+    myRunContentDescriptor = sessionTab.getRunContentDescriptor();
+  }
+
   private void disableSlaveBreakpoints() {
     Set<XBreakpoint<?>> slaveBreakpoints = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager().getAllSlaveBreakpoints();
     if (slaveBreakpoints.isEmpty()) {
@@ -466,8 +514,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void showSessionTab() {
-    RunContentDescriptor descriptor = getRunContentDescriptor();
-    RunContentManager.getInstance(getProject()).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    XDebugSessionTab tab = getSessionTab();
+    assert tab != null;
+    tab.showTab();
   }
 
   public @Nullable XValueMarkers<?, ?> getValueMarkers() {
@@ -986,12 +1035,11 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     logPositionReached(topFramePosition);
 
-    final boolean showOnSuspend = myShowTabOnSuspend.compareAndSet(true, false);
-    if (showOnSuspend || attract) {
+    final boolean needsInitialization = myTabInitDataFlow.getValue() == null;
+    if (needsInitialization || attract) {
       AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-        if (showOnSuspend) {
-          initSessionTab(null);
-          showSessionTab();
+        if (needsInitialization) {
+          initSessionTab(null, true);
         }
 
         // user attractions should only be made if event happens independently (e.g. program paused/suspended)

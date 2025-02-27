@@ -49,6 +49,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Note: could be stored in frontend, but it kept in shared due to compatibility issues.
+ */
 @ApiStatus.Internal
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final Logger LOG = Logger.getInstance(XDebugSessionTab.class);
@@ -61,6 +64,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected @Nullable XDebugSessionProxy mySession;
   private XDebugSessionData mySessionData;
 
+  /**
+   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironment, RunContentDescriptor, boolean, boolean)}
+   */
+  @Deprecated
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
@@ -163,6 +170,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @ApiStatus.Internal
   public @Nullable XVariablesViewBase getVariablesView() {
     return getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+  }
+
+  @ApiStatus.Internal
+  public void showTab() {
+    RunContentDescriptor descriptor = getRunContentDescriptor();
+    if (descriptor == null) return;
+    RunContentManager.getInstance(myProject).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
   protected void initFocusingVariablesFromFramesView() {
@@ -447,27 +461,23 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab tab = session.getSessionTab();
-    if (tab != null) {
-      showView(session, tab.getWatchesContentId());
-    }
+    if (tab == null) return;
+    tab.showView(tab.getWatchesContentId());
   }
 
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
-    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
-    if (tab != null) {
-      showView(session, tab.getFramesContentId());
-    }
+    if (session == null) return;
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab == null) return;
+    tab.showView(tab.getFramesContentId());
   }
 
-  private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
-    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
-    if (tab != null) {
-      tab.toFront(false, null);
-      Content content = tab.findOrRestoreContentIfNeeded(viewId);
-      // make sure we make it visible to the user
-      if (content != null) {
-        tab.myUi.selectAndFocus(content, false, false);
-      }
+  void showView(String viewId) {
+    toFront(false, null);
+    Content content = findOrRestoreContentIfNeeded(viewId);
+    // make sure we make it visible to the user
+    if (content != null) {
+      myUi.selectAndFocus(content, false, false);
     }
   }
 

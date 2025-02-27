@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -19,6 +20,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import org.jetbrains.annotations.ApiStatus
 
@@ -47,10 +49,15 @@ interface XDebugSessionProxy {
   fun rebuildViews()
   fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup)
   fun putKey(sink: DataSink)
+  fun updateExecutionPosition()
+  fun onTabInitialized(tab: XDebugSessionTab)
 
   companion object {
     @JvmField
     val DEBUG_SESSION_PROXY_KEY: DataKey<XDebugSessionProxy> = DataKey.create("XDebugSessionProxy")
+
+    @JvmStatic
+    fun useFeProxy(): Boolean = Registry.`is`("xdebugger.toolwindow.split")
   }
 
   // TODO WeakReference<XDebugSession>?
@@ -116,6 +123,14 @@ interface XDebugSessionProxy {
 
     override fun putKey(sink: DataSink) {
       sink[XDebugSession.DATA_KEY] = session
+    }
+
+    override fun updateExecutionPosition() {
+      (session as? XDebugSessionImpl)?.updateExecutionPosition()
+    }
+
+    override fun onTabInitialized(tab: XDebugSessionTab) {
+      (session as? XDebugSessionImpl)?.tabInitialized(tab)
     }
   }
 }

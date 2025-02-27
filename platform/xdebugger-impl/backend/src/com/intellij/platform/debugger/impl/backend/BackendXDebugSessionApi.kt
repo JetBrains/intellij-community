@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
@@ -72,6 +73,15 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
       backendDocument.bindToFrontend(frontendDocumentId)
+    }
+  }
+
+  override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto?> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    return session.tabInitDataFlow.map {
+      if (it == null) return@map null
+      XDebuggerSessionTabDto(it)
     }
   }
 

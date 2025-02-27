@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
@@ -8,17 +9,12 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFronten
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XValueMarkerId
-import com.intellij.xdebugger.impl.rpc.sourcePosition
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
+import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXDebuggerSession(
   private val project: Project,
@@ -81,7 +77,40 @@ internal class FrontendXDebuggerSession(
 
   val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 
+  init {
+    cs.launch {
+      XDebugSessionApi.getInstance().sessionTabInfo(id).collectLatest { tabDto ->
+        if (tabDto == null) return@collectLatest
+        initTabInfo(tabDto)
+        this.cancel() // Only one tab expected
+      }
+    }
+  }
+
+  private fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
+    val (tabInfo) = tabDto
+    cs.launch {
+      val sessionTab = when (tabInfo) {
+        is XDebuggerSessionTabInfo -> {
+          val proxy = createProxy(this@FrontendXDebuggerSession)
+          withContext(Dispatchers.EDT) {
+            XDebugSessionTab.create(proxy, tabInfo.icon, tabInfo.executionEnvironment, tabInfo.contentToReuse,
+                                    tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
+              proxy.onTabInitialized(this)
+              if (tabInfo.shouldShowTab) {
+                showTab()
+              }
+            }
+          }
+        }
+        is XDebuggerSessionTabInfoNoInit -> tabInfo.tab ?: return@launch
+      }
+    }
+  }
+
   fun closeScope() {
     cs.cancel()
   }
 }
+
+private fun createProxy(session: FrontendXDebuggerSession): XDebugSessionProxy = TODO()
