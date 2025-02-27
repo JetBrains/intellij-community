@@ -79,6 +79,18 @@ object PluginXmlConst {
   const val EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE: String = "IDEA_PROJECT"
   const val EXTENSION_POINT_AREA_IDEA_MODULE_VALUE: String = "IDEA_MODULE"
 
+  const val SERVICE_EP_SERVICE_INTERFACE_ATTR: String = "serviceInterface"
+  const val SERVICE_EP_SERVICE_IMPLEMENTATION_ATTR: String = "serviceImplementation"
+  const val SERVICE_EP_TEST_SERVICE_IMPLEMENTATION_ATTR: String = "testServiceImplementation"
+  const val SERVICE_EP_HEADLESS_IMPLEMENTATION_ATTR: String = "headlessImplementation"
+  const val SERVICE_EP_CONFIGURATION_SCHEMA_KEY_ATTR: String = "configurationSchemaKey"
+  const val SERVICE_EP_OVERRIDES_ATTR: String = "overrides"
+  const val SERVICE_EP_PRELOAD_ATTR: String = "preload"
+  const val SERVICE_EP_PRELOAD_TRUE_VALUE: String = "true"
+  const val SERVICE_EP_PRELOAD_AWAIT_VALUE: String = "await"
+  const val SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE: String = "notHeadless"
+  const val SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE: String = "notLightEdit"
+
   const val APPLICATION_COMPONENTS_ELEM: String = "application-components"
   const val PROJECT_COMPONENTS_ELEM: String = "project-components"
   const val MODULE_COMPONENTS_ELEM: String = "module-components"

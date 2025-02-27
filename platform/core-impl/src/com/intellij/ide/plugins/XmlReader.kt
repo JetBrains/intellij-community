@@ -593,18 +593,18 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
   var client: ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "serviceInterface" -> serviceInterface = getNullifiedAttributeValue(reader, i)
-      "serviceImplementation" -> serviceImplementation = getNullifiedAttributeValue(reader, i)
-      "testServiceImplementation" -> testServiceImplementation = getNullifiedAttributeValue(reader, i)
-      "headlessImplementation" -> headlessImplementation = getNullifiedAttributeValue(reader, i)
-      "configurationSchemaKey" -> configurationSchemaKey = reader.getAttributeValue(i)
-      "overrides" -> overrides = reader.getAttributeAsBoolean(i)
-      "preload" -> {
+      PluginXmlConst.SERVICE_EP_SERVICE_INTERFACE_ATTR -> serviceInterface = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.SERVICE_EP_SERVICE_IMPLEMENTATION_ATTR-> serviceImplementation = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.SERVICE_EP_TEST_SERVICE_IMPLEMENTATION_ATTR -> testServiceImplementation = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.SERVICE_EP_HEADLESS_IMPLEMENTATION_ATTR -> headlessImplementation = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.SERVICE_EP_CONFIGURATION_SCHEMA_KEY_ATTR -> configurationSchemaKey = reader.getAttributeValue(i)
+      PluginXmlConst.SERVICE_EP_OVERRIDES_ATTR -> overrides = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.SERVICE_EP_PRELOAD_ATTR -> {
         when (reader.getAttributeValue(i)) {
-          "true" -> preload = ServiceDescriptor.PreloadMode.TRUE
-          "await" -> preload = ServiceDescriptor.PreloadMode.AWAIT
-          "notHeadless" -> preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS
-          "notLightEdit" -> preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = ServiceDescriptor.PreloadMode.TRUE
+          PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = ServiceDescriptor.PreloadMode.AWAIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
