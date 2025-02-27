@@ -2,11 +2,12 @@
 package com.intellij.vcs.log.graph.impl.print.elements
 
 import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
-internal open class EdgePrintElementImpl(override val rowIndex: Int, override val positionInCurrentRow: Int, override val positionInOtherRow: Int,
+internal open class EdgePrintElementImpl(override val rowIndex: VcsLogVisibleGraphIndex, override val positionInCurrentRow: Int, override val positionInOtherRow: Int,
                                          override val type: EdgePrintElement.Type, graphEdge: GraphEdge,
                                          private val hasArrow: Boolean,
                                          presentationManager: PrintElementPresentationManager) :

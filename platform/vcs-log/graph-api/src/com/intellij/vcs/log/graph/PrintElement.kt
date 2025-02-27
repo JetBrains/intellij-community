@@ -2,9 +2,10 @@
 package com.intellij.vcs.log.graph
 
 /**
+ * Element in visible commit graph [VisibleGraph]
  */
 interface PrintElement {
-  val rowIndex: Int
+  val rowIndex: VcsLogVisibleGraphIndex
   val positionInCurrentRow: Int
   val colorId: Int
   val isSelected: Boolean

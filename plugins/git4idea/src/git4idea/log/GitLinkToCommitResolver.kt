@@ -16,11 +16,13 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
 import com.intellij.vcs.log.ui.table.GraphTableModel
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import com.intellij.vcs.log.ui.table.links.CommitLinksProvider
 import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit
@@ -34,7 +36,7 @@ internal class GitCommitLinkProvider(private val project: Project) : CommitLinks
   }
 
   override fun resolveLinks(logId: String, logData: VcsLogData, model: GraphTableModel,
-                            startRow: Int, endRow: Int) {
+                            startRow: VcsLogTableIndex, endRow: VcsLogTableIndex) {
     project.service<GitLinkToCommitResolver>().submitResolveLinks(logId, logData, model,
                                                                   startRow, endRow)
   }
@@ -67,8 +69,8 @@ internal class GitLinkToCommitResolver(private val project: Project) {
     logId: String,
     logData: VcsLogData,
     model: GraphTableModel,
-    startRow: Int,
-    endRow: Int
+    startRow: VcsLogTableIndex,
+    endRow: VcsLogTableIndex
   ) {
     val visibleGraph = model.visiblePack.visibleGraph as? VisibleGraphImpl ?: return
 
@@ -162,7 +164,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
   private fun iterateCommits(
     logData: VcsLogData,
     visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,
-    startFromCommitIndex: Int,
+    startFromCommitIndex: VcsLogVisibleGraphIndex,
     commitsCount: Int,
     consumer: (VcsCommitMetadata) -> Boolean
   ) {
@@ -170,9 +172,9 @@ internal class GitLinkToCommitResolver(private val project: Project) {
 
     val walkDepth = min(commitsCount, visibleGraph.visibleCommitCount)
     var visitedNode = 0
-    DfsWalk(listOf(startFromCommitIndex), linearGraph).walk(true) { currentNodeId ->
+    DfsWalk(listOf(startFromCommitIndex), linearGraph).walk(true) { currentRow ->
 
-      val currentCommitIndex = visibleGraph.getRowInfo(currentNodeId).commit
+      val currentCommitIndex = visibleGraph.getRowInfo(currentRow).commit
       val currentCommitData = logData.commitMetadataCache.getCachedData(currentCommitIndex)
       var consumed = false
 

@@ -5,7 +5,7 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.LoadingDetails
 
-internal fun GraphTableModel.getCommitId(row: Int): CommitId? {
+internal fun GraphTableModel.getCommitId(row: VcsLogTableIndex): CommitId? {
   return getCommitMetadata(row)?.getKnownCommitId()
 }
 

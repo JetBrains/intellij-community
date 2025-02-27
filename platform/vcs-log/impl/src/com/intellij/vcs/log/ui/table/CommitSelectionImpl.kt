@@ -7,6 +7,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.VisibleGraph
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
@@ -28,10 +29,10 @@ class CommitSelectionImpl(private val logData: VcsLogData,
     logData.commitDetailsGetter.loadCommitsData(ids, consumer::accept, { }, null)
   }
 
-  private fun getIdAtRow(row: Int) = visibleGraph.getRowInfo(row).commit
+  private fun getIdAtRow(row: VcsLogVisibleGraphIndex) = visibleGraph.getRowInfo(row).commit
 
   companion object {
-    private fun <T> IntArray.lazyMap(transform: (Int) -> T): List<T> {
+    private fun <T> IntArray.lazyMap(transform: (VcsLogVisibleGraphIndex) -> T): List<T> {
       return object : AbstractList<T>() {
         override fun get(index: Int): T = transform(this@lazyMap[index])
         override val size get() = this@lazyMap.size

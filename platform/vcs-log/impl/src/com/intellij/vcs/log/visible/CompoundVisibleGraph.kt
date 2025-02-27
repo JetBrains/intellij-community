@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.visible
 
 import com.intellij.vcs.log.graph.RowInfo
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.actions.ActionController
 import kotlin.math.max
@@ -13,7 +14,7 @@ internal class CompoundVisibleGraph<CommitId : Any>(
   override val visibleCommitCount: Int
     get() = max(firstGraph.visibleCommitCount, secondGraph.visibleCommitCount)
 
-  override fun getRowInfo(visibleRow: Int): RowInfo<CommitId> =
+  override fun getRowInfo(visibleRow: VcsLogVisibleGraphIndex): RowInfo<CommitId> =
     when {
       firstGraph.containsRow(visibleRow) -> firstGraph.getRowInfo(visibleRow)
       secondGraph.containsRow(visibleRow) -> secondGraph.getRowInfo(visibleRow)
@@ -21,7 +22,7 @@ internal class CompoundVisibleGraph<CommitId : Any>(
                  and secondGraph=${secondGraph.visibleCommitCount}""".trimMargin())
     }
 
-  override fun getVisibleRowIndex(id: CommitId): Int? {
+  override fun getVisibleRowIndex(id: CommitId): VcsLogVisibleGraphIndex? {
     return firstGraph.getVisibleRowIndex(id) ?: secondGraph.getVisibleRowIndex(id)
   }
 
@@ -31,7 +32,7 @@ internal class CompoundVisibleGraph<CommitId : Any>(
   override val recommendedWidth: Int
     get() = secondGraph.recommendedWidth
 
-  private fun VisibleGraph<CommitId>.containsRow(visibleRow: Int): Boolean {
+  private fun VisibleGraph<CommitId>.containsRow(visibleRow: VcsLogVisibleGraphIndex): Boolean {
     return visibleRow in 0 until visibleCommitCount
   }
 }

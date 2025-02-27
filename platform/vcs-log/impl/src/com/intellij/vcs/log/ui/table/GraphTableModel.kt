@@ -14,6 +14,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.RowInfo
 import com.intellij.vcs.log.graph.RowType
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
@@ -24,6 +25,11 @@ import javax.swing.table.AbstractTableModel
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
+
+/**
+ * Row index used in [VcsLogGraphTable].
+ */
+typealias VcsLogTableIndex = Int
 
 class GraphTableModel @ApiStatus.Internal constructor(
   val logData: VcsLogData,
@@ -50,7 +56,7 @@ class GraphTableModel @ApiStatus.Internal constructor(
     return getValueAt(rowIndex, getColumn(columnIndex)) as Any
   }
 
-  fun <T> getValueAt(rowIndex: Int, column: VcsLogColumn<T>): T {
+  fun <T> getValueAt(rowIndex: VcsLogTableIndex, column: VcsLogColumn<T>): T {
     if (rowIndex >= rowCount - 1 && VcsLogUtil.canRequestMore(visiblePack)) {
       requestMore.run()
     }
@@ -67,29 +73,30 @@ class GraphTableModel @ApiStatus.Internal constructor(
     }
   }
 
-  override fun getId(row: Int): VcsLogCommitStorageIndex? {
+  override fun getId(row: VcsLogTableIndex): VcsLogCommitStorageIndex? {
     return getGraphRowInfo(row)?.commit
   }
 
-  private fun getGraphRowInfo(row: Int): RowInfo<VcsLogCommitStorageIndex>? {
-    return visiblePack.visibleGraph.getRowInfo(row)
+  private fun getGraphRowInfo(row: VcsLogTableIndex): RowInfo<VcsLogCommitStorageIndex>? {
+    val graphRow = fromTableToGraphRow(row) ?: return null
+    return visiblePack.visibleGraph.getRowInfo(graphRow)
   }
 
-  fun getRowType(row: Int): RowType? {
+  fun getRowType(row: VcsLogTableIndex): RowType? {
     return getGraphRowInfo(row)?.rowType
   }
 
-  fun getRootAtRow(row: Int): VirtualFile? {
+  fun getRootAtRow(row: VcsLogTableIndex): VirtualFile? {
     val head = getGraphRowInfo(row)?.getOneOfHeads() ?: return null
     return visiblePack.getRootAtHead(head)
   }
 
-  fun getPrintElements(row: Int): Collection<PrintElement> {
+  fun getPrintElements(row: VcsLogTableIndex): Collection<PrintElement> {
     return if (VisiblePack.NO_GRAPH_INFORMATION.get(visiblePack, false)) emptyList()
     else getGraphRowInfo(row)?.printElements.orEmpty()
   }
 
-  fun getRefsAtRow(row: Int): List<VcsRef> {
+  fun getRefsAtRow(row: VcsLogTableIndex): List<VcsRef> {
     val root = getRootAtRow(row)
     val id = getId(row) ?: return emptyList()
     val refsModel = visiblePack.dataPack.refsModel
@@ -97,22 +104,24 @@ class GraphTableModel @ApiStatus.Internal constructor(
   }
 
   @JvmOverloads
-  fun getCommitMetadata(row: Int, load: Boolean = false): VcsCommitMetadata? {
+  fun getCommitMetadata(row: VcsLogTableIndex, load: Boolean = false): VcsCommitMetadata? {
     val commit = getId(row) ?: return null
     val commitsToLoad = if (load) {
       val startRowIndex = max(0, (row - UP_PRELOAD_COUNT))
       val endRowIndex = min(row + DOWN_PRELOAD_COUNT, rowCount)
       (startRowIndex until endRowIndex).asSequence().mapNotNull { getGraphRowInfo(it)?.commit }.asIterable()
     }
-    else ContainerUtil.emptyList<Int>()
+    else ContainerUtil.emptyList()
     return logData.miniDetailsGetter.getCommitData(commit, commitsToLoad)
   }
 
   fun createSelection(rows: IntArray): VcsLogCommitSelection {
-    return CommitSelectionImpl(logData, visiblePack.visibleGraph, rows)
+    return CommitSelectionImpl(logData, visiblePack.visibleGraph, fromTableToGraphRows(rows))
   }
 
-  fun fromGraphToTableRow(graphRow: Int): Int = graphRow
+  fun fromGraphToTableRow(graphRow: VcsLogVisibleGraphIndex): VcsLogTableIndex = graphRow
+  private fun fromTableToGraphRow(graphRow: VcsLogTableIndex): VcsLogVisibleGraphIndex? = graphRow
+  private fun fromTableToGraphRows(rows: IntArray): IntArray = rows
 
   private companion object {
     private const val UP_PRELOAD_COUNT = 20

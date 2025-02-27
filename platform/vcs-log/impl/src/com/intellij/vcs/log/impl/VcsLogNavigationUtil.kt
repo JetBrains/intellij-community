@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -217,7 +218,7 @@ object VcsLogNavigationUtil {
    * @param focus    focus the table
    */
   @JvmStatic
-  fun VcsLogUiEx.jumpToGraphRow(row: Int, silently: Boolean, focus: Boolean) {
+  fun VcsLogUiEx.jumpToGraphRow(row: VcsLogVisibleGraphIndex, silently: Boolean, focus: Boolean) {
     jumpTo(row, { visiblePack, r ->
       if (visiblePack.visibleGraph.visibleCommitCount <= r) return@jumpTo -1
       r
@@ -342,7 +343,7 @@ object VcsLogNavigationUtil {
     return mapToJumpSuccess(future)
   }
 
-  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): Int {
+  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): VcsLogVisibleGraphIndex {
     val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
     if (matchingRefs.isEmpty()) return VcsLogUiEx.COMMIT_NOT_FOUND
 
@@ -354,7 +355,7 @@ object VcsLogNavigationUtil {
     return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }
 
-  private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): Int {
+  private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): VcsLogVisibleGraphIndex {
     if (partialHash.length == VcsLogUtil.FULL_HASH_LENGTH) {
       var row = VcsLogUiEx.COMMIT_NOT_FOUND
       val candidateHash = HashImpl.build(partialHash)
@@ -379,14 +380,14 @@ object VcsLogNavigationUtil {
     return row.get()
   }
 
-  private fun getCommitRow(storage: VcsLogStorage, visiblePack: VisiblePack, hash: Hash, root: VirtualFile): Int {
+  private fun getCommitRow(storage: VcsLogStorage, visiblePack: VisiblePack, hash: Hash, root: VirtualFile): VcsLogVisibleGraphIndex {
     if (visiblePack.dataPack is ErrorDataPack) return VcsLogUiEx.COMMIT_NOT_FOUND
     if (visiblePack is ErrorVisiblePack) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
 
     return visiblePack.getCommitRow(storage.getCommitIndex(hash, root))
   }
 
-  private fun VisiblePack.getCommitRow(commitIndex: VcsLogCommitStorageIndex): Int {
+  private fun VisiblePack.getCommitRow(commitIndex: VcsLogCommitStorageIndex): VcsLogVisibleGraphIndex {
     val visibleGraphImpl = visibleGraph as? VisibleGraphImpl<VcsLogCommitStorageIndex> ?: return visibleGraph.getVisibleRowIndex(commitIndex)
                                                                                                  ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
     val nodeId = visibleGraphImpl.permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)

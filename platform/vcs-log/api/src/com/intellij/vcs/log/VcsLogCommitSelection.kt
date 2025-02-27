@@ -12,6 +12,8 @@ interface VcsLogCommitSelection {
 
   /**
    * Rows in [com.intellij.vcs.log.graph.VisibleGraph]
+   *
+   * @see com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
    */
   val rows: IntArray
 

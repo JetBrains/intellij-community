@@ -35,13 +35,13 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
   override val visibleCommitCount: Int
     get() = graphController.compiledGraph.nodesCount()
 
-  override fun getRowInfo(visibleRow: Int): RowInfo<CommitId> {
+  override fun getRowInfo(visibleRow: VcsLogVisibleGraphIndex): RowInfo<CommitId> {
     val nodeId = graphController.compiledGraph.getNodeId(visibleRow)
     assert(nodeId >= 0) // todo remake for all id
     return RowInfoImpl(nodeId, visibleRow)
   }
 
-  override fun getVisibleRowIndex(commitId: CommitId): Int? {
+  override fun getVisibleRowIndex(commitId: CommitId): VcsLogVisibleGraphIndex? {
     val nodeId = permanentGraph.permanentCommitsInfo.getNodeId(commitId)
     return graphController.compiledGraph.getNodeIndex(nodeId)
   }
@@ -50,7 +50,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
   fun updatePrintElementGenerator() {
     presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorGenerator)
-    val comparator = GraphElementComparatorByLayoutIndex { nodeIndex: Int ->
+    val comparator = GraphElementComparatorByLayoutIndex { nodeIndex: VcsLogVisibleGraphIndex ->
       val nodeId = linearGraph.getNodeId(nodeIndex)
       if (nodeId < 0) return@GraphElementComparatorByLayoutIndex nodeId
       permanentGraph.permanentGraphLayout.getLayoutIndex(nodeId)
@@ -58,7 +58,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     printElementGenerator = PrintElementGeneratorImpl(linearGraph, presentationManager, isShowLongEdges, comparator)
   }
 
-  fun buildSimpleGraphInfo(visibleRow: Int, visibleRange: Int): SimpleGraphInfo<CommitId> {
+  fun buildSimpleGraphInfo(visibleRow: VcsLogVisibleGraphIndex, visibleRange: Int): SimpleGraphInfo<CommitId> {
     return SimpleGraphInfo.build(graphController.compiledGraph,
                                  permanentGraph.permanentGraphLayout,
                                  permanentGraph.permanentCommitsInfo,
@@ -81,7 +81,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
   }
 
   private inner class ActionControllerImpl : ActionController<CommitId> {
-    private fun convertToNodeId(nodeIndex: Int?): Int? {
+    private fun convertToNodeId(nodeIndex: VcsLogVisibleGraphIndex?): Int? {
       return if (nodeIndex == null) null else graphController.compiledGraph.getNodeId(nodeIndex)
     }
 
@@ -190,7 +190,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
   data class LinearGraphActionImpl(override val affectedElement: GraphPrintElement?, override val type: GraphAction.Type) : LinearGraphAction
 
-  private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: Int) : RowInfo<CommitId> {
+  private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: VcsLogVisibleGraphIndex) : RowInfo<CommitId> {
     override fun getCommit(): CommitId {
       return permanentGraph.permanentCommitsInfo.getCommitId(nodeId)
     }
@@ -212,7 +212,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
       }
     }
 
-    override fun getAdjacentRows(parent: Boolean): List<Int> {
+    override fun getAdjacentRows(parent: Boolean): List<VcsLogVisibleGraphIndex> {
       return if (parent) LinearGraphUtils.getDownNodes(graphController.compiledGraph, visibleRow)
       else LinearGraphUtils.getUpNodes(graphController.compiledGraph, visibleRow)
     }
