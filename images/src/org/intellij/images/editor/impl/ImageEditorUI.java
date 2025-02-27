@@ -597,6 +597,7 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     sink.set(PlatformDataKeys.COPY_PROVIDER, this);
     sink.set(DATA_KEY, editor != null ? editor : this);
     if (editor == null) return;
+    sink.set(ImageDocument.IMAGE_DOCUMENT_DATA_KEY, editor.getDocument());
     Project project = editor.getProject();
     VirtualFile file = editor.getFile();
 
