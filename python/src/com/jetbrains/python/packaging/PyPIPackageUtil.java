@@ -41,7 +41,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.python.packaging.common.PackagesKt.normalizePackageName;
+import static com.jetbrains.python.packaging.PyPackageNameNormalizeUtilKt.normalizePackageName;
+
 
 @ApiStatus.Internal
 public final class PyPIPackageUtil {
