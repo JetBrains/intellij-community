@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.ide.actions.ToolWindowTabRenameActionBase
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
@@ -13,7 +14,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
-), DumbAware {
+), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return content.displayName
     return widget.terminalTitle.buildFullTitle()
