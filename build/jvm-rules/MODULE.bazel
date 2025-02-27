@@ -59,9 +59,9 @@ archive_override(
 
 http_file(
     name = "jps-standalone_http",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-build-standalone-27.02.25.jar",
-    downloaded_file_path = "jps-build-standalone-27.02.25.jar",
-    integrity = "sha256-WIGBhdShgsW93qar4Hj0GcrIbuNfqAkrtjGASpDasfM=",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-27.02.25.jar",
+    downloaded_file_path = "jps-27.02.25.jar",
+    integrity = "sha256-8hrPGgo0axQRJXTdCoCiowLHWqKraqJYkmoNqeIuVSc=",
 )
 
 http_archive(
