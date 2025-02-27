@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -48,6 +49,7 @@ import java.util.*;
 public final class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
+  private static final int WAIT_KILL_TIMEOUT = 10000;
 
   private final Project myProject;
   private final Map<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -208,6 +210,12 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
               debugProcess.stop(willBeDestroyed &&
                                 !(processHandler instanceof KillableColoredProcessHandler &&
                                   ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+
+              // still need to wait in tests for results stability
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                assert !DebuggerManagerThreadImpl.isManagerThread() && !DebuggerManagerThreadImpl.isManagerThread();
+                debugProcess.waitFor(WAIT_KILL_TIMEOUT);
+              }
             }
           }
         }
