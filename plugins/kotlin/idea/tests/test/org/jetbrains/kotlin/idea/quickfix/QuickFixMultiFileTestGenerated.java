@@ -412,6 +412,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
             }
 
+            @TestMetadata("extensionWrongTypeParam2_class.test")
+            public void testExtensionWrongTypeParam2_class() throws Exception {
+                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_class.test");
+            }
+
+            @TestMetadata("extensionWrongTypeParam2_rootPackage.test")
+            public void testExtensionWrongTypeParam2_rootPackage() throws Exception {
+                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_rootPackage.test");
+            }
+
             @TestMetadata("extensionWrongTypeParam3.test")
             public void testExtensionWrongTypeParam3() throws Exception {
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
