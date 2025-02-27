@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.readModuleDescriptor
+import com.intellij.ide.plugins.parser.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.UrlClassLoader
@@ -46,15 +44,9 @@ class ClassPathXmlPathResolver(
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        return readModuleDescriptor(
-          input = it,
-          readContext = readContext,
-          pathResolver = this,
-          dataLoader = dataLoader,
-          includeBase = null,
-          readInto = readInto,
-          locationSource = dataLoader.toString(),
-        )
+        val reader = PluginXmlStreamReader(readContext, dataLoader, this, null, readInto)
+        reader.consume(it, dataLoader.toString())
+        return reader.getRawPluginDescriptor()
       }
       resource = null
     }

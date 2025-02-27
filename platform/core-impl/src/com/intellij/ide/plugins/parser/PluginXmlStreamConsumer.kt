@@ -1,0 +1,27 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.parser
+
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import org.codehaus.stax2.XMLStreamReader2
+import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import javax.xml.stream.XMLStreamException
+
+@ApiStatus.Internal
+interface PluginXmlStreamConsumer {
+  @Throws(XMLStreamException::class)
+  fun consume(reader: XMLStreamReader2)
+}
+
+/**
+ * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
+ */
+@ApiStatus.Internal
+@Throws(XMLStreamException::class)
+fun PluginXmlStreamConsumer.consume(input: InputStream, locationSource: String?): Unit =
+  consume(createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource))
+
+@ApiStatus.Internal
+@Throws(XMLStreamException::class)
+fun PluginXmlStreamConsumer.consume(byteArray: ByteArray, locationSource: String?): Unit =
+  consume(createNonCoalescingXmlStreamReader(input = byteArray, locationSource = locationSource))

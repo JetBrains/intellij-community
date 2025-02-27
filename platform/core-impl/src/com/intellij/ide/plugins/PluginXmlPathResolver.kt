@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.parser.PluginXmlStreamReader
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.readModuleDescriptor
+import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
@@ -49,16 +50,11 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
   override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
     val path = toLoadPath(relativePath, base)
     try {
-      dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
-        readModuleDescriptor(
-          input = it,
-          readContext = readContext,
-          pathResolver = this,
-          dataLoader = dataLoader,
-          includeBase = getChildBase(base = base, relativePath = relativePath),
-          readInto = readInto,
-          locationSource = null,
-        )
+      dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
+        PluginXmlStreamReader(readContext, dataLoader, this, getChildBase(base = base, relativePath = relativePath), readInto).let {
+          it.consume(input, null)
+          it.getRawPluginDescriptor()
+        }
         return true
       }
 
@@ -75,8 +71,11 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
 
       // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
       if (path.startsWith("META-INF/")) {
-        PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-          readModuleDescriptor(input = it, readContext = readContext, pathResolver = this, dataLoader = dataLoader, includeBase = null, readInto = readInto, locationSource = null)
+        PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let { input ->
+          PluginXmlStreamReader(readContext, dataLoader, this, null, readInto).let {
+            it.consume(input, null)
+            it.getRawPluginDescriptor()
+          }
           return true
         }
       }
@@ -89,16 +88,11 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = toLoadPath(relativePath)
-    dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
-      return readModuleDescriptor(
-        input = it,
-        readContext = readContext,
-        pathResolver = this,
-        dataLoader = dataLoader,
-        includeBase = null,
-        readInto = readInto,
-        locationSource = null,
-      )
+    dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
+      return PluginXmlStreamReader(readContext, dataLoader, this, null, readInto).let {
+        it.consume(input, null)
+        it.getRawPluginDescriptor()
+      }
     }
 
     val result = readInto ?: RawPluginDescriptor()
@@ -129,15 +123,10 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    val descriptor = readModuleDescriptor(
-      input = input,
-      readContext = readContext,
-      pathResolver = this,
-      dataLoader = dataLoader,
-      includeBase = null,
-      readInto = readInto,
-      locationSource = null,
-    )
+    val descriptor = PluginXmlStreamReader(readContext, dataLoader, this, null, readInto).let {
+      it.consume(input, null)
+      it.getRawPluginDescriptor()
+    }
     return descriptor
   }
 
@@ -162,16 +151,11 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
         continue
       }
 
-      val result = resolver.loadZipEntry(relativePath)?.let {
-        readModuleDescriptor(
-          input = it,
-          readContext = readContext,
-          pathResolver = this,
-          dataLoader = dataLoader,
-          includeBase = includeBase,
-          readInto = readInto,
-          locationSource = jarFile.toString(),
-        )
+      val result = resolver.loadZipEntry(relativePath)?.let { input ->
+        PluginXmlStreamReader(readContext, dataLoader, this, includeBase, readInto).let {
+          it.consume(input, jarFile.toString())
+          it.getRawPluginDescriptor()
+        }
       }
 
       (resolver as? Closeable)?.close()

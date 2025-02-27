@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.PathResolver
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.parser.PluginXmlStreamReader
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.readModuleDescriptor
+import com.intellij.ide.plugins.parser.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path
@@ -32,15 +35,9 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      return readModuleDescriptor(
-        input = input,
-        readContext = readContext,
-        pathResolver = this,
-        dataLoader = dataLoader,
-        includeBase = null,
-        readInto = readInto,
-        locationSource = path,
-      )
+      val reader = PluginXmlStreamReader(readContext, dataLoader, this, null, readInto)
+      reader.consume(input, path)
+      return reader.getRawPluginDescriptor()
     }
     else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
       return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }

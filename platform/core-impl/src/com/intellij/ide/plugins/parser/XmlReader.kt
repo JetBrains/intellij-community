@@ -33,28 +33,6 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
-/**
- * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
- */
-@ApiStatus.Internal
-fun readModuleDescriptor(
-  input: InputStream,
-  readContext: ReadModuleContext,
-  pathResolver: PathResolver?,
-  dataLoader: DataLoader,
-  includeBase: String?,
-  readInto: RawPluginDescriptor?,
-  locationSource: String?,
-): RawPluginDescriptor {
-  return readModuleDescriptor(
-    reader = createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource),
-    readContext = readContext,
-    dataLoader = dataLoader,
-    pathResolver = pathResolver,
-    includeBase = includeBase,
-    readInto = readInto,
-  )
-}
 
 @ApiStatus.Internal
 fun readModuleDescriptor(

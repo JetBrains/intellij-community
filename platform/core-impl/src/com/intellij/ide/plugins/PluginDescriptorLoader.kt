@@ -4,9 +4,7 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.readBasicDescriptorData
-import com.intellij.ide.plugins.parser.readModuleDescriptor
+import com.intellij.ide.plugins.parser.*
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -176,15 +174,10 @@ private fun loadDescriptorFromStream(
   descriptorRelativePath: String,
   pool: ZipEntryResolverPool,
 ): IdeaPluginDescriptorImpl {
-  val raw = readModuleDescriptor(
-    input = input,
-    readContext = context,
-    pathResolver = pathResolver,
-    dataLoader = dataLoader,
-    includeBase = null,
-    readInto = null,
-    locationSource = fileOrDir.toString(),
-  )
+  val raw = PluginXmlStreamReader(context, dataLoader, pathResolver, null, null).let {
+    it.consume(input, fileOrDir.toString())
+    it.getRawPluginDescriptor()
+  }
   val descriptor = IdeaPluginDescriptorImpl(
     raw = raw,
     path = pluginDir ?: fileOrDir,
@@ -1284,15 +1277,10 @@ private fun loadDescriptorFromResource(
       else -> return null
     }
 
-    val raw = readModuleDescriptor(
-      input = input,
-      readContext = context,
-      pathResolver = pathResolver,
-      dataLoader = dataLoader,
-      includeBase = null,
-      readInto = null,
-      locationSource = file.toString(),
-    )
+    val raw = PluginXmlStreamReader(context, dataLoader, pathResolver, null, null).let {
+      it.consume(input, file.toString())
+      it.getRawPluginDescriptor()
+    }
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = basePath, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
