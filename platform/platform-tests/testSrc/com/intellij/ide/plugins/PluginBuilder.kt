@@ -198,10 +198,10 @@ class PluginBuilder private constructor() {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
-        append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
+        append(""" ${PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR}="true"""")
       }
       packagePrefix?.let {
-        append(""" $PACKAGE_ATTRIBUTE="$it"""")
+        append(""" ${PluginXmlConst.PLUGIN_PACKAGE_ATTR}="$it"""")
       }
       if (separateJar) {
         append(""" separate-jar="true"""") // todo change to const from xml reader
