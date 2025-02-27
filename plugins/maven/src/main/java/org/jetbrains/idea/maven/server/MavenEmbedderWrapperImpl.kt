@@ -102,7 +102,7 @@ internal class MavenEmbedderWrapperImpl(
 
   override fun isCompatibleWith(project: Project, multiModuleDirectory: String): Boolean {
     val jdk = getJdkForImporter(project)
-    return myConnector?.isCompatibleWith(project, jdk, multiModuleDirectory) ?: false
+    return myConnector?.isCompatibleWith(project, jdk, multiModuleDirectory) ?: true
   }
 
   @Synchronized
