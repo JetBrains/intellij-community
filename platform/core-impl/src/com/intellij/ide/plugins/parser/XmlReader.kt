@@ -38,42 +38,30 @@ import javax.xml.stream.events.XMLEvent
 
 
 internal fun readModuleDescriptor(
+  builder: PluginXmlFromXmlStreamBuilder,
   reader: XMLStreamReader2,
-  readContext: ReadModuleContext,
-  dataLoader: DataLoader,
-  pathResolver: PathResolver? = null,
-  includeBase: String? = null,
-  readInto: RawPluginDescriptor? = null,
-): RawPluginDescriptor {
+) {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
       throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, but current state is ${getEventTypeString(reader.eventType)}", reader.location)
     }
 
-    val descriptor = readInto ?: RawPluginDescriptor()
-
     @Suppress("ControlFlowWithEmptyBody")
     while (reader.next() != XMLStreamConstants.START_ELEMENT) ;
     if (!reader.isStartElement) {
-      return descriptor
+      return
     }
 
-    readRootAttributes(reader, descriptor)
+    readRootAttributes(reader, builder.builder)
 
     reader.consumeChildElements { localName ->
       readRootElementChild(
+        builder = builder,
         reader = reader,
-        descriptor = descriptor,
         localName = localName,
-        readContext = readContext,
-        pathResolver = pathResolver,
-        dataLoader = dataLoader,
-        includeBase = includeBase,
       )
       assert(reader.isEndElement)
     }
-
-    return descriptor
   }
   finally {
     reader.closeCompletely()
@@ -162,14 +150,12 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
 ))
 
 private fun readRootElementChild(
+  builder: PluginXmlFromXmlStreamBuilder,
   reader: XMLStreamReader2,
-  descriptor: RawPluginDescriptor,
-  localName: String,
-  readContext: ReadModuleContext,
-  pathResolver: PathResolver?,
-  dataLoader: DataLoader,
-  includeBase: String?,
+  localName: String
 ) {
+  val descriptor = builder.builder
+  val readContext = builder.readContext
   when (localName) {
     PluginXmlConst.ID_ELEM -> {
       when {
@@ -228,38 +214,23 @@ private fun readRootElementChild(
         descriptor.incompatibilities!!.add(PluginId.getId(it))
       }
     }
-
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)
     PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, descriptor.projectContainerDescriptor)
     PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, descriptor.moduleContainerDescriptor)
-
     PluginXmlConst.APPLICATION_LISTENERS_ELEM -> readListeners(reader, descriptor.appContainerDescriptor)
     PluginXmlConst.PROJECT_LISTENERS_ELEM -> readListeners(reader, descriptor.projectContainerDescriptor)
-
     PluginXmlConst.EXTENSIONS_ELEM -> readExtensions(reader, descriptor, readContext.interner)
     PluginXmlConst.EXTENSION_POINTS_ELEM -> readExtensionPoints(
+      builder = builder,
       reader = reader,
-      descriptor = descriptor,
-      readContext = readContext,
-      pathResolver = pathResolver,
-      dataLoader = dataLoader,
-      includeBase = includeBase,
     )
-
     PluginXmlConst.CONTENT_ELEM -> readContent(reader, descriptor, readContext)
     PluginXmlConst.DEPENDENCIES_ELEM-> readDependencies(reader, descriptor, readContext.interner)
-
     PluginXmlConst.DEPENDS_ELEM -> readOldDepends(reader, descriptor)
-
     PluginXmlConst.ACTIONS_ELEM -> readActions(descriptor, reader, readContext)
-
     PluginXmlConst.INCLUDE_ELEM -> readInclude(
+      builder = builder,
       reader = reader,
-      readInto = descriptor,
-      readContext = readContext,
-      pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
-      dataLoader = dataLoader,
-      includeBase = includeBase,
       allowedPointer = PluginXmlConst.DEFAULT_XPOINTER_VALUE,
     )
     PluginXmlConst.HELPSET_ELEM -> {
@@ -448,30 +419,28 @@ private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolea
 
 @Suppress("DuplicatedCode")
 private fun readExtensionPoints(
+  builder: PluginXmlFromXmlStreamBuilder,
   reader: XMLStreamReader2,
-  descriptor: RawPluginDescriptor,
-  readContext: ReadModuleContext,
-  pathResolver: PathResolver?,
-  dataLoader: DataLoader,
-  includeBase: String?,
 ) {
+  val descriptor = builder.builder
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
-        val partial = RawPluginDescriptor()
+        val partial = PluginXmlFromXmlStreamBuilder(
+          builder.readContext,
+          builder.dataLoader,
+          builder.pathResolver,
+          builder.includeBase,
+        )
         readInclude(
-          reader,
           partial,
-          readContext,
-          pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
-          dataLoader,
-          includeBase,
+          reader,
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
-        applyPartialContainer(partial, descriptor) { it.appContainerDescriptor }
-        applyPartialContainer(partial, descriptor) { it.projectContainerDescriptor }
-        applyPartialContainer(partial, descriptor) { it.moduleContainerDescriptor }
+        applyPartialContainer(partial.builder, descriptor) { it.appContainerDescriptor }
+        applyPartialContainer(partial.builder, descriptor) { it.projectContainerDescriptor }
+        applyPartialContainer(partial.builder, descriptor) { it.moduleContainerDescriptor }
       }
       else {
         LOG.error("Unknown element: $elementName (${reader.location})")
@@ -797,14 +766,11 @@ interface ReadModuleContext {
 }
 
 private fun readInclude(
+  builder: PluginXmlFromXmlStreamBuilder,
   reader: XMLStreamReader2,
-  readInto: RawPluginDescriptor,
-  readContext: ReadModuleContext,
-  pathResolver: PathResolver,
-  dataLoader: DataLoader,
-  includeBase: String?,
   allowedPointer: String,
 ) {
+  val pathResolver = builder.pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location)
   var path: String? = null
   var pointer: String? = null
   for (i in 0 until reader.attributeCount) {
@@ -812,7 +778,7 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
-        checkConditionalIncludeIsSupported("includeIf", readInto)
+        checkConditionalIncludeIsSupported("includeIf", builder.builder)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value != "true") {
           reader.skipElement()
@@ -820,7 +786,7 @@ private fun readInclude(
         }
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
-        checkConditionalIncludeIsSupported("includeUnless", readInto)
+        checkConditionalIncludeIsSupported("includeUnless", builder.builder)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value == "true") {
           reader.skipElement()
@@ -847,16 +813,16 @@ private fun readInclude(
 
   var readError: IOException? = null
   val read = try {
-    pathResolver.loadXIncludeReference(dataLoader = dataLoader, base = includeBase, relativePath = path, readContext = readContext, readInto = readInto)
+    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path, readContext = builder.readContext, readInto = builder.builder)
   }
   catch (e: IOException) {
     readError = e
     false
   }
   if (read) {
-    (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
-      rawPluginDescriptor = readInto,
-      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = includeBase),
+    (builder.readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
+      rawPluginDescriptor = builder.builder,
+      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = builder.includeBase),
     )
   }
 
@@ -864,12 +830,12 @@ private fun readInclude(
     return
   }
 
-  if (readContext.isMissingIncludeIgnored) {
-    LOG.info("$path include ignored (dataLoader=$dataLoader)", readError)
+  if (builder.readContext.isMissingIncludeIgnored) {
+    LOG.info("$path include ignored (dataLoader=${builder.dataLoader})", readError)
     return
   }
   else {
-    throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)", readError)
+    throw RuntimeException("Cannot resolve $path (dataLoader=${builder.dataLoader})", readError)
   }
 }
 

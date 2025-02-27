@@ -20,12 +20,8 @@ class PluginXmlFromXmlStreamBuilder(
 
   override fun consume(reader: XMLStreamReader2) {
     readModuleDescriptor(
+      builder = this,
       reader = reader,
-      readContext = readContext,
-      dataLoader = dataLoader,
-      pathResolver = pathResolver,
-      includeBase = includeBase,
-      readInto = builder
     )
   }
 }
