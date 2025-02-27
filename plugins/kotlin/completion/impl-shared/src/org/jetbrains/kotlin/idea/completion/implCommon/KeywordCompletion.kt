@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
@@ -49,12 +50,7 @@ open class KeywordLookupObject {
 }
 
 
-class KeywordCompletion(private val languageVersionSettingProvider: LanguageVersionSettingProvider) {
-    interface LanguageVersionSettingProvider {
-        fun getLanguageVersionSetting(element: PsiElement): LanguageVersionSettings
-        fun getLanguageVersionSetting(module: Module): LanguageVersionSettings
-    }
-
+class KeywordCompletion() {
     companion object {
         private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
             .map { it as KtKeywordToken }
@@ -129,7 +125,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, isJvmModule: Boolean, consumer: (LookupElement) -> Unit) {
         if (!GENERAL_FILTER.isAcceptable(position, position)) return
-        val sealedInterfacesEnabled = languageVersionSettingProvider.getLanguageVersionSetting(position).supportsFeature(LanguageFeature.SealedInterfaces)
+        val sealedInterfacesEnabled = position.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)
 
         val parserFilter = buildFilter(position)
         for (keywordToken in ALL_KEYWORDS) {
@@ -144,7 +140,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
         return when {
             this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
-            else -> getCompoundKeywords(this, languageVersionSettingProvider.getLanguageVersionSetting(position))
+            else -> getCompoundKeywords(this, position.languageVersionSettings)
         }
     }
 
@@ -525,9 +521,8 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
 
-            val languageVersionSettings =
-                ModuleUtilCore.findModuleForPsiElement(position)?.let(languageVersionSettingProvider::getLanguageVersionSetting)
-                    ?: LanguageVersionSettingsImpl.DEFAULT
+            val languageVersionSettings = ModuleUtilCore.findModuleForPsiElement(position)?.languageVersionSettings
+                ?: LanguageVersionSettingsImpl.DEFAULT
             when {
                 !elementAt.node!!.elementType.matchesKeyword(keywordTokenType) -> return false
 

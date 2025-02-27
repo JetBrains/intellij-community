@@ -692,10 +692,7 @@ class BasicCompletionSession(
     private val KEYWORDS_ONLY = object : OneKindCompletionCategory(KotlinCompletionKindName.KEYWORD_ONLY) {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
-        private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
-            override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
-            override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
-        })
+        private val keywordCompletion = KeywordCompletion()
 
         override fun fillResultSet() {
             val keywordsToSkip = HashSet<String>()

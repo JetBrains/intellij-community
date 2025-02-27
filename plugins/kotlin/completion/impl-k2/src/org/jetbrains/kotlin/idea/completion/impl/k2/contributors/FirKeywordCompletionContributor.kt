@@ -35,10 +35,7 @@ internal class FirKeywordCompletionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
-    private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
-        override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
-        override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
-    })
+    private val keywordCompletion = KeywordCompletion()
 
     private val resolveDependentCompletionKeywordHandlers = object : CompletionKeywordHandlerProvider<KaSession>() {
 
