@@ -59,13 +59,12 @@ val Project.languageVersionSettings: LanguageVersionSettings
 
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() {
-        if (project.serviceOrNull<ProjectFileIndex>() == null) {
-            return LanguageVersionSettingsImpl.DEFAULT
-        }
-
         return runReadAction {
             when (KotlinPluginModeProvider.currentPluginMode) {
                 KotlinPluginMode.K1 -> {
+                    if (project.serviceOrNull<ProjectFileIndex>() == null) {
+                        return@runReadAction LanguageVersionSettingsImpl.DEFAULT
+                    }
                     project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
                 }
                 KotlinPluginMode.K2 -> {
