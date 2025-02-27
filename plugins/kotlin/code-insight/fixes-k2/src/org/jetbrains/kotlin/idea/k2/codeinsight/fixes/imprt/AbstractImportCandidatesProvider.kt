@@ -38,8 +38,17 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
     private fun KaSymbol.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean =
         this is KaDeclarationSymbol && visibilityChecker.isVisible(this)
 
-    protected fun PsiElement.isImported(): Boolean =
-        kotlinFqName?.let { ImportPath(it, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList()) } == true
+    protected fun PsiElement.isImported(): Boolean {
+        val fqName = kotlinFqName ?: return false
+
+        if (fqName.parent() == file.packageFqName) {
+            // the declaration is already imported via default package import
+            // TODO Consider getting rid of this check after KTIJ-33214 is fixed
+            return true
+        }
+
+        return ImportPath(fqName, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList())
+    }
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {
