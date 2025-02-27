@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
-import andel.text.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentListener
@@ -21,18 +20,25 @@ import java.util.*
 @Experimental
 internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
 
+  private val textDocument = AdTextDocument {
+    documentRead {
+      entity.text
+    }
+  }
+
+
   // region TEXT
 
   override fun getText(range: TextRange): String {
-    return textView().string(range.startOffset, range.endOffset)
+    return textDocument.getText(range)
   }
 
   override fun getImmutableCharSequence(): CharSequence {
-    return textView().charSequence()
+    return textDocument.immutableCharSequence
   }
 
   override fun getTextLength(): Int {
-    return text().charCount
+    return textDocument.textLength
   }
 
   // endregion
@@ -41,33 +47,27 @@ internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
   //region LINES
 
   override fun getLineCount(): Int {
-    val text = text()
-    if (text.charCount == 0) {
-      return 0
-    }
-    return text.lineCount.line
+    return textDocument.lineCount
   }
 
   override fun getLineNumber(offset: Int): Int {
-    return textView().lineAt(offset).line
+    return textDocument.getLineNumber(offset)
   }
 
   override fun getLineStartOffset(line: Int): Int {
-    return textView().lineStartOffset(line.line)
+    return textDocument.getLineStartOffset(line)
   }
 
   override fun getLineEndOffset(line: Int): Int {
-    return textView().lineEndOffset(line.line)
+    return textDocument.getLineEndOffset(line)
   }
 
   override fun getLineSeparatorLength(line: Int): Int {
-    // TODO: optimize
-    return textView().lineEndOffset(line.line, includeLineSeparator=true) -
-           textView().lineEndOffset(line.line, includeLineSeparator=false)
+    return textDocument.getLineSeparatorLength(line)
   }
 
   override fun createLineIterator(): LineIterator {
-    TODO("Not yet implemented")
+    return textDocument.createLineIterator()
   }
 
   //endregion
@@ -298,15 +298,6 @@ internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
 
   //region PRIVATE
 
-  private fun text(): Text {
-    return documentRead {
-      entity.text
-    }
-  }
-
-  private fun textView(): TextView {
-    return text().view()
-  }
 
   private fun <T> documentRead(block: () -> T): T {
     return block()

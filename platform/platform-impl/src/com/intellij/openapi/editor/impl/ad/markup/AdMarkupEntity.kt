@@ -35,7 +35,7 @@ class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentCo
       AdMarkupEntity.new {
         it[Durable.Id] = uid
         it[DocumentAttr] = documentEntity
-        it[MarkupStorageAttr] = AdMarkupStorage.empty()
+        it[MarkupStorageAttr] = AdMarkupStorage.empty(documentEntity.text)
       }
     }
   }
@@ -45,7 +45,7 @@ class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentCo
     return object : DocumentComponent {
       override fun edit(before: Text, after: Text, operation: Operation) {
         changeScope.run {
-          entity[MarkupStorageAttr] = markupStorage.edit(operation)
+          entity[MarkupStorageAttr] = markupStorage.edit(after, operation)
         }
       }
     }

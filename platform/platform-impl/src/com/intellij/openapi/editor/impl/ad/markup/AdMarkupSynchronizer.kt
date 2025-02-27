@@ -101,9 +101,10 @@ private class AdMarkupSynchronizer(
   }
 
   private fun scheduleCollect() {
+    // TODO: do not cancel scheduled
     scheduledCollect.getAndSet(null)?.cancel()
     val scheduled = coroutineScope.launch {
-      delay(300)
+      delay(100)
       collectBatch(lastSeenNoveltyId.get())
     }
     val alreadyScheduled = !scheduledCollect.compareAndSet(null, scheduled)

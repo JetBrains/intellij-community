@@ -17,8 +17,10 @@ internal data class AdRangeHighlighterData(
   val isExactRange: Boolean,
   val isAfterEndOfLine: Boolean,
   val isVisibleIfFolded: Boolean,
+  val isThinErrorStripeMark: Boolean,
   @Transient val origin: RangeHighlighterEx? = null,
 ) {
+
   fun targetArea(): HighlighterTargetArea {
     return if (isExactRange) HighlighterTargetArea.EXACT_RANGE else HighlighterTargetArea.LINES_IN_RANGE
   }
