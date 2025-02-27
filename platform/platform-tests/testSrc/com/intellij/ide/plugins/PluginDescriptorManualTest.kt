@@ -12,6 +12,7 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 @Disabled // manual run
 class PluginDescriptorManualTest {
@@ -20,7 +21,9 @@ class PluginDescriptorManualTest {
     IoTestUtil.assumeMacOS()
 
     assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Volumes/data/plugins"))
+    val path = Paths.get("/Volumes/data/plugins")
+    assumeTrue(path.exists())
+    val descriptors = PluginSetTestBuilder(path = path)
       .build()
       .allPlugins
     assertThat(descriptors).isNotEmpty()
@@ -30,7 +33,9 @@ class PluginDescriptorManualTest {
   fun testProductionPlugins() {
     IoTestUtil.assumeMacOS()
     assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Applications/Idea.app/Contents/plugins"))
+    val path = Paths.get("/Applications/Idea.app/Contents/plugins")
+    assumeTrue(path.exists())
+    val descriptors = PluginSetTestBuilder(path = path)
       .build()
       .allPlugins
     assertThat(descriptors).isNotEmpty()
