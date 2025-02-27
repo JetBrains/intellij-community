@@ -4,7 +4,10 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.*
+import com.intellij.ide.plugins.parser.PluginXmlStreamReader
+import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.consume
+import com.intellij.ide.plugins.parser.readBasicDescriptorData
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -231,7 +234,10 @@ fun initMainDescriptorByRaw(
       }
     }
     else {
-      val subRaw = readModuleDescriptor(createXmlStreamReader(module.descriptorContent), context, dataLoader)
+      val subRaw = PluginXmlStreamReader(context, dataLoader, null, null, null).let {
+        it.consume(createXmlStreamReader(module.descriptorContent))
+        it.getRawPluginDescriptor()
+      }
       val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
@@ -743,8 +749,10 @@ private fun loadPluginDescriptor(
   val item = fileItems.first()
   val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
-  val raw = readModuleDescriptor(reader = descriptorInput, readContext = context, dataLoader = dataLoader, pathResolver = pluginPathResolver)
-
+  val raw = PluginXmlStreamReader(context, dataLoader, pluginPathResolver, null, null).let {
+    it.consume(descriptorInput)
+    it.getRawPluginDescriptor()
+  }
   val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, id = null, moduleName = null)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
   for (module in descriptor.content.modules) {
@@ -758,11 +766,18 @@ private fun loadPluginDescriptor(
         loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
       }
       else {
-        readModuleDescriptor(createXmlStreamReader(input), context, dataLoader, pluginPathResolver)
+        PluginXmlStreamReader(context, dataLoader, pluginPathResolver, null, null).let {
+          it.consume(input, null)
+          it.getRawPluginDescriptor()
+        }
       }
     }
     else {
-      val subRaw = readModuleDescriptor(createXmlStreamReader(module.descriptorContent), context, dataLoader)
+      // TODO isn't pluginPathResolver missing here?
+      val subRaw = PluginXmlStreamReader(context, dataLoader, null, null, null).let {
+        it.consume(createXmlStreamReader(module.descriptorContent))
+        it.getRawPluginDescriptor()
+      }
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
       }
@@ -841,7 +856,10 @@ private fun loadModuleFromSeparateJar(
   try {
     val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
     // product module is always fully resolved and do not contain `xi:include`
-    return readModuleDescriptor(createXmlStreamReader(input, jarFile.toString()), context, dataLoader)
+    return PluginXmlStreamReader(context, dataLoader, null, null, null).let {
+      it.consume(input, jarFile.toString())
+      it.getRawPluginDescriptor()
+    }
   }
   finally {
     (resolver as? Closeable)?.close()
@@ -955,8 +973,10 @@ private fun loadCoreProductPlugin(
 
     override fun toString() = "product classpath"
   }
-
-  val raw = readModuleDescriptor(reader = reader, readContext = context, dataLoader = dataLoader, pathResolver = pathResolver)
+  val raw = PluginXmlStreamReader(context, dataLoader, pathResolver, null, null).let {
+    it.consume(reader)
+    it.getRawPluginDescriptor()
+  }
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
@@ -1030,7 +1050,10 @@ private fun loadProductModule(
       "Product module ${module.name} descriptor content is not embedded - corrupted distribution " +
       "(jarFile=$jarFile, containerDescriptor=$containerDescriptor, siblings=${containerDescriptor.content.modules.joinToString()})"
     })
-    readModuleDescriptor(reader, context, dataLoader, pathResolver, includeBase = null, readInto = null)
+    PluginXmlStreamReader(context, dataLoader, pathResolver, null, null).let {
+      it.consume(reader)
+      it.getRawPluginDescriptor()
+    }
   }
   val subDescriptor = containerDescriptor.createSub(moduleRaw, subDescriptorFile, context, module)
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()

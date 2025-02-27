@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.*
+import com.intellij.ide.plugins.parser.PluginXmlStreamReader
+import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.ReadModuleContext
+import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.UrlClassLoader
@@ -26,14 +29,10 @@ class ClassPathXmlPathResolver(
     else {
       reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return false, dataLoader.toString())
     }
-    readModuleDescriptor(
-      reader = reader,
-      readContext = readContext,
-      pathResolver = this,
-      dataLoader = dataLoader,
-      includeBase = PluginXmlPathResolver.getChildBase(base = base, relativePath = relativePath),
-      readInto = readInto,
-    )
+    PluginXmlStreamReader(readContext, dataLoader, this, PluginXmlPathResolver.getChildBase(base = base, relativePath = relativePath), readInto).let {
+      it.consume(reader)
+      it.getRawPluginDescriptor()
+    }
     return true
   }
 
@@ -80,14 +79,11 @@ class ClassPathXmlPathResolver(
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
-    return readModuleDescriptor(
-      reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null,
-      readContext = readContext,
-      pathResolver = this,
-      dataLoader = dataLoader,
-      includeBase = null,
-      readInto = readInto,
-    )
+    val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
+    return PluginXmlStreamReader(readContext, dataLoader, this, null, readInto).let {
+      it.consume(reader)
+      it.getRawPluginDescriptor()
+    }
   }
 
   private fun getXmlReader(classLoader: ClassLoader, path: String, dataLoader: DataLoader): XMLStreamReader2? {

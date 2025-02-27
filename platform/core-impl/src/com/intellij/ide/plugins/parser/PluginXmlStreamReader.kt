@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 class PluginXmlStreamReader(
   val readContext: ReadModuleContext,
   val dataLoader: DataLoader,
-  val pathResolver: PathResolver,
+  val pathResolver: PathResolver?,
   val includeBase: String?,
   readInto: RawPluginDescriptor? = null,
 ) : PluginXmlStreamConsumer {
