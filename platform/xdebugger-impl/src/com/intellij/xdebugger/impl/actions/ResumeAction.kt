@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions
 
-import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -31,15 +29,6 @@ open class ResumeAction : XDebuggerActionBase(), DumbAware {
       return super.isHidden(event)
     }
     return super.isHidden(event) || !isEnabled(event)
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    if (!performWithHandler(e)) {
-      val project = getEventProject(e)
-      if (project != null && !isDumb(project)) {
-        ChooseDebugConfigurationPopupAction().actionPerformed(e)
-      }
-    }
   }
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
