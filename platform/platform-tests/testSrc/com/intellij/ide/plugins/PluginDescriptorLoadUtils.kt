@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginXmlStreamReader
+import com.intellij.ide.plugins.parser.PluginXmlFromXmlStreamBuilder
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
+
 
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
@@ -17,7 +18,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     override fun toString() = throw UnsupportedOperationException()
   }
 
-  val raw = PluginXmlStreamReader(object : ReadModuleContext {
+  val raw = PluginXmlFromXmlStreamBuilder(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
   }, dataLoader, pathResolver, null, null).let {
     it.consume(input, path.toString())
@@ -45,7 +46,7 @@ fun createFromDescriptor(path: Path,
                          context: DescriptorListLoadingContext,
                          pathResolver: PathResolver,
                          dataLoader: DataLoader): IdeaPluginDescriptorImpl {
-  val raw = PluginXmlStreamReader(context, dataLoader, pathResolver, null, null).let {
+  val raw = PluginXmlFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
     it.consume(data, path.toString())
     it.getRawPluginDescriptor()
   }
