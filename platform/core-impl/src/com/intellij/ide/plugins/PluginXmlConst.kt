@@ -38,6 +38,8 @@ object PluginXmlConst {
   const val LOCALE_ELEM: String = "locale"
 
   const val MODULE_ELEM: String = "module"
+  const val MODULE_VALUE_ATTR: String = "value"
+
   const val CONTENT_ELEM: String = "content"
 
   const val DEPENDS_ELEM: String = "depends"
@@ -64,6 +66,18 @@ object PluginXmlConst {
   const val EXTENSION_POINT_ATTR: String = "point"
 
   const val EXTENSION_POINTS_ELEM: String = "extensionPoints"
+  const val EXTENSION_POINTS_XINCLUDE_VALUE: String = "xpointer(/idea-plugin/extensionPoints/*)"
+  const val EXTENSION_POINTS_EP_ELEM: String = "extensionPoint"
+  const val EXTENSION_POINTS_EP_AREA_ATTR: String = "area"
+  const val EXTENSION_POINTS_EP_NAME_ATTR: String = "name"
+  const val EXTENSION_POINTS_EP_QUALIFIED_NAME_ATTR: String = "qualifiedName"
+  const val EXTENSION_POINTS_EP_BEAN_CLASS_ATTR: String = "beanClass"
+  const val EXTENSION_POINTS_EP_INTERFACE_ATTR: String = "interface"
+  const val EXTENSION_POINTS_EP_DYNAMIC_ATTR: String = "dynamic"
+  const val EXTENSION_POINTS_EP_HAS_ATTRIBUTES_ATTR: String = "hasAttributes"
+
+  const val EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE: String = "IDEA_PROJECT"
+  const val EXTENSION_POINT_AREA_IDEA_MODULE_VALUE: String = "IDEA_MODULE"
 
   const val APPLICATION_COMPONENTS_ELEM: String = "application-components"
   const val PROJECT_COMPONENTS_ELEM: String = "project-components"

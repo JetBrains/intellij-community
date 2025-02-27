@@ -239,7 +239,7 @@ private fun readRootElementChild(
     PluginXmlConst.RESOURCE_BUNDLE_ELEM -> descriptor.resourceBundleBaseName = getNullifiedContent(reader)
     PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
     PluginXmlConst.MODULE_ELEM -> {
-      findAttributeValue(reader, "value")?.let { moduleName ->
+      findAttributeValue(reader, PluginXmlConst.MODULE_VALUE_ATTR)?.let { moduleName ->
         if (descriptor.pluginAliases == null) {
           descriptor.pluginAliases = ArrayList()
         }
@@ -493,8 +493,8 @@ private fun readExtensionPoints(
   includeBase: String?,
 ) {
   reader.consumeChildElements { elementName ->
-    if (elementName != "extensionPoint") {
-      if (elementName == "include" && reader.namespaceURI == "http://www.w3.org/2001/XInclude") {
+    if (elementName != PluginXmlConst.EXTENSION_POINTS_EP_ELEM) {
+      if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = RawPluginDescriptor()
         readInclude(
           reader,
@@ -503,7 +503,7 @@ private fun readExtensionPoints(
           pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
           dataLoader,
           includeBase,
-          allowedPointer = "xpointer(/idea-plugin/extensionPoints/*)"
+          allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
         applyPartialContainer(partial, descriptor) { it.appContainerDescriptor }
@@ -526,16 +526,13 @@ private fun readExtensionPoints(
     var hasAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        "area" -> area = getNullifiedAttributeValue(reader, i)
-
-        "qualifiedName" -> qualifiedName = reader.getAttributeValue(i)
-        "name" -> name = getNullifiedAttributeValue(reader, i)
-
-        "beanClass" -> beanClass = getNullifiedAttributeValue(reader, i)
-        "interface" -> `interface` = getNullifiedAttributeValue(reader, i)
-
-        "dynamic" -> isDynamic = reader.getAttributeAsBoolean(i)
-        "hasAttributes" -> hasAttributes = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.EXTENSION_POINTS_EP_AREA_ATTR -> area = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINTS_EP_QUALIFIED_NAME_ATTR -> qualifiedName = reader.getAttributeValue(i)
+        PluginXmlConst.EXTENSION_POINTS_EP_NAME_ATTR -> name = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINTS_EP_BEAN_CLASS_ATTR -> beanClass = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINTS_EP_INTERFACE_ATTR -> `interface` = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINTS_EP_DYNAMIC_ATTR -> isDynamic = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.EXTENSION_POINTS_EP_HAS_ATTRIBUTES_ATTR -> hasAttributes = reader.getAttributeAsBoolean(i)
       }
     }
 
@@ -550,8 +547,8 @@ private fun readExtensionPoints(
 
     val containerDescriptor = when (area) {
       null -> descriptor.appContainerDescriptor
-      "IDEA_PROJECT" -> descriptor.projectContainerDescriptor
-      "IDEA_MODULE" -> descriptor.moduleContainerDescriptor
+      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE -> descriptor.projectContainerDescriptor
+      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_MODULE_VALUE -> descriptor.moduleContainerDescriptor
       else -> {
         LOG.error("Unknown area: $area")
         return@consumeChildElements
