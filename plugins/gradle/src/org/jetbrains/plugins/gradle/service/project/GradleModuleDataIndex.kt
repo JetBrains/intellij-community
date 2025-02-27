@@ -19,8 +19,9 @@ object GradleModuleDataIndex {
 
   @JvmStatic
   fun findGradleModuleData(module: Module): GradleModuleData? {
-    val moduleData = ExternalSystemModuleDataIndex.findModuleNode(module) ?: return null
-    return GradleModuleData(moduleData)
+    val moduleDataNode = ExternalSystemModuleDataIndex.findModuleNode(module) ?: return null
+    if (moduleDataNode.data.owner != GradleConstants.SYSTEM_ID) return null
+    return GradleModuleData(moduleDataNode)
   }
 
   @JvmStatic
