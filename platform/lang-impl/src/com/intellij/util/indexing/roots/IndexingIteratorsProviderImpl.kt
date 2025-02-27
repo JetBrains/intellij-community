@@ -57,6 +57,7 @@ class IndexingIteratorsProviderImpl(
   private fun doGetIndexingIterators(): List<IndexableFilesIterator> {
     val model = WorkspaceModel.getInstance(project)
     val index = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl
+    val storage = model.currentSnapshot
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
 
     val iterators = ArrayList<IndexableFilesIterator>()
@@ -80,7 +81,6 @@ class IndexingIteratorsProviderImpl(
         iterators.add(GenericContentEntityIteratorImpl(entityPointer, rootHolder))
       }
       else {
-        val storage = model.currentSnapshot
         val entity = entityPointer.resolve(storage)
         if (entity is LibraryEntity) {
           val libraryBridge = storage.libraryMap.getDataByEntity(entity)
