@@ -67,15 +67,15 @@ object PluginXmlConst {
 
   const val EXTENSION_POINTS_ELEM: String = "extensionPoints"
   const val EXTENSION_POINTS_XINCLUDE_VALUE: String = "xpointer(/idea-plugin/extensionPoints/*)"
-  const val EXTENSION_POINTS_EP_ELEM: String = "extensionPoint"
-  const val EXTENSION_POINTS_EP_AREA_ATTR: String = "area"
-  const val EXTENSION_POINTS_EP_NAME_ATTR: String = "name"
-  const val EXTENSION_POINTS_EP_QUALIFIED_NAME_ATTR: String = "qualifiedName"
-  const val EXTENSION_POINTS_EP_BEAN_CLASS_ATTR: String = "beanClass"
-  const val EXTENSION_POINTS_EP_INTERFACE_ATTR: String = "interface"
-  const val EXTENSION_POINTS_EP_DYNAMIC_ATTR: String = "dynamic"
-  const val EXTENSION_POINTS_EP_HAS_ATTRIBUTES_ATTR: String = "hasAttributes"
 
+  const val EXTENSION_POINT_ELEM: String = "extensionPoint"
+  const val EXTENSION_POINT_AREA_ATTR: String = "area"
+  const val EXTENSION_POINT_NAME_ATTR: String = "name"
+  const val EXTENSION_POINT_QUALIFIED_NAME_ATTR: String = "qualifiedName"
+  const val EXTENSION_POINT_BEAN_CLASS_ATTR: String = "beanClass"
+  const val EXTENSION_POINT_INTERFACE_ATTR: String = "interface"
+  const val EXTENSION_POINT_DYNAMIC_ATTR: String = "dynamic"
+  const val EXTENSION_POINT_HAS_ATTRIBUTES_ATTR: String = "hasAttributes"
   const val EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE: String = "IDEA_PROJECT"
   const val EXTENSION_POINT_AREA_IDEA_MODULE_VALUE: String = "IDEA_MODULE"
 

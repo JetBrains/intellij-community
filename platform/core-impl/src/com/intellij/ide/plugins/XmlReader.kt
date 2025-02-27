@@ -493,7 +493,7 @@ private fun readExtensionPoints(
   includeBase: String?,
 ) {
   reader.consumeChildElements { elementName ->
-    if (elementName != PluginXmlConst.EXTENSION_POINTS_EP_ELEM) {
+    if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = RawPluginDescriptor()
         readInclude(
@@ -526,13 +526,13 @@ private fun readExtensionPoints(
     var hasAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        PluginXmlConst.EXTENSION_POINTS_EP_AREA_ATTR -> area = getNullifiedAttributeValue(reader, i)
-        PluginXmlConst.EXTENSION_POINTS_EP_QUALIFIED_NAME_ATTR -> qualifiedName = reader.getAttributeValue(i)
-        PluginXmlConst.EXTENSION_POINTS_EP_NAME_ATTR -> name = getNullifiedAttributeValue(reader, i)
-        PluginXmlConst.EXTENSION_POINTS_EP_BEAN_CLASS_ATTR -> beanClass = getNullifiedAttributeValue(reader, i)
-        PluginXmlConst.EXTENSION_POINTS_EP_INTERFACE_ATTR -> `interface` = getNullifiedAttributeValue(reader, i)
-        PluginXmlConst.EXTENSION_POINTS_EP_DYNAMIC_ATTR -> isDynamic = reader.getAttributeAsBoolean(i)
-        PluginXmlConst.EXTENSION_POINTS_EP_HAS_ATTRIBUTES_ATTR -> hasAttributes = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.EXTENSION_POINT_AREA_ATTR -> area = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINT_QUALIFIED_NAME_ATTR -> qualifiedName = reader.getAttributeValue(i)
+        PluginXmlConst.EXTENSION_POINT_NAME_ATTR -> name = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINT_BEAN_CLASS_ATTR -> beanClass = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINT_INTERFACE_ATTR -> `interface` = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_POINT_DYNAMIC_ATTR -> isDynamic = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.EXTENSION_POINT_HAS_ATTRIBUTES_ATTR -> hasAttributes = reader.getAttributeAsBoolean(i)
       }
     }
 
