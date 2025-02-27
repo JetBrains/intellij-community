@@ -85,4 +85,7 @@ enum class KotlinK2BundledCompilerPlugins(
     val bundledJarLocation: Path =
         PathManager.getJarForClass(registrarClass.java)
             ?: error("Unable to find .jar for '$registrarClassName' registrar in IDE distribution")
+
+    @Deprecated("This companion object is left for binary compatibility only; do not use it.")
+    companion object
 }
