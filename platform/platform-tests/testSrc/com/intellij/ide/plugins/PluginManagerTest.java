@@ -316,7 +316,7 @@ public class PluginManagerTest {
               try {
                 var reader = new PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto);
                 PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
-                return reader.getRawPluginDescriptor();
+                return reader.build();
               }
               catch (XMLStreamException e) {
                 throw new RuntimeException(e);

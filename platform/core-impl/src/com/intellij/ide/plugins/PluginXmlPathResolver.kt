@@ -55,7 +55,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
         PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
           it.consume(input, null)
-          it.getRawPluginDescriptor()
+          it.build()
         }
         return true
       }
@@ -76,7 +76,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
         PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let { input ->
           PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
             it.consume(input, null)
-            it.getRawPluginDescriptor()
+            it.build()
           }
           return true
         }
@@ -93,7 +93,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
       return PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
         it.consume(input, null)
-        it.getRawPluginDescriptor()
+        it.build()
       }
     }
 
@@ -127,7 +127,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
 
     val descriptor = PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
       it.consume(input, null)
-      it.getRawPluginDescriptor()
+      it.build()
     }
     return descriptor
   }
@@ -156,7 +156,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       val result = resolver.loadZipEntry(relativePath)?.let { input ->
         PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, includeBase, readInto).let {
           it.consume(input, jarFile.toString())
-          it.getRawPluginDescriptor()
+          it.build()
         }
       }
 

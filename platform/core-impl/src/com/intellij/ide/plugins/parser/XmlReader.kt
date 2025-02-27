@@ -52,7 +52,7 @@ internal fun readModuleDescriptor(
       return
     }
 
-    readRootAttributes(reader, builder.builder)
+    readRootAttributes(reader, builder.raw)
 
     reader.consumeChildElements { localName ->
       readRootElementChild(
@@ -154,7 +154,7 @@ private fun readRootElementChild(
   reader: XMLStreamReader2,
   localName: String
 ) {
-  val descriptor = builder.builder
+  val descriptor = builder.raw
   val readContext = builder.readContext
   when (localName) {
     PluginXmlConst.ID_ELEM -> {
@@ -422,7 +422,7 @@ private fun readExtensionPoints(
   builder: PluginXmlFromXmlStreamBuilder,
   reader: XMLStreamReader2,
 ) {
-  val descriptor = builder.builder
+  val descriptor = builder.raw
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
@@ -438,9 +438,9 @@ private fun readExtensionPoints(
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
-        applyPartialContainer(partial.builder, descriptor) { it.appContainerDescriptor }
-        applyPartialContainer(partial.builder, descriptor) { it.projectContainerDescriptor }
-        applyPartialContainer(partial.builder, descriptor) { it.moduleContainerDescriptor }
+        applyPartialContainer(partial.raw, descriptor) { it.appContainerDescriptor }
+        applyPartialContainer(partial.raw, descriptor) { it.projectContainerDescriptor }
+        applyPartialContainer(partial.raw, descriptor) { it.moduleContainerDescriptor }
       }
       else {
         LOG.error("Unknown element: $elementName (${reader.location})")
@@ -778,7 +778,7 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
-        checkConditionalIncludeIsSupported("includeIf", builder.builder)
+        checkConditionalIncludeIsSupported("includeIf", builder.raw)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value != "true") {
           reader.skipElement()
@@ -786,7 +786,7 @@ private fun readInclude(
         }
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
-        checkConditionalIncludeIsSupported("includeUnless", builder.builder)
+        checkConditionalIncludeIsSupported("includeUnless", builder.raw)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value == "true") {
           reader.skipElement()
@@ -813,7 +813,7 @@ private fun readInclude(
 
   var readError: IOException? = null
   val read = try {
-    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path, readContext = builder.readContext, readInto = builder.builder)
+    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path, readContext = builder.readContext, readInto = builder.raw)
   }
   catch (e: IOException) {
     readError = e
@@ -821,7 +821,7 @@ private fun readInclude(
   }
   if (read) {
     (builder.readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
-      rawPluginDescriptor = builder.builder,
+      rawPluginDescriptor = builder.raw,
       path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = builder.includeBase),
     )
   }

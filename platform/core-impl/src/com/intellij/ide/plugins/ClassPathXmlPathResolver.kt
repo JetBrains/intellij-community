@@ -31,7 +31,7 @@ class ClassPathXmlPathResolver(
     }
     PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, PluginXmlPathResolver.getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
       it.consume(reader)
-      it.getRawPluginDescriptor()
+      it.build()
     }
     return true
   }
@@ -45,7 +45,7 @@ class ClassPathXmlPathResolver(
       classLoader.getResourceAsStream(path)?.let {
         val reader = PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto)
         reader.consume(it, dataLoader.toString())
-        return reader.getRawPluginDescriptor()
+        return reader.build()
       }
       resource = null
     }
@@ -73,7 +73,7 @@ class ClassPathXmlPathResolver(
 
     return PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
       it.consume(resource, dataLoader.toString())
-      it.getRawPluginDescriptor()
+      it.build()
     }
   }
 
@@ -82,7 +82,7 @@ class ClassPathXmlPathResolver(
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
     return PluginXmlFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
       it.consume(reader)
-      it.getRawPluginDescriptor()
+      it.build()
     }
   }
 

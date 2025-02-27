@@ -14,9 +14,9 @@ class PluginXmlFromXmlStreamBuilder(
   val includeBase: String?,
   readInto: RawPluginDescriptor? = null,
 ) : PluginXmlStreamConsumer {
-  internal val builder = readInto ?: RawPluginDescriptor()
+  internal val raw = readInto ?: RawPluginDescriptor()
 
-  fun getRawPluginDescriptor(): RawPluginDescriptor = builder
+  fun build(): RawPluginDescriptor = raw
 
   override fun consume(reader: XMLStreamReader2) {
     readModuleDescriptor(

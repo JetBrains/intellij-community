@@ -179,7 +179,7 @@ private fun loadDescriptorFromStream(
 ): IdeaPluginDescriptorImpl {
   val raw = PluginXmlFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
     it.consume(input, fileOrDir.toString())
-    it.getRawPluginDescriptor()
+    it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(
     raw = raw,
@@ -236,7 +236,7 @@ fun initMainDescriptorByRaw(
     else {
       val subRaw = PluginXmlFromXmlStreamBuilder(context, dataLoader, null, null, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
-        it.getRawPluginDescriptor()
+        it.build()
       }
       val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
@@ -751,7 +751,7 @@ private fun loadPluginDescriptor(
   val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
   val raw = PluginXmlFromXmlStreamBuilder(context, dataLoader, pluginPathResolver, null, null).let {
     it.consume(descriptorInput)
-    it.getRawPluginDescriptor()
+    it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, id = null, moduleName = null)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
@@ -768,7 +768,7 @@ private fun loadPluginDescriptor(
       else {
         PluginXmlFromXmlStreamBuilder(context, dataLoader, pluginPathResolver, null, null).let {
           it.consume(input, null)
-          it.getRawPluginDescriptor()
+          it.build()
         }
       }
     }
@@ -776,7 +776,7 @@ private fun loadPluginDescriptor(
       // TODO isn't pluginPathResolver missing here?
       val subRaw = PluginXmlFromXmlStreamBuilder(context, dataLoader, null, null, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
-        it.getRawPluginDescriptor()
+        it.build()
       }
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
@@ -858,7 +858,7 @@ private fun loadModuleFromSeparateJar(
     // product module is always fully resolved and do not contain `xi:include`
     return PluginXmlFromXmlStreamBuilder(context, dataLoader, null, null, null).let {
       it.consume(input, jarFile.toString())
-      it.getRawPluginDescriptor()
+      it.build()
     }
   }
   finally {
@@ -975,7 +975,7 @@ private fun loadCoreProductPlugin(
   }
   val raw = PluginXmlFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
     it.consume(reader)
-    it.getRawPluginDescriptor()
+    it.build()
   }
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
@@ -1052,7 +1052,7 @@ private fun loadProductModule(
     })
     PluginXmlFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
       it.consume(reader)
-      it.getRawPluginDescriptor()
+      it.build()
     }
   }
   val subDescriptor = containerDescriptor.createSub(moduleRaw, subDescriptorFile, context, module)
@@ -1302,7 +1302,7 @@ private fun loadDescriptorFromResource(
 
     val raw = PluginXmlFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
       it.consume(input, file.toString())
-      it.getRawPluginDescriptor()
+      it.build()
     }
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources

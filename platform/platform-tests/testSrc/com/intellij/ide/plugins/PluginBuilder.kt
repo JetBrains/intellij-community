@@ -345,6 +345,6 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
     override fun toString() = ""
   }, pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, includeBase = null, readInto = null).let {
     it.consume(input, null)
-    it.getRawPluginDescriptor()
+    it.build()
   }
 }
