@@ -39,7 +39,7 @@ internal data class AdMarkupStorage(
     return copy(intervals = intervals.addIntervals(intervalsToAdd).removeByIds(toRemove))
   }
 
-  private object Serializer : DataSerializer<AdMarkupStorage, AdMarkupStorageData>(AdMarkupStorageData.serializer()) {
+  internal object Serializer : DataSerializer<AdMarkupStorage, AdMarkupStorageData>(AdMarkupStorageData.serializer()) {
     override fun fromData(data: AdMarkupStorageData): AdMarkupStorage {
       return AdMarkupStorage(
         document = data.toDocument(),
@@ -56,7 +56,7 @@ internal data class AdMarkupStorage(
   }
 
   @Serializable
-  private data class AdMarkupStorageData(
+  internal data class AdMarkupStorageData(
     private val text: Text,
     private val highlighters: List<AdRangeHighlighter>,
   ) {
