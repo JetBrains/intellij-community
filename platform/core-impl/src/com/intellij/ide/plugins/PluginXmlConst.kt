@@ -26,7 +26,6 @@ object PluginXmlConst {
   const val PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR: String = "release-version"
   const val PRODUCT_DESCRIPTOR_OPTIONAL_ATTR: String = "optional"
 
-
   const val IDEA_VERSION_ELEM: String = "idea-version"
   const val IDEA_VERSION_SINCE_ATTR: String = "since-build"
   const val IDEA_VERSION_UNTIL_ATTR: String = "until-build"
@@ -108,6 +107,14 @@ object PluginXmlConst {
   const val APPLICATION_COMPONENTS_ELEM: String = "application-components"
   const val PROJECT_COMPONENTS_ELEM: String = "project-components"
   const val MODULE_COMPONENTS_ELEM: String = "module-components"
+
+  const val COMPONENT_ELEM: String = "component"
+  const val COMPONENT_SKIP_FOR_DEFAULT_PROJECT_ELEM: String = "skipForDefaultProject"
+  const val COMPONENT_LOAD_FOR_DEFAULT_PROJECT_ELEM: String = "loadForDefaultProject"
+  const val COMPONENT_INTERFACE_CLASS_ELEM: String = "interface-class"
+  const val COMPONENT_IMPLEMENTATION_CLASS_ELEM: String = "implementation-class"
+  const val COMPONENT_HEADLESS_IMPLEMENTATION_CLASS_ELEM: String = "headless-implementation-class"
+  const val COMPONENT_OPTION_ELEM: String = "option"
 
   const val INCLUDE_ELEM: String = "include"
   const val DEFAULT_XPOINTER_VALUE: String = "xpointer(/idea-plugin/*)"

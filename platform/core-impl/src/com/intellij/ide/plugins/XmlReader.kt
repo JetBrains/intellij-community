@@ -646,7 +646,7 @@ private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 }
 
 private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptor) {
-  reader.consumeChildElements("component") {
+  reader.consumeChildElements(PluginXmlConst.COMPONENT_ELEM) {
     var isApplicableForDefaultProject = false
     var interfaceClass: String? = null
     var implementationClass: String? = null
@@ -657,22 +657,22 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 
     reader.consumeChildElements { elementName ->
       when (elementName) {
-        "skipForDefaultProject" -> {
+        PluginXmlConst.COMPONENT_SKIP_FOR_DEFAULT_PROJECT_ELEM -> {
           val value = reader.elementText
           if (!value.isEmpty() && value.equals("false", ignoreCase = true)) {
             isApplicableForDefaultProject = true
           }
         }
-        "loadForDefaultProject" -> {
+        PluginXmlConst.COMPONENT_LOAD_FOR_DEFAULT_PROJECT_ELEM -> {
           val value = reader.elementText
           isApplicableForDefaultProject = value.isEmpty() || value.equals("true", ignoreCase = true)
         }
-        "interface-class" -> interfaceClass = getNullifiedContent(reader)
+        PluginXmlConst.COMPONENT_INTERFACE_CLASS_ELEM -> interfaceClass = getNullifiedContent(reader)
         // empty value must be supported
-        "implementation-class" -> implementationClass = getNullifiedContent(reader)
+        PluginXmlConst.COMPONENT_IMPLEMENTATION_CLASS_ELEM -> implementationClass = getNullifiedContent(reader)
         // empty value must be supported
-        "headless-implementation-class" -> headlessImplementationClass = reader.elementText
-        "option" -> {
+        PluginXmlConst.COMPONENT_HEADLESS_IMPLEMENTATION_CLASS_ELEM -> headlessImplementationClass = reader.elementText
+        PluginXmlConst.COMPONENT_OPTION_ELEM -> {
           var name: String? = null
           var value: String? = null
           for (i in 0 until reader.attributeCount) {
