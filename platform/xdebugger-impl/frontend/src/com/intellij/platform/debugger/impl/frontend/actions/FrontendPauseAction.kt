@@ -3,10 +3,11 @@ package com.intellij.platform.debugger.impl.frontend.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
-private class FrontendPauseAction : DumbAwareAction() {
+private class FrontendPauseAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(e: AnActionEvent) {
     val session = e.frontendDebuggerSession
     if (session == null || !session.isPauseActionSupported) {

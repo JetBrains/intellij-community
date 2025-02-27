@@ -3,11 +3,12 @@ package com.intellij.platform.debugger.impl.frontend.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import java.awt.event.KeyEvent
 
-private class FrontendResumeAction : DumbAwareAction() {
+private class FrontendResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
