@@ -40,7 +40,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
         .mapNotNull { stubPkg -> nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)]?.let { it to stubPkg } }
         .filter {
           val runtimePkgName = it.first.name
-          val requirement = it.second.requirements.firstOrNull { req -> req.name == runtimePkgName } ?: return@filter false
+          val requirement = it.second.requirements.firstOrNull { req -> req.equals(runtimePkgName) } ?: return@filter false
 
           requirement.match(listOf(it.first)) == null
         }
@@ -84,7 +84,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
       }
         .forEach { (runtimePkg, stubPkg) ->
           val runtimePkgName = runtimePkg.name
-          val requirement = stubPkg.requirements.firstOrNull { it.name == runtimePkgName } ?: return@forEach
+          val requirement = stubPkg.requirements.firstOrNull { it.equals(runtimePkgName) } ?: return@forEach
 
           if (requirement.match(listOf(runtimePkg)) == null) {
             val stubPkgName = stubPkg.name

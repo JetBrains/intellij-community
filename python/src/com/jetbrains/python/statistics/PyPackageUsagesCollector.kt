@@ -11,6 +11,7 @@ import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 

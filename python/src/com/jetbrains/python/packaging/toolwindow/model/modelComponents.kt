@@ -14,10 +14,10 @@ import javax.swing.Icon
 
 sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
 
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.name, repository) {
-  val currentVersion = PyPackageVersionNormalizer.normalize(instance.version)
+class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.presentableName, repository) {
+  val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
-  val isEditMode = instance.isEditableMode
+  val isEditMode: Boolean = instance.isEditableMode
   val sourceRepoIcon: Icon?
     get() {
       val condaPackage = instance as? CondaPackage ?: return null
