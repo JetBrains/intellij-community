@@ -961,7 +961,7 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
     containerDescriptor.listeners = result
   }
 
-  reader.consumeChildElements("listener") {
+  reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
     var os: ExtensionDescriptor.Os? = null
     var listenerClassName: String? = null
     var topicClassName: String? = null
@@ -969,11 +969,11 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
     var activeInHeadlessMode = true
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        "os" -> os = readOs(reader.getAttributeValue(i))
-        "class" -> listenerClassName = getNullifiedAttributeValue(reader, i)
-        "topic" -> topicClassName = getNullifiedAttributeValue(reader, i)
-        "activeInTestMode" -> activeInTestMode = reader.getAttributeAsBoolean(i)
-        "activeInHeadlessMode" -> activeInHeadlessMode = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.LISTENER_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.LISTENER_CLASS_ATTR -> listenerClassName = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.LISTENER_TOPIC_ATTR -> topicClassName = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.LISTENER_ACTIVE_IN_TEST_MODE_ATTR -> activeInTestMode = reader.getAttributeAsBoolean(i)
+        PluginXmlConst.LISTENER_ACTIVE_IN_HEADLESS_MODE_ATTR -> activeInHeadlessMode = reader.getAttributeAsBoolean(i)
       }
     }
 

@@ -73,6 +73,13 @@ object PluginXmlConst {
   const val APPLICATION_LISTENERS_ELEM: String = "applicationListeners"
   const val PROJECT_LISTENERS_ELEM: String = "projectListeners"
 
+  const val LISTENER_ELEM: String = "listener"
+  const val LISTENER_OS_ATTR: String = "os"
+  const val LISTENER_CLASS_ATTR: String = "class"
+  const val LISTENER_TOPIC_ATTR: String = "topic"
+  const val LISTENER_ACTIVE_IN_TEST_MODE_ATTR: String = "activeInTestMode"
+  const val LISTENER_ACTIVE_IN_HEADLESS_MODE_ATTR: String = "activeInHeadlessMode"
+
   const val EXTENSIONS_ELEM: String = "extensions"
   const val EXTENSIONS_DEFAULT_EXTENSION_NS_ATTR: String = "defaultExtensionNs"
 
