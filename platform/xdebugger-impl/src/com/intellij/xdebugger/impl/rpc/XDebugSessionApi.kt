@@ -22,6 +22,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
 
+  suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
+
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
 
   companion object {
@@ -41,6 +43,14 @@ data class XDebugSessionId(val id: UID)
 data class XDebugSessionDto(
   val id: XDebugSessionId,
   val editorsProviderDto: XDebuggerEditorsProviderDto,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionState(
+  val isPaused: Boolean,
+  val isStopped: Boolean,
+  val isReadOnly: Boolean,
 )
 
 @ApiStatus.Internal

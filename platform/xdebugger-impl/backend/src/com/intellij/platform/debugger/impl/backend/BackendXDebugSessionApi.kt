@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rpc.*
@@ -17,6 +19,7 @@ import fleet.kernel.withEntities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withContext
 
@@ -49,6 +52,15 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           send(sourcePosition.toRpc())
         }
       }
+    }
+  }
+
+  override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    val session = sessionEntity.session as XDebugSessionImpl
+
+    return combine(session.isPausedState, session.isStoppedState, session.isReadOnlyState) { isPaused, isStopped, isReadOnly ->
+      XDebugSessionState(isPaused, isStopped, isReadOnly)
     }
   }
 

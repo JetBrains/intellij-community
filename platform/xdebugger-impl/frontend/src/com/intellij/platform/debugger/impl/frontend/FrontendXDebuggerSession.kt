@@ -10,6 +10,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionState
 import com.intellij.xdebugger.impl.rpc.XValueMarkerId
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +54,22 @@ internal class FrontendXDebuggerSession(
         }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  private val sessionState: StateFlow<XDebugSessionState> =
+    channelFlow {
+      XDebugSessionApi.getInstance().currentSessionState(sessionId).collectLatest { sessionState ->
+        send(sessionState)
+      }
+    }.stateIn(cs, SharingStarted.Eagerly, XDebugSessionState(false, false, false))
+
+  val isStopped: Boolean
+    get() = sessionState.value.isStopped
+
+  val isPaused: Boolean
+    get() = sessionState.value.isPaused
+
+  val isReadOnly: Boolean
+    get() = sessionState.value.isReadOnly
 
   val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
                                                   ?: FrontendXDebuggerEditorsProvider(sessionId, sessionDto.editorsProviderDto.fileTypeId)

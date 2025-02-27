@@ -60,6 +60,7 @@ import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
 import kotlinx.coroutines.flow.FlowKt;
+import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -74,6 +75,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 
 @ApiStatus.Internal
@@ -97,7 +99,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private @Nullable XAlternativeSourceHandler myAlternativeSourceHandler;
   private boolean myIsTopFrame;
   private volatile XStackFrame myTopStackFrame;
-  private final AtomicBoolean myPaused = new AtomicBoolean();
+  private final MutableStateFlow<Boolean> myPaused = createMutableStateFlow(false);
   private XValueMarkers<?, ?> myValueMarkers;
   private final @Nls String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
@@ -107,9 +109,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final Project myProject;
   private final CoroutineScope myCoroutineScope;
   private final @Nullable ExecutionEnvironment myEnvironment;
-  private final AtomicBoolean myStopped = new AtomicBoolean();
+  private final MutableStateFlow<Boolean> myStopped = createMutableStateFlow(false);
   private boolean myPauseActionSupported;
-  private boolean myReadOnly = false;
+  private final MutableStateFlow<Boolean> myReadOnly = createMutableStateFlow(false);
   private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<>();
   private final List<AnAction> myExtraStopActions = new SmartList<>();
@@ -193,12 +195,17 @@ public final class XDebugSessionImpl implements XDebugSession {
     myPauseActionSupported = isSupported;
   }
 
-  public boolean isReadOnly() {
+
+  public StateFlow<Boolean> isReadOnlyState() {
     return myReadOnly;
   }
 
+  public boolean isReadOnly() {
+    return myReadOnly.getValue();
+  }
+
   public void setReadOnly(boolean readOnly) {
-    myReadOnly = readOnly;
+    myReadOnly.setValue(readOnly);
   }
 
   public @NotNull List<AnAction> getRestartActions() {
@@ -264,12 +271,17 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public boolean isSuspended() {
-    return myPaused.get() && mySuspendContext != null;
+    return myPaused.getValue() && mySuspendContext != null;
+  }
+
+  @ApiStatus.Internal
+  public StateFlow<Boolean> isPausedState() {
+    return myPaused;
   }
 
   @Override
   public boolean isPaused() {
-    return myPaused.get();
+    return myPaused.getValue();
   }
 
   @Override
@@ -656,7 +668,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private @Nullable XSuspendContext doResume() {
-    if (!myPaused.getAndSet(false)) {
+    if (!StateFlowKt.getAndUpdate(myPaused, (it) -> false)) {
       return null;
     }
 
@@ -940,7 +952,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void unsetPaused() {
-    myPaused.set(false);
+    myPaused.setValue(false);
   }
 
   private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
@@ -960,7 +972,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     boolean isSteppingSuspendContext = suspendContext instanceof XSteppingSuspendContext;
 
-    myPaused.set(!isSteppingSuspendContext);
+    myPaused.setValue(!isSteppingSuspendContext);
 
     if (!isSteppingSuspendContext) {
       boolean isAlternative = myAlternativeSourceHandler != null &&
@@ -1019,9 +1031,14 @@ public final class XDebugSessionImpl implements XDebugSession {
     doResume();
   }
 
+  @ApiStatus.Internal
+  public StateFlow<Boolean> isStoppedState() {
+    return myStopped;
+  }
+
   @Override
   public boolean isStopped() {
-    return myStopped.get();
+    return myStopped.getValue();
   }
 
   private void stopImpl() {
