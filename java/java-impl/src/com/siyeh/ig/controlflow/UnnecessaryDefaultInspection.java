@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -41,8 +40,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.SwitchExhaustivenessState;
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.SwitchExhaustivenessState;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -256,7 +255,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       return null;
     }
     final SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(switchBlock, false);
-    return completenessResult == PatternsInSwitchBlockHighlightingModel.SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL
+    return completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL
            ? result : null;
   }
 }

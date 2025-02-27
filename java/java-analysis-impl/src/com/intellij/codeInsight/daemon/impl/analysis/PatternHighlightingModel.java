@@ -234,7 +234,7 @@ final class PatternHighlightingModel {
         Set<PatternTypeTestDescription> toAdd = new HashSet<>();
         Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
         Set<PsiClass> visitedCovered =
-          PatternsInSwitchBlockHighlightingModel.findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
+          SwitchBlockHighlightingModel.findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
       boolean changed = addNewClasses(context, mySelectorType, visitedCovered, existedTypes, toAdd);
         if (!changed) {
           return new ReduceResult(currentPatterns, false);
@@ -525,7 +525,7 @@ final class PatternHighlightingModel {
     /**
      * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
      * Previous sealed classes are not excluded because they can be used in another combination.
-     * This method uses {@link PatternsInSwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClasses}
+     * This method uses {@link SwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClasses}
      * To prevent recursive calls, only TypeTest descriptions are passed to this method.
      */
     private @NotNull ReduceResult reduceClasses(@NotNull PsiType selectorType, @NotNull PsiElement context) {
@@ -712,7 +712,7 @@ final class PatternHighlightingModel {
         else {
           Set<PsiType> existedTypes = nestedTypeDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
           Set<PsiClass> sealedResult =
-            PatternsInSwitchBlockHighlightingModel.findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
+            SwitchBlockHighlightingModel.findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
           if (!sealedResult.isEmpty()) {
             addNewClasses(context, componentType, sealedResult, existedTypes, missedComponentTypeDescription);
           }
