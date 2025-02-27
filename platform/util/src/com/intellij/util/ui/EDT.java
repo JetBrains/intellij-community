@@ -28,6 +28,18 @@ import java.lang.reflect.Method;
 public final class EDT {
   private static Thread myEventDispatchThread;
 
+  private static boolean disableEdtChecks = false;
+
+  @ApiStatus.Internal
+  public static void disableEdtChecks() {
+    disableEdtChecks = true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDisableEdtChecks() {
+    return disableEdtChecks;
+  }
+
   private EDT() { }
 
   /**
@@ -73,7 +85,7 @@ public final class EDT {
   }
 
   public static void assertIsEdt() {
-    if (!isCurrentThreadEdt()) {
+    if (!isCurrentThreadEdt() && !disableEdtChecks) {
       Logger.getInstance(EDT.class).error("Assert: must be called on EDT");
     }
   }
