@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
@@ -24,8 +25,7 @@ import java.util.logging.LogRecord
 @ApiStatus.Internal
 class DialogAppender : Handler() {
   private val MAX_EARLY_LOGGING_EVENTS = 20
-  private val FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification"
-  private val DISABLED_VALUE = "disabled"
+  private val NOTIFICATIONS_ENABLED = System.getProperty("idea.fatal.error.notification") != "disabled"
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
@@ -89,17 +89,8 @@ class DialogAppender : Handler() {
         LowMemoryNotifier.showNotification(oomErrorKind, true)
       }
       else {
-        val notificationEnabled = System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY) != DISABLED_VALUE
-
-        val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
-        val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
-        val showPluginError = submitter !is ITNReporter || submitter.showErrorInRelease(IdeaLoggingEvent(message, throwable))
-
-        if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-          UpdateChecker.updateAndShowResult()
-        }
-
-        if (app.isInternal() || notificationEnabled || showPluginError) {
+        val plugin = findPlugin(throwable)
+        if (app.isInternal() || NOTIFICATIONS_ENABLED || showPluginError(throwable, message, plugin)) {
           val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
           val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
           val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
@@ -111,6 +102,19 @@ class DialogAppender : Handler() {
       loggerBroken.set(true)
       throw e
     }
+  }
+
+  private fun findPlugin(throwable: Throwable): IdeaPluginDescriptor? {
+    val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
+    if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
+      UpdateChecker.updateAndShowResult()
+    }
+    return plugin
+  }
+
+  private fun showPluginError(throwable: Throwable, message: String?, plugin: IdeaPluginDescriptor?): Boolean {
+    val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
+    return submitter !is ITNReporter || submitter.showErrorInRelease(IdeaLoggingEvent(message, throwable))
   }
 
   override fun flush() { }
