@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,23 +41,16 @@ public abstract class HighlightInfoUpdater {
                                   @NotNull ManagedHighlighterRecycler invalidElementRecycler);
 
   @ApiStatus.Internal
-  public abstract void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
-                                                     @NotNull TextRange restrictRange,
-                                                     @NotNull HighlightingSession highlightingSession,
-                                                     @NotNull Collection<? extends PsiFile> liveInjectedFiles);
+  public void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
+                                                   @NotNull TextRange restrictRange,
+                                                   @NotNull HighlightingSession highlightingSession,
+                                                   @NotNull Collection<? extends FileViewProvider> liveInjectedFiles) {}
 
   /**
    * {@link HighlightInfoUpdater} which doesn't update markup model. Useful for obtaining highlighting without showing anything
     */
   @ApiStatus.Internal
   public static final @NotNull HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
-    @Override
-    public void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
-                                              @NotNull TextRange restrictRange,
-                                              @NotNull HighlightingSession highlightingSession,
-                                              @NotNull Collection<? extends PsiFile> liveInjectedFiles) {
-    }
-
     @Override
     public void psiElementVisited(@NotNull Object toolId,
                            @NotNull PsiElement visitedPsiElement,

@@ -18,10 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
@@ -81,7 +78,7 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
-    Set<@NotNull PsiFile> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
+    Set<@NotNull FileViewProvider> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
     ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recycler -> {
       processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
                               (injectedPsi, places) ->
@@ -105,7 +102,7 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
   private void processInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
                                        @NotNull List<? extends PsiElement> elements2,
                                        @NotNull ProgressIndicator progress,
-                                       @NotNull Set<? super PsiFile> visitedInjected,
+                                       @NotNull Set<? super FileViewProvider> visitedInjected,
                                        @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -153,7 +150,7 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         injectedLanguageManager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
-          if (visitedInjected.add(injectedPsi)) {
+          if (visitedInjected.add(injectedPsi.getViewProvider())) {
             visitor.visit(injectedPsi, places);
           }
         });
