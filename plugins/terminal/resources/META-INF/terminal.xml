@@ -23,7 +23,7 @@
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
     <registryKey key="terminal.new.ui" defaultValue="false"
                  description="Enable new terminal (Gen1)"/>
-    <registryKey key="terminal.new.ui.reworked" defaultValue="true"
+    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
                  description="Replace classic terminal with reworked terminal (Gen2)"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
