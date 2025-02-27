@@ -12711,6 +12711,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/endBodyComments3.kt");
         }
 
+        @TestMetadata("functionParameterAndWithContext.kt")
+        public void testFunctionParameterAndWithContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/functionParameterAndWithContext.kt");
+        }
+
         @TestMetadata("functionalType.kt")
         public void testFunctionalType() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/functionalType.kt");
