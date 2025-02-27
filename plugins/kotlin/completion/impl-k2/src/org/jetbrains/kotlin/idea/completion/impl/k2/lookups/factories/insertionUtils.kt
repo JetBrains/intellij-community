@@ -6,8 +6,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
@@ -47,7 +45,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
         // if a context receiver has no owner declaration, then its type reference is not resolved and therefore cannot be shortened
         token?.isContextReceiverWithoutOwnerDeclaration() == true -> ") fun"
 
-        caretInTheMiddleOfElement(context = this) -> " "
+        caretInTheMiddleOfElement() -> " "
 
         else -> ""
     }
@@ -69,10 +67,14 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     }
 }
 
-private fun caretInTheMiddleOfElement(context: InsertionContext): Boolean {
-    val caretOffset = context.editor.caretModel.offset
-    val element = context.file.findElementAt(caretOffset) ?: return false
-    return element.startOffset < caretOffset && caretOffset < element.endOffset
+private fun InsertionContext.caretInTheMiddleOfElement(): Boolean {
+    val caretOffset = editor.caretModel.offset
+    val textRange = file.findElementAt(caretOffset)
+        ?.textRange
+        ?: return false
+
+    return textRange.startOffset < caretOffset // todo contains?
+            && caretOffset < textRange.endOffset
 }
 
 private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
