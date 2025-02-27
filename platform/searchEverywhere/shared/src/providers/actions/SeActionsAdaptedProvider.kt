@@ -32,7 +32,7 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
-    return legacyContributor.synchronousContributor.processSelectedItem(legacyItem, modifiers, searchText)
+    return legacyContributor.processSelectedItem(legacyItem, modifiers, searchText)
   }
 
   companion object {

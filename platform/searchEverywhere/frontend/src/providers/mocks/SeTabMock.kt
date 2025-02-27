@@ -9,19 +9,21 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeFilterData
+import com.intellij.platform.searchEverywhere.api.SeResultEvent
 import com.intellij.platform.searchEverywhere.api.SeTab
-import com.intellij.platform.searchEverywhere.frontend.SeTabHelper
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabMock(override val name: String,
-                private val helper: SeTabHelper): SeTab {
+                private val delegate: SeTabDelegate
+): SeTab {
   override val shortName: String = name
 
-  override fun getItems(params: SeParams): Flow<SeItemData> =
-    helper.getItems(params)
+  override fun getItems(params: SeParams): Flow<SeResultEvent> =
+    delegate.getItems(params)
 
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData>? = null
 
@@ -36,8 +38,8 @@ class SeTabMock(override val name: String,
                        name: String,
                        providerIds: List<SeProviderId>,
                        forceRemote: Boolean = false): SeTabMock {
-      val helper = SeTabHelper.create(project, sessionRef, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
-      return SeTabMock(name, helper)
+      val delegate = SeTabDelegate.create(project, sessionRef, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
+      return SeTabMock(name, delegate)
     }
   }
 }

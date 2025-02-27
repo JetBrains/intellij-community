@@ -12,8 +12,11 @@ import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.providers.files.SeTargetItemPresentationRenderer
-import com.intellij.platform.searchEverywhere.frontend.vm.SeListItemData
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultAddedEvent
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
+import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -86,20 +89,34 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
     textField.bindTextIn(vm.searchPattern, vm.coroutineScope)
 
     vm.coroutineScope.launch {
-      vm.searchResults.collectLatest { resultsFlow ->
+      vm.searchResults.collectLatest { listEventFlow ->
         withContext(Dispatchers.EDT) {
           resultListModel.removeAllElements()
+          if (vm.searchPattern.value.isNotEmpty()) {
+            resultListModel.addElement(SeResultListMoreRow)
+          }
         }
 
-        resultsFlow.collect { listItem ->
+        listEventFlow.collect { listEvent ->
           withContext(Dispatchers.EDT) {
-            if (!resultListModel.isEmpty && resultListModel.lastElement() is SeResultListMoreRow) {
-              resultListModel.removeElementAt(resultListModel.size() - 1)
-            }
+            when (listEvent) {
+              is SeResultListUpdateEvent -> {
+                when (val sortedEvent = listEvent.event) {
+                  is SeSortedResultAddedEvent -> {
+                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
+                  }
+                  is SeSortedResultReplacedEvent -> {
+                    resultListModel.removeElement(sortedEvent.indexToRemove)
+                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
+                  }
+                }
+              }
 
-            (listItem as? SeListItemData)?.let {
-              resultListModel.addElement(SeResultListItemRow(it.value))
-              resultListModel.addElement(SeResultListMoreRow)
+              SeResultListStopEvent -> {
+                if (!resultListModel.isEmpty && resultListModel.lastElement() is SeResultListMoreRow) {
+                  resultListModel.removeElementAt(resultListModel.size() - 1)
+                }
+              }
             }
           }
         }

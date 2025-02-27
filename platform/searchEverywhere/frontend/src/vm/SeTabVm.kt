@@ -9,6 +9,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeFilterData
 import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeResultsSorter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -21,7 +22,7 @@ class SeTabVm(
   private val tab: SeTab,
   searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<SeListItem>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<SeResultListEvent>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: ObservableOptionEditor<SeFilterData>? = tab.getFilterEditor()
 
@@ -30,7 +31,7 @@ class SeTabVm(
     get() = shouldLoadMoreFlow.value;
     set(value) { shouldLoadMoreFlow.value = value }
 
-  private val _searchResults: MutableStateFlow<Flow<SeListItem>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<SeResultListEvent>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   private val dumbModeExitFlow = flow<Any> {
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
@@ -43,6 +44,7 @@ class SeTabVm(
       }
     })
   }
+  private val resultsSorter = SeResultsSorter(tab)
 
   init {
     coroutineScope.launch {
@@ -58,13 +60,13 @@ class SeTabVm(
             val params = SeTextSearchParams(searchPattern, filterData)
 
             flow {
-              tab.getItems(params).map { item ->
+              resultsSorter.getItems(params).map { item ->
                 shouldLoadMoreFlow.first { it }
                 item
               }.onCompletion {
-                emit(SeListTerminalItem)
+                emit(SeResultListStopEvent)
               }.collect {
-                emit(SeListItemData(it))
+                emit(SeResultListUpdateEvent(it))
               }
             }
           }.collect {

@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 data class SeItemData(
-  val itemId: SeItemId,
   val providerId: SeProviderId,
   val weight: Int,
   val presentation: SeItemPresentation,
@@ -36,10 +35,7 @@ data class SeItemData(
     ): SeItemData? {
       val entityRef = SeItemEntity.createWith(sessionRef, item) ?: return null
 
-      // TODO: Seems like we don't need this id. We should rid of this as soon as SeResultsAccumulator stops using it.
-      val itemId = withKernel { entityRef.derefOrNull()?.eid } ?: return null
-
-      return SeItemData(SeItemId(itemId), providerId, weight, presentation, entityRef)
+      return SeItemData(providerId, weight, presentation, entityRef)
     }
   }
 }

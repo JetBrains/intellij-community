@@ -2,7 +2,7 @@
 package com.intellij.platform.searchEverywhere.providers.files
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereAsyncContributor
+import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.actions.SeActionsAdaptedProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -23,10 +24,11 @@ class SeFilesProviderFactory : SeItemsProviderFactory {
     val legacyContributor = runBlockingCancellable {
       readAction {
         val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
-        FileSearchEverywhereContributorFactory().createContributor(actionEvent) as SearchEverywhereAsyncContributor<Any?>
+        @Suppress("UNCHECKED_CAST")
+        FileSearchEverywhereContributorFactory().createContributor(actionEvent) as WeightedSearchEverywhereContributor<Any>
       }
     }
 
-    return SeFilesProvider(project, legacyContributor)
+    return SeFilesProvider(project, SeAsyncContributorWrapper(legacyContributor))
   }
 }

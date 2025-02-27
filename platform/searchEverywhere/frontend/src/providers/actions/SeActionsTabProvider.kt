@@ -7,18 +7,18 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeTab
 import com.intellij.platform.searchEverywhere.api.SeTabProvider
-import com.intellij.platform.searchEverywhere.frontend.SeTabHelper
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
-    val helper = SeTabHelper.create(project,
-                                    sessionRef,
-                                    listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
-                                    dataContext,
-                                    true)
-    return SeActionsTab(helper)
+    val delegate = SeTabDelegate.create(project,
+                                        sessionRef,
+                                        listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
+                                        dataContext,
+                                        true)
+    return SeActionsTab(delegate)
   }
 }

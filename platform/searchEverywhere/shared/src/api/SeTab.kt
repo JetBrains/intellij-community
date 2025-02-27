@@ -13,7 +13,7 @@ interface SeTab {
   val name: String
   val shortName: String
 
-  fun getItems(params: SeParams): Flow<SeItemData>
+  fun getItems(params: SeParams): Flow<SeResultEvent>
 
   fun getFilterEditor(): ObservableOptionEditor<SeFilterData>?
 
