@@ -75,6 +75,15 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
 ): Cell<ProjectWizardJdkComboBox> {
+  return projectWizardJdkComboBox(row, sdkProperty, sdkDownloadTaskProperty, null)
+}
+
+fun NewProjectWizardStep.projectWizardJdkComboBox(
+  row: Row,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  jdkPredicate: ProjectWizardJdkPredicate?,
+): Cell<ProjectWizardJdkComboBox> {
   return projectWizardJdkComboBox(
     row, sdkProperty, sdkDownloadTaskProperty,
     requireNotNull(baseData) {
@@ -83,6 +92,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
     { sdk -> context.projectJdk = sdk },
     context.disposable,
     context.projectJdk,
+    jdkPredicate = jdkPredicate,
   )
 }
 
@@ -95,7 +105,7 @@ fun projectWizardJdkComboBox(
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
-  jdkPredicate: ProjectWizardJdkPredicate = ProjectWizardJdkPredicate.IsJdkSupported(),
+  jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
   val sdkPropertyId = StdModuleTypes.JAVA
   val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
@@ -125,7 +135,7 @@ fun projectWizardJdkComboBox(
       val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@validationInfo null
       val version = intent.versionString ?: return@validationInfo null
       val name = intent.name
-      val error = jdkPredicate.getError(version, name ?: version) ?: return@validationInfo null
+      val error = jdkPredicate?.getError(version, name ?: version) ?: return@validationInfo null
       warning(error)
     }
     .validationOnApply {
