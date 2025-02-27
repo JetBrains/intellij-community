@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IntelliJProjectUtil;
@@ -28,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class PluginModuleType extends ModuleType<PluginModuleBuilder> {
+public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
 
   public static final @NonNls String ID = "PLUGIN_MODULE";
 
@@ -45,8 +46,8 @@ public final class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   @Override
-  public @NotNull PluginModuleBuilder createModuleBuilder() {
-    return new PluginModuleBuilder();
+  public @NotNull JavaModuleBuilder createModuleBuilder() {
+    return new JavaModuleBuilder();
   }
 
   @Override
