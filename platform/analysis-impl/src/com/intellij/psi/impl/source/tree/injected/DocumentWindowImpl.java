@@ -884,8 +884,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof DocumentWindowImpl window)) return false;
-    return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
+    return o instanceof DocumentWindowImpl window && myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 
   @Override

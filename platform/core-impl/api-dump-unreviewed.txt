@@ -2299,6 +2299,7 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - getLastCommittedText(com.intellij.openapi.editor.Document):java.lang.CharSequence
 - getPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
 - getSynchronizer():com.intellij.psi.impl.PsiToDocumentSynchronizer
+- s:getTopLevelDocument(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
 - getUncommittedDocuments():com.intellij.openapi.editor.Document[]
 - hasEventSystemEnabledUncommittedDocuments():Z
 - hasUncommitedDocuments():Z

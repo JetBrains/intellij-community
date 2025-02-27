@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayCharSequence
@@ -176,7 +177,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
   }
 
   private fun createEditor(document: Document, isViewer: Boolean, project: Project?, kind: EditorKind): EditorImpl {
-    val hostDocument = if (document is DocumentWindow) document.delegate else document
+    val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
     return doCreateEditor(project = project, document = hostDocument, isViewer = isViewer, kind = kind, file = null, highlighter = null, afterCreation = null)
   }
 

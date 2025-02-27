@@ -922,7 +922,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
            && !isInUncommittedSet(document);
   }
 
-  private static @NotNull Document getTopLevelDocument(@NotNull Document document) {
+  public static @NotNull Document getTopLevelDocument(@NotNull Document document) {
     return document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
   }
 
