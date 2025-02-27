@@ -3,8 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps.storage
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentBTreeEnumerator
@@ -21,7 +19,6 @@ import org.jetbrains.jps.dependency.Maplet
 import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Usage
-import org.jetbrains.jps.dependency.impl.CachingMultiMaplet
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
 import org.jetbrains.jps.incremental.storage.runAllCatching
@@ -31,14 +28,9 @@ import java.io.DataOutput
 import java.io.IOException
 import java.lang.AutoCloseable
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
-import kotlin.math.max
-import kotlin.math.min
-
-private const val BASE_CACHE_SIZE = 512
-
-private val cacheSize = BASE_CACHE_SIZE * min(max(1, (Runtime.getRuntime().maxMemory() / 1073741824L).toInt()), 5)
 
 internal class BazelPersistentMapletFactory private constructor(
   private val rootDir: Path,
@@ -58,8 +50,11 @@ internal class BazelPersistentMapletFactory private constructor(
 
   private val maps = ArrayList<BaseMaplet<*>>()
 
-  private val usageInterner: LoadingCache<Usage, Usage> = Caffeine.newBuilder().maximumSize(cacheSize.toLong()).build { it }
-  private val usageInternerFunction: (Usage) -> Usage = { usageInterner.get(it) }
+  private val usageInterner = ConcurrentHashMap<Usage, Usage>()
+
+  private val usageInternerFunction: (Usage) -> Usage = { usage ->
+    usageInterner.computeIfAbsent(usage) { it }
+  }
 
   // synchronized - we access data mostly in a single-threaded manner (cache per target)
   private val stringEnumerator: StringEnumerator = object : StringEnumerator, ToIntFunction<String>, IntFunction<String> {
@@ -100,7 +95,6 @@ internal class BazelPersistentMapletFactory private constructor(
           elementInterner = usageInternerFunction,
         ),
       ),
-      cacheSize,
     )
     maps.add(container)
     return container

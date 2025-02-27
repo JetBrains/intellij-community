@@ -18,9 +18,9 @@ import org.jetbrains.bazel.jvm.jps.impl.markAffectedFilesDirty
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
+import org.jetbrains.jps.dependency.impl.DeltaImpl
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
 import org.jetbrains.jps.incremental.RebuildRequestedException
@@ -57,7 +57,7 @@ internal suspend fun checkDependencies(
     /* sourcesToProcess = */ nodesToProcess,
     /* deletedSources = */ emptyList(),
     /* isSourceOnly = */ false,
-  )
+  ) as DeltaImpl
   tracer.span("associate dependencies") {
     associate(nodesToProcess = nodesToProcess, changedOrAdded = changedOrAdded, delta = delta)
   }
@@ -88,43 +88,53 @@ internal suspend fun checkDependencies(
 }
 
 
-private fun CoroutineScope.associate(nodesToProcess: List<NodeSource>, changedOrAdded: List<Path>, delta: Delta) {
-  val channel = Channel<Pair<Node<*, *>, List<NodeSource>>>(capacity = Channel.BUFFERED)
+private fun CoroutineScope.associate(nodesToProcess: List<NodeSource>, changedOrAdded: List<Path>, delta: DeltaImpl) {
+  val channel = Channel<Pair<Node<*, *>, NodeSource>>(capacity = Channel.BUFFERED)
 
   launch {
-    for ((node, sources) in channel) {
-      delta.associate(node, sources)
+    for ((node, source) in channel) {
+      delta.associateSource(node, source)
     }
   }
 
   launch {
-    for ((index, node) in nodesToProcess.withIndex()) {
+    for ((index, libNode) in nodesToProcess.withIndex()) {
       val jarFile = changedOrAdded.get(index)
       launch {
-        val sources = listOf(node)
-        val path = jarFile.toString()
-        @Suppress("SpellCheckingInspection")
-        val isAbiJar = path.endsWith(".abi.jar") || path.endsWith("-ijar.jar")
-        suspendAwareReadZipFile(jarFile) { name, dataProvider ->
-          if (!name.endsWith(".class") || name.startsWith("META-INF/")) {
-            return@suspendAwareReadZipFile
-          }
-
-          val buffer = dataProvider()
-          val size = buffer.remaining()
-          if (size == 0) {
-            return@suspendAwareReadZipFile
-          }
-
-          val classFileData = ByteArray(size)
-          buffer.get(classFileData)
-          val reader = FailSafeClassReader(classFileData)
-          val node = JvmClassNodeBuilder.createForLibrary("\$cp/$name", reader).result
-          if (isAbiJar || node.flags.isPublic) {
-            channel.send(node to sources)
-          }
+        doAssociate(jarFile, libNode) { node, source ->
+          channel.send(node to source)
         }
       }
     }
   }.invokeOnCompletion { channel.close(it) }
+}
+
+private suspend inline fun doAssociate(
+  jarFile: Path,
+  libNode: NodeSource,
+  crossinline associator: suspend (Node<*, *>, NodeSource) -> Unit,
+) {
+  val path = jarFile.toString()
+
+  @Suppress("SpellCheckingInspection")
+  val isAbiJar = path.endsWith(".abi.jar") || path.endsWith("-ijar.jar")
+  suspendAwareReadZipFile(jarFile) { name, dataProvider ->
+    if (!name.endsWith(".class") || name.startsWith("META-INF/")) {
+      return@suspendAwareReadZipFile
+    }
+
+    val buffer = dataProvider()
+    val size = buffer.remaining()
+    if (size == 0) {
+      return@suspendAwareReadZipFile
+    }
+
+    val classFileData = ByteArray(size)
+    buffer.get(classFileData)
+    val reader = FailSafeClassReader(classFileData)
+    val node = JvmClassNodeBuilder.createForLibrary("\$cp/$name", reader).result
+    if (isAbiJar || node.flags.isPublic) {
+      associator(node, libNode)
+    }
+  }
 }

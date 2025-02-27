@@ -6,7 +6,6 @@ package org.jetbrains.bazel.jvm.jps.storage
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMapValueStorage
-import com.intellij.util.io.PersistentMapBase
 import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.PersistentMapImpl
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -24,7 +23,7 @@ internal class MultiMapletImpl<K : Any, V : Any>(
   keyDescriptor: KeyDescriptor<K>,
   private val valueExternalizer: GraphDataExternalizer<V>,
 ) : MultiMaplet<K, V> {
-  private val map: PersistentMapBase<K, Set<V>>
+  private val map: PersistentMapImpl<K, Set<V>>
 
   init {
     val builder = PersistentMapBuilder.newBuilder(mapFile, keyDescriptor, object : DataExternalizer<Set<V>> {
