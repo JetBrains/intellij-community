@@ -122,7 +122,7 @@ class IdeaPluginDescriptorImpl(
   private var _pluginClassLoader: ClassLoader? = null
 
   @JvmField
-  val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
+  val actions: List<ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
 
   // extension point name -> list of extension descriptors
   @JvmField

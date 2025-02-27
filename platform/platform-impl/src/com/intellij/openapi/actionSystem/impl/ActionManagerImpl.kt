@@ -14,9 +14,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.ProhibitAWTEvents
-import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorAction
-import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorGroup
+import com.intellij.ide.plugins.ActionDescriptor.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.IdeaLogger
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider

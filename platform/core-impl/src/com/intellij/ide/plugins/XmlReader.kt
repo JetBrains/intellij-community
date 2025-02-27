@@ -2,7 +2,7 @@
 @file:JvmName("XmlReader")
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.RawPluginDescriptor.*
+import com.intellij.ide.plugins.ActionDescriptor.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
