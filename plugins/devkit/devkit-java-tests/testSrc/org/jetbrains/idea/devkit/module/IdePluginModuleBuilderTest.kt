@@ -91,7 +91,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
         <vendor url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="242" until-build="251.*"/>
+        <idea-version since-build="242"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
