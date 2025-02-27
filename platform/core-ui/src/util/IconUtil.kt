@@ -649,6 +649,7 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
+@Internal
 class ColorFilter(val color: Color, val keepGray: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 

@@ -431,12 +431,6 @@ f:com.intellij.ui.icons.TextIcon
 - f:getText():java.lang.String
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-f:com.intellij.util.ColorFilter
-- java.awt.image.RGBImageFilter
-- <init>(java.awt.Color,Z):V
-- filterRGB(I,I,I):I
-- f:getColor():java.awt.Color
-- f:getKeepGray():Z
 f:com.intellij.util.IconUtil
 - sf:INSTANCE:com.intellij.util.IconUtil
 - sf:addText(javax.swing.Icon,java.lang.String):javax.swing.Icon
