@@ -157,14 +157,14 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
-      "url" -> descriptor.url = getNullifiedAttributeValue(reader, i)
-      "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
-      "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_URL_ATTR -> descriptor.url = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
-      "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
-      "dependent-on-core" -> descriptor.isDependentOnCoreClassLoader = reader.getAttributeAsBoolean(i)
-      "separate-jar" -> descriptor.isSeparateJar = reader.getAttributeAsBoolean(i)
-      "version" -> {
+      PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.isDependentOnCoreClassLoader = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> descriptor.isSeparateJar = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?
         getNullifiedAttributeValue(reader, i)?.let {
           try {
