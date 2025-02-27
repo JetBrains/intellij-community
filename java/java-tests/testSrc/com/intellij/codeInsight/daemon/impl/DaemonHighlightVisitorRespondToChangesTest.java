@@ -4,7 +4,9 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -605,5 +607,61 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     });
     myDaemonCodeAnalyzer.restart(getTestName(false));
     assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+  }
+
+
+  private static class MyCheckingCallsVisitor implements HighlightVisitor {
+    private static volatile boolean ANALYZE_CALLED;
+    private static volatile boolean VISIT_CALLED;
+
+    @Override
+    public boolean suitableForFile(@NotNull PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void visit(@NotNull PsiElement element) {
+      VISIT_CALLED = true;
+    }
+
+    @Override
+    public boolean analyze(@NotNull PsiFile file,
+                           boolean updateWholeFile,
+                           @NotNull HighlightInfoHolder holder,
+                           @NotNull Runnable action) {
+      ANALYZE_CALLED = true;
+      action.run();
+      return true;
+    }
+
+    @Override
+    public @NotNull HighlightVisitor clone() {
+      return new MyCheckingCallsVisitor();
+    }
+  }
+  public void testHighlightingVisitorAnalyzeMethodMustNotBeCalledIfTheHighlightingIsDisabledForThisFile() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo(int wwwwwwwwwwwwwwwww) {
+        }
+      }
+      """;
+    HighlightVisitor visitor = new MyCheckingCallsVisitor();
+    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
+    configureByText(JavaFileType.INSTANCE, text);
+    MyCheckingCallsVisitor.VISIT_CALLED = false;
+    MyCheckingCallsVisitor.ANALYZE_CALLED = false;
+    doHighlighting();
+    assertTrue(MyCheckingCallsVisitor.ANALYZE_CALLED);
+    assertTrue(MyCheckingCallsVisitor.VISIT_CALLED);
+
+    HighlightingSettingsPerFile.getInstance(myProject).setHighlightingSettingForRoot(myFile, FileHighlightingSetting.SKIP_HIGHLIGHTING);
+    MyCheckingCallsVisitor.VISIT_CALLED = false;
+    MyCheckingCallsVisitor.ANALYZE_CALLED = false;
+    myDaemonCodeAnalyzer.restart();
+    doHighlighting();
+    assertFalse(MyCheckingCallsVisitor.VISIT_CALLED);
+    assertFalse(MyCheckingCallsVisitor.ANALYZE_CALLED);
   }
 }

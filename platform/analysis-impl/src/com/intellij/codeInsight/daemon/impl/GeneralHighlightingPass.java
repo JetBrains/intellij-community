@@ -188,20 +188,27 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
           impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
         }
-        boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
-                                            forceHighlightParents, (toolId, psiElement, newInfos) -> {
-            myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
-            myHighlights.addAll(newInfos);
-            if (psiElement instanceof PsiErrorElement) {
-              myHasErrorElement = true;
-            }
-            for (HighlightInfo info : newInfos) {
-              if (info.getSeverity() == HighlightSeverity.ERROR) {
-                myHasErrorSeverity = true;
-                break;
+        boolean success;
+        if (allInsideElements.isEmpty() && allOutsideElements.isEmpty()) {
+          success = true;
+        }
+        else {
+          success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
+                                      forceHighlightParents, (toolId, psiElement, newInfos) -> {
+              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject,
+                                                       getHighlightingSession(), invalidPsiRecycler);
+              myHighlights.addAll(newInfos);
+              if (psiElement instanceof PsiErrorElement) {
+                myHasErrorElement = true;
               }
-            }
-        });
+              for (HighlightInfo info : newInfos) {
+                if (info.getSeverity() == HighlightSeverity.ERROR) {
+                  myHasErrorSeverity = true;
+                  break;
+                }
+              }
+            });
+        }
         if (success) {
           if (myUpdateAll) {
             daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
