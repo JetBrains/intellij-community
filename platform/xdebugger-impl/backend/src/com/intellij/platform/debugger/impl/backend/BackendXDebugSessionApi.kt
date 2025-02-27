@@ -15,6 +15,7 @@ import com.jetbrains.rhizomedb.entity
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
 import fleet.kernel.withEntities
+import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -81,7 +82,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
     return session.tabInitDataFlow.map {
       if (it == null) return@map null
-      XDebuggerSessionTabDto(it)
+      XDebuggerSessionTabDto(it, session.pausedFlow.toRpc())
     }
   }
 

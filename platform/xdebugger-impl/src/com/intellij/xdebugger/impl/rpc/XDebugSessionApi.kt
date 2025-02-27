@@ -11,6 +11,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
 import fleet.util.UID
 import kotlinx.coroutines.flow.Flow
@@ -102,4 +103,12 @@ data class XDebuggerSessionTabInfo(
 @Serializable
 data class XDebuggerSessionTabDto(
   val tabInfo: XDebuggerSessionTabAbstractInfo,
+  val pausedInfo: RpcFlow<XDebugSessionPausedInfo?>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionPausedInfo(
+  val pausedByUser: Boolean,
+  val topFrameIsAbsent: Boolean,
 )

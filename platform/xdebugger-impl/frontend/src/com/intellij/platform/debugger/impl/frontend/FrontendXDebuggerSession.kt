@@ -91,22 +91,25 @@ internal class FrontendXDebuggerSession(
   }
 
   private fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
-    val (tabInfo) = tabDto
+    val (tabInfo, pausedFlow) = tabDto
     cs.launch {
-      val sessionTab = when (tabInfo) {
-        is XDebuggerSessionTabInfo -> {
-          val proxy = createProxy(this@FrontendXDebuggerSession)
-          withContext(Dispatchers.EDT) {
-            XDebugSessionTab.create(proxy, tabInfo.icon, tabInfo.executionEnvironment, tabInfo.contentToReuse,
-                                    tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
-              proxy.onTabInitialized(this)
-              if (tabInfo.shouldShowTab) {
-                showTab()
-              }
+      if (tabInfo !is XDebuggerSessionTabInfo) return@launch
+
+      val proxy = createProxy(this@FrontendXDebuggerSession)
+      withContext(Dispatchers.EDT) {
+        XDebugSessionTab.create(proxy, tabInfo.icon, tabInfo.executionEnvironment, tabInfo.contentToReuse,
+                                tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
+          proxy.onTabInitialized(this)
+          if (tabInfo.shouldShowTab) {
+            showTab()
+          }
+          pausedFlow.toFlow().collectLatest { paused ->
+            if (paused == null) return@collectLatest
+            withContext(Dispatchers.EDT) {
+              onPause(paused.pausedByUser, paused.topFrameIsAbsent)
             }
           }
         }
-        is XDebuggerSessionTabInfoNoInit -> tabInfo.tab ?: return@launch
       }
     }
   }

@@ -39,6 +39,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -547,5 +548,27 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       return contentUi.findOrRestoreContentIfNeeded(contentId);
     }
     return myUi.findContent(contentId);
+  }
+
+  @ApiStatus.Internal
+  public void onPause(boolean pausedByUser, boolean topFramePositionAbsent) {
+    // user attractions should only be made if event happens independently (e.g. program paused/suspended)
+    // and should not be made when user steps in the code
+    if (!pausedByUser) return;
+    if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+      toFront(true, () -> {
+        if (mySession != null) {
+          mySession.updateExecutionPosition();
+        }
+      });
+    }
+
+    if (topFramePositionAbsent) {
+      // if there is no source position available, we should somehow tell the user that session is stopped.
+      // the best way is to show the stack frames.
+      showView(getFramesContentId());
+    }
+
+    getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
   }
 }

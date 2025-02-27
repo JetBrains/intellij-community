@@ -50,6 +50,7 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
+import com.intellij.xdebugger.impl.rpc.XDebugSessionPausedInfo;
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo;
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo;
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit;
@@ -117,6 +118,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final MutableStateFlow<Boolean> myReadOnly = createMutableStateFlow(false);
   private final boolean myShowToolWindowOnSuspendOnly;
   private final MutableStateFlow<@Nullable XDebuggerSessionTabAbstractInfo> myTabInitDataFlow = CoroutineUtilsKt.createMutableStateFlow(null);
+  private final MutableStateFlow<@Nullable XDebugSessionPausedInfo> myPausedFlow = CoroutineUtilsKt.createMutableStateFlow(null);
   private final List<AnAction> myRestartActions = new SmartList<>();
   private final List<AnAction> myExtraStopActions = new SmartList<>();
   private final List<AnAction> myExtraActions = new SmartList<>();
@@ -183,6 +185,11 @@ public final class XDebugSessionImpl implements XDebugSession {
   @ApiStatus.Internal
   public Flow<@Nullable XDebuggerSessionTabAbstractInfo> getTabInitDataFlow() {
     return myTabInitDataFlow;
+  }
+
+  @ApiStatus.Internal
+  public Flow<@Nullable XDebugSessionPausedInfo> getPausedFlow() {
+    return myPausedFlow;
   }
 
   @Override
@@ -1049,25 +1056,14 @@ public final class XDebugSessionImpl implements XDebugSession {
           initSessionTab(null, true);
         }
 
-        // user attractions should only be made if event happens independently (e.g. program paused/suspended)
-        // and should not be made when user steps in the code
-        if (attract) {
-          if (mySessionTab == null) {
-            LOG.debug("Cannot request focus because Session Tab is not initialized yet");
-            return;
-          }
-
-          if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
-            mySessionTab.toFront(true, this::updateExecutionPosition);
-          }
-
-          if (topFramePosition == null) {
-            // if there is no source position available, we should somehow tell the user that session is stopped.
-            // the best way is to show the stack frames.
-            XDebugSessionTab.showFramesView(this);
-          }
-
-          mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        boolean topFrameIsAbsent = topFramePosition == null;
+        if (XDebugSessionProxy.useFeProxy()) {
+          myPausedFlow.setValue(new XDebugSessionPausedInfo(attract, topFrameIsAbsent));
+        }
+        else {
+          // We have to keep this code because Code with Me expects BE to work with tab similar to monolith
+          assert mySessionTab != null;
+          mySessionTab.onPause(attract, topFrameIsAbsent);
         }
       });
     }
