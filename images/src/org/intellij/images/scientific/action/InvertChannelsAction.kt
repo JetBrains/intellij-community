@@ -5,11 +5,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.intellij.images.editor.ImageDocument
-import org.intellij.images.editor.ImageFileEditor
+import com.intellij.openapi.vfs.writeBytes
+import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
 import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.ScientificUtils.DEFAULT_IMAGE_FORMAT
 import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
-import org.intellij.images.scientific.convertToByteArray
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -26,22 +26,29 @@ class InvertChannelsAction : DumbAwareAction() {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val invertedImage = applyInvertChannels(originalImage)
-    //val editor = e.getData(IMAGE_DOCUMENT_DATA_KEY ) TODO: get editor?
-    //val document = (editor as ImageFileEditor).imageEditor.document as ImageDocument
-    //document.value = invertedImage
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    ImageIO.write(invertedImage, DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
+    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
+    val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
+    document.value = invertedImage
   }
 
 
   private fun applyInvertChannels(image: BufferedImage): BufferedImage {
-    val invertedImage = BufferedImage(image.width, image.height, image.type)
+    val hasAlpha = image.colorModel.hasAlpha()
+    val invertedImage = BufferedImage(image.width, image.height, if (hasAlpha) BufferedImage.TYPE_INT_ARGB else BufferedImage.TYPE_INT_RGB)
     for (x in 0 until image.width) {
       for (y in 0 until image.height) {
-        val rgb = image.getRGB(x, y)
-        val red = (rgb shr 16) and 0xFF
-        val green = (rgb shr 8) and 0xFF
-        val blue = rgb and 0xFF
-        val bgr = (blue shl 16) or (green shl 8) or red
-        invertedImage.setRGB(x, y, bgr)
+        val rgba = image.getRGB(x, y)
+        val alpha = (rgba shr 24) and 0xFF
+        val red = (rgba shr 16) and 0xFF
+        val green = (rgba shr 8) and 0xFF
+        val blue = rgba and 0xFF
+        val invertedRed = 255 - red
+        val invertedGreen = 255 - green
+        val invertedBlue = 255 - blue
+        val invertedRgba = (alpha shl 24) or (invertedRed shl 16) or (invertedGreen shl 8) or invertedBlue
+        invertedImage.setRGB(x, y, invertedRgba)
       }
     }
     return invertedImage
