@@ -120,9 +120,7 @@ a:com.intellij.xdebugger.impl.DebuggerSupport
 - getForceStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getForceStepOverHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getMuteBreakpointsHandler():com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
-- getPauseHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getQuickEvaluateHandler():com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
-- getResumeActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getShowExecutionPointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getSmartStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -175,8 +173,6 @@ c:com.intellij.xdebugger.impl.XDebuggerSupport
 - getForceStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getForceStepOverHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getMuteBreakpointsHandler():com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
-- getPauseHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getResumeActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getShowExecutionPointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getSmartStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -334,21 +330,20 @@ c:com.intellij.xdebugger.impl.actions.MuteBreakpointAction
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.PauseAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- com.intellij.openapi.project.DumbAwareAction
 - <init>():V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- p:isHidden(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction
 - com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
 - <init>():V
 c:com.intellij.xdebugger.impl.actions.ResumeAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
-- com.intellij.openapi.project.DumbAware
+- com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- p:isHidden(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.RunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
