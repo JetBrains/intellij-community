@@ -1,14 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
@@ -23,6 +28,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -74,5 +80,13 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       })
       awaitClose()
     }.buffer(Channel.UNLIMITED)
+  }
+
+  override suspend fun reshowInlays(projectId: ProjectId, editorId: EditorId?) {
+    val project = projectId.findProjectOrNull() ?: return
+    val editor = editorId?.findEditorOrNull() ?: return
+    withContext(Dispatchers.EDT) {
+      reshowInlayRunToCursor(project, editor)
+    }
   }
 }

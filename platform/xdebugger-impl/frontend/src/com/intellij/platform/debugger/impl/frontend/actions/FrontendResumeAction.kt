@@ -38,7 +38,7 @@ private class FrontendResumeAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val session = e.frontendDebuggerSession ?: return
-    performDebuggerActionAsync(e) {
+    performDebuggerActionAsync(e, updateInlays = true) {
       XDebugSessionApi.getInstance().resume(session.id)
     }
   }

@@ -2,13 +2,16 @@
 package com.intellij.platform.debugger.impl.frontend.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerSession
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
+import com.intellij.platform.project.projectId
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,8 +35,11 @@ internal fun performDebuggerActionAsync(
   coroutineScope.launch {
     action()
     if (updateInlays) {
-      withContext(Dispatchers.EDT) {
-        reshowInlayRunToCursor(e)
+      val editor = e.getData(CommonDataKeys.EDITOR)
+      if (project != null && editor != null) {
+        withContext(Dispatchers.EDT) {
+          XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
+        }
       }
     }
   }

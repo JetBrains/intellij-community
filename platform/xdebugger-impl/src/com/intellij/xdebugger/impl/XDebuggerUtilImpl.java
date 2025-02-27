@@ -541,10 +541,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     }
 
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if(editor == null) {
+    if (editor == null) {
       return;
     }
 
+    reshowInlayRunToCursor(project, editor);
+  }
+
+  @ApiStatus.Internal
+  public static void reshowInlayRunToCursor(Project project, Editor editor) {
     if (XDebuggerManager.getInstance(project) instanceof XDebuggerManagerImpl debuggerManagerImpl) {
       debuggerManagerImpl.reshowInlayToolbar(editor);
     }
