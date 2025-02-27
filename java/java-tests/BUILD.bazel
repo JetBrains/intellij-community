@@ -125,6 +125,8 @@ jvm_library(
     "//platform/searchEverywhere/testFramework",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
     "//java/codeserver/core:java-codeserver-core",
+    "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure",
+    "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure_test_lib",
   ],
   runtime_deps = [
     ":tests_test_resources",
