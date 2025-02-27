@@ -31,7 +31,7 @@ import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
 import com.jetbrains.python.psi.impl.PyImportElementImpl

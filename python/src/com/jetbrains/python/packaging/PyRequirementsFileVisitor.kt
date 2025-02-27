@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
-import java.util.Locale
+import java.util.*
 
 class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PyPackage>,
                                 private val settings: PyPackageRequirementsSettings) {
@@ -75,7 +75,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       }
       else {
         val requirement = parsed.first()
-        val name = requirement.name.lowercase(Locale.getDefault())
+        val name = requirement.name
         if (name in importedPackages) {
           val pkg = importedPackages.remove(name)!!
           val formatted = formatRequirement(requirement, pkg, lines)
@@ -131,10 +131,10 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
   private fun convertToRequirementsEntry(requirement: PyRequirement, settings: PyPackageRequirementsSettings, version: String? = null): String {
     val packageName = when {
       settings.specifyVersion -> when {
-        version != null -> requirement.name + requirement.extras + settings.versionSpecifier.separator + version
-        else -> requirement.presentableText
+        version != null -> requirement.presentableTextWithoutVersion + requirement.extras + settings.versionSpecifier.separator + version
+        else -> requirement.presentableTextWithoutVersion
       }
-      else -> requirement.name + requirement.extras
+      else -> requirement.presentableTextWithoutVersion + requirement.extras
     }
 
     if (requirement.installOptions.size == 1) return packageName

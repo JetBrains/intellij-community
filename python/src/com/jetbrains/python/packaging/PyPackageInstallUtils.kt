@@ -15,7 +15,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -138,7 +137,7 @@ internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Pr
 
   if (!confirmationEnabled || packageNames.isEmpty()) return packageNames.toSet()
 
-  val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableText }
+  val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableTextWithoutVersion }
 
   if (!dialog.showAndGet()) {
     PyPackagesUsageCollector.installAllCanceledEvent.log()

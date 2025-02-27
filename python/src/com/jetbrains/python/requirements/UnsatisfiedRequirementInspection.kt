@@ -26,7 +26,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
@@ -100,7 +99,7 @@ class InstallAllRequirementsQuickFix(requirements: List<Requirement>) : LocalQui
     InstallRequirementQuickFix.installPackages(
       project,
       descriptor,
-      requirementElements.filter { pkg -> confirmedPackages.any { it.name == pkg.displayName } }
+      requirementElements.filter { pkg -> confirmedPackages.any { it.equals(pkg.displayName) } }
     )
   }
 

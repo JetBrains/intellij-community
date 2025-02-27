@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.packaging.normalizePackageName
 
 class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
