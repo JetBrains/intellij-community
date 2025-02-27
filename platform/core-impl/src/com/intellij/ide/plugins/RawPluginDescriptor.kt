@@ -11,44 +11,44 @@ import java.time.LocalDate
 @ApiStatus.Internal
 class RawPluginDescriptor {
   @JvmField var id: String? = null
-  @JvmField internal var name: String? = null
-  @JvmField internal var description: @NlsSafe String? = null
-  @JvmField internal var category: String? = null
-  @JvmField internal var changeNotes: String? = null
+  @JvmField var name: String? = null
+  @JvmField var description: @NlsSafe String? = null
+  @JvmField var category: String? = null
+  @JvmField var changeNotes: String? = null
 
-  @JvmField internal var version: String? = null
-  @JvmField internal var sinceBuild: String? = null
+  @JvmField var version: String? = null
+  @JvmField var sinceBuild: String? = null
 
   @Deprecated("Deprecated since 2025.2, the value is disregarded if its major part is at least 251. " +
               "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
-  @JvmField internal var untilBuild: String? = null
+  @JvmField var untilBuild: String? = null
 
   @JvmField var `package`: String? = null
   @JvmField var isSeparateJar: Boolean = false
 
-  @JvmField internal var url: String? = null
-  @JvmField internal var vendor: String? = null
-  @JvmField internal var vendorEmail: String? = null
-  @JvmField internal var vendorUrl: String? = null
+  @JvmField var url: String? = null
+  @JvmField var vendor: String? = null
+  @JvmField var vendorEmail: String? = null
+  @JvmField var vendorUrl: String? = null
 
-  @JvmField internal var resourceBundleBaseName: String? = null
+  @JvmField var resourceBundleBaseName: String? = null
 
-  @JvmField internal var isUseIdeaClassLoader: Boolean = false
-  @JvmField internal var isBundledUpdateAllowed: Boolean = false
-  @JvmField internal var implementationDetail: Boolean = false
-  @JvmField internal var isRestartRequired: Boolean = false
-  @JvmField internal var isLicenseOptional: Boolean = false
+  @JvmField var isUseIdeaClassLoader: Boolean = false
+  @JvmField var isBundledUpdateAllowed: Boolean = false
+  @JvmField var implementationDetail: Boolean = false
+  @JvmField var isRestartRequired: Boolean = false
+  @JvmField var isLicenseOptional: Boolean = false
   // makes sense only for product modules for now
-  @JvmField internal var isDependentOnCoreClassLoader: Boolean = true
+  @JvmField var isDependentOnCoreClassLoader: Boolean = true
 
-  @JvmField internal var productCode: String? = null
-  @JvmField internal var releaseDate: LocalDate? = null
-  @JvmField internal var releaseVersion: Int = 0
+  @JvmField var productCode: String? = null
+  @JvmField var releaseDate: LocalDate? = null
+  @JvmField var releaseVersion: Int = 0
 
-  @JvmField internal var pluginAliases: MutableList<PluginId>? = null
+  @JvmField var pluginAliases: MutableList<PluginId>? = null
 
-  @JvmField internal var depends: MutableList<PluginDependency>? = null
-  @JvmField internal var actions: MutableList<ActionDescriptor>? = null
+  @JvmField var depends: MutableList<PluginDependency>? = null
+  @JvmField var actions: MutableList<ActionDescriptor>? = null
 
   @JvmField var incompatibilities: MutableList<PluginId>? = null
 
@@ -58,8 +58,8 @@ class RawPluginDescriptor {
 
   @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
-  @JvmField internal var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
-  @JvmField internal var dependencies: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor.EMPTY
+  @JvmField var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
+  @JvmField var dependencies: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor.EMPTY
 
   sealed class ActionDescriptor(
     @JvmField val name: ActionDescriptorName,
