@@ -231,7 +231,8 @@
   <technology name="kotlin-logging" root="io.github.oshai.kotlinlogging"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
-  <technology name="ktor" root="io.ktor"/>
+  <technology name="ktor-client" root="io.ktor.client"/>
+  <technology name="ktor-server" root="io.ktor.server"/>
   <technology name="ktorm" root="org.ktorm"/>
   <technology name="kvision" root="io.kvision"/>
   <technology name="lagom" root="com.lightbend.lagom"/>
