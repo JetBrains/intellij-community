@@ -121,6 +121,7 @@ internal class ContextParametersMigrationInspection : KotlinApplicableInspection
         val implicitOnlyContextReceivers = getImplicitOnlyContextReceivers(implicitContextReceiverUsages)
         val implicitContextUsagesWithLocalReplacement = implicitContextReceiverUsages.filterNot { contextReceiverUsage ->
             implicitOnlyContextReceivers.containsAll(contextReceiverUsage.getAllContextReceivers())
+                    && contextReceiverUsage.isInsideBodyOf(containingDeclaration) // not true for default parameters
         }
         val contextNames = findSuggestedContextNames(receivers, containingDeclaration) ?: createFallbackNames(receivers)
         val reviewedShadowedThisUsages = shadowedThisUsages.takeIf { implicitOnlyContextReceivers.isNotEmpty() }.orEmpty()
@@ -137,6 +138,16 @@ internal class ContextParametersMigrationInspection : KotlinApplicableInspection
     private fun getImplicitOnlyContextReceivers(calls: List<ImplicitContextReceiverUsage>): Set<KtContextReceiver> {
         return calls.filter { it.receiverCombination in receiverCombinationsWithImplicitOnlyContext }
             .mapNotNullTo(SmartSet.create()) { it.getImplicitOnlyContextReceiver() }
+    }
+
+    private fun ImplicitContextReceiverUsage.isInsideBodyOf(containingDeclaration: KtNamedDeclaration): Boolean {
+        val callReference = callReference.element ?: return false
+        return when (containingDeclaration) {
+            is KtNamedFunction -> PsiTreeUtil.isAncestor(containingDeclaration.bodyExpression, callReference, true)
+            is KtProperty -> PsiTreeUtil.isAncestor(containingDeclaration.getter?.bodyExpression, callReference, true)
+                    || PsiTreeUtil.isAncestor(containingDeclaration.setter?.bodyExpression, callReference, true)
+            else -> false
+        }
     }
 
     /**
