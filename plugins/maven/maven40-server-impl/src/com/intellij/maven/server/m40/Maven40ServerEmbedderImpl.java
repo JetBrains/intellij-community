@@ -34,7 +34,6 @@ import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.model.path.DefaultPathTranslator;
-import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.path.PathTranslator;
 import org.apache.maven.model.profile.DefaultProfileActivationContext;
 import org.apache.maven.model.profile.DefaultProfileInjector;
@@ -42,7 +41,6 @@ import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
 import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator;
 import org.apache.maven.model.profile.activation.ProfileActivator;
 import org.apache.maven.model.profile.activation.PropertyProfileActivator;
-import org.apache.maven.model.root.DefaultRootLocator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
@@ -861,9 +859,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public @NotNull Model interpolateAndAlignModel(Model nativeModel, File pomDir) {
     File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
-    DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
-    DefaultRootLocator rootLocator = new DefaultRootLocator();
-    StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
+    StringVisitorModelInterpolator interpolator = getComponent(StringVisitorModelInterpolator.class);
     Model result = doInterpolate(interpolator, nativeModel, baseDir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, pomDir);
@@ -942,10 +938,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private static ProfileApplicationResult applyProfiles(MavenModel model,
-                                                        File basedir,
-                                                        MavenExplicitProfiles explicitProfiles,
-                                                        Collection<String> alwaysOnProfiles) {
+  private ProfileApplicationResult applyProfiles(MavenModel model,
+                                                 File basedir,
+                                                 MavenExplicitProfiles explicitProfiles,
+                                                 Collection<String> alwaysOnProfiles) {
     Model nativeModel = Maven40ModelConverter.toNativeModel(model);
 
     Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
@@ -976,10 +972,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         // expand only if necessary
         if (expandedProfilesCache == null) {
-          DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
-          DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
-          DefaultRootLocator rootLocator = new DefaultRootLocator();
-          StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
+          StringVisitorModelInterpolator interpolator = getComponent(StringVisitorModelInterpolator.class);
           expandedProfilesCache = doInterpolate(interpolator, nativeModel, basedir).getProfiles();
         }
         Profile eachExpandedProfile = expandedProfilesCache.get(i);
