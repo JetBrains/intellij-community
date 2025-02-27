@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.MarkupModelWindow;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -52,8 +53,10 @@ public final class DocumentMarkupModel {
       MarkupModelEx markupModel = document.getUserData(MARKUP_MODEL_KEY);
       if (create && markupModel == null) {
         MarkupModelEx newModel = new MarkupModelImpl((DocumentEx)document);
+        fireMarkupModelCreated(null, newModel);
         if ((markupModel = ((UserDataHolderEx)document).putUserDataIfAbsent(MARKUP_MODEL_KEY, newModel)) != newModel) {
           newModel.dispose();
+          fireMarkupModelDisposed(null, newModel);
         }
       }
       return markupModel;
@@ -70,11 +73,13 @@ public final class DocumentMarkupModel {
     MarkupModelImpl model = markupModelMap.get(project);
     if (create && model == null) {
       MarkupModelImpl newModel = new MarkupModelImpl((DocumentEx)document);
+      fireMarkupModelCreated(project, newModel);
       if ((model = ConcurrencyUtil.cacheOrGet(markupModelMap, project, newModel)) == newModel) {
         documentMarkupModelManager.registerDocument(document);
       }
       else {
         newModel.dispose();
+        fireMarkupModelDisposed(project, newModel);
       }
     }
 
@@ -110,6 +115,17 @@ public final class DocumentMarkupModel {
     MarkupModelImpl removed = getMarkupModelMap(document).remove(project);
     if (removed != null) {
       removed.dispose();
+      fireMarkupModelDisposed(project, removed);
     }
+  }
+
+  private static void fireMarkupModelCreated(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupModelListener.TOPIC)
+      .markupModelCreated(project, markupModel);
+  }
+
+  private static void fireMarkupModelDisposed(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupModelListener.TOPIC)
+      .markupModelDisposed(project, markupModel);
   }
 }

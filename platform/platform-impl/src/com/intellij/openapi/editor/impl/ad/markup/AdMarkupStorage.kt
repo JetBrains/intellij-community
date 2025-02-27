@@ -17,13 +17,8 @@ internal data class AdMarkupStorage(
   private val document: AdTextDocument,
   private val intervals: Intervals<Long, AdRangeHighlighterData>,
 ) {
-
-  companion object {
-    fun empty(text: Text): AdMarkupStorage = AdMarkupStorage(
-      AdTextDocument(text),
-      Intervals.keepingCollapsed().empty(),
-    )
-  }
+  constructor(text: Text) : this(text, Intervals.keepingCollapsed().empty())
+  constructor(text: Text, intervals: Intervals<Long, AdRangeHighlighterData>) : this(AdTextDocument(text), intervals)
 
   fun query(startOffset: Int, endOffset: Int): Sequence<AdRangeHighlighter> {
     return intervals.query(startOffset.toLong(), endOffset.toLong())
@@ -31,7 +26,7 @@ internal data class AdMarkupStorage(
   }
 
   fun edit(text: Text, operation: Operation): AdMarkupStorage {
-    return AdMarkupStorage(AdTextDocument(text), intervals.edit(operation))
+    return AdMarkupStorage(text, intervals.edit(operation))
   }
 
   fun batchUpdate(toAdd: Iterable<AdRangeHighlighter>, toRemove: Iterable<Long>): AdMarkupStorage {

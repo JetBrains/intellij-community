@@ -19,7 +19,7 @@ interface AdEntityProvider {
   fun getDocEntityUid(document: DocumentEx): UID?
   suspend fun createDocEntity(uid: UID, document: DocumentEx): DocumentEntity
   suspend fun deleteDocEntity(docEntity: DocumentEntity)
-  suspend fun createMarkupEntity(uid: UID, project: Project, markupModel: MarkupModelEx): AdMarkupEntity
+  suspend fun createMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity
   suspend fun deleteMarkupEntity(markupEntity: AdMarkupEntity)
 
   companion object {

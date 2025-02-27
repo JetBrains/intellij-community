@@ -7,7 +7,10 @@ import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollingModel
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
@@ -17,9 +20,8 @@ import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentEntityManager
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
-import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModelManager
+import com.intellij.openapi.editor.impl.ad.markup.document.AdDocumentMarkupModelManager
 import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
-import com.intellij.openapi.project.Project
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -43,20 +45,13 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     }
   }
 
-  fun bindMarkupEntity(project: Project?, document: Document) {
-    if (isEnabled() && project != null && document is DocumentEx) {
-      val markupModel = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
-      AdMarkupModelManager.getInstance(project).bindMarkupModelEntity(markupModel)
-    }
-  }
-
   fun getEditorModel(editor: EditorImpl): EditorModel? {
     if (isEnabled()) {
       val docEntity = docEntity(editor)
       if (docEntity != null) {
         val project = editor.project!!
         val mm = DocumentMarkupModel.forDocument(editor.document, project, true) as MarkupModelEx
-        val adMarkupModel = adMarkupModel(editor, mm)
+        val adMarkupModel = adMarkupModel(mm)
         ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
         return object : EditorModel {
           override fun getDocument(): DocumentEx = AdDocument(docEntity)
@@ -71,7 +66,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
           override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
           override fun getFocusModel(): FocusModeModel = editor.focusModeModel
           override fun isAd(): Boolean = true
-          override fun dispose() = AdMarkupModelManager.getInstance(project).releaseMarkupModelEntity(mm)
+          override fun dispose() {}
         }
       }
     }
@@ -105,10 +100,8 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
     }.getOrNull()
   }
 
-  private fun adMarkupModel(editor: Editor, markupModel: MarkupModelEx): AdMarkupModel {
-    val project = editor.project!!
-    val manager = AdMarkupModelManager.getInstance(project)
-    val entity = manager.getMarkupEntityRunBlocking(markupModel)!!
+  private fun adMarkupModel(markupModel: MarkupModelEx): AdMarkupModel {
+    val entity = AdDocumentMarkupModelManager.getInstance().getMarkupEntityRunBlocking(markupModel)!!
     return AdMarkupModel(entity)
   }
 

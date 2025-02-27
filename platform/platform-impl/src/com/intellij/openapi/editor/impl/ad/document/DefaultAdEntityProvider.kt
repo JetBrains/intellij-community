@@ -54,7 +54,7 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
     }
   }
 
-  override suspend fun createMarkupEntity(uid: UID, project: Project, markupModel: MarkupModelEx): AdMarkupEntity {
+  override suspend fun createMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity {
     val docEntity = AdDocumentEntityManager.getInstance().getDocEntity(markupModel.document)
     checkNotNull(docEntity) { "doc entity not found" }
     val markupEntity = change {
@@ -62,7 +62,7 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
         AdMarkupEntity.empty(uid, docEntity)
       }
     }
-    val cs = project.service<AdMarkupSynchronizerService>().createSynchronizer(markupEntity, markupModel)
+    val cs = AdMarkupSynchronizerService.getInstance().createSynchronizer(markupEntity, markupModel)
     markupToScope[markupEntity] = cs
     return markupEntity
   }

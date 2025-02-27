@@ -35,7 +35,7 @@ class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentCo
       AdMarkupEntity.new {
         it[Durable.Id] = uid
         it[DocumentAttr] = documentEntity
-        it[MarkupStorageAttr] = AdMarkupStorage.empty(documentEntity.text)
+        it[MarkupStorageAttr] = AdMarkupStorage(documentEntity.text)
       }
     }
   }
