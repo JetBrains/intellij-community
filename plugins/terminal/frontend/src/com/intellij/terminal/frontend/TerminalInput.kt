@@ -5,7 +5,9 @@ import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
@@ -15,21 +17,30 @@ import java.util.concurrent.CompletableFuture
 internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
-  private val coroutineScope: CoroutineScope,
+  coroutineScope: CoroutineScope,
 ) {
   companion object {
     val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
   }
+
+  /**
+   * Use the flow to buffer the input events before we get the actual channel from the backend.
+   */
+  private val inputFlow = MutableSharedFlow<TerminalInputEvent>(extraBufferCapacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
     coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
       terminalSessionFuture.await().getInputChannel()
     }
 
-  /**
-   * Use this dispatcher to ensure that events are sent in the same order as methods in this class were called.
-   */
-  private val synchronousDispatcher = Dispatchers.Default.limitedParallelism(1)
+  init {
+    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+      inputFlow.collect { event ->
+        val channel = inputChannelDeferred.await()
+        channel.send(event)
+      }
+    }
+  }
 
   fun sendString(data: String) {
     // TODO: should there always be UTF8?
@@ -62,9 +73,6 @@ internal class TerminalInput(
   }
 
   private fun sendEvent(event: TerminalInputEvent) {
-    coroutineScope.launch(synchronousDispatcher + CoroutineName("Send input event")) {
-      val channel = inputChannelDeferred.await()
-      channel.send(event)
-    }
+    inputFlow.tryEmit(event)
   }
 }
