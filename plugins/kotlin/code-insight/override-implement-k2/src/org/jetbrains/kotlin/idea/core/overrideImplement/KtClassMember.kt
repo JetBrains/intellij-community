@@ -159,6 +159,7 @@ fun generateMember(
     return newMember
 }
 
+context(KaSession)
 private fun getBodyType(
     ktClassMember: KtClassMember?,
     symbol: KaCallableSymbol,
@@ -167,7 +168,7 @@ private fun getBodyType(
 ): BodyType {
     return when {
         mode == MemberGenerateMode.EXPECT -> BodyType.NoBody
-        mode == MemberGenerateMode.ACTUAL && symbol.modality == KaSymbolModality.ABSTRACT -> BodyType.NoBody
+        isToKeepAbstract(mode, symbol) -> BodyType.NoBody
         mode == MemberGenerateMode.ACTUAL && ktClassMember == null -> BodyType.EmptyOrTemplate
         ktClassMember == null -> BodyType.FromTemplate
         targetClass?.hasExpectModifier() == true -> BodyType.NoBody
@@ -422,11 +423,17 @@ private fun generateFunction(
     val returnType = symbol.returnType
     val returnsUnit = returnType.isUnitType
 
-    val body = if (bodyType != BodyType.NoBody && (symbol is KaNamedFunctionSymbol || symbol is KaConstructorSymbol && !symbol.isPrimary) && (mode != MemberGenerateMode.ACTUAL || symbol.modality != KaSymbolModality.ABSTRACT)) {
-        val delegation = generateUnsupportedOrSuperCall(project, symbol, bodyType, returnsUnit)
-        val returnPrefix = if (!returnsUnit && bodyType.requiresReturn) "return " else ""
-        "{$returnPrefix$delegation\n}"
-    } else ""
+    val canHaveBody = symbol is KaNamedFunctionSymbol || symbol is KaConstructorSymbol && !symbol.isPrimary
+    val isToKeepAbstract = isToKeepAbstract(mode, symbol)
+    val body = when {
+        bodyType == BodyType.NoBody -> ""
+        canHaveBody && !isToKeepAbstract -> {
+            val delegation = generateUnsupportedOrSuperCall(project, symbol, bodyType, returnsUnit)
+            val returnPrefix = if (!returnsUnit && bodyType.requiresReturn) "return " else ""
+            "{$returnPrefix$delegation\n}"
+        }
+        else -> ""
+    }
 
     val factory = KtPsiFactory(project)
     val functionText = symbol.render(renderer) + body
@@ -510,7 +517,8 @@ private fun generateProperty(
     val returnType = symbol.returnType
     val returnsNotUnit = !returnType.isUnitType
 
-    val body = if (bodyType != BodyType.NoBody && (mode != MemberGenerateMode.ACTUAL || symbol.modality != KaSymbolModality.ABSTRACT)) {
+    val isToKeepAbstract = isToKeepAbstract(mode, symbol)
+    val body = if (bodyType != BodyType.NoBody && !isToKeepAbstract) {
         buildString {
             append("\nget()")
             append(" = ")
@@ -522,6 +530,12 @@ private fun generateProperty(
     } else ""
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
+
+context(KaSession)
+private fun isToKeepAbstract(
+    mode: MemberGenerateMode,
+    symbol: KaCallableSymbol
+): Boolean = mode != MemberGenerateMode.OVERRIDE && symbol.modality == KaSymbolModality.ABSTRACT
 
 @OptIn(KaExperimentalApi::class)
 fun <T> KaSession.generateUnsupportedOrSuperCall(
