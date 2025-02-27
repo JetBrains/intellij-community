@@ -92,6 +92,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
+import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
@@ -107,6 +108,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2236,13 +2238,79 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
       logThreads();
-      getVirtualMachineProxy().suspend();
+      if (Registry.is("debugger.evaluate.on.pause")) {
+        tryPauseWithEvaluatableContext();
+      } else {
+        fallbackPauseWithNonEvaluatableContext();
+      }
+    }
+
+    private void tryPauseWithEvaluatableContext() {
+      DebugProcessImpl process = getVirtualMachineProxy().getDebugProcess();
+      stopOnAnyMethodEntryAndGetSuspendContext(process);
+    }
+
+    private void stopOnAnyMethodEntryAndGetSuspendContext(DebugProcessImpl process) {
+      var evaluatableContextObtained = new DebuggerCompletableFuture<Void>();
+      var evaluatableContextFuture = new DebuggerCompletableFuture<SuspendContextImpl>();
+      var requestor = new FilteredRequestorImpl(process.project) {
+        @Override
+        public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
+          process.getRequestsManager().deleteRequest(this);
+          var evaluatableContext = action.getSuspendContext();
+          // evaluatableContextObtained future is used to timeout on getting the suspendContext,
+          // evaluatableContextFuture actually stores the suspendContext.
+          // We complete 2 futures for the case when the timeout expires and the request is deleted,
+          // but the request was hit and processed concurrently with the timeout, thus we can still get the saved suspendContext.
+          evaluatableContextFuture.complete(evaluatableContext);
+          evaluatableContextObtained.complete(null);
+          return true;
+        }
+
+        @Override
+        public String getSuspendPolicy() {
+          return DebuggerSettings.SUSPEND_ALL;
+        }
+      };
+      var request = process.getRequestsManager().createMethodEntryRequest(requestor);
+      request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+      request.setEnabled(true);
+
+      long timeout = Registry.intValue("debugger.evaluate.on.pause.timeout.ms", 500);
+      evaluatableContextObtained
+        .orTimeout(timeout, TimeUnit.MILLISECONDS)
+        .whenComplete((evaluatableContext, error) -> {
+          process.getManagerThread().schedule(new DebuggerCommandImpl() {
+            @Override
+            protected void action() {
+              if (error != null) {
+                process.getRequestsManager().deleteRequest(requestor);
+                // Check if the request was processed concurrently (before it was removed on a timeout) and saved the suspendContext.
+                if (evaluatableContextFuture.isDone()) {
+                  var evaluatableContext = evaluatableContextFuture.get();
+                  assert evaluatableContext != null;
+                  setSuspendContextAndCheckConsistency(evaluatableContext);
+                } else {
+                  if (Registry.is("debugger.run.suspend.helper")) {
+                    logError("[evaluatable pause]: Failed to provide evaluatable context on pause with enabled Suspend Helper Thread, falling back to the regular pause on timeout.", error);
+                  }
+                  fallbackPauseWithNonEvaluatableContext();
+                }
+              } else {
+                var evaluatableContext = evaluatableContextFuture.get();
+                assert evaluatableContext != null;
+                setSuspendContextAndCheckConsistency(evaluatableContext);
+              }
+            }
+          });
+        });
+    }
+
+    private void setSuspendContextAndCheckConsistency(@NotNull SuspendContextImpl suspendContext) {
       logThreads();
-      SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
       if (myPredefinedThread != null && !myPredefinedThread.isCollected()) {
         suspendContext.setThread(myPredefinedThread.getThreadReference());
       }
-      forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
 
       myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
         @Override
@@ -2255,6 +2323,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           return Priority.LOWEST;
         }
       });
+    }
+
+    private void fallbackPauseWithNonEvaluatableContext() {
+      getVirtualMachineProxy().suspend();
+      SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
+      setSuspendContextAndCheckConsistency(suspendContext);
+      forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
     }
   }
 

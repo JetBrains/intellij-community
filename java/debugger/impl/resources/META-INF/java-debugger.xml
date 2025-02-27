@@ -190,6 +190,10 @@
                  description="Try to get virtual threads during debugger's Get Thread Dump action"/>
     <registryKey key="debugger.thread.dump.virtual.threads.with.monitors.max.count" defaultValue="1000"
                  description="Maximum number of virtual threads when debugger still tries to collect information about owned/contended monitors"/>
+    <registryKey key="debugger.evaluate.on.pause" defaultValue="true"
+                 description="Provide evaluatable context on Pause"/>
+    <registryKey key="debugger.evaluate.on.pause.timeout.ms" defaultValue="500"
+                 description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
   </extensions>
 
   <actions>
