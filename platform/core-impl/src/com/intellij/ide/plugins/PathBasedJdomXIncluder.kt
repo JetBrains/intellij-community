@@ -3,6 +3,8 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.ReadModuleContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 

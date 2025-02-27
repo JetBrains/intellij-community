@@ -4,6 +4,9 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.readBasicDescriptorData
+import com.intellij.ide.plugins.parser.readModuleDescriptor
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl

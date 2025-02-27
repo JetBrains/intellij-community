@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.cl.ResolveScopeManager
+import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.lang.ClassPath

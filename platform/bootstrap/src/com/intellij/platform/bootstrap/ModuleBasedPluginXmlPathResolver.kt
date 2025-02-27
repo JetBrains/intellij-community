@@ -2,6 +2,9 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.ReadModuleContext
+import com.intellij.ide.plugins.parser.readModuleDescriptor
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path

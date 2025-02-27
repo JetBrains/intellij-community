@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
-package com.intellij.ide.plugins
 
+package com.intellij.ide.plugins.parser
+
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.ActionDescriptor.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
@@ -821,7 +823,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
   val oldDependencies = descriptor.dependencies
   val newModules = if (oldDependencies.modules.isEmpty()) modules else oldDependencies.modules + modules
   val newPlugins = if (oldDependencies.plugins.isEmpty()) plugins else oldDependencies.plugins + plugins
-  descriptor.dependencies = ModuleDependenciesDescriptor(newModules, newPlugins) 
+  descriptor.dependencies = ModuleDependenciesDescriptor(newModules, newPlugins)
   assert(reader.isEndElement)
 }
 
@@ -906,7 +908,7 @@ private fun readInclude(
   if (read) {
     (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
       rawPluginDescriptor = readInto,
-      path = PluginXmlPathResolver.toLoadPath(relativePath = path, base = includeBase),
+      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, base = includeBase),
     )
   }
 
