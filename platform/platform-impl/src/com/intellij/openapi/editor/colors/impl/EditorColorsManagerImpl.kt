@@ -67,7 +67,6 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
-import kotlin.reflect.KFunction1
 
 private val LOG: Logger
   get() = logger<EditorColorsManagerImpl>()
@@ -228,8 +227,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun resolveSchemeParent(scheme: EditorColorsScheme) {
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly) {
-      val kFunction1: KFunction1<String, EditorColorsScheme?> = schemeManager::findSchemeByName
-      scheme.resolveParent(kFunction1)
+      scheme.resolveParent(schemeManager::findSchemeByName)
     }
   }
 
