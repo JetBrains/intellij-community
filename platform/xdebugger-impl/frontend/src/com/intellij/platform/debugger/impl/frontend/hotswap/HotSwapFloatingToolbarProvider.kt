@@ -33,7 +33,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Insets
@@ -173,7 +172,6 @@ private fun JComponent.installPopupMenu() {
 
 private val logger = logger<HotSwapFloatingToolbarProvider>()
 
-@ApiStatus.Internal
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val backgroundAlpha: Float = JBUI.CurrentTheme.FloatingToolbar.TRANSLUCENT_BACKGROUND_ALPHA
