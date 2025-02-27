@@ -4,7 +4,6 @@ package com.intellij.platform.debugger.impl.frontend.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.xdebugger.impl.actions.PauseAction.isPauseResumeMerged
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
 private class FrontendPauseAction : DumbAwareAction() {
@@ -14,20 +13,9 @@ private class FrontendPauseAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-
-    if (isPauseResumeMerged()) {
-      e.presentation.isEnabledAndVisible = isEnabled(e)
+    if (session.isStopped || session.isPaused) {
+      e.presentation.isEnabled = false
     }
-    else {
-      e.presentation.isVisible = true
-      e.presentation.isEnabled = isEnabled(e)
-    }
-  }
-
-  private fun isEnabled(e: AnActionEvent): Boolean {
-    val project = e.project
-    val session = e.frontendDebuggerSession
-    return project != null && session != null && !session.isStopped && !session.isPaused
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

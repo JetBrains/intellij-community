@@ -5,11 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
@@ -26,13 +24,9 @@ public class PauseAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-
-    if (isPauseResumeMerged()) {
-      e.getPresentation().setEnabledAndVisible(isEnabled(e));
-    }
-    else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(isEnabled(e));
+    Project project = e.getProject();
+    if (project == null || session.isStopped() || session.isPaused()) {
+      e.getPresentation().setEnabled(false);
     }
   }
 
@@ -41,25 +35,11 @@ public class PauseAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean isEnabled(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    XDebugSession session = DebuggerUIUtil.getSession(e);
-    if (project == null || session == null || session.isStopped() || session.isPaused()) {
-      return false;
-    }
-    return true;
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     if (session != null) {
       performDebuggerAction(e, () -> session.pause());
     }
-  }
-
-  @ApiStatus.Internal
-  public static boolean isPauseResumeMerged() {
-    return Registry.is("debugger.merge.pause.and.resume");
   }
 }

@@ -4,32 +4,24 @@ package com.intellij.platform.debugger.impl.frontend.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.xdebugger.impl.actions.PauseAction
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import java.awt.event.KeyEvent
 
 private class FrontendResumeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    if (PauseAction.isPauseResumeMerged()) {
-      e.presentation.isEnabledAndVisible = isEnabled(e)
-      return
-    }
-
-    e.presentation.isVisible = true
-    e.presentation.isEnabled = isEnabled(e)
-  }
-
-  private fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
     if (project == null) {
-      return false
+      e.presentation.isEnabled = false
+      return
     }
     val session = e.frontendDebuggerSession
     if (session != null && !session.isStopped) {
-      return !session.isReadOnly && session.isPaused
+      e.presentation.isEnabled = session.isPaused && !session.isReadOnly
     }
-    // disable visual representation but leave the shortcut action enabled
-    return e.inputEvent is KeyEvent
+    else {
+      // disable visual representation but leave the shortcut action enabled
+      e.presentation.isEnabled = e.inputEvent is KeyEvent
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

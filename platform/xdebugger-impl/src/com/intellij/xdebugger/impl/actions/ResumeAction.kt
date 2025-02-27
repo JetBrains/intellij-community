@@ -14,26 +14,19 @@ import java.awt.event.KeyEvent
 @ApiStatus.ScheduledForRemoval
 open class ResumeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    if (PauseAction.isPauseResumeMerged()) {
-      e.presentation.isEnabledAndVisible = isEnabled(e)
-      return
-    }
-
-    e.presentation.isVisible = true
-    e.presentation.isEnabled = isEnabled(e)
-  }
-
-  private fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
     if (project == null) {
-      return false
+      e.presentation.isEnabled = false
+      return
     }
     val session = DebuggerUIUtil.getSession(e) as XDebugSessionImpl?
     if (session != null && !session.isStopped) {
-      return !session.isReadOnly && session.isPaused
+      e.presentation.isEnabled = session.isPaused && !session.isReadOnly
     }
-    // disable visual representation but leave the shortcut action enabled
-    return e.inputEvent is KeyEvent
+    else {
+      // disable visual representation but leave the shortcut action enabled
+      e.presentation.isEnabled = e.inputEvent is KeyEvent
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
