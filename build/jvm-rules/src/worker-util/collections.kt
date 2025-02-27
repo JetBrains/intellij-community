@@ -16,7 +16,7 @@ private object SlowEqualsAwareHashStrategy : Hash.Strategy<Any> {
   override fun equals(a: Any?, b: Any?): Boolean = (a?.hashCode() ?: 0) == (b?.hashCode() ?: 0) && a == b
 }
 
-private fun <T> slowEqualsAwareHashStrategy(): Hash.Strategy<T> {
+fun <T> slowEqualsAwareHashStrategy(): Hash.Strategy<T> {
   @Suppress("UNCHECKED_CAST")
   return SlowEqualsAwareHashStrategy as Hash.Strategy<T>
 }

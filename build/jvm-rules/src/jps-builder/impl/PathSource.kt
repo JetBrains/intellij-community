@@ -3,29 +3,23 @@
 
 package org.jetbrains.jps.dependency.impl
 
-import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.NodeSource
 import java.io.File
 
-private fun pathToHashCode(path: String): Int = Hashing.xxh3_64().hashBytesToInt(path.encodeToByteArray())
+private val isForwardSlash = File.separatorChar == '/'
 
 @Suppress("unused")
 internal class PathSource : NodeSource {
   private val path: String
 
-  // used for PHM  - make sure that our hash code is good
-  private val hashCode: Int
-
   constructor(relativePath: String) {
-    this.path = if (File.separatorChar == '/') relativePath else relativePath.replace(File.separatorChar, '/')
-    hashCode = pathToHashCode(this.path)
+    this.path = if (isForwardSlash) relativePath else relativePath.replace(File.separatorChar, '/')
   }
 
   constructor(`in`: GraphDataInput) {
     path = `in`.readUTF()
-    hashCode = pathToHashCode(path)
   }
 
   override fun write(out: GraphDataOutput) {
@@ -36,10 +30,10 @@ internal class PathSource : NodeSource {
     if (this === other) {
       return true
     }
-    return other is PathSource && hashCode == other.hashCode && path == other.path
+    return other is PathSource && path == other.path
   }
 
-  override fun hashCode(): Int = hashCode
+  override fun hashCode(): Int = path.hashCode()
 
   override fun toString() = path
 }
