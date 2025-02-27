@@ -11,19 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.rename.NameSuggestionProvider
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -32,7 +24,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLabelToBeReferencedByThis
@@ -42,8 +34,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
 import org.jetbrains.kotlin.utils.SmartSet
-import java.util.EnumSet
-import kotlin.reflect.KClass
+import java.util.*
 
 internal class InspectionContext(
     val contextReceiversWithNames: Map<SmartPsiElementPointer<KtContextReceiver>, String>,
@@ -60,31 +51,26 @@ internal class InspectionContext(
         }
 }
 
-internal class ContextParametersMigrationInspection :
-    KotlinKtDiagnosticBasedInspectionBase<KtElement, KaFirDiagnostic.ContextParameterWithoutName, InspectionContext>() {
-
-    override val diagnosticType: KClass<KaFirDiagnostic.ContextParameterWithoutName>
-        get() = KaFirDiagnostic.ContextParameterWithoutName::class
-
-    override val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-
-    override fun isApplicableByPsi(element: KtElement): Boolean {
+internal class ContextParametersMigrationInspection : KotlinApplicableInspectionBase.Simple<KtNamedDeclaration, InspectionContext>() {
+    override fun isApplicableByPsi(element: KtNamedDeclaration): Boolean {
         val languageVersionSettings = element.languageVersionSettings
-        return element is KtContextReceiver
-                && languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)
-                && languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_2_2
+        if (element !is KtNamedFunction && element !is KtProperty) return false
+        if (!languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
+        if (languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_2_2) return false
+        return element.contextReceiverList?.contextReceivers()?.isNotEmpty() == true
     }
 
-    override fun getApplicableRanges(element: KtElement): List<TextRange> {
-        return ApplicabilityRange.single(element) { el ->
-            el as? KtContextReceiver
+    override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> {
+        return ApplicabilityRange.multiple(element) { el ->
+            if (el !is KtNamedFunction && el !is KtProperty) return@multiple emptyList()
+            el.contextReceiverList?.contextReceivers().orEmpty()
         }
     }
 
-    override fun getProblemDescription(element: KtElement, context: InspectionContext): @InspectionMessage String =
+    override fun getProblemDescription(element: KtNamedDeclaration, context: InspectionContext): @InspectionMessage String =
         KotlinBundle.message("inspection.context.parameters.migration.problem.description")
 
-    override fun createQuickFix(element: KtElement, context: InspectionContext): KotlinModCommandQuickFix<KtElement> =
+    override fun createQuickFix(element: KtNamedDeclaration, context: InspectionContext): KotlinModCommandQuickFix<KtNamedDeclaration> =
         ContextParametersMigrationQuickFix(context)
 
     override fun buildVisitor(
@@ -92,22 +78,21 @@ internal class ContextParametersMigrationInspection :
         isOnTheFly: Boolean
     ): KtVisitor<*, *> {
         return object : KtVisitorVoid() {
-            override fun visitContextReceiverList(contextReceiverList: KtContextReceiverList) {
-                contextReceiverList.contextReceivers().forEach { contextReceiver ->
-                    visitTargetElement(contextReceiver, holder, isOnTheFly)
-                }
+            override fun visitNamedFunction(function: KtNamedFunction) {
+                visitTargetElement(function, holder, isOnTheFly)
+            }
+
+            override fun visitProperty(property: KtProperty) {
+                visitTargetElement(property, holder, isOnTheFly)
             }
         }
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContextByDiagnostic(
-        element: KtElement,
-        diagnostic: KaFirDiagnostic.ContextParameterWithoutName
-    ): InspectionContext? {
-        if (element !is KtContextReceiver) return null
-        val containingDeclaration = element.parentOfTypes(KtNamedFunction::class, KtProperty::class) ?: return null
-        val receivers = element.parentOfType<KtContextReceiverList>()?.contextReceivers() ?: return null
+    override fun KaSession.prepareContext(element: KtNamedDeclaration): InspectionContext? {
+        val containingDeclaration = element
+        if (containingDeclaration !is KtNamedFunction && containingDeclaration !is KtProperty) return null
+        val receivers = element.contextReceiverList?.contextReceivers() ?: return null
         val ktContextReceiverSet = receivers.toSet()
         val containingDeclarationSymbol = containingDeclaration.symbol
 
@@ -363,18 +348,19 @@ private val receiverCombinationsWithImplicitOnlyContext: EnumSet<ReceiverCombina
 
 internal class ContextParametersMigrationQuickFix(
     internal val context: InspectionContext,
-) : KotlinModCommandQuickFix<KtElement>() {
+) : KotlinModCommandQuickFix<KtNamedDeclaration>() {
     override fun getFamilyName(): @IntentionFamilyName String {
         return KotlinBundle.message("inspection.context.parameters.migration.quick.fix.text")
     }
 
     override fun applyFix(
         project: Project,
-        element: KtElement,
+        element: KtNamedDeclaration,
         updater: ModPsiUpdater,
     ) {
         val factory = KtPsiFactory(project)
-        val containingFunctionOrProperty = element.parentOfTypes(KtNamedFunction::class, KtProperty::class) ?: return
+        if (element !is KtNamedFunction && element !is KtProperty) return
+        val containingFunctionOrProperty = element
         val contextReceiversWithNewNames = context.contextReceiversWithNames.mapNotNull { (contextReceiverPointer, newName) ->
             contextReceiverPointer.element?.to(newName)
         }.toMap()
