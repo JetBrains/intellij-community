@@ -119,7 +119,8 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (recordCandidate == null) return;
       boolean necessaryCheckConflicts = myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
                   myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
-      if (necessaryCheckConflicts && !ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
+      boolean isConflictFree = ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty();
+      if (necessaryCheckConflicts && !isConflictFree) {
         if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST) {
           registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
         }
