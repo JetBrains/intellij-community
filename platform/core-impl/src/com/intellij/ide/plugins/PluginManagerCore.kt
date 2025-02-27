@@ -1126,6 +1126,12 @@ fun getPluginDistDirByClass(aClass: Class<*>): Path? {
 }
 
 @Internal
+fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId): Boolean {
+  val idMap = PluginManagerCore.buildPluginIdMap()
+  return pluginRequiresUltimatePluginButItsDisabled(plugin, idMap)
+}
+
+@Internal
 fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>): Boolean {
   if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
   val rootDescriptor = pluginMap[plugin]
