@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -154,10 +155,15 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       val installedPlugin = installedPlugin
       if (hasSuggestedIde) {
         addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
-        return panel    // Don't show the "Ignore extension" label
+        return panel // Don't show the "Ignore extension" label
       }
       else if (installedPlugin != null) {
         if (!installedPlugin.isEnabled) {
+          if (pluginRequiresUltimatePluginButItsDisabled(installedPlugin.pluginId)) {
+            // the plugin requires ultimate and it cannot be enabled
+            return null
+          }
+
           panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", installedPlugin.name)) {
             pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
             updateAllNotifications(project)
