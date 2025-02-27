@@ -18,7 +18,7 @@ import java.awt.event.InputEvent
 
 internal class ActionGroupPopupActivity(
   project: Project?,
-  actionGroupId: @NonNls String?,
+  private val actionGroupId: @NonNls String?,
   private var place: String,
 ) {
   companion object {
@@ -57,6 +57,8 @@ internal class ActionGroupPopupActivity(
   fun filtered(filterLength: Int, itemsBefore: Int, itemsAfter: Int) {
     activity.stageStarted(ActionGroupPopupCollector.FILTERED) {
       listOf(
+        ActionGroupPopupCollector.ACTION_GROUP_ID.with(actionGroupId),
+        ActionGroupPopupCollector.PLACE.with(place),
         ActionGroupPopupCollector.FILTER_LENGTH.with(filterLength),
         ActionGroupPopupCollector.FILTER_ITEMS_BEFORE.with(itemsBefore),
         ActionGroupPopupCollector.FILTER_ITEMS_AFTER.with(itemsAfter),
@@ -77,6 +79,7 @@ internal class ActionGroupPopupActivity(
   fun stop(ok: Boolean) {
     activity.finished {
       listOf(
+        ActionGroupPopupCollector.ACTION_GROUP_ID.with(actionGroupId),
         ActionGroupPopupCollector.ACTION_ID.with(selectedActionId),
         ActionGroupPopupCollector.INPUT_EVENT.with(currentInputEvent(place)),
         ActionGroupPopupCollector.PLACE.with(place),
@@ -91,7 +94,7 @@ private val KEY = Key.create<ActionGroupPopupActivity>("ActionGroupActivity")
 internal object ActionGroupPopupCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup? = GROUP
 
-  val GROUP = EventLogGroup("action.group.popup", 1)
+  val GROUP = EventLogGroup("action.group.popup", 2)
 
   val INPUT_EVENT = EventFields.InputEvent
   val ACTION_GROUP_ID = EventFields.StringValidatedByCustomRule("action_group_id", ActionRuleValidator::class.java)
@@ -105,7 +108,7 @@ internal object ActionGroupPopupCollector : CounterUsagesCollector() {
   val POPUP_ACTIVITY = GROUP.registerIdeActivity(
     "show",
     startEventAdditionalFields = arrayOf(ACTION_GROUP_ID, INPUT_EVENT, PLACE),
-    finishEventAdditionalFields = arrayOf(ACTION_ID, INPUT_EVENT, OK, PLACE),
+    finishEventAdditionalFields = arrayOf(ACTION_GROUP_ID, ACTION_ID, INPUT_EVENT, OK, PLACE),
   )
-  val FILTERED = POPUP_ACTIVITY.registerStage("filtered", arrayOf(FILTER_LENGTH, FILTER_ITEMS_BEFORE, FILTER_ITEMS_AFTER))
+  val FILTERED = POPUP_ACTIVITY.registerStage("filtered", arrayOf(ACTION_GROUP_ID, PLACE, FILTER_LENGTH, FILTER_ITEMS_BEFORE, FILTER_ITEMS_AFTER))
 }
