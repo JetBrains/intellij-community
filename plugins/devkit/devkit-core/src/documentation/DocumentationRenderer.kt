@@ -260,9 +260,12 @@ internal class DocumentationRenderer(private val project: Project) {
   }
 
   private fun StringBuilder.appendAttributes(attributes: List<AttributeWrapper>) {
-    if (attributes.isNotEmpty()) {
+    val includedAttributes = attributes
+      .mapNotNull { it.attribute }
+      .filter { it.shouldBeRenderedIn(RenderContext.DOC_PROVIDER) }
+    if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
-      for (attribute in attributes.mapNotNull { it.attribute }) {
+      for (attribute in includedAttributes) {
         appendLine("- ${attributeLink(attribute.name!!, attribute.path)}${getRequirementSimpleText(attribute.requirement)}")
       }
     }

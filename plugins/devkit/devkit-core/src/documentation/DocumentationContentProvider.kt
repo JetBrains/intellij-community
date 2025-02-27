@@ -166,7 +166,7 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
     for (elementWrapper in content.elements) {
       val element = elementWrapper.element ?: continue
       copyReusedObjectsExceptContainingItself(elementWrapper, null, mutableListOf())
-      fillElementPathsRecursively(element, emptyList())
+      fillElementParentsAndPathsRecursively(null, element, emptyList())
       fillSelfContainingElementsRecursively(elementWrapper)
     }
   }
@@ -207,22 +207,27 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
     return map { if (it === old) new else it }
   }
 
-
-  private fun fillElementPathsRecursively(element: Element, parentPath: List<String>) {
+  private fun fillElementParentsAndPathsRecursively(parent: Element?, element: Element, parentPath: List<String>) {
     val elementPath = parentPath + element.name!!
     // If an element is aliased and referenced in YAML, the same instance is shared.
-    // For this reason, set the path only if it is empty, so we get the shortest paths filled.
+    // For this reason, set the parent/path only if it is null/empty, so we get the shortest paths filled.
+    if (element.parent == null) {
+      element.parent = parent
+    }
     if (element.path.isEmpty()) {
       element.path = elementPath
     }
     for (attribute in element.attributes.mapNotNull { it.attribute }) {
+      if (attribute.parent == null) {
+        attribute.parent = element
+      }
       if (attribute.path.isEmpty()) {
         val attributePath = elementPath + attribute.name!!
         attribute.path = attributePath
       }
     }
     for (child in element.children) {
-      fillElementPathsRecursively(child.element!!, elementPath)
+      fillElementParentsAndPathsRecursively(element, child.element!!, elementPath)
     }
   }
 

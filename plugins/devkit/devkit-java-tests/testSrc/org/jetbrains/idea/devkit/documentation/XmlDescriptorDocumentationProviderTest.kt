@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.psi.PsiElement
@@ -29,7 +30,10 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<h5>Requirement</h5>" +
       "<p>Required: <b>yes</b>" +
       "<h5>Attributes</h5>" +
-      "<ul><li><a href=\"psi_element://#attribute:root__first-attribute\"><code>first-attribute</code></a></li><li><a href=\"psi_element://#attribute:root__secondAttribute\"><code>secondAttribute</code></a></li></ul>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__first-attribute\"><code>first-attribute</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__secondAttribute\"><code>secondAttribute</code></a></li>" +
+      "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__first-level-child-1\"><code>&lt;first-level-child-1&gt;</code></a></li>" +
@@ -37,6 +41,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithCallouts\"><code>&lt;elementWithCallouts&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementNotIncludedInDocumentationProvider\"><code>&lt;elementNotIncludedInDocumentationProvider&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "</ul>"
     )
@@ -314,16 +320,81 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
     )
   }
 
+  fun `test element not included in the doc_provider context should not be documented`() {
+    doTestDoesNotProvideDoc(
+      """
+        <root>
+          <element<caret>NotIncludedInDocumentationProvider/>
+        </root>
+      """.trimIndent()
+    )
+  }
+
+  fun `test child of an element not included in the doc_provider context should not be documented`() {
+    doTestDoesNotProvideDoc(
+      """
+        <root>
+          <elementNotIncludedInDocumentationProvider>
+            <childNotIncluded<caret>InDocumentationProvider/>
+          </elementNotIncludedInDocumentationProvider>
+        </root>
+      """.trimIndent()
+    )
+  }
+
+  fun `test child included in doc_provider, but under an element not enabled in the doc_provider context should not be documented`() {
+    doTestDoesNotProvideDoc(
+      """
+        <root>
+          <elementNotIncludedInDocumentationProvider>
+            <childIncluded<caret>InDocumentationProvider/>
+          </elementNotIncludedInDocumentationProvider>
+        </root>
+      """.trimIndent()
+    )
+  }
+
+  fun `test not included attribute should not be documented`() {
+    doTestDoesNotProvideDoc(
+      """
+        <root>
+          <elementWithNotIncludedAttribute notIncluded<caret>Attribute="any"/>
+        </root>
+      """.trimIndent()
+    )
+  }
+
+  fun `test included attribute, but under an element not enabled in the doc_provider context should not be documented`() {
+    doTestDoesNotProvideDoc(
+      """
+        <root>
+          <elementNotIncludedInDocumentationProvider attribute<caret>IncludedInDocumentationProvider="any"/>
+        </root>
+      """.trimIndent()
+    )
+  }
+
   private fun doTestDocContains(@Language("XML") fileText: String, @Language("HTML") expectedDoc: String) {
+    val data = findDocumentationData(fileText)
+    assertNotNull(data)
+    assertEquals(expectedDoc, data!!.html)
+  }
+
+  private fun doTestDoesNotProvideDoc(@Language("XML") fileText: String) {
+    val data = findDocumentationData(fileText)
+    assertNull(data)
+  }
+
+  private fun findDocumentationData(fileText: String): DocumentationData? {
     myFixture.configureByText(TEST_XML_FILE_NAME, fileText)
     val targets = IdeDocumentationTargetProvider.getInstance(project)
       .documentationTargets(myFixture.editor, myFixture.file, myFixture.caretOffset)
     assertSize(1, targets)
     val target = targets.single()
     val data = computeDocumentationBlocking(target.createPointer())
-    assertNotNull(data)
-    assertEquals(expectedDoc, data!!.html)
+    return data
   }
+
 }
 
 private class TestXmlDescriptorDocumentationTargetProvider : AbstractXmlDescriptorDocumentationTargetProvider() {

@@ -28,6 +28,11 @@ elements:
             #language=Markdown
             description: |
               The `secondAttribute` description. And a [link](https://example.com).
+        - attribute:
+            # should not be included in doc_provider and parent content
+            name: notIncludedAttribute
+            renderContexts: [sdk_docs]
+            description: any
       children:
         - element:
             name: first-level-child-1
@@ -191,6 +196,44 @@ elements:
               {title="Custom Title"}
             requirement:
               required: no
+
+        - element:
+            name: elementNotIncludedInDocumentationProvider
+            # should not be rendered in doc_provider
+            renderContexts: [sdk_docs]
+            description: any
+            childrenDescription: any
+            attributes:
+              # should not be rendered as the parent is not included in doc_provider
+              - attribute:
+                  name: attributeIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+            children:
+              - element:
+                  name: childNotIncludedInDocumentationProvider
+                  description: any
+              - element:
+                  # should not be included because the parent is not included in doc_provider
+                  name: childIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+                  attributes:
+                  - attribute:
+                      name: attributeIncludedInDocumentationProvider
+                      renderContexts: [doc_provider]
+                      description: any
+        - element:
+            name: elementWithNotIncludedAttribute
+            # should not be rendered as the parent is not included in doc_provider
+            renderContexts: [sdk_docs]
+            attributes:
+              - attribute:
+                  # should not be included in doc_provider
+                  name: notIncludedAttribute
+                  renderContexts: [sdk_docs]
+                  description: any
+
         - element:
             name: elementWithChildrenDescription
             description: any
