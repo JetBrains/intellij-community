@@ -6,9 +6,11 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.traceBackParsers.TraceBackParser
 import java.io.File
+import kotlin.io.path.Path
 
 open class PythonTracebackFilter : Filter {
   protected val project: Project
@@ -60,6 +62,9 @@ open class PythonTracebackFilter : Filter {
     var vFile = LocalFileSystem.getInstance().findFileByPath(preparedName)
     if (vFile == null && !myWorkingDirectory.isNullOrBlank()) {
       vFile = LocalFileSystem.getInstance().findFileByIoFile(File(myWorkingDirectory, preparedName))
+    }
+    if (vFile == null) {
+      vFile = VirtualFileManager.getInstance().findFileByUrl(preparedName)
     }
     return vFile
   }
