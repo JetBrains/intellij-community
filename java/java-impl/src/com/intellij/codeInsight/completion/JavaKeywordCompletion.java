@@ -30,7 +30,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SealedUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1198,7 +1197,7 @@ public class JavaKeywordCompletion {
       if (switchBlock != null && switchBlock.getExpression() != null) {
         PsiType type = switchBlock.getExpression().getType();
         if (PsiTypes.booleanType().equals(PsiPrimitiveType.getOptionallyUnboxedType(type))) {
-          Set<String> branches = SwitchUtils.getSwitchBranches(switchBlock).stream()
+          Set<String> branches = JavaPsiSwitchUtil.getSwitchBranches(switchBlock).stream()
             .map(branch -> branch instanceof PsiExpression expression ? ExpressionUtils.computeConstantExpression(expression) : null)
             .filter(constant -> constant instanceof Boolean)
             .map(branch -> branch.toString())

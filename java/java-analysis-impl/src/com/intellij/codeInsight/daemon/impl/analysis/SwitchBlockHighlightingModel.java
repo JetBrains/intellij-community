@@ -20,7 +20,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -306,7 +305,7 @@ public class SwitchBlockHighlightingModel {
     if (switchModel == null) return SwitchExhaustivenessState.UNEVALUATED;
     PsiCodeBlock switchBody = switchModel.myBlock.getBody();
     if (switchBody == null) return SwitchExhaustivenessState.UNEVALUATED;
-    List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
+    List<PsiCaseLabelElement> labelElements = StreamEx.of(JavaPsiSwitchUtil.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
       .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
     if (labelElements.isEmpty()) return SwitchExhaustivenessState.UNEVALUATED;
     boolean needToCheckCompleteness = ExpressionUtil.isEnhancedSwitch(switchBlock);

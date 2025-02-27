@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -13,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.dataflow.CreateNullBranchFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public abstract class BaseSwitchFix extends PsiUpdateModCommandAction<PsiSwitchB
     PsiExpression expression = block.getExpression();
     Nullability nullability = NullabilityUtil.getExpressionNullability(expression, true);
     if (nullability != Nullability.NULLABLE) return null;
-    List<PsiElement> branches = SwitchUtils.getSwitchBranches(block);
+    List<PsiElement> branches = JavaPsiSwitchUtil.getSwitchBranches(block);
     if (ContainerUtil.or(branches,
                          branch -> branch instanceof PsiExpression psiExpression && ExpressionUtils.isNullLiteral(psiExpression))) {
       return null;

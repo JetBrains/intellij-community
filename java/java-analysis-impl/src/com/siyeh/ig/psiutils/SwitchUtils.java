@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -69,7 +68,7 @@ public final class SwitchUtils {
    * @return a negative number if a default case was encountered.
    */
   public static int calculateBranchCount(@NotNull PsiSwitchBlock block) {
-    List<PsiElement> switchBranches = getSwitchBranches(block);
+    List<PsiElement> switchBranches = JavaPsiSwitchUtil.getSwitchBranches(block);
     if (switchBranches.isEmpty()) return 0;
     int branches = 0;
     boolean defaultFound = false;
@@ -93,27 +92,6 @@ public final class SwitchUtils {
       return 0;
     }
     return defaultFound ? -branches - 1 : branches;
-  }
-
-  /**
-   * @param block the switch block
-   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
-   */
-  public static @NotNull List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
-    final PsiCodeBlock body = block.getBody();
-    if (body == null) return Collections.emptyList();
-    List<PsiElement> result = new SmartList<>();
-    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
-      if (child.isDefaultCase()) {
-        result.add(child);
-      }
-      else {
-        PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        Collections.addAll(result, labelElementList.getElements());
-      }
-    }
-    return result;
   }
 
   /**

@@ -834,7 +834,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiType selectorType = selector.getType();
     if (selectorType == null) return Collections.emptySet();
     List<PsiCaseLabelElement> labelElements =
-      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
+      ContainerUtil.filterIsInstance(JavaPsiSwitchUtil.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
     if (labelElements.isEmpty()) return Collections.emptySet();
     MultiMap<Object, PsiElement> duplicateCandidates = JavaPsiSwitchUtil.getValuesAndLabels(switchBlock);
 

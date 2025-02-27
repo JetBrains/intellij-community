@@ -5,11 +5,9 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
@@ -381,6 +379,27 @@ public final class JavaPsiSwitchUtil {
     if (labelElementList == null) return null;
     return ContainerUtil.find(labelElementList.getElements(),
                               labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
+  }
+
+  /**
+   * @param block the switch block
+   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
+   */
+  public static @NotNull List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
+    final PsiCodeBlock body = block.getBody();
+    if (body == null) return Collections.emptyList();
+    List<PsiElement> result = new SmartList<>();
+    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
+      if (child.isDefaultCase()) {
+        result.add(child);
+      }
+      else {
+        PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        Collections.addAll(result, labelElementList.getElements());
+      }
+    }
+    return result;
   }
 
   /**

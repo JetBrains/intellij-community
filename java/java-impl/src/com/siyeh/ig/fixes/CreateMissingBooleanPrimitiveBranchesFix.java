@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     if (selectorPrimitiveType == null) return null;
     if (!PsiTypes.booleanType().equals(selectorPrimitiveType)) return null;
     if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return null;
-    List<PsiElement> branches = SwitchUtils.getSwitchBranches(block);
+    List<PsiElement> branches = JavaPsiSwitchUtil.getSwitchBranches(block);
     PsiClassType boxedBooleanType = selectorPrimitiveType.getBoxedType(block);
     if (boxedBooleanType == null) return null;
     Set<String> existed = new HashSet<>();

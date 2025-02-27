@@ -20,6 +20,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -166,7 +167,7 @@ public final class SwitchStatementWithTooFewBranchesInspection extends BaseInspe
         // Empty switch is reported by another inspection
         return null;
       }
-      boolean patternSwitch = ContainerUtil.exists(SwitchUtils.getSwitchBranches(block), e -> e instanceof PsiPattern);
+      boolean patternSwitch = ContainerUtil.exists(JavaPsiSwitchUtil.getSwitchBranches(block), e -> e instanceof PsiPattern);
       if (patternSwitch && ignorePatternSwitch) return null;
       if (branchCount > 0 && (patternSwitch || block instanceof PsiSwitchExpression)) {
         // Absence of 'default' branch makes the pattern-switch or expression-switch exhaustive
