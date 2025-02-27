@@ -608,16 +608,16 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
-      "client" -> {
+      PluginXmlConst.SERVICE_EP_CLIENT_ATTR -> {
         @Suppress("DEPRECATION")
         when (reader.getAttributeValue(i)) {
-          "local" -> client = ClientKind.LOCAL
-          "guest" -> client = ClientKind.GUEST
-          "controller" -> client = ClientKind.CONTROLLER
-          "owner" -> client = ClientKind.OWNER
-          "remote" -> client = ClientKind.REMOTE
-          "frontend" -> client = ClientKind.FRONTEND
-          "all" -> client = ClientKind.ALL
+          PluginXmlConst.SERVICE_EP_CLIENT_LOCAL_VALUE -> client = ClientKind.LOCAL
+          PluginXmlConst.SERVICE_EP_CLIENT_GUEST_VALUE -> client = ClientKind.GUEST
+          PluginXmlConst.SERVICE_EP_CLIENT_CONTROLLER_VALUE -> client = ClientKind.CONTROLLER
+          PluginXmlConst.SERVICE_EP_CLIENT_OWNER_VALUE -> client = ClientKind.OWNER
+          PluginXmlConst.SERVICE_EP_CLIENT_REMOTE_VALUE -> client = ClientKind.REMOTE
+          PluginXmlConst.SERVICE_EP_CLIENT_FRONTEND_VALUE -> client = ClientKind.FRONTEND
+          PluginXmlConst.SERVICE_EP_CLIENT_ALL_VALUE -> client = ClientKind.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
