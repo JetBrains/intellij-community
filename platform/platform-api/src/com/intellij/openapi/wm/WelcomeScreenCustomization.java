@@ -44,4 +44,9 @@ public interface WelcomeScreenCustomization {
   default @Nullable JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
     return null;
   }
+
+  @ApiStatus.Internal
+  default @Nullable JComponent createMainEmptyState(@NotNull Disposable parentDisposable) {
+    return null;
+  }
 }

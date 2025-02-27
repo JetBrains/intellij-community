@@ -21,6 +21,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
@@ -56,7 +57,8 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
 
 
 // Returns main actions, more actions
-private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
+@ApiStatus.Internal
+fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
   val actionManager = ActionManager.getInstance()
   val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
   val moreActionGroup = DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true)

@@ -16,6 +16,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,12 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private Disposable currentDisposable = null;
 
   TabbedWelcomeScreen() {
-    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), true, true);
+    this(true);
+  }
+
+  @ApiStatus.Internal
+  public TabbedWelcomeScreen(boolean addLogo) {
+    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), addLogo, true);
   }
 
   public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories,
@@ -77,7 +83,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       centralPanel.add(mainPanelToolbar, BorderLayout.SOUTH);
     }
 
-    add(leftSidebarHolder, BorderLayout.WEST);
+    add(createLeftPanel(leftSidebarHolder), BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
 
     if (ExperimentalUI.isNewUI()) {
@@ -86,6 +92,13 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     loadTabs(welcomeTabFactories);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull BorderLayoutPanel createLeftPanel(JPanel content) {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    panel.addToCenter(content);
+    return panel;
   }
 
   @Override

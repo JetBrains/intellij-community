@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.wm.WelcomeScreenCustomization
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -195,7 +196,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun createEmptyStatePanel(): JComponent {
-    val emptyStateProjectsPanel = emptyStateProjectPanel(parentDisposable)
+    val emptyStateProjectsPanel = WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.extensionList.firstNotNullOfOrNull { it.createMainEmptyState(parentDisposable) }
+                                  ?: emptyStateProjectPanel(parentDisposable)
     initDnD(emptyStateProjectsPanel)
     return emptyStateProjectsPanel
   }
