@@ -9,6 +9,10 @@ plugins {
 dependencies {
     api(projects.ui)
     api(libs.commonmark.core)
+    runtimeOnly(libs.ktor.client.java)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.ktor3)
+    implementation(libs.coil.svg)
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(projects.ui)
