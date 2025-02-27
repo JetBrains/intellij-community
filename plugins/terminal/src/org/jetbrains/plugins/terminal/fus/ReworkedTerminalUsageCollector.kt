@@ -35,7 +35,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                         "Fired each time when command is started")
 
   private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
-                                                               "Fired each time when command is finished. New Terminal only.",
+                                                               "Fired each time when command is finished",
                                                                TerminalCommandUsageStatistics.commandExecutableField,
                                                                TerminalCommandUsageStatistics.subCommandField,
                                                                EXIT_CODE_FIELD,
