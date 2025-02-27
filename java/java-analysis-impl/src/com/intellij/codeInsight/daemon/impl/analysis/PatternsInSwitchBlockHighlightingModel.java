@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -53,57 +52,19 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
-    List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
-    for (PsiStatement st : body.getStatements()) {
-      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement) || labelStatement.isDefaultCase()) continue;
-      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-      if (labelElementList != null) {
-        Collections.addAll(elementsToCheckCompleteness, labelElementList.getElements());
-      }
-    }
     if (ExpressionUtil.isEnhancedSwitch(myBlock)) {
-      if (checkRedundantDefaultBranch(errorSink)) return;
       if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(myBlock) != null) return;
       if (JavaPsiSwitchUtil.findDefaultElement(myBlock) != null) return;
+      List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
+      for (PsiStatement st : body.getStatements()) {
+        if (!(st instanceof PsiSwitchLabelStatementBase labelStatement) || labelStatement.isDefaultCase()) continue;
+        PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+        if (labelElementList != null) {
+          Collections.addAll(elementsToCheckCompleteness, labelElementList.getElements());
+        }
+      }
       checkCompleteness(elementsToCheckCompleteness, errorSink);
     }
-  }
-
-  private boolean checkRedundantDefaultBranch(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
-    PsiCaseLabelElement elementCoversType = JavaPsiSwitchUtil.getUnconditionalPatternLabel(myBlock);
-    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(myBlock);
-    if (defaultElement != null && elementCoversType != null) {
-      HighlightInfo.Builder defaultInfo =
-        createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.pattern.and.default.exist"));
-      registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
-      errorSink.accept(defaultInfo);
-      HighlightInfo.Builder patternInfo = createError(elementCoversType, JavaErrorBundle.message(
-        "switch.unconditional.pattern.and.default.exist"));
-      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
-      patternInfo.registerFix(action, null, null, null, null);
-      errorSink.accept(patternInfo);
-      return true;
-    }
-    //default (or unconditional), TRUE and FALSE cannot be together
-    if ((defaultElement != null || elementCoversType != null) && 
-        JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(myBlock)) {
-      if (defaultElement != null) {
-        HighlightInfo.Builder defaultInfo =
-          createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.unconditional.boolean.and.default.exist"));
-        registerDeleteFixForDefaultElement(defaultInfo, defaultElement, defaultElement.getFirstChild());
-        errorSink.accept(defaultInfo);
-      }
-      if (elementCoversType != null) {
-        HighlightInfo.Builder patternInfo = createError(elementCoversType,
-                                                        JavaErrorBundle.message(
-                                                          "switch.unconditional.boolean.and.unconditional.exist"));
-        IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(elementCoversType);
-        patternInfo.registerFix(action, null, null, null, null);
-        errorSink.accept(patternInfo);
-      }
-    }
-    return defaultElement != null || elementCoversType != null;
   }
 
   private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements,
@@ -195,18 +156,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
 
   private static boolean checkRecordCaseSetNotEmpty(@NotNull List<? extends PsiCaseLabelElement> elements) {
     return ContainerUtil.exists(elements, element -> extractPattern(element) != null);
-  }
-
-  private static void registerDeleteFixForDefaultElement(@NotNull HighlightInfo.Builder info,
-                                                         PsiElement defaultElement,
-                                                         @NotNull PsiElement duplicateElement) {
-    if (defaultElement instanceof PsiCaseLabelElement caseElement) {
-      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(caseElement);
-      info.registerFix(action, null, null, null, null);
-      return;
-    }
-    IntentionAction action = getFixFactory().createDeleteDefaultFix(null, duplicateElement);
-    info.registerFix(action, null, null, null, null);
   }
 
   private @Nullable HighlightInfo.Builder checkSealedClassCompleteness(@NotNull PsiType selectorType,

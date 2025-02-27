@@ -117,10 +117,6 @@ public class SwitchBlockHighlightingModel {
     return QuickFixFactory.getInstance();
   }
 
-  static @Nullable Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
-    return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant, false);
-  }
-
   void checkEnumCompleteness(@NotNull PsiClass selectorClass,
                              @NotNull List<PsiEnumConstant> enumElements,
                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {

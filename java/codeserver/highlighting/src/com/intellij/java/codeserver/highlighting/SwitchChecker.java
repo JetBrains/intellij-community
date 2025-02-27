@@ -33,6 +33,7 @@ final class SwitchChecker {
     if (!myVisitor.hasErrorResults()) checkDuplicates(block);
     if (!myVisitor.hasErrorResults()) checkFallthroughLegality(block);
     if (!myVisitor.hasErrorResults()) checkDominance(block);
+    if (!myVisitor.hasErrorResults()) checkNoDefaultBranchAllowed(block);
   }
 
   void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
@@ -618,4 +619,27 @@ final class SwitchChecker {
       myVisitor.report(JavaErrorKinds.SWITCH_DOMINANCE_VIOLATION.create(overWhom, who));
     }
   }
+  
+  private void checkNoDefaultBranchAllowed(@NotNull PsiSwitchBlock block) {
+    if (!myVisitor.isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) return;
+    //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
+    PsiCaseLabelElement elementCoversType = JavaPsiSwitchUtil.getUnconditionalPatternLabel(block);
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(block);
+    if (defaultElement != null && elementCoversType != null) {
+      myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT.create(defaultElement.getFirstChild()));
+      myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT.create(elementCoversType));
+      return;
+    }
+    //default (or unconditional), TRUE and FALSE cannot be together
+    if ((defaultElement != null || elementCoversType != null) &&
+        JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(block)) {
+      if (defaultElement != null) {
+        myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_AND_BOOLEAN.create(defaultElement.getFirstChild()));
+      }
+      if (elementCoversType != null) {
+        myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN.create(elementCoversType));
+      }
+    }
+  }
+
 }

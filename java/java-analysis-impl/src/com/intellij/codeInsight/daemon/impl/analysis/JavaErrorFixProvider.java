@@ -760,6 +760,11 @@ final class JavaErrorFixProvider {
         sink.accept(myFactory.createDeleteSwitchLabelFix(overWhom));
       }
     });
+    fix(SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT, error -> error.psi() instanceof PsiCaseLabelElement elementCoversType
+           ? myFactory.createDeleteSwitchLabelFix(elementCoversType)
+           : myFactory.createDeleteDefaultFix(null, error.psi()));
+    fix(SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN, error -> myFactory.createDeleteSwitchLabelFix(error.psi()));
+    fix(SWITCH_DEFAULT_AND_BOOLEAN, error -> myFactory.createDeleteDefaultFix(null, error.psi()));
   }
 
   private void createAccessFixes() {
