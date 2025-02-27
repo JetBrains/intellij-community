@@ -7,6 +7,7 @@ import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableWithId;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -42,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
+public final class TerminalNewPredefinedSessionAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   private static final List<String> UNIX_BINARIES_DIRECTORIES = List.of(
     "/bin",
