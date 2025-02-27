@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -7,8 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
 
 public abstract class XDebuggerActionBase extends AnAction {
   private final boolean myHideDisabledInPopup;
@@ -61,8 +62,7 @@ public abstract class XDebuggerActionBase extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    performWithHandler(e);
-    XDebuggerUtilImpl.reshowInlayRunToCursor(e);
+    performDebuggerAction(e, () -> performWithHandler(e));
   }
 
   protected boolean performWithHandler(@NotNull AnActionEvent e) {

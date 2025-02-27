@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -525,7 +525,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     removeBreakpointsWithConfirmation(project, breakpoints);
   }
 
-  public static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {
+  public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
+    action.run();
+    reshowInlayRunToCursor(e);
+  }
+
+  private static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {
     if (!(e.getInputEvent() instanceof MouseEvent)) {
       return;
     }
