@@ -206,19 +206,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
-    checkSwitchBlock(statement);
+    if (!hasErrorResults()) SwitchBlockHighlightingModel.checkExhaustiveness(statement, builder -> add(builder));
   }
 
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     super.visitSwitchExpression(expression);
-    checkSwitchBlock(expression);
+    if (!hasErrorResults()) SwitchBlockHighlightingModel.checkExhaustiveness(expression, builder -> add(builder));
   }
-
-  private void checkSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
-    SwitchBlockHighlightingModel model = SwitchBlockHighlightingModel.createInstance(switchBlock);
-    if (model == null) return;
-    if (!hasErrorResults()) model.checkSwitchLabelValues(builder -> add(builder));
-  }
-
 }
