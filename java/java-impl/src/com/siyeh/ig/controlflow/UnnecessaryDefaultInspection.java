@@ -255,7 +255,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       return null;
     }
     final SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(switchBlock, false);
-    return completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL
+    return completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT
            ? result : null;
   }
 }

@@ -286,8 +286,8 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       if (existsDefaultLabelElement(branch.myLabelStatement)) return true;
     }
     SwitchBlockHighlightingModel.SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(switchStatement, true);
-    return completenessResult == SwitchBlockHighlightingModel.SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL ||
-           completenessResult == SwitchBlockHighlightingModel.SwitchExhaustivenessState.EXHAUSTIVE_WITH_UNCONDITIONAL;
+    return completenessResult == SwitchBlockHighlightingModel.SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT ||
+           completenessResult == SwitchBlockHighlightingModel.SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
   }
 
   private static boolean isConvertibleBranch(@NotNull OldSwitchStatementBranch branch, boolean hasNext) {

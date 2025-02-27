@@ -75,8 +75,8 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
         else {
           SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(statement, true);
           if (completenessResult == SwitchExhaustivenessState.UNEVALUATED ||
-              completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_WITH_UNCONDITIONAL) return;
-          if (m_ignoreFullyCoveredEnums && completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL) {
+              completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT) {
             if (!isOnTheFly) return;
             infoMode = true;
           }

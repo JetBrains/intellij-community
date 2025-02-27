@@ -12,7 +12,6 @@ import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,37 +35,28 @@ import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingM
 import static java.util.Objects.requireNonNull;
 
 public class SwitchBlockHighlightingModel {
-  final @NotNull LanguageLevel myLevel;
-  final @NotNull PsiSwitchBlock myBlock;
-  final @NotNull PsiExpression mySelector;
-  final @NotNull PsiType mySelectorType;
-  final @NotNull PsiFile myFile;
+  private final @NotNull PsiSwitchBlock myBlock;
+  private final @NotNull PsiExpression mySelector;
+  private final @NotNull PsiType mySelectorType;
   private final @NotNull JavaPsiSwitchUtil.SelectorKind mySelectorKind;
 
-  SwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
-                               @NotNull PsiSwitchBlock switchBlock,
-                               @NotNull PsiFile psiFile) {
-    myLevel = languageLevel;
+  SwitchBlockHighlightingModel(@NotNull PsiSwitchBlock switchBlock) {
     myBlock = switchBlock;
     mySelector = requireNonNull(myBlock.getExpression());
     mySelectorType = requireNonNull(mySelector.getType());
-    myFile = psiFile;
     mySelectorKind = getSwitchSelectorKind();
   }
 
-  static @Nullable SwitchBlockHighlightingModel createInstance(@NotNull LanguageLevel languageLevel,
-                                                               @NotNull PsiSwitchBlock switchBlock,
-                                                               @NotNull PsiFile psiFile) {
+  static @Nullable SwitchBlockHighlightingModel createInstance(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return null;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return null;
-    return new SwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
+    return new SwitchBlockHighlightingModel(switchBlock);
   }
 
   public static boolean shouldAddDefault(@NotNull PsiSwitchBlock block) {
-    PsiFile file = block.getContainingFile();
-    SwitchBlockHighlightingModel model = createInstance(PsiUtil.getLanguageLevel(file), block, file);
+    SwitchBlockHighlightingModel model = createInstance(block);
     if (model == null) return false;
     ModCommandAction templateAction = QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null).asModCommandAction();
     if (templateAction == null) return false;
@@ -303,21 +293,16 @@ public class SwitchBlockHighlightingModel {
   }
 
   /**
-   * Evaluates the completeness of a switch block.
+   * Evaluates the exhaustiveness state of a switch block.
    *
    * @param switchBlock                          the PsiSwitchBlock to evaluate
    * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
    *                                             because nested deconstruction patterns don't cover null values
-   * @return {@link SwitchExhaustivenessState#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
-   * (this is already covered by highlighting)
-   * <p>{@link SwitchExhaustivenessState#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-   * <p>{@link SwitchExhaustivenessState#EXHAUSTIVE_WITH_UNCONDITIONAL}, if switch is complete because an unconditional pattern exists
-   * <p>{@link SwitchExhaustivenessState#EXHAUSTIVE_WITHOUT_UNCONDITIONAL}, if switch is complete and doesn't contain an unconditional pattern
+   * @return exhaustiveness state.
    */
   public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
                                                                               boolean considerNestedDeconstructionPatterns) {
-    SwitchBlockHighlightingModel switchModel = createInstance(
-      PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
+    SwitchBlockHighlightingModel switchModel = createInstance(switchBlock);
     if (switchModel == null) return SwitchExhaustivenessState.UNEVALUATED;
     PsiCodeBlock switchBody = switchModel.myBlock.getBody();
     if (switchBody == null) return SwitchExhaustivenessState.UNEVALUATED;
@@ -326,12 +311,11 @@ public class SwitchBlockHighlightingModel {
     if (labelElements.isEmpty()) return SwitchExhaustivenessState.UNEVALUATED;
     boolean needToCheckCompleteness = ExpressionUtil.isEnhancedSwitch(switchBlock);
     boolean isEnumSelector = switchModel.getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.ENUM;
-    AtomicBoolean reported = new AtomicBoolean();
     if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) {
-      return SwitchExhaustivenessState.EXHAUSTIVE_WITH_UNCONDITIONAL;
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
     }
     if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(switchBlock)) {
-      return SwitchExhaustivenessState.EXHAUSTIVE_WITH_UNCONDITIONAL;
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
     }
     if (!needToCheckCompleteness && !isEnumSelector) return SwitchExhaustivenessState.INCOMPLETE;
     // It is necessary because deconstruction patterns don't cover cases 
@@ -343,14 +327,15 @@ public class SwitchBlockHighlightingModel {
                                     deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
                                     component -> component instanceof PsiDeconstructionPattern)));
     }
+    AtomicBoolean reported = new AtomicBoolean();
     switchModel.checkCompleteness(labelElements, (Consumer<? super HighlightInfo.Builder>)builder -> {
       if (builder != null) reported.set(true);
     });
     // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
     if (needToCheckCompleteness) {
-      return reported.get() ? SwitchExhaustivenessState.UNEVALUATED : SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL;
+      return reported.get() ? SwitchExhaustivenessState.UNEVALUATED : SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT;
     }
-    return reported.get() ? SwitchExhaustivenessState.INCOMPLETE : SwitchExhaustivenessState.EXHAUSTIVE_WITHOUT_UNCONDITIONAL;
+    return reported.get() ? SwitchExhaustivenessState.INCOMPLETE : SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT;
   }
 
   private static QuickFixFactory getFixFactory() {
@@ -504,12 +489,14 @@ public class SwitchBlockHighlightingModel {
      */
     INCOMPLETE,
     /**
-     * Switch is exhaustive (complete) because an unconditional pattern exists
+     * Switch is exhaustive (complete), and adding a default branch would be a compilation error.
+     * This includes a switch over boolean having both true and false branches, 
+     * or a switch that has an unconditional pattern branch.
      */
-    EXHAUSTIVE_WITH_UNCONDITIONAL,
+    EXHAUSTIVE_NO_DEFAULT,
     /**
-     * Switch is exhaustive (complete) despite there's no unconditional pattern
+     * Switch is exhaustive (complete), but it's possible to add a default branch.
      */
-    EXHAUSTIVE_WITHOUT_UNCONDITIONAL
+    EXHAUSTIVE_CAN_ADD_DEFAULT
   }
 }
