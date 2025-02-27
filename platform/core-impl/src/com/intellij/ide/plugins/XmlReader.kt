@@ -792,20 +792,20 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
 
   reader.consumeChildElements { elementName ->
     when (elementName) {
-      "module" -> {
+      PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
         var name: String? = null
         for (i in 0 until reader.attributeCount) {
-          if (reader.getAttributeLocalName(i) == "name") {
+          if (reader.getAttributeLocalName(i) == PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR) {
             name = interner.name(reader.getAttributeValue(i))
             break
           }
         }
         modules.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
       }
-      "plugin" -> {
+      PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
         var id: String? = null
         for (i in 0 until reader.attributeCount) {
-          if (reader.getAttributeLocalName(i) == "id") {
+          if (reader.getAttributeLocalName(i) == PluginXmlConst.DEPENDENCIES_PLUGIN_ID_ATTR) {
             id = interner.name(reader.getAttributeValue(i))
             break
           }

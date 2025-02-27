@@ -60,6 +60,12 @@ object PluginXmlConst {
   const val DEPENDS_CONFIG_FILE_ATTR: String = "config-file"
 
   const val DEPENDENCIES_ELEM: String = "dependencies"
+  const val DEPENDENCIES_MODULE_ELEM: String = "module"
+  const val DEPENDENCIES_MODULE_NAME_ATTR: String = "name"
+  const val DEPENDENCIES_PLUGIN_ELEM: String = "plugin"
+  const val DEPENDENCIES_PLUGIN_ID_ATTR: String = "id"
+
+
   const val INCOMPATIBLE_WITH_ELEM: String = "incompatible-with"
 
   const val ACTIONS_ELEM: String = "actions"
