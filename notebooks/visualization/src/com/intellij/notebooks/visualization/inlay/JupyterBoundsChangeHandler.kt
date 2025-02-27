@@ -5,6 +5,7 @@ import com.intellij.notebooks.visualization.NotebookCellLinesEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.FoldingListener
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.EventDispatcher
 import java.beans.PropertyChangeListener
+import javax.swing.SwingUtilities
 
 /**
  * Per-editor service on which can one subscribe.
@@ -51,6 +53,10 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
     })
 
     editor.foldingModel.addListener(object : FoldingListener {
+      override fun onFoldRegionStateChange(region: FoldRegion) {
+        boundsChanged()
+      }
+
       override fun onFoldProcessingEnd() {
         boundsChanged()
       }
@@ -119,6 +125,10 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
       isShouldBeRecalculated = true
       return
     }
+    notifyBoundsChanged()
+  }
+
+  private fun notifyBoundsChanged() {
     if (!editor.isDisposed) {
       dispatcher.multicaster.boundsChanged()
     }
@@ -130,9 +140,22 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   }
 
   fun performPostponed() {
+    finishDelayAndDoIfShouldBeRecalculated { notifyBoundsChanged() }
+  }
+
+  fun schedulePerformPostponed() {
+    finishDelayAndDoIfShouldBeRecalculated {
+      SwingUtilities.invokeLater {
+        notifyBoundsChanged()
+      }
+    }
+  }
+
+  private fun finishDelayAndDoIfShouldBeRecalculated(block: () -> Unit) {
     isDelayed = false
     if (isShouldBeRecalculated) {
-      boundsChanged()
+      isShouldBeRecalculated = false
+      block()
     }
   }
 

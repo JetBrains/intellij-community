@@ -168,7 +168,7 @@ class DecoratedEditor private constructor(
       editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
         JupyterBoundsChangeHandler.get(editor).postponeUpdates()
         super.validateTree()
-        JupyterBoundsChangeHandler.get(editor).performPostponed()
+        JupyterBoundsChangeHandler.get(editor).schedulePerformPostponed()
       }
     }
 
