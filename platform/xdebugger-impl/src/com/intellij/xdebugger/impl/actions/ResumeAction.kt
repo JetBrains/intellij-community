@@ -3,10 +3,13 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import java.awt.event.KeyEvent
 
@@ -40,6 +43,14 @@ open class ResumeAction : XDebuggerActionBase(), DumbAware {
   }
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
-    return debuggerSupport.resumeActionHandler
+    return object : XDebuggerActionHandler() {
+      override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
+        return session.isPaused()
+      }
+
+      override fun perform(session: XDebugSession, dataContext: DataContext) {
+        session.resume()
+      }
+    }
   }
 }
