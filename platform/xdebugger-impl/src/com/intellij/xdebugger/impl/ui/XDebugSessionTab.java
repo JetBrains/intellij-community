@@ -59,6 +59,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
   protected @Nullable XDebugSessionProxy mySession;
+  private XDebugSessionData mySessionData;
 
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
                                                  @Nullable Icon icon,
@@ -125,11 +126,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
       sink.set(XWatchesView.DATA_KEY, myWatchesView);
       sink.set(TAB_KEY, this);
+      sink.set(XDebugSessionData.DATA_KEY, mySessionData);
 
       if (mySession != null) {
         sink.set(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, mySession);
         mySession.putKey(sink);
-        sink.set(XDebugSessionData.DATA_KEY, mySession.getSessionData());
         sink.set(LangDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
       }
     });
@@ -236,6 +237,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private void setSession(@NotNull XDebugSessionProxy session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
     myEnvironment = environment;
     mySession = session;
+    mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
 
     AnAction[] restartActions;
