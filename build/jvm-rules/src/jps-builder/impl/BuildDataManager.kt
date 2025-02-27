@@ -22,7 +22,6 @@ import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
 import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
-import org.jetbrains.jps.incremental.storage.BuildDataManager.Companion.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -31,38 +30,45 @@ import java.util.function.Function
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val processConstantsIncrementally = !System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false").toBoolean()
+private val processConstantsIncrementally = !System.getProperty("compiler.process.constants.non.incremental", "false").toBoolean()
 
-class BuildDataManager internal constructor(
+internal class BuildDataManager private constructor(
   val dataPaths: BuildDataPaths,
   @get:Deprecated("Use {@link #getTargetStateManager()} or, preferably, avoid using internal APIs.") val targetsState: BuildTargetsState,
   val relativizer: PathRelativizerService,
   private val dataManager: BuildDataProvider,
-  containerFactory: BazelPersistentMapletFactory,
+  depGraph: DependencyGraph,
 ) {
-  private val depGraph: DependencyGraph
+  private val depGraph = SynchronizedDependencyGraph(depGraph)
   private val depGraphPathMapper: NodeSourcePathMapper
 
   private val targetToStorages = ConcurrentHashMap<Pair<BuildTarget<*>, StorageProvider<StorageOwner>>, StorageOwner>()
 
   init {
-    try {
-      depGraph = SynchronizedDependencyGraph(DependencyGraphImpl(containerFactory))
-    }
-    catch (e: Throwable) {
-      try {
-        close()
-      }
-      catch (_: Throwable) {
-      }
-      throw e
-    }
-
     val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
     depGraphPathMapper = PathSourceMapper(
       Function { typeAwareRelativizer.toAbsolute(it, RelativePathType.SOURCE) },
       Function { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) },
     )
+  }
+
+  companion object {
+    fun open(
+      containerFactory: BazelPersistentMapletFactory,
+      dataPaths: BuildDataPaths,
+      relativizer: PathRelativizerService,
+      targetState: BuildTargetsState,
+      dataManager: BuildDataProvider,
+    ): BuildDataManager {
+      val depGraph = DependencyGraphImpl(containerFactory)
+      return BuildDataManager(
+        dataPaths = dataPaths,
+        targetsState = targetState,
+        dataManager = dataManager,
+        relativizer = relativizer,
+        depGraph = depGraph,
+      )
+    }
   }
 
   @Suppress("unused")
@@ -164,10 +170,6 @@ class BuildDataManager internal constructor(
   @Suppress("unused")
   fun reportUnhandledRelativizerPaths() {
     relativizer.reportUnhandledPaths()
-  }
-
-  companion object {
-    const val PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY: String = "compiler.process.constants.non.incremental"
   }
 }
 

@@ -11,9 +11,6 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
@@ -41,13 +38,12 @@ import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
-import org.jetbrains.bazel.jvm.jps.storage.AsyncExecutor
+import org.jetbrains.bazel.jvm.jps.storage.StorageInitializer
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
-import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsModel
@@ -57,7 +53,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.coroutineContext
 
 internal suspend fun incrementalBuild(
@@ -143,11 +138,15 @@ suspend fun buildUsingJps(
   val typeAwareRelativizer = relativizer.typeAwareRelativizer as BazelPathTypeAwareRelativizer
   val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer, relativizer = typeAwareRelativizer)
 
-  val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
   val prefix = outJar.fileName.toString().removeSuffix(".jar")
   val bazelOutDir = outJar.parent
   val dataDir = bazelOutDir.resolve("$cachePrefix$prefix-jps-data")
+  val outputs = OutputFiles(
+    outJar = outJar,
+    abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() },
+    dataDir = dataDir,
+  )
 
   val (jpsModel, targetDigests) = loadJpsModel(
     sources = sources,
@@ -166,7 +165,7 @@ suspend fun buildUsingJps(
   if (isDebugEnabled) {
     parentSpan.setAttribute("isIncrementalCompilation", isIncrementalCompilation)
     parentSpan.setAttribute("outJar", outJar.toString())
-    parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
+    parentSpan.setAttribute("abiJar", outputs.abiJar?.toString() ?: "")
     for (kind in TargetConfigurationDigestProperty.entries) {
       parentSpan.setAttribute(kind.name, targetDigests.get(kind))
     }
@@ -185,7 +184,7 @@ suspend fun buildUsingJps(
     )
   }
 
-  var rebuildReason = validateFileExistence(outJar = outJar, abiJar = abiJar, cacheDir = dataDir)
+  var rebuildReason = validateFileExistence(outputs = outputs, cacheDir = dataDir)
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val depStateStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
   val classPath = moduleTarget.module.container.getChild(BazelConfigurationHolder.KIND).classPath
@@ -236,8 +235,7 @@ suspend fun buildUsingJps(
       dataDir = dataDir,
       targetDigests = targetDigests,
       moduleTarget = moduleTarget,
-      outJar = outJar,
-      abiJar = abiJar,
+      outputs = outputs,
       relativizer = relativizer,
       jpsModel = jpsModel,
       dataManager = BazelBuildDataProvider(
@@ -257,12 +255,15 @@ suspend fun buildUsingJps(
       isDebugEnabled = isDebugEnabled,
     )
   }
-  catch (e: RebuildRequestedException) {
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
     if (isDebugEnabled) {
       log.out.appendLine("rebuild requested: ${e.stackTraceToString()}")
     }
     parentSpan.recordException(e)
-    rebuildReason = e.cause!!.message
+    rebuildReason = e.cause?.message ?: e.message ?: "unknown error"
     -1
   }
 
@@ -275,8 +276,7 @@ suspend fun buildUsingJps(
       dataDir = dataDir,
       targetDigests = targetDigests,
       moduleTarget = moduleTarget,
-      outJar = outJar,
-      abiJar = abiJar,
+      outputs = outputs,
       relativizer = relativizer,
       jpsModel = jpsModel,
       dataManager = BazelBuildDataProvider(
@@ -316,6 +316,15 @@ internal fun createJavaBuilder(
   }
 }
 
+internal class OutputFiles(
+  @JvmField val outJar: Path,
+  @JvmField val abiJar: Path?,
+  dataDir: Path,
+) {
+  @JvmField val cachedJar: Path = dataDir.resolve(outJar.fileName)
+  @JvmField val cachedAbiJar: Path? = abiJar?.let { dataDir.resolve(it.fileName) }
+}
+
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun initAndBuild(
   rebuildReason: String?,
@@ -324,8 +333,7 @@ private suspend fun initAndBuild(
   dataDir: Path,
   targetDigests: TargetConfigurationDigestContainer,
   moduleTarget: BazelModuleBuildTarget,
-  outJar: Path,
-  abiJar: Path?,
+  outputs: OutputFiles,
   relativizer: PathRelativizerService,
   jpsModel: JpsModel,
   dataManager: BazelBuildDataProvider,
@@ -340,20 +348,10 @@ private suspend fun initAndBuild(
     .setAttribute("isRebuild", isRebuild)
     .setAttribute("rebuildReason", rebuildReason ?: "")
     .use { span ->
-      if (isRebuild) {
-        storageInitializer.clearAndInit(span)
-      }
-
       storageInitializer.createBuildDataManager(
-        jpsModel = jpsModel,
-        moduleTarget = moduleTarget,
+        isRebuild = isRebuild,
         relativizer = relativizer,
         buildDataProvider = dataManager,
-        executor = object : AsyncExecutor {
-          override fun <T> execute(action: () -> T): CompletableFuture<T> {
-            return GlobalScope.async { action() }.asCompletableFuture()
-          }
-        },
         span = span,
       )
     }
@@ -365,9 +363,6 @@ private suspend fun initAndBuild(
       coroutineContext = coroutineContext,
     )
 
-    val cachedJar = dataDir.resolve(outJar.fileName)
-    val cachedAbiJar = abiJar?.let { dataDir.resolve(it.fileName) }
-
     val oldJar: Path?
     val oldAbiJar: Path?
     if (isRebuild) {
@@ -375,11 +370,11 @@ private suspend fun initAndBuild(
       oldAbiJar = null
     }
     else {
-      oldJar = cachedJar.takeIf { Files.exists(it) }
-      oldAbiJar = if (cachedJar == null || cachedAbiJar == null) null else cachedAbiJar.takeIf { Files.exists(it) }
+      oldJar = outputs.cachedJar.takeIf { Files.exists(it) }
+      oldAbiJar = if (oldJar == null || outputs.cachedAbiJar == null) null else outputs.cachedAbiJar.takeIf { Files.exists(it) }
     }
 
-    createOutputSink(oldJar = oldJar, oldAbiJar = oldAbiJar, withAbi = abiJar != null).use { outputSink ->
+    createOutputSink(oldJar = oldJar, oldAbiJar = oldAbiJar, withAbi = outputs.abiJar != null).use { outputSink ->
       val exitCode = tracer.spanBuilder("compile")
         .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
         .use { span ->
@@ -431,10 +426,7 @@ private suspend fun initAndBuild(
             buildDataManager = buildDataManager,
             success = exitCode == 0,
             moduleTarget = moduleTarget,
-            outJar = outJar,
-            abiJar = abiJar,
-            cachedJar = cachedJar,
-            cachedAbiJar = cachedAbiJar,
+            outputs = outputs,
             context = context,
             targetDigests = targetDigests,
             buildDataProvider = dataManager,
@@ -475,10 +467,7 @@ private val stateFileMetaNames: Array<String> = TargetConfigurationDigestPropert
 
 private fun CoroutineScope.postBuild(
   moduleTarget: BazelModuleBuildTarget,
-  outJar: Path,
-  abiJar: Path?,
-  cachedJar: Path,
-  cachedAbiJar: Path?,
+  outputs: OutputFiles,
   context: BazelCompileContext,
   targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
@@ -521,8 +510,8 @@ private fun CoroutineScope.postBuild(
       writeJarAndAbi(
         tracer = requestLog.tracer,
         outputSink = outputSink,
-        outJar = cachedJar,
-        abiJar = cachedAbiJar,
+        outJar = outputs.cachedJar,
+        abiJar = outputs.cachedAbiJar,
         sourceDescriptors = sourceDescriptors,
       )
     }
@@ -532,9 +521,9 @@ private fun CoroutineScope.postBuild(
 
     // copy to output
     withContext(Dispatchers.IO) {
-      Files.copy(cachedJar, outJar, StandardCopyOption.REPLACE_EXISTING)
-      if (abiJar != null) {
-        Files.copy(cachedAbiJar, abiJar, StandardCopyOption.REPLACE_EXISTING)
+      Files.copy(outputs.cachedJar, outputs.outJar, StandardCopyOption.REPLACE_EXISTING)
+      if (outputs.abiJar != null) {
+        Files.copy(outputs.cachedAbiJar, outputs.abiJar, StandardCopyOption.REPLACE_EXISTING)
       }
     }
   }

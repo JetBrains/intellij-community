@@ -73,7 +73,7 @@ internal fun loadJpsModel(
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
   digests.set(TargetConfigurationDigestProperty.JPS_TRACK_LIB_DEPS, if (isLibTracked) 1 else 0)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 6)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 7)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)

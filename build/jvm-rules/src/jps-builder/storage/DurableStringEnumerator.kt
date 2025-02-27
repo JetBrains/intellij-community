@@ -2,7 +2,6 @@
 
 package org.jetbrains.bazel.jvm.jps.storage
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IntRef
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
@@ -14,42 +13,26 @@ import com.intellij.util.io.IOUtil
 import com.intellij.util.io.Unmappable
 import com.intellij.util.io.blobstorage.ByteBufferReader
 import org.jetbrains.annotations.Nullable
-import java.nio.ByteBuffer
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
 import java.util.function.IntPredicate
 
-internal class DurableStringEnumerator(
+internal class DurableStringEnumerator private constructor(
   private val valuesLog: AppendOnlyLog,
-  private val valueHashToIdFuture: CompletableFuture<Int2IntMultimap>,
+  private val valueHashToId: Int2IntMultimap,
 ) : DurableDataEnumerator<String>, Unmappable, CleanableStorage {
   private val valueHashLock = Any()
 
-  /** lazily initialized in [valueHashToId] */
-  private var valueHashToId: Int2IntMultimap? = null
-
   companion object {
-    const val DATA_FORMAT_VERSION: Int = 1
-    const val PAGE_SIZE: Int = 8 shl 20
-
     private val VALUES_LOG_FACTORY = AppendOnlyLogFactory
       .withDefaults()
-      .pageSize(PAGE_SIZE)
-      .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION)
+      .failIfDataFormatVersionNotMatch(1)
       .checkIfFileCompatibleEagerly(true)
       .cleanIfFileIncompatible()
 
-    //fun open(storagePath: Path): DurableStringEnumerator {
-    //  return VALUES_LOG_FACTORY.wrapStorageSafely<DurableStringEnumerator, IOException>(
-    //    storagePath,
-    //    { valuesLog -> DurableStringEnumerator(valuesLog, buildValueToIdIndex(valuesLog)) }
-    //  )
-    //}
-
-    fun openAsync(storagePath: Path, executor: AsyncExecutor): DurableStringEnumerator {
-      return VALUES_LOG_FACTORY.wrapStorageSafely<DurableStringEnumerator, RuntimeException>(storagePath) { valuesLog ->
-        DurableStringEnumerator(valuesLog, executor.execute { buildValueToIdIndex(valuesLog) })
+    fun open(storagePath: Path): DurableStringEnumerator {
+      return executeOrCloseStorage(VALUES_LOG_FACTORY.open(storagePath)) { valuesLog ->
+        val valueHashToId = buildValueToIdIndex(valuesLog)
+        DurableStringEnumerator(valuesLog, valueHashToId)
       }
     }
   }
@@ -67,7 +50,7 @@ internal class DurableStringEnumerator(
 
     val valueHash = hashOf(value)
     synchronized(valueHashLock) {
-      val valueHashToId = valueHashToId()
+      val valueHashToId = valueHashToId
       val foundId = lookupValue(valueHashToId, value, valueHash)
       if (foundId != DataEnumerator.NULL_ID) {
         return foundId
@@ -86,7 +69,7 @@ internal class DurableStringEnumerator(
 
     val valueHash = hashOf(value)
     synchronized(valueHashLock) {
-      val valueHashToId = valueHashToId()
+      val valueHashToId = valueHashToId
       return lookupValue(valueHashToId, value, valueHash)
     }
   }
@@ -99,15 +82,6 @@ internal class DurableStringEnumerator(
   }
 
   override fun close() {
-    try {
-      valueHashToIdFuture.join()
-    }
-    catch (_: CancellationException) {
-    }
-    catch (e: Throwable) {
-      logger<DurableStringEnumerator>().info(".valueHashToId computation failed", e)
-    }
-
     valuesLog.close()
   }
 
@@ -121,15 +95,6 @@ internal class DurableStringEnumerator(
   override fun closeAndClean() {
     close()
     valuesLog.closeAndClean()
-  }
-
-  private fun valueHashToId(): Int2IntMultimap {
-    var valueHashToId = valueHashToId
-    if (valueHashToId == null) {
-      valueHashToId = valueHashToIdFuture.get()
-      this.valueHashToId = valueHashToId
-    }
-    return valueHashToId
   }
 
   private fun lookupValue(valueHashToId: Int2IntMultimap, value: String, hash: Int): Int {
@@ -153,18 +118,13 @@ private fun hashOf(value: String): Int {
   val hash = value.hashCode()
   if (hash == Int2IntMultimap.NO_VALUE) {
     //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 hash with just any value!=0. Hash doesn't
-    // identify name uniquely anyway, hence this replacement just adds another hash collision -- basically,
-    // of collisions
+    // identify name uniquely anyway; hence this replacement just adds another hash collision -- basically, of collisions
     return -1 // any value!=0 will do
   }
   return hash
 }
 
-private val stringReader = ByteBufferReader { readString(it) }
-
-private fun readString(buffer: ByteBuffer): String {
-  return IOUtil.readString(buffer)
-}
+private val stringReader = ByteBufferReader { IOUtil.readString(it) }
 
 private fun writeString(value: String, valuesLog: AppendOnlyLog): Int {
   val valueBytes = value.encodeToByteArray()
@@ -175,7 +135,7 @@ private fun writeString(value: String, valuesLog: AppendOnlyLog): Int {
 private fun buildValueToIdIndex(valuesLog: AppendOnlyLog): Int2IntMultimap {
   val valueHashToId = Int2IntMultimap()
   valuesLog.forEachRecord { logId, buffer ->
-    val value = readString(buffer)
+    val value = IOUtil.readString(buffer)
     val id = convertLogIdToValueId(logId)
     val valueHash = hashOf(value)
     valueHashToId.put(valueHash, id)

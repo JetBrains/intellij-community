@@ -3,54 +3,20 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import org.jetbrains.bazel.jvm.jps.storage.AsyncExecutor
-import org.jetbrains.bazel.jvm.jps.storage.BazelPersistentMapletFactory
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetIndex
 import org.jetbrains.jps.builders.BuildTargetRegistry.ModuleTargetSelector
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
-import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.fs.BuildFSState
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
-import org.jetbrains.jps.incremental.storage.BuildTargetsState
 import org.jetbrains.jps.indices.IgnoredFileIndex
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
-import java.nio.file.Path
-
-private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
-  override fun getDataStorageDir() = dir
-
-  override fun getTargetsDataRoot(): Path = dir
-
-  override fun getTargetTypeDataRootDir(targetType: BuildTargetType<*>): Path = dir.resolve(targetType.typeId)
-
-  override fun getTargetDataRootDir(target: BuildTarget<*>): Path = dir.resolve(target.targetType.typeId)
-
-  override fun getTargetDataRoot(targetType: BuildTargetType<*>, targetId: String): Path = dir
-}
-
-internal fun createDataManager(
-  dataStorageRoot: Path,
-  relativizer: PathRelativizerService,
-  buildDataProvider: BazelBuildDataProvider,
-  executor: AsyncExecutor,
-): BuildDataManager {
-  val containerFactory = BazelPersistentMapletFactory(dataStorageRoot.resolve("mappings-graph"), executor)
-  return BuildDataManager(
-    dataPaths = BazelBuildDataPaths(dataStorageRoot),
-    targetsState = BuildTargetsState(BazelBuildTargetStateManager),
-    relativizer = relativizer,
-    dataManager = buildDataProvider,
-    containerFactory = containerFactory,
-  )
-}
 
 internal fun createJpsProjectDescriptor(
   dataManager: BuildDataManager,

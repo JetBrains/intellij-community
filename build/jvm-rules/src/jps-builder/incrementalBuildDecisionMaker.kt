@@ -22,11 +22,11 @@ private const val thresholdPercentage = 0.5
 
 // if output jar doesn't exist, make sure that we do not to use existing cache -
 // set `isRebuild` to true and clear caches in this case
-internal fun validateFileExistence(outJar: Path, abiJar: Path?, cacheDir: Path): String? {
+internal fun validateFileExistence(outputs: OutputFiles, cacheDir: Path): String? {
   return when {
     !Files.isDirectory(cacheDir) -> "cache dir doesn't exist"
-    Files.notExists(cacheDir.resolve(outJar.fileName)) -> "cached output jar doesn't exist"
-    abiJar != null && Files.notExists(cacheDir.resolve(abiJar.fileName)) -> {
+    Files.notExists(outputs.cachedJar) -> "cached output jar doesn't exist"
+    outputs.cachedAbiJar != null && Files.notExists(outputs.cachedAbiJar) -> {
       "cached output JAR exists but not ABI JAR - something wrong, or we enabled ABI JARs"
     }
     else -> null
