@@ -114,11 +114,6 @@ public abstract class DebuggerSupport {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getPauseHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-
   public @NotNull DebuggerActionHandler getToggleLineBreakpointHandler() {
     return DisabledActionHandler.INSTANCE;
   }

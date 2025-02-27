@@ -21,7 +21,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerSuspendedActionHandler myForceStepIntoHandler;
   private final XDebuggerRunToCursorActionHandler myRunToCursorHandler;
   private final XDebuggerRunToCursorActionHandler myForceRunToCursor;
-  private final XDebuggerPauseActionHandler myPauseHandler;
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
 
@@ -68,7 +67,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     mySmartStepIntoHandler = new XDebuggerSmartStepIntoHandler();
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
-    myPauseHandler = new XDebuggerPauseActionHandler();
     myShowExecutionPointHandler = new XDebuggerSuspendedActionHandler() {
       @Override
       protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
@@ -124,11 +122,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public @NotNull DebuggerActionHandler getForceRunToCursorHandler() {
     return myForceRunToCursor;
-  }
-
-  @Override
-  public @NotNull DebuggerActionHandler getPauseHandler() {
-    return myPauseHandler;
   }
 
   @Override
