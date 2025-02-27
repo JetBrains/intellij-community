@@ -94,10 +94,12 @@ private class ElementsBuilder {
     val explicitElement = LogicalStructureTreeElementProvider.getTreeElement(model)
     if (explicitElement != null) return explicitElement
     val psiElement: PsiElement? = getPsiElement(model)
-    if (psiElement != null) {
-      return PsiElementStructureElement(assembledModel, psiElement)
-    }
-    return OtherStructureElement(assembledModel)
+    return if (psiElement != null)
+      PsiElementStructureElement(assembledModel, psiElement)
+    else if (model is ProvidedLogicalContainer<*>)
+      LogicalGroupStructureElement(assembledModel, model.provider) { assembledModel.getChildren() }
+    else
+      OtherStructureElement(assembledModel)
   }
 
   private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>): Collection<StructureViewTreeElement> {
