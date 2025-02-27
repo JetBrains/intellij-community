@@ -37,7 +37,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite coverageSuite) {
+  public LoadCoverageResult loadCoverageDataWithLogging(
+    final @NotNull File sessionDataFile,
+    final @Nullable CoverageSuite coverageSuite,
+    final @Nullable CoverageLoadErrorReporter reporter
+  ) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
@@ -46,6 +50,9 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
+        if (reporter != null) {
+          reporter.reportError("Error reading source map associated with coverage data: " + e.getMessage(), e);
+        }
       }
     }
     if (coverageSuite instanceof JavaCoverageSuite javaSuite) {
@@ -60,7 +67,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         javaSuite.setExcludePatterns(excludePatterns);
       }
     }
-    return projectData;
+    return new SuccessLoadCoverageResult(projectData);
   }
 
   @Override

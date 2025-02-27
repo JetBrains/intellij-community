@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,7 +23,46 @@ public abstract class CoverageRunner {
    * @param baseCoverageSuite suite where coverage would be loaded. 
    *                          Can be used to retrieve additional information about configuration which was run with coverage.
    */
-  public abstract @Nullable ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite baseCoverageSuite);
+  @ApiStatus.NonExtendable
+  public @Nullable ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite baseCoverageSuite) {
+    if (baseCoverageSuite == null) {
+      return loadCoverageDataWithLogging(sessionDataFile, null, null).getProjectData();
+    }
+    CoverageLoadListener listener = baseCoverageSuite.getProject().getMessageBus().syncPublisher(CoverageLoadListener.COVERAGE_TOPIC);
+    LoadCoverageResult result;
+    listener.coverageLoadingStarted(sessionDataFile);
+    try {
+      result = loadCoverageDataWithLogging(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporter(listener, sessionDataFile));
+    }
+    catch (UnsupportedOperationException e) {
+      String message = "Coverage runner " + this.getClass().getName() + " does not implement coverage loading, please contact a developer of extension";
+      result = new FailedLoadCoverageResult(null, message, e);
+    }
+    catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
+      result = new FailedLoadCoverageResult(null, "Could not load coverage from file " + sessionDataFile + ": " + e.getMessage(), e);
+    }
+    listener.reportCoverageLoaded(result, sessionDataFile);
+
+    return result.getProjectData();
+  }
+
+  /**
+   * Loads coverage data from {@code sessionDataFile} into IntelliJ presentation {@link ProjectData},
+   * with a result of execution {@link LoadCoverageResult}.
+   *
+   * @param baseCoverageSuite suite where coverage would be loaded.
+   *                          Can be used to retrieve additional information about configuration which was run with coverage.
+   * @param reporter wrapper around {@link CoverageLoadListener} is used for notifying about errors during coverage loading
+   */
+  @ApiStatus.OverrideOnly
+  public LoadCoverageResult loadCoverageDataWithLogging(
+    final @NotNull File sessionDataFile,
+    final @Nullable CoverageSuite baseCoverageSuite,
+    final @Nullable CoverageLoadErrorReporter reporter
+  ) {
+    throw new UnsupportedOperationException("Method loadCoverageDataWithLogging should be implemented");
+  }
 
   /**
    * When multiple coverage runners are available for one {@link CoverageEngine}, 
