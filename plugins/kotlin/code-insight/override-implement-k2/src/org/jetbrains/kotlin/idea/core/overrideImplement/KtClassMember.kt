@@ -16,7 +16,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -25,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
@@ -207,6 +211,8 @@ fun generateMember(
                 }
             }
         }
+
+        withoutLabel()
     }
 
     if (this != null && preferConstructorParameter && memberInfo.isProperty) {
@@ -248,6 +254,31 @@ fun generateMember(
     }
 
     return newMember
+}
+
+@OptIn(KaExperimentalApi::class)
+inline fun KaDeclarationRenderer.Builder.withoutLabel() {
+    contextReceiversRenderer = contextReceiversRenderer.with {
+        contextReceiverLabelRenderer = WITHOUT_LABEL
+    }
+
+    typeRenderer = typeRenderer.with {
+        contextReceiversRenderer = contextReceiversRenderer.with {
+            contextReceiverLabelRenderer = WITHOUT_LABEL
+        }
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+object WITHOUT_LABEL : KaContextReceiverLabelRenderer {
+
+    override fun renderLabel(
+        analysisSession: KaSession,
+        contextReceiver: KaContextReceiver,
+        contextReceiversRenderer: KaContextReceiversRenderer,
+        printer: PrettyPrinter,
+    ) {
+    }
 }
 
 /**

@@ -13,7 +13,6 @@ class Bar : Foo {
     fo<caret>
 }
 
-// TODO FIX @Context
 // ELEMENT_TEXT: "override suspend fun foo() {...}"
 // TAIL_TEXT: " for Context"
 // TYPE_TEXT: "Foo"
