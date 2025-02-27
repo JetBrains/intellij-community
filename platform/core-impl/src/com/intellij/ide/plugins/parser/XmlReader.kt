@@ -5,6 +5,9 @@ package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.ActionDescriptor.*
+import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
+import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
+import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -784,19 +787,6 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
   descriptor.dependencies = ModuleDependenciesDescriptor(newModules, newPlugins)
   assert(reader.isEndElement)
 }
-
-private fun findAttributeValue(reader: XMLStreamReader2, name: String): String? {
-  for (i in 0 until reader.attributeCount) {
-    if (reader.getAttributeLocalName(i) == name) {
-      return getNullifiedAttributeValue(reader, i)
-    }
-  }
-  return null
-}
-
-private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.trim().takeIf { !it.isEmpty() }
-
-private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }
 
 @ApiStatus.Internal
 interface ReadModuleContext {
