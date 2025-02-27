@@ -321,8 +321,8 @@ private fun readRootElementChild(
 private fun readIdeaVersion(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "since-build" -> descriptor.sinceBuild = getNullifiedAttributeValue(reader, i)
-      "until-build" -> descriptor.untilBuild = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.IDEA_VERSION_SINCE_ATTR -> descriptor.sinceBuild = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.IDEA_VERSION_UNTIL_ATTR -> descriptor.untilBuild = getNullifiedAttributeValue(reader, i)
     }
   }
   reader.skipElement()
@@ -340,7 +340,7 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
     descriptor.actions = actionElements
   }
 
-  val resourceBundle = findAttributeValue(reader, "resource-bundle")
+  val resourceBundle = findAttributeValue(reader, PluginXmlConst.ACTIONS_RESOURCE_BUNDLE_ATTR)
   reader.consumeChildElements { elementName ->
     if (checkXInclude(elementName, reader)) {
       return@consumeChildElements
@@ -391,8 +391,8 @@ private fun readOldDepends(reader: XMLStreamReader2, descriptor: RawPluginDescri
   var configFile: String? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "optional" -> isOptional = reader.getAttributeAsBoolean(i)
-      "config-file" -> configFile = reader.getAttributeValue(i)
+      PluginXmlConst.DEPENDS_OPTIONAL_ATTR -> isOptional = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.DEPENDS_CONFIG_FILE_ATTR -> configFile = reader.getAttributeValue(i)
     }
   }
 
@@ -407,7 +407,7 @@ private fun readOldDepends(reader: XMLStreamReader2, descriptor: RawPluginDescri
 }
 
 private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, interner: XmlInterner) {
-  val ns = findAttributeValue(reader, "defaultExtensionNs")
+  val ns = findAttributeValue(reader, PluginXmlConst.EXTENSIONS_DEFAULT_EXTENSION_NS_ATTR)
   reader.consumeChildElements { elementName ->
     if (checkXInclude(elementName, reader)) {
       return@consumeChildElements
@@ -422,12 +422,12 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
     var hasExtraAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        "implementation" -> implementation = reader.getAttributeValue(i)
-        "implementationClass" -> implementation = reader.getAttributeValue(i)  // deprecated attribute
-        "os" -> os = readOs(reader.getAttributeValue(i))
-        "id" -> orderId = getNullifiedAttributeValue(reader, i)
-        "order" -> order = readOrder(reader.getAttributeValue(i))
-        "point" -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_IMPLEMENTATION_ATTR -> implementation = reader.getAttributeValue(i)
+        PluginXmlConst.EXTENSION_IMPLEMENTATION_CLASS_ATTR -> implementation = reader.getAttributeValue(i)  // deprecated attribute
+        PluginXmlConst.EXTENSION_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.EXTENSION_ID_ATTR -> orderId = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_ORDER_ATTR -> order = readOrder(reader.getAttributeValue(i))
+        PluginXmlConst.EXTENSION_POINT_ATTR -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
         else -> hasExtraAttributes = true
       }
     }
@@ -438,13 +438,13 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
 
     val containerDescriptor: ContainerDescriptor
     when (qualifiedExtensionPointName) {
-      "com.intellij.applicationService" -> containerDescriptor = descriptor.appContainerDescriptor
-      "com.intellij.projectService" -> containerDescriptor = descriptor.projectContainerDescriptor
-      "com.intellij.moduleService" -> containerDescriptor = descriptor.moduleContainerDescriptor
+      PluginXmlConst.FQN_APPLICATION_SERVICE -> containerDescriptor = descriptor.appContainerDescriptor
+      PluginXmlConst.FQN_PROJECT_SERVICE -> containerDescriptor = descriptor.projectContainerDescriptor
+      PluginXmlConst.FQN_MODULE_SERVICE -> containerDescriptor = descriptor.moduleContainerDescriptor
       else -> {
         // bean EP can use id / implementation attributes for own bean class
         // - that's why we have to create XmlElement even if all attributes are common
-        val element = if (qualifiedExtensionPointName == "com.intellij.postStartupActivity") {
+        val element = if (qualifiedExtensionPointName == PluginXmlConst.FQN_POST_STARTUP_ACTIVITY) {
           reader.skipElement()
           null
         }
@@ -475,7 +475,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
 }
 
 private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolean {
-  if (elementName == "include" && reader.namespaceURI == "http://www.w3.org/2001/XInclude") {
+  if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
     LOG.error("`include` is supported only on a root level (${reader.location})")
     reader.skipElement()
     return true

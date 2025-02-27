@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PluginXmlConst {
+  // todo root element is not checked (<idea-plugin>)
   const val PLUGIN_PACKAGE_ATTR: String = "package"
   const val PLUGIN_IMPLEMENTATION_DETAIL_ATTR: String = "implementation-detail"
   const val PLUGIN_URL_ATTR: String = "url"
@@ -18,8 +19,11 @@ object PluginXmlConst {
   const val ID_ELEM: String = "id"
   const val NAME_ELEM: String = "name"
   const val VERSION_ELEM: String = "version"
-  const val IDEA_VERSION_ELEM: String = "idea-version"
   const val PRODUCT_DESCRIPTOR_ELEM: String = "product-descriptor"
+
+  const val IDEA_VERSION_ELEM: String = "idea-version"
+  const val IDEA_VERSION_SINCE_ATTR: String = "since-build"
+  const val IDEA_VERSION_UNTIL_ATTR: String = "until-build"
 
   const val VENDOR_ELEM: String = "vendor"
   const val VENDOR_URL_ATTR: String = "url"
@@ -37,15 +41,28 @@ object PluginXmlConst {
   const val CONTENT_ELEM: String = "content"
 
   const val DEPENDS_ELEM: String = "depends"
+  const val DEPENDS_OPTIONAL_ATTR: String = "optional"
+  const val DEPENDS_CONFIG_FILE_ATTR: String = "config-file"
+
   const val DEPENDENCIES_ELEM: String = "dependencies"
   const val INCOMPATIBLE_WITH_ELEM: String = "incompatible-with"
 
   const val ACTIONS_ELEM: String = "actions"
+  const val ACTIONS_RESOURCE_BUNDLE_ATTR: String = "resource-bundle"
 
   const val APPLICATION_LISTENERS_ELEM: String = "applicationListeners"
   const val PROJECT_LISTENERS_ELEM: String = "projectListeners"
 
   const val EXTENSIONS_ELEM: String = "extensions"
+  const val EXTENSIONS_DEFAULT_EXTENSION_NS_ATTR: String = "defaultExtensionNs"
+
+  const val EXTENSION_IMPLEMENTATION_ATTR: String = "implementation"
+  const val EXTENSION_IMPLEMENTATION_CLASS_ATTR: String = "implementationClass"
+  const val EXTENSION_OS_ATTR: String = "os"
+  const val EXTENSION_ID_ATTR: String = "id"
+  const val EXTENSION_ORDER_ATTR: String = "order"
+  const val EXTENSION_POINT_ATTR: String = "point"
+
   const val EXTENSION_POINTS_ELEM: String = "extensionPoints"
 
   const val APPLICATION_COMPONENTS_ELEM: String = "application-components"
@@ -54,4 +71,10 @@ object PluginXmlConst {
 
   const val INCLUDE_ELEM: String = "include"
   const val DEFAULT_XPOINTER_VALUE: String = "xpointer(/idea-plugin/*)"
+  const val XINCLUDE_NAMESPACE_URI: String = "http://www.w3.org/2001/XInclude"
+
+  const val FQN_APPLICATION_SERVICE: String = "com.intellij.applicationService"
+  const val FQN_PROJECT_SERVICE: String = "com.intellij.projectService"
+  const val FQN_MODULE_SERVICE: String = "com.intellij.moduleService"
+  const val FQN_POST_STARTUP_ACTIVITY: String = "com.intellij.postStartupActivity"
 }
