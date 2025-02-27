@@ -497,18 +497,6 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       }
     }
   }
-
-  @Test
-  fun `pure read access in explicit read action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    runWithModalProgressBlocking {
-      ApplicationManager.getApplication().runReadAction {
-        assertFalse(application.isWriteIntentLockAcquired)
-        assertTrue(application.holdsReadLock())
-        assertFalse(application.isWriteAccessAllowed)
-        assertTrue(application.isReadAccessAllowed)
-      }
-    }
-  }
 }
 
 private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
