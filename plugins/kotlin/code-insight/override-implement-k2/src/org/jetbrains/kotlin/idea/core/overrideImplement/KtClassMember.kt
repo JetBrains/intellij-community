@@ -16,7 +16,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -348,8 +351,35 @@ private fun createRenderer(
                 }
             }
         }
+
+        withoutLabel()
     }
     return renderer
+}
+
+@OptIn(KaExperimentalApi::class)
+inline fun KaDeclarationRenderer.Builder.withoutLabel() {
+    contextReceiversRenderer = contextReceiversRenderer.with {
+        contextReceiverLabelRenderer = WITHOUT_LABEL
+    }
+
+    typeRenderer = typeRenderer.with {
+        contextReceiversRenderer = contextReceiversRenderer.with {
+            contextReceiverLabelRenderer = WITHOUT_LABEL
+        }
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+object WITHOUT_LABEL : KaContextReceiverLabelRenderer {
+
+    override fun renderLabel(
+        analysisSession: KaSession,
+        contextReceiver: KaContextReceiver,
+        contextReceiversRenderer: KaContextReceiversRenderer,
+        printer: PrettyPrinter,
+    ) {
+    }
 }
 
 /**
