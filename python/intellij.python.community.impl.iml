@@ -145,5 +145,7 @@
     <orderEntry type="library" name="io.github.z4kn4fein.semver.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
 </module>
