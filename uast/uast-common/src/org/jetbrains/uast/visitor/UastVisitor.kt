@@ -3,6 +3,26 @@ package org.jetbrains.uast.visitor
 
 import org.jetbrains.uast.*
 
+/**
+ * A visitor for UAST elements.
+ *
+ * When an instance is passed to any [UElement]'s [UElement.accept] function, the approrpiate
+ * `visit*` function will be called, depending on the actual type of the element.
+ *
+ * The default implementation for each `visit*` function other than [visitElement] is to delegate to
+ * the `visit*` function for the element's supertype. That lets you implement only the most general
+ * `visit*` method that applies to your use case. For example, if you want to visit all variables,
+ * you can implement [visitVariable] instead of [visitParameter], [visitField], and
+ * [visitLocalVariable].
+ *
+ * To visit the element's children as well, return `false` from the `visit*` function.
+ *
+ * If the `visit*` function returns `false`, then the visitor will be passed to the `accept`
+ * function of each of the direct children of the element, and then the visitor's `afterVisit*` will
+ * be called for the element's type. The default implementation for each `afterVisit*` function
+ * other than [afterVisitElement] is to delegate to the `afterVisit*` function for the element's
+ * supertype.
+ */
 interface UastVisitor {
   fun visitElement(node: UElement): Boolean
 
@@ -18,6 +38,7 @@ interface UastVisitor {
   fun visitLocalVariable(node: ULocalVariable): Boolean = visitVariable(node)
   fun visitEnumConstant(node: UEnumConstant): Boolean = visitField(node)
   fun visitAnnotation(node: UAnnotation): Boolean = visitElement(node)
+
   // Expressions
   fun visitExpression(node: UExpression): Boolean = visitElement(node)
   fun visitLabeledExpression(node: ULabeledExpression): Boolean = visitExpression(node)
@@ -51,7 +72,8 @@ interface UastVisitor {
   fun visitThisExpression(node: UThisExpression): Boolean = visitExpression(node)
   fun visitSuperExpression(node: USuperExpression): Boolean = visitExpression(node)
   fun visitReturnExpression(node: UReturnExpression): Boolean = visitExpression(node)
-  fun visitBreakExpression(node: UBreakExpression): Boolean = visitExpression(node) fun visitYieldExpression(node: UYieldExpression): Boolean = visitExpression(node)
+  fun visitBreakExpression(node: UBreakExpression): Boolean = visitExpression(node)
+  fun visitYieldExpression(node: UYieldExpression): Boolean = visitExpression(node)
   fun visitContinueExpression(node: UContinueExpression): Boolean = visitExpression(node)
   fun visitThrowExpression(node: UThrowExpression): Boolean = visitExpression(node)
   fun visitArrayAccessExpression(node: UArrayAccessExpression): Boolean = visitExpression(node)
@@ -110,7 +132,8 @@ interface UastVisitor {
   fun afterVisitThisExpression(node: UThisExpression) = afterVisitExpression(node)
   fun afterVisitSuperExpression(node: USuperExpression) = afterVisitExpression(node)
   fun afterVisitReturnExpression(node: UReturnExpression) = afterVisitExpression(node)
-  fun afterVisitBreakExpression(node: UBreakExpression) = afterVisitExpression(node) fun afterVisitYieldExpression(node: UYieldExpression) = afterVisitExpression(node)
+  fun afterVisitBreakExpression(node: UBreakExpression) = afterVisitExpression(node)
+  fun afterVisitYieldExpression(node: UYieldExpression) = afterVisitExpression(node)
   fun afterVisitContinueExpression(node: UContinueExpression) = afterVisitExpression(node)
   fun afterVisitThrowExpression(node: UThrowExpression) = afterVisitExpression(node)
   fun afterVisitArrayAccessExpression(node: UArrayAccessExpression) = afterVisitExpression(node)
@@ -123,18 +146,21 @@ interface UastVisitor {
   fun afterVisitComment(node: UComment) = afterVisitElement(node)
 }
 
+/** A [UastVisitor] that visits each element's children by default. */
 abstract class AbstractUastVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = false
 }
 
 /**
- * There is a convention in UAST-visitors that a visitor will not be passed to children if `visit*` will return `true`.
- * So make sure that overridden methods returns `true` and please think twice before returning `false` if you are passing implementation to
- * [com.intellij.uast.UastVisitorAdapter].
+ * A [UastVisitor] that does not visit each element's children by default.
+ *
+ * If passing an instance to [com.intellij.uast.UastVisitorAdapter], make sure that no implemented
+ * function returns `false`, since that class requires a never-traversing visitor.
  */
 abstract class AbstractUastNonRecursiveVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = true
 }
 
+/** A [UastVisitor] that visits each element's children but does nothing at each element. */
 @Suppress("unused")
 object EmptyUastVisitor : AbstractUastVisitor()
