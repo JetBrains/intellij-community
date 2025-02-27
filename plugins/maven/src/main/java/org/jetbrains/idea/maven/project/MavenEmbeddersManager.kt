@@ -78,13 +78,6 @@ class MavenEmbeddersManager(private val myProject: Project) {
     return getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory)
   }
 
-  // used in third-party plugins
-  @Deprecated("use {@link MavenEmbeddersManager#getEmbedder(Key, String)} instead")
-  @Synchronized
-  fun getEmbedder(kind: Key<*>, ignoredWorkingDirectory: String?, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
-    return getEmbedder(kind, multiModuleProjectDirectory)
-  }
-
   @Synchronized
   fun release(embedder: MavenEmbedderWrapper) {
     if (!myEmbeddersInUse.contains(embedder)) {
