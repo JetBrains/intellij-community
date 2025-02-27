@@ -29,7 +29,7 @@ class ClassPathXmlPathResolver(
     else {
       reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return false, dataLoader.toString())
     }
-    PluginXmlStreamReader(readContext, dataLoader, this, PluginXmlPathResolver.getChildBase(base = base, relativePath = relativePath), readInto).let {
+    PluginXmlStreamReader(readContext, dataLoader, this, PluginXmlPathResolver.getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
       it.consume(reader)
       it.getRawPluginDescriptor()
     }

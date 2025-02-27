@@ -856,7 +856,7 @@ private fun readInclude(
   if (read) {
     (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
       rawPluginDescriptor = readInto,
-      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, base = includeBase),
+      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = includeBase),
     )
   }
 

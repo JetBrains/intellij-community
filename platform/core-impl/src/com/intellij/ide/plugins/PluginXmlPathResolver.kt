@@ -38,7 +38,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
 
     // FIXME this thing is bugged when relative path is an absolute path outside /META-INF, probably it has to trim first /
-    internal fun getChildBase(base: String?, relativePath: String): String? {
+    internal fun getChildBaseDir(base: String?, relativePath: String): String? {
       val end = relativePath.lastIndexOf('/')
       if (end <= 0 || relativePath.startsWith("/META-INF/")) {
         return base
@@ -53,7 +53,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     val path = toLoadPath(relativePath, base)
     try {
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
-        PluginXmlStreamReader(readContext, dataLoader, this, getChildBase(base = base, relativePath = relativePath), readInto).let {
+        PluginXmlStreamReader(readContext, dataLoader, this, getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
           it.consume(input, null)
           it.getRawPluginDescriptor()
         }
@@ -65,7 +65,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
           dataLoader = dataLoader,
           readContext = readContext,
           relativePath = path,
-          includeBase = getChildBase(base = base, relativePath = relativePath),
+          includeBase = getChildBaseDir(base = base, relativePath = relativePath),
           pool = pool,
         )) {
         return true
