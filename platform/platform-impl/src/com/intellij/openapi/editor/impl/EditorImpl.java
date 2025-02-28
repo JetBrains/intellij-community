@@ -134,6 +134,7 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.ex.util.EditorUtil.isCaretInsideSelection;
+import static com.intellij.openapi.editor.impl.EditorIdKt.getKERNEL_EDITOR_ID_KEY;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener, FocusListener {

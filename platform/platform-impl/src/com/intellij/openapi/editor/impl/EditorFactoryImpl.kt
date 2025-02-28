@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
-import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -32,6 +31,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.EventDispatcher
@@ -210,8 +210,9 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     highlighter: EditorHighlighter?,
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
+    hackyPutEditorIdToDocument(document)
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
-    editor.putEditorId()
+    putEditorId(document, editor)
     // must be _before_ event firing
     afterCreation?.invoke(editor)
 
@@ -305,4 +306,21 @@ private class MyRawTypedHandler(private val delegate: TypedActionHandler) : Type
 
 private fun collectAllEditors(): Sequence<Editor> {
   return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editorsSequence() }
+}
+
+private fun hackyPutEditorIdToDocument(document: Document) {
+  if (isRhizomeAdEnabled) {
+    if (document.getUserData(KERNEL_EDITOR_ID_KEY) == null) {
+      document.putUserData(KERNEL_EDITOR_ID_KEY, EditorId.create())
+    }
+  }
+}
+
+private fun putEditorId(document: Document, editor: EditorImpl) {
+  if (isRhizomeAdEnabled) {
+    editor.putUserData(KERNEL_EDITOR_ID_KEY, document.removeUserData(KERNEL_EDITOR_ID_KEY))
+  }
+  else {
+    editor.putEditorId()
+  }
 }

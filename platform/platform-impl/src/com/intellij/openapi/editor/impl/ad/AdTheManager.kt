@@ -17,14 +17,17 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
+import com.intellij.openapi.editor.impl.KERNEL_EDITOR_ID_KEY
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentManager
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
 import com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManager
+import com.intellij.openapi.editor.impl.ad.markup.AdEditorMarkupManager
 import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import fleet.kernel.transactor
+import fleet.util.UID
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -46,32 +49,40 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
   fun getEditorModel(editor: EditorImpl): EditorModel? {
     if (isEnabled()) {
-      val debugName = editor.toString()
       val document = editor.document
-      val docMarkup = DocumentMarkupModel.forDocument(document, editor.project, true) as MarkupModelEx
-      runCatching {
-        val docEntity = AdDocumentManager.getInstance().getDocEntityRunBlocking(document)
-        val docMarkupEntity = AdDocumentMarkupManager.getInstance().getMarkupEntityRunBlocking(docMarkup)
-        if (docEntity != null && docMarkupEntity != null) {
-          ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-          return object : EditorModel {
-            override fun getDocument(): DocumentEx = AdDocument(docEntity)
-            override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
-            override fun getDocumentMarkupModel(): MarkupModelEx = AdMarkupModel(docMarkupEntity) // TODO: filtered
-            override fun getHighlighter(): EditorHighlighter = editor.highlighter
-            override fun getInlayModel(): InlayModelEx = editor.inlayModel
-            override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
-            override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
-            override fun getCaretModel(): CaretModel = editor.caretModel
-            override fun getSelectionModel(): SelectionModel = editor.selectionModel
-            override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
-            override fun getFocusModel(): FocusModeModel = editor.focusModeModel
-            override fun isAd(): Boolean = true
-            override fun dispose() {}
+      val editorId = document.getUserData(KERNEL_EDITOR_ID_KEY)
+      if (editorId != null) {
+        val debugName = editor.toString()
+        val editorUid = UID.fromString(editorId.serializeToString())
+        val docMarkup = DocumentMarkupModel.forDocument(document, editor.project, true) as MarkupModelEx
+        val editorMarkup = editor.markupModel
+        runCatching {
+          val docEntity = AdDocumentManager.getInstance().getDocEntityRunBlocking(document)
+          val docMarkupEntity = AdDocumentMarkupManager.getInstance().getMarkupEntityRunBlocking(docMarkup)
+          val editorMarkupEntity = AdEditorMarkupManager.getInstance().createEditorMarkupEntityRunBlocking(editorUid, editorMarkup)
+          if (docEntity != null && docMarkupEntity != null && editorMarkupEntity != null) {
+            ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
+            return object : EditorModel {
+              override fun getDocument(): DocumentEx = AdDocument(docEntity)
+              override fun getEditorMarkupModel(): MarkupModelEx = AdMarkupModel("editor", editorMarkupEntity)
+              override fun getDocumentMarkupModel(): MarkupModelEx = AdMarkupModel("document", docMarkupEntity) // TODO: filtered
+              override fun getHighlighter(): EditorHighlighter = editor.highlighter
+              override fun getInlayModel(): InlayModelEx = editor.inlayModel
+              override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
+              override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
+              override fun getCaretModel(): CaretModel = editor.caretModel
+              override fun getSelectionModel(): SelectionModel = editor.selectionModel
+              override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
+              override fun getFocusModel(): FocusModeModel = editor.focusModeModel
+              override fun isAd(): Boolean = true
+              override fun dispose() {
+                AdEditorMarkupManager.getInstance().deleteEditorMarkupEntityRunBlocking(editorMarkupEntity)
+              }
+            }
           }
+        }.onFailure {
+          LOG.error(it) { "failed to create editor model $debugName" }
         }
-      }.onFailure {
-        LOG.error(it) { "failed to create editor model $debugName" }
       }
     }
     return null

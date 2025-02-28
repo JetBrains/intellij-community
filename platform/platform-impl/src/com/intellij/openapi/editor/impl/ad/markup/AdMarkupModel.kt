@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 
 @Experimental
-internal class AdMarkupModel(private val entity: AdMarkupEntity): MarkupModelEx {
+internal class AdMarkupModel(private val debugName: String, private val entity: AdMarkupEntity): MarkupModelEx {
 
   override fun processRangeHighlightersOverlappingWith(start: Int, end: Int, processor: Processor<in RangeHighlighterEx>): Boolean {
     for (highlighter in entity.markupStorage.query(start, end)) {

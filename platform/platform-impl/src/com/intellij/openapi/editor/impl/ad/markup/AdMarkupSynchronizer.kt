@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.ad.AdTheManager.Companion.AD_DISPATCHER
@@ -39,7 +40,8 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
   fun createSynchronizer(markupEntity: AdMarkupEntity, markupModel: MarkupModelEx): CoroutineScope {
     val cs = coroutineScope.childScope("markup->entity sync", AD_DISPATCHER)
     val disposable = cs.asDisposable()
-    val sync = AdMarkupSynchronizer(markupEntity, markupModel, cs)
+    val delay = if (markupModel is EditorMarkupModel) 0L else 100L
+    val sync = AdMarkupSynchronizer(markupEntity, markupModel, delay, cs)
     markupModel.document.addDocumentListener(sync, disposable)
     markupModel.addMarkupModelListener(disposable, sync)
     return cs
@@ -51,6 +53,7 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
 private class AdMarkupSynchronizer(
   private val markupEntity: AdMarkupEntity,
   private val markupModel: MarkupModelEx,
+  private val delay: Long,
   private val coroutineScope: CoroutineScope,
 ) : MarkupModelListener, DocumentListener {
 
@@ -110,7 +113,9 @@ private class AdMarkupSynchronizer(
     // TODO: do not cancel scheduled
     scheduledCollect.getAndSet(null)?.cancel()
     val scheduled = coroutineScope.launch {
-      delay(100)
+      if (delay > 0) {
+        delay(delay)
+      }
       collectBatch(lastSeenNoveltyId.get())
     }
     val alreadyScheduled = !scheduledCollect.compareAndSet(null, scheduled)

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizerService
