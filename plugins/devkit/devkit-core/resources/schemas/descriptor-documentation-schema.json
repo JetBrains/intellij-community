@@ -66,6 +66,11 @@
           "description": "Description of the element. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
+        "internalNote": {
+          "type": "string",
+          "description": "An internal note if the element is for the internal use only. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
         "sdkDocsSupportDetails": {
           "type": "string",
           "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format.",
@@ -200,6 +205,11 @@
         "description": {
           "type": "string",
           "description": "Description of the attribute. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
+        "internalNote": {
+          "type": "string",
+          "description": "An internal note if the attribute is for the internal use only. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
         "defaultValue": {
