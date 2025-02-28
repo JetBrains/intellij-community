@@ -4,6 +4,7 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isO
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
+import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.use
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -15,10 +16,12 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class EditorCellFoldingBar(
   private val editor: EditorImpl,
+  private val draggableAdapter: EditorCellDragAssistant?,
   private val yAndHeightSupplier: () -> Pair<Int, Int>,
   private val toggleListener: () -> Unit,
 ) : Disposable {
@@ -111,10 +114,32 @@ class EditorCellFoldingBar(
           repaint()
         }
 
+        override fun mousePressed(e: MouseEvent) {
+          if (SwingUtilities.isLeftMouseButton(e)) {
+            draggableAdapter?.initDrag(e)
+          }
+        }
+
+        override fun mouseReleased(e: MouseEvent) {
+          if (SwingUtilities.isLeftMouseButton(e)) {
+            draggableAdapter?.finishDrag(e)
+          }
+        }
+
         override fun mouseClicked(e: MouseEvent) {
-          toggleListener.invoke()
+          when (draggableAdapter) {
+            null -> toggleListener.invoke()
+            else -> if (!draggableAdapter.isDragging) toggleListener.invoke()
+          }
         }
       })
+
+      addMouseMotionListener(object : MouseAdapter() {
+        override fun mouseDragged(e: MouseEvent) {
+          draggableAdapter?.updateDragOperation(e)
+        }
+      })
+
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     }
 
