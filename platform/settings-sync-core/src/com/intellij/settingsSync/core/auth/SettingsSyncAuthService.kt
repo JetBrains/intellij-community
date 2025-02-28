@@ -27,6 +27,12 @@ interface SettingsSyncAuthService {
   suspend fun login(parentComponent: Component?) : SettingsSyncUserData?
 
   /**
+   * Starts the logout procedure or navigates a user to the place where they can log out themselves.
+   * The method must call `SettingsSyncEvents.getInstance().fireLoginStateChanged()` in order to propagate the changed state
+   */
+  suspend fun logout(parentComponent: Component?) {}
+
+  /**
    * Data of the current user. If there's no user, return null
    * This data is used for in the local git repo as well as UI (if necessary)
    */
