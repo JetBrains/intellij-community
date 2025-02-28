@@ -16,8 +16,6 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +25,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.*;
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -105,9 +103,7 @@ public final class SwitchBlockHighlightingModel {
     }
     List<PsiType> sealedTypes = getAbstractSealedTypes(JavaPsiPatternUtil.deconstructSelectorType(selectorType));
     if (!sealedTypes.isEmpty()) {
-      List<PatternDescription> descriptions = preparePatternDescription(elements);
-      List<PsiEnumConstant> enumConstants = getEnumConstants(elements);
-      return !findMissedClasses(selectorType, descriptions, enumConstants, block).missedClasses().isEmpty();
+      return !findMissedClasses(block, selectorType, elements).isEmpty();
     }
     //records are final; checking intersections is not needed
     if (selectorClass != null && selectorClass.isRecord()) {
@@ -225,14 +221,9 @@ public final class SwitchBlockHighlightingModel {
   private static @NotNull Set<PsiClass> getMissedClassesInSealedHierarchy(@NotNull PsiType selectorType,
                                                                           @NotNull List<? extends PsiCaseLabelElement> elements,
                                                                           @NotNull PsiSwitchBlock block) {
-    Set<PsiClass> missedClasses;
-    List<PatternDescription> descriptions = preparePatternDescription(elements);
-    List<PsiEnumConstant> enumConstants = getEnumConstants(elements);
-    List<PsiClass> missedSealedClasses =
-      StreamEx.of(findMissedClasses(selectorType, descriptions, enumConstants, block).missedClasses())
-        .sortedBy(t -> t.getQualifiedName())
-        .toList();
-    missedClasses = new LinkedHashSet<>();
+    Set<PsiClass> classes = findMissedClasses(block, selectorType, elements);
+    List<PsiClass> missedSealedClasses = StreamEx.of(classes).sortedBy(t -> t.getQualifiedName()).toList();
+    Set<PsiClass> missedClasses = new LinkedHashSet<>();
     //if T is intersection types, it is allowed to choose any of them to cover
     PsiExpression selector = requireNonNull(block.getExpression());
     for (PsiClass missedClass : missedSealedClasses) {
@@ -328,137 +319,11 @@ public final class SwitchBlockHighlightingModel {
   }
 
 
-  private static @NotNull MultiMap<PsiClass, PsiType> findPermittedClasses(@NotNull List<PatternTypeTestDescription> elements) {
-    MultiMap<PsiClass, PsiType> patternClasses = new MultiMap<>();
-    for (PatternDescription element : elements) {
-      PsiType patternType = element.type();
-      PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
-      if (patternClass != null) {
-        patternClasses.putValue(patternClass, element.type());
-        Set<PsiClass> classes = JavaPsiSealedUtil.getAllPermittedClasses(patternClass);
-        for (PsiClass aClass : classes) {
-          patternClasses.putValue(aClass, element.type());
-        }
-      }
-    }
-    return patternClasses;
-  }
-
-
   private static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
     if (element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern)) {
       return pattern;
     }
     return null;
-  }
-
-  record SealedResult(@NotNull Set<PsiClass> missedClasses, @NotNull Set<PsiClass> coveredClasses) {
-  }
-
-  /**
-   * Finds the missed and covered classes for a sealed selector type.
-   * If a selector type is not sealed classes, it will be checked if it is covered by one of the elements or enumConstants
-   *
-   * @param selectorType  the selector type
-   * @param elements      the pattern descriptions, unconditional
-   * @param enumConstants the enum constants, which can be used to cover enum classes
-   * @param context       the context element (parent of pattern descriptions)
-   * @return the container of missed and covered classes (may contain classes outside the selector type hierarchy)
-   */
-  static @NotNull SealedResult findMissedClasses(@NotNull PsiType selectorType,
-                                                 @NotNull List<? extends PatternDescription> elements,
-                                                 @NotNull List<PsiEnumConstant> enumConstants,
-                                                 @NotNull PsiElement context) {
-    //Used to keep dependencies. The last dependency is one of the selector types.
-    record ClassWithDependencies(PsiClass mainClass, List<PsiClass> dependencies) {
-    }
-
-    Set<PsiClass> coveredClasses = new HashSet<>();
-    Set<PsiClass> visitedNotCovered = new HashSet<>();
-    Set<PsiClass> missingClasses = new LinkedHashSet<>();
-
-    //reduce record patterns and enums to TypeTestDescription
-    List<PatternTypeTestDescription> reducedDescriptions = reduceToTypeTest(elements, context);
-    reducedDescriptions.addAll(reduceEnumConstantsToTypeTest(enumConstants));
-    MultiMap<PsiClass, PsiType> permittedPatternClasses = findPermittedClasses(reducedDescriptions);
-    //according JEP 440-441, only direct abstract-sealed classes are allowed (14.11.1.1)
-    Set<PsiClass> sealedUpperClasses = JavaPsiSealedUtil.findSealedUpperClasses(permittedPatternClasses.keySet());
-
-    List<PatternTypeTestDescription> typeTestPatterns = ContainerUtil.filterIsInstance(elements, PatternTypeTestDescription.class);
-
-    Set<PsiClass> selectorClasses = ContainerUtil.map2SetNotNull(JavaPsiPatternUtil.deconstructSelectorType(selectorType),
-                                                                 type -> PsiUtil.resolveClassInClassTypeOnly(
-                                                                   TypeConversionUtil.erasure(type)));
-    if (selectorClasses.isEmpty()) {
-      return new SealedResult(Collections.emptySet(), Collections.emptySet());
-    }
-
-    Queue<ClassWithDependencies> nonVisited = new ArrayDeque<>();
-    Set<ClassWithDependencies> visited = new SmartHashSet<>();
-
-    for (PsiClass selectorClass : selectorClasses) {
-      List<PsiClass> dependencies = new ArrayList<>();
-      dependencies.add(selectorClass);
-      nonVisited.add(new ClassWithDependencies(selectorClass, dependencies));
-    }
-
-    while (!nonVisited.isEmpty()) {
-      ClassWithDependencies peeked = nonVisited.peek();
-      if (!visited.add(peeked)) continue;
-      PsiClass psiClass = peeked.mainClass;
-      PsiClass selectorClass = peeked.dependencies.get(peeked.dependencies.size() - 1);
-      if (sealedUpperClasses.contains(psiClass) ||
-          //used to generate missed classes when the switch is empty
-          (selectorClasses.contains(psiClass) && elements.isEmpty())) {
-        for (PsiClass permittedClass : JavaPsiSealedUtil.getPermittedClasses(psiClass)) {
-          Collection<PsiType> patternTypes = permittedPatternClasses.get(permittedClass);
-          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
-          PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
-          //if we don't have patternType and tree goes away from a target type, let's skip it
-          if (patternTypes.isEmpty() && TypeConversionUtil.areTypesConvertible(selectorType, permittedType) ||
-              //if permittedClass is covered by existed patternType, we don't have to go further
-              !patternTypes.isEmpty() && !ContainerUtil.exists(patternTypes,
-                                                               patternType -> JavaPsiPatternUtil.covers(context, patternType,
-                                                                                                        TypeUtils.getType(
-                                                                                                          permittedClass)))) {
-            List<PsiClass> dependentClasses = new ArrayList<>(peeked.dependencies);
-            dependentClasses.add(permittedClass);
-            nonVisited.add(new ClassWithDependencies(permittedClass, dependentClasses));
-          }
-          else {
-            if (!patternTypes.isEmpty()) {
-              coveredClasses.addAll(peeked.dependencies);
-            }
-          }
-        }
-      }
-      else {
-        PsiClassType targetType = TypeUtils.getType(psiClass);
-        //there is a chance, that tree goes away from a target type
-        if (TypeConversionUtil.areTypesConvertible(targetType, selectorType) ||
-            //we should consider items from the intersections in the usual way
-            JavaPsiPatternUtil.covers(context, targetType, selectorType)) {
-          if (//check a case, when we have something, which not in sealed hierarchy, but covers some leaves
-            !ContainerUtil.exists(typeTestPatterns, pattern -> JavaPsiPatternUtil.covers(context, pattern.type(), targetType))) {
-            missingClasses.add(psiClass);
-            visitedNotCovered.addAll(peeked.dependencies);
-          }
-          else {
-            coveredClasses.addAll(peeked.dependencies);
-          }
-        }
-      }
-      nonVisited.poll();
-    }
-    coveredClasses.removeAll(visitedNotCovered);
-    for (PsiClass selectorClass : selectorClasses) {
-      if (coveredClasses.contains(selectorClass)) {
-        //one of the selector classes is covered, so the selector type is covered
-        missingClasses.clear();
-        break;
-      }
-    }
-    return new SealedResult(missingClasses, coveredClasses);
   }
 
   /**

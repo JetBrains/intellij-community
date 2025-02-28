@@ -93,7 +93,7 @@ public final class JavaPsiSwitchUtil {
     return false;
   }
 
-  private static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
+  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       return ObjectUtils.tryCast(((PsiReferenceExpression)element).resolve(), PsiEnumConstant.class);
     }
