@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
@@ -50,6 +51,8 @@ internal class InspectionContext(
             addAll(shadowedThisUsages)
         }
 }
+
+private val LOG = Logger.getInstance(ContextParametersMigrationInspection::class.java)
 
 internal class ContextParametersMigrationInspection : KotlinApplicableInspectionBase.Simple<KtNamedDeclaration, InspectionContext>() {
     override fun isApplicableByPsi(element: KtNamedDeclaration): Boolean {
@@ -462,24 +465,26 @@ internal class ContextParametersMigrationQuickFix(
 
     private fun wrapWithContext(range: PsiChildRange, contextName: String, ktPsiFactory: KtPsiFactory): KtExpression? {
         val first = range.firstOrNull() ?: return null
-        val (withContextExpression, lambdaBody) = createWithContextCallAndFindLambdaBody(contextName, ktPsiFactory)
+        val (withContextExpression, lambdaBody) = createWithContextCallAndFindLambdaBody(contextName, ktPsiFactory) ?: return null
         lambdaBody.addRangeAfter(first, range.last(), lambdaBody.lBrace)
         return withContextExpression
     }
 
     private fun wrapWithContext(element: KtElement, contextName: String, ktPsiFactory: KtPsiFactory): KtExpression? {
-        val (withContextExpression, lambdaBody) = createWithContextCallAndFindLambdaBody(contextName, ktPsiFactory)
+        val (withContextExpression, lambdaBody) = createWithContextCallAndFindLambdaBody(contextName, ktPsiFactory) ?: return null
         lambdaBody.addAfter(element, lambdaBody.lBrace)
         return withContextExpression
     }
 
     private fun createWithContextCallAndFindLambdaBody(
         contextName: String, ktPsiFactory: KtPsiFactory
-    ): Pair<KtExpression, KtBlockExpression> {
+    ): Pair<KtExpression, KtBlockExpression>? {
         val withContextExpression = ktPsiFactory.createExpression("with($contextName) {}")
         val lastLambdaArgument = withContextExpression.lastChild as? KtLambdaArgument
-        val lambdaBody =  lastLambdaArgument?.getLambdaExpression()?.bodyExpression
-            ?: error("Unexpected failure to get the lambda body from the expression: ${withContextExpression.text}")
+        val lambdaBody =  lastLambdaArgument?.getLambdaExpression()?.bodyExpression ?: run {
+            LOG.error("Unexpected failure to get the lambda body from the expression: ${withContextExpression.text}")
+            return null
+        }
         return withContextExpression to lambdaBody
     }
 }
