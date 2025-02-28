@@ -53,9 +53,7 @@ internal class InternalReadAction<T>(
         }
       }
       withContext(Dispatchers.Default) {
-        check(!application.isReadAccessAllowed) {
-          "This thread unexpectedly holds the read lock"
-        }
+        application.assertReadAccessNotAllowed()
         readLoop()
       }
     }
