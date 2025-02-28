@@ -228,7 +228,7 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
       hash.putString(encoding);
     }
 
-    if (SystemProperties.getBooleanProperty("jps.rebuild.on.change.in.instrumenters", false)) {
+    if (SystemProperties.getBooleanProperty("jps.rebuild.on.change.in.instrumenters", true)) {
       for (JvmClassFileInstrumenter instrumenter : BuilderRegistry.getInstance().getClassFileInstrumenters()) {
         if (instrumenter.isEnabled(projectDescriptor, module)) {
           hash.putString(instrumenter.getId());
