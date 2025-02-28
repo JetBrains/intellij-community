@@ -541,7 +541,7 @@ class SchemeManagerTest {
         val a = TestScheme("a", "a")
         val b = TestScheme("b", "b")
         schemeManager.setSchemes(listOf(a, b))
-        runInEdtAndWait { schemeManager.save() }
+        schemeManager.save()
 
         assertThat(dir.resolve("a.xml")).isRegularFile()
         assertThat(dir.resolve("b.xml")).isRegularFile()
