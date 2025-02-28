@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
@@ -185,6 +186,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
         if (project.equals(cachedPsi.getProject())) {
           message += " (this)";
         }
+        message += " use.workspace.file.index.to.generate.iterators=" + Registry.is("use.workspace.file.index.to.generate.iterators");
         message += " shouldBeIndexed=" + IndexingIteratorsProvider.getInstance(project).shouldBeIndexed(vFile);
         // Should return the same as above. Why do we need two different API?
         message += " shouldBeIndexed2=" + ((FileBasedIndexImpl)FileBasedIndex.getInstance()).belongsToProjectIndexableFiles(vFile, project);
