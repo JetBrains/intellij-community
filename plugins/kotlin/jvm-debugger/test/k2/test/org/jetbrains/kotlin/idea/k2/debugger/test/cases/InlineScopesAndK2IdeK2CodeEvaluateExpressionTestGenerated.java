@@ -2099,6 +2099,16 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
             }
 
+            @TestMetadata("multifileClassMembers.kt")
+            public void testMultifileClassMembers() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/multifileClassMembers.kt");
+            }
+
+            @TestMetadata("multifileClassMembers-parts-inherit.kt")
+            public void testMultifileClassMembers_parts_inherit() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/multifileClassMembers-parts-inherit.kt");
+            }
+
             @TestMetadata("multilineExpressionAtBreakpoint.kt")
             public void testMultilineExpressionAtBreakpoint() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
