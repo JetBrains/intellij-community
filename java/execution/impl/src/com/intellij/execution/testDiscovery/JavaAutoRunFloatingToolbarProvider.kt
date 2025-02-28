@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
+import com.intellij.execution.ui.RunContentManager.getInstanceIfCreated
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.java.JavaBundle
@@ -93,11 +94,15 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
     }
 
     content.whenDisposed {
-      updateFloatingToolbarVisibility(project, component, autoRunManager)
+      application.invokeLater {
+        updateFloatingToolbarVisibility(project, component, autoRunManager)
+      }
     }
 
     getConsoleProperties(project)?.addListener(TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR) {
-      updateFloatingToolbarVisibility(project, component, autoRunManager)
+      application.invokeLater {
+        updateFloatingToolbarVisibility(project, component, autoRunManager)
+      }
     }
   }
 
@@ -153,12 +158,8 @@ private class HideAction : AnAction() {
   }
 }
 
-private fun getContentDescriptor(project: Project): RunContentDescriptor? {
-  return RunContentManager.getInstanceIfCreated(project)?.selectedContent
-}
-
 private fun getConsoleProperties(project: Project): TestConsoleProperties? {
-  val content = getContentDescriptor(project) ?: return null
+  val content = getInstanceIfCreated(project)?.selectedContent ?: return null
   val console = getSMTRunnerConsoleView(content.executionConsole) ?: return null
   return console.properties
 }
