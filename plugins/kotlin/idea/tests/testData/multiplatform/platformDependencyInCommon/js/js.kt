@@ -2,7 +2,7 @@ fun checkCloneableIsAbsent(array: Array<String>) {
     array.<!UNRESOLVED_REFERENCE!>clone<!>()
 }
 
-fun checkSynchronizedIsDeprecatedInJs() {
-    <!DEPRECATION_ERROR!>synchronized<!>(Any()) {
+fun checkSynchronizedIsUnresolvedInJs() {
+    <!UNRESOLVED_REFERENCE!>synchronized<!>(Any()) {
     }
 }
