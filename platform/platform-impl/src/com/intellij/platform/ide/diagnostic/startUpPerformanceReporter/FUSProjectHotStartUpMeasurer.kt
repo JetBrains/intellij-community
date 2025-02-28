@@ -33,6 +33,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -149,6 +150,12 @@ object FUSProjectHotStartUpMeasurer {
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
     return if (isProperContext()) MyMarker else null
+  }
+
+  // This code is necessary for reporting metrics from the frontend because frontend metrics are sent outside the project initialization process.
+  @Internal
+  fun getContextElementToPass(): CoroutineContext.Element {
+    return MyMarker
   }
 
   private fun reportViolation(violation: Violation) {

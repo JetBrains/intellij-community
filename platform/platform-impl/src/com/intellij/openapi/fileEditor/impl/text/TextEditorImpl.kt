@@ -274,3 +274,8 @@ fun createEditorImpl(project: Project, file: VirtualFile, asyncLoader: AsyncEdit
     it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
   }) to asyncLoader
 }
+
+@Internal
+fun TextEditorImpl.performWhenLoaded(action: () -> Unit) {
+  AsyncEditorLoader.performWhenLoaded(asyncLoader, action)
+}

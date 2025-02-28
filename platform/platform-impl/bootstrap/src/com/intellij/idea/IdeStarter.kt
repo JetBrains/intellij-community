@@ -42,6 +42,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JOptionPane
@@ -87,7 +88,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       val starterClass = this@IdeStarter.javaClass
       val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(
-        close = isHeadless || (starterClass != IdeStarter::class.java && starterClass != StandaloneLightEditStarter::class.java),
+        close = isHeadless || (!shouldRunFusStartUpMeasurer() && starterClass != IdeStarter::class.java && starterClass != StandaloneLightEditStarter::class.java)
       )
       if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
@@ -189,6 +190,9 @@ open class IdeStarter : ModernApplicationStarter() {
       WelcomeFrame.showIfNoProjectOpened(publisher)
     }
   }
+
+  @ApiStatus.Internal
+  protected open fun shouldRunFusStartUpMeasurer(): Boolean = false
 
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
