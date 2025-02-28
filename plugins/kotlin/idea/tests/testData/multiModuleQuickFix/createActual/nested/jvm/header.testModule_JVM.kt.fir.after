@@ -1,5 +1,5 @@
 // WithNested: to be implemented
-actual class WithNested {
+actual class <selection><caret></selection>WithNested<T> {
     actual fun foo(): Int {
         TODO("Not yet implemented")
     }
