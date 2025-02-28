@@ -1145,6 +1145,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @Nullable GutterMark findGutter(@NotNull String filePath) {
     configureByFilesInner(filePath);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(editor.getDocument(), false, false, false, true);
+    data.init();
+
     CommonProcessors.FindFirstProcessor<GutterMark> processor = new CommonProcessors.FindFirstProcessor<>();
     doHighlighting();
     processGuttersAtCaret(editor, getProject(), processor);
