@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl
-import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -35,7 +32,9 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   override fun visitElement(element: PsiElement) {
     findProblem(element)
-    element.parent?.accept(this)
+    if (element != file) {
+      element.parent?.accept(this)
+    }
   }
 
   override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
@@ -108,32 +107,10 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   private fun findProblem(element: PsiElement) {
     if (element !is Navigatable) return
-    val problemHolder = ProblemHolder(file)
-    val visitor = object : HighlightVisitorImpl() {
-      init {
-        prepareToRunAsInspection(problemHolder)
-      }
-    }
-    element.accept(visitor)
-    val reportedElement = problemHolder.reportedElement ?: return
+    val error = JavaErrorCollector.findSingleError(element) ?: return
     val context = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement::class.java,
                                                        PsiClass::class.java, PsiMethod::class.java, PsiVariable::class.java) ?: element
-    problems.add(Problem(reportedElement, context))
-  }
-
-  private class ProblemHolder(private val file: PsiFile) : HighlightInfoHolder(file) {
-
-    var reportedElement: PsiElement? = null
-
-    override fun add(info: HighlightInfo?): Boolean {
-      if (reportedElement != null || info == null || info.severity != HighlightSeverity.ERROR || info.description == null) return true
-      reportedElement = file.findElementAt(info.actualStartOffset)
-      return true
-    }
-
-    override fun hasErrorResults(): Boolean {
-      return reportedElement != null
-    }
+    problems.add(Problem(error.psi(), context))
   }
 
   companion object {
