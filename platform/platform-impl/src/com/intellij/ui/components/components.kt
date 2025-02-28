@@ -161,7 +161,7 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Panel.group")
+@Deprecated("Use Kotlin UI DSL, method Panel.group", level = DeprecationLevel.ERROR)
 fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }
