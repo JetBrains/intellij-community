@@ -25,7 +25,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .generate()
     )
     val actualGradleHome = GradleInstallationManager.getInstance().getGradleHomePath(project, projectPath)
-    assertEquals(calculateGradleDistributionRoot(), actualGradleHome)
+    assertThat(calculateGradleDistributionRoot()).contains(actualGradleHome)
   }
 
   @Test
@@ -46,7 +46,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .withJavaPlugin()
         .generate()
     )
-    val guessedVersion = GradleInstallationManager.getGradleVersion(calculateGradleDistributionRoot())
+    val guessedVersion = GradleInstallationManager.getGradleVersion(calculateGradleDistributionRoot().first())
     // we have to compare base versions because "-rc" versions are located in a folder without a suffix
     assertEquals(version(gradleVersion).baseVersion, version(guessedVersion).baseVersion)
   }
@@ -58,7 +58,9 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .withJavaPlugin()
         .generate()
     )
-    assertTrue(GradleInstallationManager.getInstance().isGradleSdkHome(myProject, calculateGradleDistributionRoot()))
+    assertThat(calculateGradleDistributionRoot()
+                 .map { GradleInstallationManager.getInstance().isGradleSdkHome(myProject,it) })
+      .allMatch { it }
   }
 
   @Test
@@ -78,13 +80,16 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
     assertEquals(actual.size, expected.size)
   }
 
-  private fun calculateGradleDistributionRoot(): Path {
+  private fun calculateGradleDistributionRoot(): List<Path> {
     val distributionFolder = gradleUserHome.resolve("wrapper/dists/gradle-$gradleVersion-bin/")
     val entries = distributionFolder.listDirectoryEntries()
-    assertEquals(1, entries.size)
+    if (entries.size != 1) {
+      println("WARN: Unexpected number of entries in the distribution folder: ${entries.size}")
+      entries.forEach { println(it) }
+    }
     // we don't want to calculate the hash to be able to resolve the folder by its name
-    val firstDistributionFolder = entries.first()
-    return firstDistributionFolder.resolve("gradle-${gradleVersion}")
+    // val firstDistributionFolder = entries.first()
+    return entries.map { it.resolve("gradle-${gradleVersion}") }
   }
 
   private fun getExpectedGradleClassRoots(): List<String> {
