@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery
 
+import com.intellij.build.BuildView
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -173,6 +174,7 @@ private fun getSMTRunnerConsoleView(console: ExecutionConsole): SMTRunnerConsole
   return when (console) {
     is SMTRunnerConsoleView -> console
     is ConsoleViewWithDelegate -> getSMTRunnerConsoleView(console.delegate)
+    is BuildView -> console.consoleView?.let { getSMTRunnerConsoleView(it) }
     else -> null
   }
 }
