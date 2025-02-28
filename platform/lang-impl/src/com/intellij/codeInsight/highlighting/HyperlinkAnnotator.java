@@ -29,9 +29,14 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -103,7 +108,7 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
                                             @NotNull AnnotationHolder holder,
                                             @NotNull List<PsiReference> references) {
     boolean hasUnprocessedReferences = false;
-
+    Set<TextRange> highlighted = new HashSet<>();
     for (PsiReference reference : references) {
       if (reference instanceof WebReference) {
         String message = holder.getCurrentAnnotationSession().getUserData(messageKey);
@@ -112,10 +117,12 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
           holder.getCurrentAnnotationSession().putUserData(messageKey, message);
         }
         TextRange range = reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
-        holder.newAnnotation(HighlightSeverity.INFORMATION, message)
-          .range(range)
-          .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
-          .create();
+        if (highlighted.add(range)) {
+          holder.newAnnotation(HighlightSeverity.INFORMATION, message)
+            .range(range)
+            .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
+            .create();
+        }
       }
       else if (reference instanceof HighlightedReference) {
         if (reference.isSoft() && !((HighlightedReference)reference).isHighlightedWhenSoft()) continue;
