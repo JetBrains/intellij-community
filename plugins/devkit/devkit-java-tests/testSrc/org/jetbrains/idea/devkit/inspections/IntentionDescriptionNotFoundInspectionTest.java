@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
@@ -36,7 +36,7 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
-    moduleBuilder.addLibrary("java-analysis-impl", PathUtil.getJarPathForClass(HighlightVisitorImpl.class));
+    moduleBuilder.addLibrary("java-analysis-impl", PathUtil.getJarPathForClass(HighlightFixUtil.class));
     moduleBuilder.addLibrary("java-codeserver-highlighter", PathUtil.getJarPathForClass(JavaCompilationError.class));
     moduleBuilder.addLibrary("java-annotations", PathUtil.getJarPathForClass(NotNull.class));
   }
