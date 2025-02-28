@@ -198,6 +198,7 @@ fun generateClassWithMembers(
             newClass.forEachDescendantOfType<KtDeclaration> { declaration ->
                 if (!(declaration is KtParameter && !declaration.isPropertyParameter()) &&
                     declaration !is KtPropertyAccessor &&
+                    declaration !is KtTypeParameter &&
                     declaration !is KtEnumEntry) {
                     declaration.addModifier(KtTokens.ACTUAL_KEYWORD)
                 }
