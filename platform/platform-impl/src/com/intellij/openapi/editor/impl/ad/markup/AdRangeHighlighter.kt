@@ -35,6 +35,7 @@ internal data class AdRangeHighlighter(
       return AdRangeHighlighter(
         interval = AdIntervalData.fromRangeMarker(id, highlighter),
         data = AdRangeHighlighterData(
+          highlighter.id,
           highlighter.textAttributesKey?.externalName,
           highlighter.layer,
           highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
@@ -72,10 +73,7 @@ internal data class AdRangeHighlighter(
   override fun getCustomRenderer(): CustomHighlighterRenderer? = data.origin?.customRenderer
 
   override fun getTextAttributesKey(): TextAttributesKey? = data.textAttributesKey()
-  override fun getTextAttributes(scheme: EditorColorsScheme?): TextAttributes? {
-    val colorScheme = scheme ?: EditorColorsManager.getInstance().getGlobalScheme()
-    return colorScheme.getAttributes(getTextAttributesKey())
-  }
+  override fun getTextAttributes(scheme: EditorColorsScheme?): TextAttributes? = getTextAttr(scheme)
 
   override fun getLineSeparatorPlacement(): SeparatorPlacement? = data.origin?.lineSeparatorPlacement
   override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = data.origin?.lineSeparatorRenderer
@@ -175,6 +173,19 @@ internal data class AdRangeHighlighter(
   }
 
   // endregion
+
+  private fun getTextAttr(scheme: EditorColorsScheme?): TextAttributes? {
+    val forced = getForcedTextAttributes()
+    if (forced != null) {
+      return forced
+    }
+    val key = getTextAttributesKey()
+    if (key == null) {
+      return null
+    }
+    val colorScheme = scheme ?: EditorColorsManager.getInstance().getGlobalScheme()
+    return colorScheme.getAttributes(key)
+  }
 
   private fun getAffectedStartOffset(): Int {
     val offset = startOffset

@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizerService
@@ -56,7 +55,7 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
     val document = markupModel.document as? DocumentEx
                    ?: throw IllegalStateException("document is expected to be DocumentEx")
     val docEntity = AdDocumentManager.getInstance().getDocEntity(document)
-    checkNotNull(docEntity) { "doc entity not found" }
+    checkNotNull(docEntity) { "doc entity not found" } // TODO: investigate why happens in vcs shift+ctrl+option
     val markupEntity = change {
       shared {
         AdMarkupEntity.empty(uid, docEntity)

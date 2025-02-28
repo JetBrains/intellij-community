@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 @Serializable
 internal data class AdRangeHighlighterData(
+  val originId: Long,
   val textAttributesKey: String?,
   val layer: Int,
   val isExactRange: Boolean,
