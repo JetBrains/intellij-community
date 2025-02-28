@@ -93,20 +93,17 @@ public final class JavaPsiSwitchUtil {
     return false;
   }
 
-  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      return ObjectUtils.tryCast(((PsiReferenceExpression)element).resolve(), PsiEnumConstant.class);
+  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiCaseLabelElement element) {
+    if (element instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiEnumConstant enumConstant) {
+      return enumConstant;
     }
     return null;
   }
 
   private static @Nullable Object getBranchConstant(@NotNull PsiCaseLabelElement labelElement, @NotNull PsiType selectorType) {
     if (labelElement instanceof PsiExpression expr) {
-      if (expr instanceof PsiReferenceExpression) {
-        PsiEnumConstant enumConstant = getEnumConstant(expr);
-        if (enumConstant != null) {
-          return enumConstant;
-        }
+      if (expr instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiEnumConstant constant) {
+        return constant;
       }
       Object operand = JavaPsiFacade.getInstance(labelElement.getProject()).getConstantEvaluationHelper()
         .computeConstantExpression(labelElement, false);
@@ -216,11 +213,7 @@ public final class JavaPsiSwitchUtil {
   private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
     Object value = JavaPsiFacade.getInstance(labelElement.getProject()).getConstantEvaluationHelper()
       .computeConstantExpression(labelElement, false);
-    return value != null || isEnumConstant(labelElement);
-  }
-
-  private static boolean isEnumConstant(@NotNull PsiCaseLabelElement element) {
-    return getEnumConstant(element) != null;
+    return value != null || getEnumConstant(labelElement) != null;
   }
 
   /**
@@ -383,7 +376,8 @@ public final class JavaPsiSwitchUtil {
 
   /**
    * @param block the switch block
-   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
+   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} for default case,
+   * or {@link PsiCaseLabelElement}
    */
   public static @NotNull List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
     final PsiCodeBlock body = block.getBody();
@@ -400,6 +394,24 @@ public final class JavaPsiSwitchUtil {
       }
     }
     return result;
+  }
+
+  /**
+   * @param block the switch block
+   * @return a list of all case labels within this switch block (default branches are naturally not returned).
+   */
+  public static @NotNull List<PsiCaseLabelElement> getCaseLabelElements(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return List.of();
+    List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement) || labelStatement.isDefaultCase()) continue;
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList != null) {
+        Collections.addAll(elementsToCheckCompleteness, labelElementList.getElements());
+      }
+    }
+    return elementsToCheckCompleteness;
   }
 
   /**

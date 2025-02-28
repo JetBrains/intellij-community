@@ -735,7 +735,15 @@ public final class JavaPatternExhaustivenessUtil {
 
   /**
    * @param block switch block to analyze
-   * @param elements list of labels to analyze (can be a subset of all labels of block)
+   * @return true if this block is not exhaustive while it should be
+   */
+  public static boolean hasExhaustivenessError(@NotNull PsiSwitchBlock block) {
+    return hasExhaustivenessError(block, JavaPsiSwitchUtil.getCaseLabelElements(block));
+  }
+
+  /**
+   * @param block switch block to analyze
+   * @param elements list of labels to analyze (can be a subset of all labels of the block)
    * @return true if this block is not exhaustive while it should be
    */
   public static boolean hasExhaustivenessError(@NotNull PsiSwitchBlock block, @NotNull List<PsiCaseLabelElement> elements) {

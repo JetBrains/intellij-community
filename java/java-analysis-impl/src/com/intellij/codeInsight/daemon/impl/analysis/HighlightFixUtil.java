@@ -8,7 +8,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -27,17 +30,15 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.checkRecordExhaustiveness;
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.findMissedClasses;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
@@ -353,8 +356,7 @@ public final class HighlightFixUtil {
 
   public static void registerFixesForExpressionStatement(@NotNull PsiElement statement, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (!(statement instanceof PsiExpressionStatement)) return;
-    PsiCodeBlock block = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
-    if (block == null) return;
+    if (!(statement.getParent() instanceof PsiCodeBlock block)) return; 
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
@@ -384,25 +386,22 @@ public final class HighlightFixUtil {
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
     if (block == null) return;
     PsiTreeUtil.processElements(block, PsiReferenceExpression.class, ref -> {
-      if (ref.isReferenceTo(variable)) {
-        PsiAssignmentExpression assignment = ObjectUtils.tryCast(ref.getParent(), PsiAssignmentExpression.class);
-        if (assignment != null) {
-          if (assignment.getLExpression() == ref &&
-              assignment.getOperationTokenType() == JavaTokenType.EQ) {
-            PsiExpression rExpression = assignment.getRExpression();
-            if (rExpression != null) {
-              PsiType type = rExpression.getType();
-              if (type instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(type) && variable.getInitializer() != null) {
-                type = ((PsiPrimitiveType)type).getBoxedType(variable);
-              }
-              if (type != null) {
-                type = GenericsUtil.getVariableTypeByExpressionType(type);
-                if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
-                  info.accept(QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type));
-                }
-                return false;
-              }
+      if (ref.isReferenceTo(variable) &&
+          ref.getParent() instanceof PsiAssignmentExpression assignment &&
+          assignment.getLExpression() == ref &&
+          assignment.getOperationTokenType() == JavaTokenType.EQ) {
+        PsiExpression rExpression = assignment.getRExpression();
+        if (rExpression != null) {
+          PsiType type = rExpression.getType();
+          if (type instanceof PsiPrimitiveType primitiveType && !PsiTypes.voidType().equals(type) && variable.getInitializer() != null) {
+            type = primitiveType.getBoxedType(variable);
+          }
+          if (type != null) {
+            type = GenericsUtil.getVariableTypeByExpressionType(type);
+            if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
+              info.accept(QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type));
             }
+            return false;
           }
         }
       }
@@ -1007,6 +1006,144 @@ public final class HighlightFixUtil {
       }
     }
     return true;
+  }
+
+  /**
+   * Registers actions to fix switch block completeness (exhaustiveness) 
+   * 
+   * @param block switch block which is not exhaustive
+   * @param info sink
+   */
+  static void addCompletenessFixes(@NotNull PsiSwitchBlock block, @NotNull Consumer<? super CommonIntentionAction> info) {
+    List<? extends PsiCaseLabelElement> elements = JavaPsiSwitchUtil.getCaseLabelElements(block);
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return;
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
+    JavaPsiSwitchUtil.SelectorKind kind = JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType);
+    if (selectorClass != null && kind == JavaPsiSwitchUtil.SelectorKind.ENUM) {
+      Set<PsiEnumConstant> enumElements = StreamEx.of(elements)
+        .select(PsiReferenceExpression.class)
+        .map(PsiReferenceExpression::resolve)
+        .select(PsiEnumConstant.class)
+        .toSet();
+      addEnumCompletenessFixes(block, selectorClass, enumElements, info);
+      return;
+    }
+    List<PsiType> sealedTypes = getAbstractSealedTypes(JavaPsiPatternUtil.deconstructSelectorType(selectorType));
+    if (!sealedTypes.isEmpty()) {
+      addSealedClassCompletenessFixes(block, selectorType, elements, info);
+      return;
+    }
+    //records are final; checking intersections are not needed
+    if (selectorClass != null && selectorClass.isRecord()) {
+      if (checkRecordCaseSetNotEmpty(elements)) {
+        addRecordExhaustivenessFixes(block, elements, selectorType, selectorClass, info);
+      }
+    }
+    else {
+      if (kind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN) {
+        QuickFixFactory factory = QuickFixFactory.getInstance();
+        IntentionAction fix = factory.createAddMissingBooleanPrimitiveBranchesFix(block);
+        if (fix != null) {
+          info.accept(fix);
+          IntentionAction fixWithNull = factory.createAddMissingBooleanPrimitiveBranchesFixWithNull(block);
+          if (fixWithNull != null) {
+            info.accept(fixWithNull);
+          }
+        }
+      }
+    }
+  }
+
+  private static void addEnumCompletenessFixes(@NotNull PsiSwitchBlock block,
+                                               @NotNull PsiClass selectorClass,
+                                               @NotNull Set<PsiEnumConstant> enumElements,
+                                               @NotNull Consumer<? super CommonIntentionAction> info) {
+    LinkedHashSet<String> missingConstants =
+      StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).remove(enumElements::contains)
+        .map(PsiField::getName)
+        .toCollection(LinkedHashSet::new);
+    if (!missingConstants.isEmpty()) {
+      IntentionAction enumBranchesFix = QuickFixFactory.getInstance().createAddMissingEnumBranchesFix(block, missingConstants);
+      info.accept(PriorityIntentionActionWrapper.highPriority(enumBranchesFix));
+    }
+  }
+
+  private static @NotNull List<PsiType> getAbstractSealedTypes(@NotNull List<PsiType> selectorTypes) {
+    return selectorTypes.stream()
+      .filter(type -> {
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type));
+        return psiClass != null && (JavaPsiSealedUtil.isAbstractSealed(psiClass));
+      })
+      .toList();
+  }
+
+  private static void addRecordExhaustivenessFixes(@NotNull PsiSwitchBlock block,
+                                                   @NotNull List<? extends PsiCaseLabelElement> elements,
+                                                   @NotNull PsiType selectorClassType,
+                                                   @NotNull PsiClass selectorClass,
+                                                   @NotNull Consumer<? super CommonIntentionAction> info) {
+    JavaPatternExhaustivenessUtil.RecordExhaustivenessResult
+      exhaustivenessResult = checkRecordExhaustiveness(elements, selectorClassType, block);
+
+    if (!exhaustivenessResult.isExhaustive() && exhaustivenessResult.canBeAdded()) {
+      IntentionAction fix =
+        QuickFixFactory.getInstance().createAddMissingRecordClassBranchesFix(
+          block, selectorClass, exhaustivenessResult.getMissedBranchesByType(), elements);
+      if (fix != null) {
+        info.accept(fix);
+      }
+    }
+  }
+
+  private static boolean checkRecordCaseSetNotEmpty(@NotNull List<? extends PsiCaseLabelElement> elements) {
+    return ContainerUtil.exists(elements, element -> element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern));
+  }
+
+  private static @NotNull Set<PsiClass> getMissedClassesInSealedHierarchy(@NotNull PsiType selectorType,
+                                                                          @NotNull List<? extends PsiCaseLabelElement> elements,
+                                                                          @NotNull PsiSwitchBlock block) {
+    Set<PsiClass> classes = findMissedClasses(block, selectorType, elements);
+    List<PsiClass> missedSealedClasses = StreamEx.of(classes).sortedBy(t -> t.getQualifiedName()).toList();
+    Set<PsiClass> missedClasses = new LinkedHashSet<>();
+    //if T is intersection types, it is allowed to choose any of them to cover
+    PsiExpression selector = requireNonNull(block.getExpression());
+    for (PsiClass missedClass : missedSealedClasses) {
+      PsiClassType missedClassType = TypeUtils.getType(missedClass);
+      if (JavaPsiPatternUtil.covers(selector, missedClassType, selectorType)) {
+        missedClasses.clear();
+        missedClasses.add(missedClass);
+        break;
+      }
+      else {
+        missedClasses.add(missedClass);
+      }
+    }
+    return missedClasses;
+  }
+
+  private static void addSealedClassCompletenessFixes(@NotNull PsiSwitchBlock block, @NotNull PsiType selectorType,
+                                                      @NotNull List<? extends PsiCaseLabelElement> elements,
+                                                      @NotNull Consumer<? super CommonIntentionAction> info) {
+    Set<PsiClass> missedClasses = getMissedClassesInSealedHierarchy(selectorType, elements, block);
+    List<String> allNames = collectLabelElementNames(elements, missedClasses);
+    Set<String> missingCases = ContainerUtil.map2LinkedSet(missedClasses, PsiClass::getQualifiedName);
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    info.accept(factory.createAddMissingSealedClassBranchesFix(block, missingCases, allNames));
+    IntentionAction fixWithNull = factory.createAddMissingSealedClassBranchesFixWithNull(block, missingCases, allNames);
+    if (fixWithNull != null) {
+      info.accept(fixWithNull);
+    }
+  }
+
+  private static @NotNull List<String> collectLabelElementNames(@NotNull List<? extends PsiCaseLabelElement> elements,
+                                                                @NotNull Set<? extends PsiClass> missingClasses) {
+    return StreamEx.of(elements).map(PsiElement::getText)
+      .append(StreamEx.of(missingClasses).map(PsiClass::getQualifiedName))
+      .distinct()
+      .toList();
   }
 
   private static final class ReturnModel {

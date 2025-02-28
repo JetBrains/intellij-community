@@ -328,18 +328,8 @@ final class SwitchChecker {
     }
   }
 
-  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
-    if (element instanceof PsiReferenceExpression referenceExpression &&
-        referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
-      return enumConstant;
-    }
-    return null;
-  }
-
   static @Nullable String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
-    PsiEnumConstant enumConstant = getEnumConstant(expr);
-    if (enumConstant != null) return enumConstant.getName();
-    return null;
+    return expr.resolve() instanceof PsiEnumConstant enumConstant ? enumConstant.getName() : null;
   }
 
   private static @Nullable Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
