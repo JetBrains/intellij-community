@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.application.options.EditorFontsConstants
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -13,6 +14,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.FontComboBox
+import com.intellij.ui.FontInfoRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
@@ -30,6 +33,7 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
+import kotlin.ranges.coerceIn
 
 internal const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
 
@@ -42,6 +46,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
+    val defaultFont = JBTerminalSystemSettingsProvider().terminalFont
 
     return panel {
 
@@ -147,6 +152,43 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
+
+        row(message("settings.font.name")) {
+          cell(fontComboBox())
+            .bind(
+              componentGet = { comboBox -> comboBox.fontName },
+              componentSet = {comboBox, value -> comboBox.fontName = value },
+              MutableProperty(
+                getter = { optionsProvider.fontFamily ?: defaultFont.family },
+                setter = { optionsProvider.fontFamily = it },
+              )
+            )
+        }
+
+        row {
+          textField()
+            .label(message("settings.font.size"))
+            .columns(4)
+            .bindText(
+              getter = { optionsProvider.fontSize.fontSizeToString() },
+              setter = { optionsProvider.fontSize = it.parseFontSize() },
+            )
+          textField()
+            .label(message("settings.line.height"))
+            .columns(4)
+            .bindText(
+              getter = { optionsProvider.lineSpacing.spacingToString() },
+              setter = { optionsProvider.lineSpacing = it.parseSpacing() },
+            )
+          textField()
+            .label(message("settings.column.width"))
+            .columns(4)
+            .bindText(
+              getter = { optionsProvider.columnSpacing.spacingToString() },
+              setter = { optionsProvider.columnSpacing = it.parseSpacing() },
+            )
+        }
+
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
@@ -258,5 +300,35 @@ private fun getChangedValueColor(): Color {
 private fun findColorByKey(vararg colorKeys: String): Color =
   colorKeys.firstNotNullOfOrNull { UIManager.getColor(it) } ?:
   throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
+
+private fun fontComboBox(): FontComboBox = FontComboBox().apply {
+  renderer = object : FontInfoRenderer() {
+    override fun isEditorFont(): Boolean = true
+  }
+  isMonospacedOnly = true
+}
+
+private fun Float.fontSizeToString(): String = String.format("%.1f", this)
+
+private fun String.parseFontSize(): Float =
+  try {
+    toFloat().coerceIn(EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat())
+  }
+  catch (_: Exception) {
+    EditorFontsConstants.getDefaultEditorFontSize().toFloat()
+  }
+
+private fun Float.spacingToString(): String =
+  String.format("%.1f", this)
+
+// We only have getMin/MaxEditorLineSpacing(), and nothing for column spacing,
+// but using the same values for column spacing seems reasonable.
+private fun String.parseSpacing(): Float =
+  try {
+    toFloat().coerceIn(EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing())
+  }
+  catch (_: Exception) {
+    1.0f
+  }
 
 private val LOG = logger<TerminalOptionsConfigurable>()

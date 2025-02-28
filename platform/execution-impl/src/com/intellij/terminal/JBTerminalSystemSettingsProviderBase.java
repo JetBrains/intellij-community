@@ -195,6 +195,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return getColorsScheme().getConsoleLineSpacing();
   }
 
+  public float getColumnSpacing() {
+    return 1.0f;
+  }
+
   @Override
   public @NotNull TextStyle getSelectionColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),

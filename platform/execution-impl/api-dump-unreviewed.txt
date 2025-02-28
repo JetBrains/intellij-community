@@ -2208,6 +2208,7 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - copyOnSelect():Z
 - getBufferMaxLinesCount():I
 - getClearBufferActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getColumnSpacing():F
 - getCopyActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCursorShape():com.jediterm.terminal.CursorShape
 - getDefaultBackground():com.jediterm.terminal.TerminalColor
