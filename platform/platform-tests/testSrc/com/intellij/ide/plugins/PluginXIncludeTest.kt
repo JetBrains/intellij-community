@@ -126,6 +126,18 @@ internal class PluginXIncludeTest {
   }
 
   @Test
+  fun `transitive include changes the base dir in an unconceivable way if relative path is used - intellij`() {
+    Spec(
+      includes("dir/a.xml"),
+      mapOf(
+        "META-INF/dir/a.xml" to includes("intellij.b.xml"),
+        "intellij.b.xml" to includes(),
+      )
+    ).buildIn(pluginDirPath)
+    assertLoads()
+  }
+
+  @Test
   fun `transitive include does not change the base dir if absolute path is used inside META-INF`() {
     Spec(
       includes("/META-INF/dir/a.xml"),
