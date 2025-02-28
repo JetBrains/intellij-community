@@ -44,6 +44,7 @@ import org.junit.platform.suite.api.Suite
   NonBlockingUndispatchedSuspendingReadActionTest::class,
   SuspendingWriteActionTest::class,
   SuspendingReadAndWriteActionTest::class,
+  BackgroundWriteActionTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,
