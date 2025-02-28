@@ -70,7 +70,7 @@
     <group id="XDebugger.ToolWindow.TopToolbar">
       <reference ref="ShowExecutionPoint"/>
       <separator/>
-      <reference ref="StepOver"/>
+      <reference ref="StepOver.Ref"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
       <reference ref="RunToCursor"/>
@@ -84,7 +84,7 @@
       <separator/>
       <reference ref="Resume.Ref"/>
       <reference ref="Pause.Ref"/>
-      <reference ref="StepOver"/>
+      <reference ref="StepOver.Ref"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
       <separator/>

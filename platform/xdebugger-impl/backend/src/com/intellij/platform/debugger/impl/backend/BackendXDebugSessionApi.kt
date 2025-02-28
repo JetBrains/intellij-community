@@ -60,9 +60,9 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionEntity.session as XDebugSessionImpl
 
     return combine(
-      session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState
-    ) { isPaused, isStopped, isReadOnly, isPauseActionSupported ->
-      XDebugSessionState(isPaused, isStopped, isReadOnly, isPauseActionSupported)
+      session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState, session.isSuspendedState
+    ) { isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended ->
+      XDebugSessionState(isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended)
     }
   }
 
@@ -86,16 +86,23 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun resume(sessionId: XDebugSessionId) {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
+    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
     withContext(Dispatchers.EDT) {
-      sessionEntity.session.resume()
+      session.resume()
     }
   }
 
   override suspend fun pause(sessionId: XDebugSessionId) {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
+    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
     withContext(Dispatchers.EDT) {
-      sessionEntity.session.pause()
+      session.pause()
+    }
+  }
+
+  override suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean) {
+    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    withContext(Dispatchers.EDT) {
+      session.stepOver(ignoreBreakpoints)
     }
   }
 }

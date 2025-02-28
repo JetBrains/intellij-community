@@ -36,6 +36,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun pause(sessionId: XDebugSessionId)
 
+  suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {
@@ -63,6 +65,7 @@ data class XDebugSessionState(
   val isStopped: Boolean,
   val isReadOnly: Boolean,
   val isPauseActionSupported: Boolean,
+  val isSuspended: Boolean,
 )
 
 @ApiStatus.Internal

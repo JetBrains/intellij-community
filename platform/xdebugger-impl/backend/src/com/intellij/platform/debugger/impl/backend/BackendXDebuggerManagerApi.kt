@@ -48,7 +48,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val editorsProvider = debugProcess.editorsProvider
     val fileTypeId = editorsProvider.fileType.name
     val initialSessionState = XDebugSessionState(
-      currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported
+      currentSession.isPaused, currentSession.isStopped, currentSession.isReadOnly, currentSession.isPauseActionSupported, currentSession.isSuspended,
     )
     return XDebugSessionDto(currentSession.id(), XDebuggerEditorsProviderDto(fileTypeId, editorsProvider), initialSessionState)
   }

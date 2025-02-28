@@ -7,6 +7,10 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Don't inherit from the action, implement your own
+ */
+@Deprecated(forRemoval = true)
 public class StepOverAction extends XDebuggerActionBase implements DumbAware {
   private static final DebuggerActionHandler ourHandler = new XDebuggerSuspendedActionHandler() {
     @Override

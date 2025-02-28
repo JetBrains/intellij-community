@@ -72,6 +72,9 @@ internal class FrontendXDebuggerSession(
   val isPauseActionSupported: Boolean
     get() = sessionState.value.isPauseActionSupported
 
+  val isSuspended: Boolean
+    get() = sessionState.value.isSuspended
+
   val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
                                                   ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
 

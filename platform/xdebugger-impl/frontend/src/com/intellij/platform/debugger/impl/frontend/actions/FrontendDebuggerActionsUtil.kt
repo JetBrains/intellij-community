@@ -45,6 +45,15 @@ internal fun performDebuggerActionAsync(
   }
 }
 
+internal fun updateSuspendedAction(e: AnActionEvent) {
+  val session = e.frontendDebuggerSession
+  if (session == null) {
+    e.presentation.isEnabled = false
+    return
+  }
+  e.presentation.isEnabled = !session.isReadOnly && session.isSuspended
+}
+
 @Service(Service.Level.APP)
 private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
 

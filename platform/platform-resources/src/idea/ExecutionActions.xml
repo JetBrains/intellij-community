@@ -101,12 +101,13 @@
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
     <group id="Resume.Ref"/>
     <group id="Pause.Ref"/>
+    <group id="StepOver.Ref"/>
     <group id="DebugMainMenu">
       <separator/>
       <group id="DebuggingActionsGroup" popup="true">
         <group id="DebugReloadGroup"/>
         <separator/>
-        <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
+        <reference ref="StepOver.Ref"/>
         <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.ForceStepOver"/>
         <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
         <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
@@ -192,7 +193,7 @@
       <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.flexible"/>
       <group id="TouchBarDebug.StepButtons" compact="true">
-        <reference ref="StepOver"/>
+        <reference ref="StepOver.Ref"/>
         <reference ref="StepInto"/>
         <reference ref="StepOut"/>
       </group>

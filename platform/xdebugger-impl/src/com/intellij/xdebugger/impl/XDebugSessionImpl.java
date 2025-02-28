@@ -77,6 +77,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createSessionSuspendedFlow;
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 
 @ApiStatus.Internal
@@ -94,7 +95,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDebuggerExecutionPointManager myExecutionPointManager;
   private Disposable myBreakpointListenerDisposable;
-  private XSuspendContext mySuspendContext;
+  private final MutableStateFlow<XSuspendContext> mySuspendContext = createMutableStateFlow(null);
   private CoroutineScope mySuspendCoroutineScope;
   private XExecutionStack myCurrentExecutionStack;
   private @Nullable XAlternativeSourceHandler myAlternativeSourceHandler;
@@ -123,6 +124,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
   private final Deferred<@NotNull XDebugSessionEntity> myEntity;
   private final XDebugSessionCurrentStackFrameManager myCurrentStackFrameManager;
+  private final StateFlow<Boolean> myIsSuspended;
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -153,6 +155,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myIcon = icon;
     myEntity = storeXDebugSessionInDb(myCoroutineScope, this);
     myCurrentStackFrameManager = new XDebugSessionCurrentStackFrameManager(myCoroutineScope, myEntity);
+    myIsSuspended = createSessionSuspendedFlow(myCoroutineScope, myPaused, mySuspendContext);
 
     XDebugSessionData oldSessionData = null;
     if (contentToReuse == null) {
@@ -286,7 +289,12 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public boolean isSuspended() {
-    return myPaused.getValue() && mySuspendContext != null;
+    return myIsSuspended.getValue();
+  }
+
+  @ApiStatus.Internal
+  public StateFlow<Boolean> isSuspendedState() {
+    return myIsSuspended;
   }
 
   @ApiStatus.Internal
@@ -310,7 +318,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public @Nullable XSuspendContext getSuspendContext() {
-    return mySuspendContext;
+    return mySuspendContext.getValue();
   }
 
   @ApiStatus.Internal
@@ -725,7 +733,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
 
     myDispatcher.getMulticaster().beforeSessionResume();
-    XSuspendContext context = mySuspendContext;
+    XSuspendContext context = mySuspendContext.getValue();
     clearPausedData();
     UIUtil.invokeLaterIfNeeded(() -> {
       if (mySessionTab != null) {
@@ -737,7 +745,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void clearPausedData() {
-    mySuspendContext = null;
+    mySuspendContext.setValue(null);
     if (mySuspendCoroutineScope != null) {
       kotlinx.coroutines.CoroutineScopeKt.cancel(mySuspendCoroutineScope, null);
     }
@@ -772,8 +780,8 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void showExecutionPoint() {
-    if (mySuspendContext != null) {
-      XExecutionStack executionStack = mySuspendContext.getActiveExecutionStack();
+    if (mySuspendContext.getValue() != null) {
+      XExecutionStack executionStack = mySuspendContext.getValue().getActiveExecutionStack();
       if (executionStack != null) {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
@@ -786,7 +794,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame) {
-    if (mySuspendContext == null) return;
+    if (mySuspendContext.getValue() == null) return;
 
     boolean frameChanged = getCurrentStackFrame() != frame;
     myCurrentExecutionStack = executionStack;
@@ -1013,7 +1021,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
 
     setBreakpointsDisabledTemporarily(false);
-    mySuspendContext = suspendContext;
+    mySuspendContext.setValue(suspendContext);
     mySuspendCoroutineScope = XDebuggerSuspendScopeProvider.INSTANCE.provideSuspendScope(this);
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     XStackFrame newCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
