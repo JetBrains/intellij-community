@@ -1,153 +1,129 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action;
+package org.jetbrains.plugins.terminal.action
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ConfigurableWithId;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.*;
-import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableWithId
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.terminal.*
+import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
+import java.awt.Point
+import java.awt.event.MouseEvent
+import java.util.function.Predicate
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
 
-public final class TerminalNewPredefinedSessionAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return;
-    RelativePoint popupPoint = getPreferredPopupPoint(e);
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<OpenShellAction> shells = detectShells();
-      List<AnAction> customActions = OpenPredefinedTerminalActionProvider.collectAll(project);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ListPopup popup = createPopup(shells, customActions, e.getDataContext());
+    val popupPoint = getPreferredPopupPoint(e)
+    ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+      val shells = detectShells()
+      val customActions = OpenPredefinedTerminalActionProvider.collectAll(project)
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        val popup = createPopup(shells, customActions, e.dataContext)
         if (popupPoint != null) {
-          popup.show(popupPoint);
+          popup.show(popupPoint)
         }
         else {
-          popup.showInFocusCenter();
+          popup.showInFocusCenter()
         }
-        InputEvent inputEvent = e.getInputEvent();
-        if (inputEvent != null && inputEvent.getComponent() != null) {
-          PopupUtil.setPopupToggleComponent(popup, inputEvent.getComponent());
+        val inputEvent = e.inputEvent
+        if (inputEvent?.component != null) {
+          PopupUtil.setPopupToggleComponent(popup, inputEvent.component)
         }
-      }, project.getDisposed());
-    });
+      }, project.getDisposed())
+    })
   }
 
-  private static @Nullable RelativePoint getPreferredPopupPoint(@NotNull AnActionEvent e) {
-    InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent instanceof MouseEvent) {
-      Component comp = inputEvent.getComponent();
-      if (comp instanceof AnActionHolder) {
-        return new RelativePoint(comp.getParent(), new Point(comp.getX() + JBUI.scale(3), comp.getY() + comp.getHeight() + JBUI.scale(3)));
+  private fun getPreferredPopupPoint(e: AnActionEvent): RelativePoint? {
+    val inputEvent = e.inputEvent
+    if (inputEvent is MouseEvent) {
+      val comp = inputEvent.component
+      if (comp is AnActionHolder) {
+        return RelativePoint(comp.parent, Point(comp.x + JBUI.scale(3), comp.y + comp.height + JBUI.scale(3)))
       }
     }
-    return null;
+    return null
   }
 
-  private static @NotNull ListPopup createPopup(@NotNull List<OpenShellAction> shells,
-                                                @NotNull List<AnAction> customActions,
-                                                @NotNull DataContext dataContext) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.addAll(shells);
-    group.addAll(customActions);
-    if (shells.size() + customActions.size() > 0) {
-      group.addSeparator();
+  private fun createPopup(
+    shells: List<AnAction>,
+    customActions: List<AnAction>,
+    dataContext: DataContext,
+  ): ListPopup {
+    val group = DefaultActionGroup()
+    group.addAll(shells)
+    group.addAll(customActions)
+    if (shells.size + customActions.size > 0) {
+      group.addSeparator()
     }
-    group.add(new TerminalSettingsAction());
-    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext,
-                                                               false, true, false, null, -1, null);
+    group.add(TerminalSettingsAction())
+
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, true, false, null, -1, null)
   }
 
-  private static @NotNull List<OpenShellAction> detectShells() {
+  private fun detectShells(): List<OpenShellAction> {
     return TerminalShellsDetector.detectShells()
-      .stream()
-      .collect(Collectors.groupingBy(DetectedShellInfo::getName, LinkedHashMap::new, Collectors.toList()))
-      .values()
-      .stream()
-      .flatMap(shellInfos -> {
-        if (shellInfos.size() > 1) {
-          return shellInfos.stream().map(info -> {
-            return createOpenShellAction(info.getPath(), info.getOptions(), info.getName() + " (" + info.getPath() + ")");
-          });
+      .groupByTo(LinkedHashMap(), DetectedShellInfo::name)
+      .values
+      .flatMap { shellInfos ->
+        if (shellInfos.size > 1) {
+          shellInfos.map { info -> createOpenShellAction(info.path, info.options, "${info.name} (${info.path})") }
         }
         else {
-          DetectedShellInfo info = shellInfos.get(0);
-          return Stream.of(createOpenShellAction(info.getPath(), info.getOptions(), info.getName()));
+          val info = shellInfos[0]
+          listOf(createOpenShellAction(info.path, info.options, info.name))
         }
-      })
-      .toList();
-  }
-
-  private static @NotNull OpenShellAction createOpenShellAction(@NotNull String shellPath,
-                                                                @NotNull List<String> shellOptions,
-                                                                @NlsSafe String presentableName) {
-    List<String> shellCommand = ContainerUtil.concat(List.of(shellPath), shellOptions);
-    Icon icon = shellPath.endsWith("wsl.exe") ? AllIcons.RunConfigurations.Wsl : null;
-    return new OpenShellAction(presentableName, shellCommand, icon);
-  }
-
-  private static final class TerminalSettingsAction extends DumbAwareAction {
-
-    private TerminalSettingsAction() {
-      super(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project != null) {
-        // Match the Terminal configurable by ID.
-        // Can't use matching by configurable class name because actual configurable can be wrapped in case of Remote Dev.
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable -> {
-          return configurable instanceof ConfigurableWithId withId &&
-                 TerminalOptionsConfigurableKt.TERMINAL_CONFIGURABLE_ID.equals(withId.getId());
-        }, null);
       }
+  }
+
+  private fun createOpenShellAction(
+    shellPath: String,
+    shellOptions: List<String>,
+    presentableName: @NlsSafe String,
+  ): OpenShellAction {
+    val shellCommand = listOf(shellPath) + shellOptions
+    val icon = if (shellPath.endsWith("wsl.exe")) AllIcons.RunConfigurations.Wsl else null
+    return OpenShellAction(presentableName, shellCommand, icon)
+  }
+
+  private class TerminalSettingsAction : DumbAwareAction(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
+
+      // Match the Terminal configurable by ID.
+      // Can't use matching by configurable class name because actual configurable can be wrapped in case of Remote Dev.
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, Predicate { configurable: Configurable ->
+        configurable is ConfigurableWithId && configurable.getId() == TERMINAL_CONFIGURABLE_ID
+      }, null)
     }
   }
 
-  private static final class OpenShellAction extends DumbAwareAction {
+  private class OpenShellAction(
+    presentableName: @NlsActions.ActionText String,
+    private val myCommand: List<String>,
+    icon: Icon?,
+  ) : DumbAwareAction(presentableName, null, icon) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
 
-    private final List<String> myCommand;
-
-    private OpenShellAction(@NotNull @NlsActions.ActionText String presentableName, @NotNull List<String> command, @Nullable Icon icon) {
-      super(presentableName, null, icon);
-      myCommand = command;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project != null) {
-        TerminalTabState tabState = new TerminalTabState();
-        tabState.myTabName = getTemplatePresentation().getText();
-        tabState.myShellCommand = myCommand;
-        TerminalToolWindowManager.getInstance(project).createNewSession(tabState);
-      }
+      val tabState = TerminalTabState()
+      tabState.myTabName = templateText
+      tabState.myShellCommand = myCommand
+      TerminalToolWindowManager.getInstance(project).createNewSession(tabState)
     }
   }
 }
