@@ -114,7 +114,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: CancellationException) { throw e }
   catch (e: ProcessCanceledException) { throw e }
   catch (e: Throwable) {
-    LOG.error("Save settings failed, p]lease restart application", e)
+    LOG.error("Save settings failed, please restart application", e)
   }
   finally {
     storeReloadManager?.unblockReloadingProjectOnExternalChanges()
