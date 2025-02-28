@@ -135,6 +135,8 @@ public final class ErrorNotificationPanel extends JPanel {
     private final List<Consumer<Disposable>> myShowHideHandlers = new ArrayList<>();
     private final StringBuilder myHtmlBuilder = new StringBuilder();
 
+    private boolean isChoppedMessage = false;
+
     private MessageType myType = MessageType.ERROR;
 
     private Builder(@NlsContexts.NotificationContent @Nullable String message, @Nullable Throwable error, @NotNull JComponent baseComponent) {
@@ -204,6 +206,14 @@ public final class ErrorNotificationPanel extends JPanel {
                                                                                                                     new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getErrorIcon(), null));
     }
 
+    public @NotNull Builder addFullMessageButtonIfNeeded() {
+      if (!isChoppedMessage) return this;
+      return addLink("details", DataGridBundle.message("action.full.message.text"), () -> Messages.showIdeaMessageDialog(null, myMessage,
+                                                                                                                    DataGridBundle.message("dialog.title.query.error"),
+                                                                                                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getErrorIcon(), null));
+
+    }
+
     public @NotNull Builder addCloseButton(Runnable action) {
       return addIconLink(DataGridBundle.message("action.close.text"), DataGridBundle.message("tooltip.close.esc"), AllIcons.Actions.Close, action);
     }
@@ -225,21 +235,23 @@ public final class ErrorNotificationPanel extends JPanel {
       myHtmlBuilder.append("</div></td>");
     }
 
-    private static @NlsContexts.NotificationContent @NotNull String getNormalizedMessage(@NotNull Throwable error) {
+    private @NlsContexts.NotificationContent @NotNull String getNormalizedMessage(@NotNull Throwable error) {
       String sourceMessage = StringUtil.notNullize(error.getMessage(),
-                                                   DataGridBundle.message("notification.content.unknown.problem.occurred.see.details"));
+                                                   DataGridBundle.message("notification.content.unknown.problem.occurred.see.details")) + "kgmsdkgmksdfgnmksndfgknskdfgnksndgkndfkgnsdkfgnskdngkndsfgksnkgnfksdngksdnfgksndkgnsdkfgnksdnfgkndkfgnskngfksnkgfnksdnfgksdnfgknsdkgnslgnskldfnglksnfgksnfgksnkfgnksdfngksdnfgksdngksndfgknsdkf";
       // In some cases source message contains stacktrace inside. Let's chop it
       int divPos = sourceMessage.indexOf("\n\tat ");
       if (divPos != -1) {
         sourceMessage = sourceMessage.substring(0, divPos);
+        isChoppedMessage = true;
       }
       return getNormalized(sourceMessage);
     }
 
-    private static @NlsContexts.NotificationContent @NotNull String getNormalized(@NlsContexts.NotificationContent @NotNull String sourceMessage) {
+    private @NlsContexts.NotificationContent @NotNull String getNormalized(@NlsContexts.NotificationContent @NotNull String sourceMessage) {
       int lineLimit = StringUtil.lineColToOffset(sourceMessage, 5, 0);
       int charLimit = 1024;
       int limit = lineLimit == -1 || lineLimit > charLimit ? charLimit : lineLimit;
+      if (sourceMessage.length() > limit) isChoppedMessage = true;
       return StringUtil.trimLog(sourceMessage, limit + 1);
     }
 
