@@ -2498,6 +2498,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-61787
+  public void testConcatenateNotReportedInCallableArguments() {
+    doTestByText("""
+                   from typing import ParamSpec, Concatenate, Any, TypeVar, Callable
+                   
+                   P = ParamSpec('P')
+                   T = TypeVar('T')
+                   
+                   def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:  # no warnings expected
+                       ...
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

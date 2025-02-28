@@ -1465,13 +1465,13 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
   private static @Nullable Pair<List<PyType>, PyParamSpecType> getConcatenateParametersTypes(@NotNull PySubscriptionExpression subscriptionExpression,
                                                                                              @NotNull TypeEvalContext context) {
     final var tuple = subscriptionExpression.getIndexExpression();
-    if (!(tuple instanceof PyTupleExpression)) return null;
-    final var result = ContainerUtil.mapNotNull(((PyTupleExpression)tuple).getElements(),
+    if (!(tuple instanceof PyTupleExpression tupleExpression)) return null;
+    final var result = ContainerUtil.map(tupleExpression.getElements(),
                                                 it -> Ref.deref(getType(it, context)));
     if (result.size() < 2) return null;
     PyType lastParameter = result.get(result.size() - 1);
-    if (!(lastParameter instanceof PyParamSpecType)) return null;
-    return new Pair<>(result.subList(0, result.size() - 1), (PyParamSpecType)lastParameter);
+    if (!(lastParameter instanceof PyParamSpecType paramSpecType)) return null;
+    return new Pair<>(result.subList(0, result.size() - 1), paramSpecType);
   }
 
   private static @Nullable PyTypeParameterType getTypeParameterTypeFromDeclaration(@NotNull PsiElement element, @NotNull Context context) {
