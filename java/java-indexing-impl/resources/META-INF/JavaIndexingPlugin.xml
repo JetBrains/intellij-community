@@ -48,6 +48,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaRecordComponentNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex"/>

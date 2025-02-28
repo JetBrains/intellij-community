@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordComponentStubImpl;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiRecordComponentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -49,14 +50,14 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
 
   @Override
   public void indexStub(@NotNull PsiRecordComponentStub stub, @NotNull IndexSink sink) {
-
+    String name = stub.getName();
+    sink.occurrence(JavaStubIndexKeys.RECORD_COMPONENTS, name);
   }
 
   @Override
   public PsiRecordComponent createPsi(@NotNull PsiRecordComponentStub stub) {
     return getPsiFactory(stub).createRecordComponent(stub);
   }
-
 
   @Override
   public PsiRecordComponent createPsi(@NotNull ASTNode node) {

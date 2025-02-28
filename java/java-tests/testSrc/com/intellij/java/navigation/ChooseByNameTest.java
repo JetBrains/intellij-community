@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
@@ -273,6 +273,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(gotoSymbol("foo.zzzZzz"), List.of(method));
     assertOrderedEquals(gotoSymbol("bar.zzzZzz"), List.of(method));
     assertOrderedEquals(gotoSymbol("bar.goo.zzzZzz"), List.of(method));
+  }
+
+  public void testFindRecordComponent() {
+    PsiClass clazz = myFixture.addClass("package x.y.z; record Point(int momentous, int obsequious) {}");
+    PsiRecordComponent[] components = clazz.getRecordComponents();
+    assertOrderedEquals(gotoSymbol("mom"), components[0]);
+    assertOrderedEquals(gotoSymbol("obse"), components[1]);
   }
 
   public void test_line_and_column_suffix() {
