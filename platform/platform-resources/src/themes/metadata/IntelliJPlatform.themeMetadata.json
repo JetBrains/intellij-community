@@ -1605,7 +1605,7 @@
     },
     {
       "key": "Settings.Spotlight.backgroundColor",
-      "description": "Color of the background of the highlighted items when searching in the Settings dialog",
+      "description": "Color of the overlay area around highlighted items when searching in the Settings dialog",
       "since": "2025.1"
     },
     {
