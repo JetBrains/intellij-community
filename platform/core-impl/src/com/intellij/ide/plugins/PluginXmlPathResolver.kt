@@ -31,6 +31,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       }
     }
 
+    // FIXME this thing is bugged when relative path is an absolute path outside /META-INF, probably it has to trim first /
     internal fun getChildBase(base: String?, relativePath: String): String? {
       val end = relativePath.lastIndexOf('/')
       if (end <= 0 || relativePath.startsWith("/META-INF/")) {
