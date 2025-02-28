@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
@@ -108,7 +107,7 @@ class ImportQuickFix(
         project.executeWriteCommand(QuickFixBundle.message("add.import")) {
             if (useShortening) {
                 (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
-                    importVariant.fqName.withRootPrefixIfNeeded(), // TODO remove this as soon as KTIJ-32932 is fixed
+                    importVariant.fqName,
                     KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
                 )
             } else {
