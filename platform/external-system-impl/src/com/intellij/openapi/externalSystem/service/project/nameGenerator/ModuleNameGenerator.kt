@@ -27,10 +27,9 @@ object ModuleNameGenerator {
     delimiter: String,
     deduplicationStrategy: ModuleNameDeduplicationStrategy = ModuleNameDeduplicationStrategy.DEFAULT,
   ): Iterable<String> {
-    val maxForCustomStrategy = 5
     val strategySuggestions = when (deduplicationStrategy) {
-      ModuleNameDeduplicationStrategy.PARENT_PATH_NAME -> PathNameGenerator.generate(name, path, delimiter, maxForCustomStrategy)
-      ModuleNameDeduplicationStrategy.NUMBER_SUFFIX -> NumericNameGenerator.generate(name, maxForCustomStrategy)
+      ModuleNameDeduplicationStrategy.PARENT_PATH_NAME -> PathNameGenerator.generate(name, path, delimiter)
+      ModuleNameDeduplicationStrategy.NUMBER_SUFFIX -> NumericNameGenerator.generate(name)
       ModuleNameDeduplicationStrategy.DEFAULT -> PathNameGenerator.generate(name, path, delimiter) + NumericNameGenerator.generate(name)
     }
 
