@@ -1101,6 +1101,8 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Elasticsearch:javax.swing.Icon
 - sf:Exasol:javax.swing.Icon
 - sf:Firebird:javax.swing.Icon
+- sf:GaussDB:javax.swing.Icon
+- sf:GeminiDb:javax.swing.Icon
 - sf:GoogleCloudSpanner:javax.swing.Icon
 - sf:Greenplum:javax.swing.Icon
 - sf:H2:javax.swing.Icon
@@ -1109,6 +1111,7 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Hsqldb:javax.swing.Icon
 - sf:Ibm:javax.swing.Icon
 - sf:Impala:javax.swing.Icon
+- sf:InfluxDB:javax.swing.Icon
 - sf:Informix:javax.swing.Icon
 - sf:IntersystemCache:javax.swing.Icon
 - sf:Kafka:javax.swing.Icon
@@ -1133,11 +1136,14 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Sqlite:javax.swing.Icon
 - sf:Sun:javax.swing.Icon
 - sf:Sybase:javax.swing.Icon
+- sf:Tair:javax.swing.Icon
 - sf:Tarantool:javax.swing.Icon
+- sf:TaurusDB:javax.swing.Icon
 - sf:Teradata:javax.swing.Icon
 - sf:Tibero:javax.swing.Icon
 - sf:Tidb:javax.swing.Icon
 - sf:Trino:javax.swing.Icon
+- sf:Turso:javax.swing.Icon
 - sf:Vertica:javax.swing.Icon
 - sf:Yugabyte:javax.swing.Icon
 - <init>():V

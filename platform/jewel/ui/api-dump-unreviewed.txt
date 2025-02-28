@@ -3264,6 +3264,8 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Elasticsearch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Exasol:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Firebird:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GaussDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GeminiDb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GoogleCloudSpanner:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Greenplum:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:H2:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3272,6 +3274,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Hsqldb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Ibm:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Impala:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InfluxDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Informix:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntersystemCache:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Kafka:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3296,11 +3299,14 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Sqlite:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sun:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sybase:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Tair:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tarantool:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TaurusDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Teradata:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tibero:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tidb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Trino:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Turso:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Vertica:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Yugabyte:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V

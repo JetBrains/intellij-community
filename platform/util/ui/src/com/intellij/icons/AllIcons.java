@@ -1200,6 +1200,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", -407419806, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", 1285797270, 2);
     /** 16x16 */ public static final @NotNull Icon Firebird = load("providers/firebird.svg", 1881709539, 0);
+    /** 16x16 */ public static final @NotNull Icon GaussDB = load("providers/gaussDB.svg", -650009525, 2);
+    /** 16x16 */ public static final @NotNull Icon GeminiDb = load("providers/geminiDb.svg", 1146970231, 2);
     /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", 2080603813, 0);
     /** 16x16 */ public static final @NotNull Icon Greenplum = load("providers/greenplum.svg", -2098154949, 0);
     /** 16x16 */ public static final @NotNull Icon H2 = load("providers/h2.svg", 1284289147, 2);
@@ -1208,6 +1210,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Hsqldb = load("providers/hsqldb.svg", -1331653091, 0);
     /** 16x16 */ public static final @NotNull Icon Ibm = load("providers/ibm.svg", 84455348, 2);
     /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", -1453615062, 2);
+    /** 16x16 */ public static final @NotNull Icon InfluxDB = load("providers/influxDB.svg", -51988850, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", -751153930, 0);
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", 836219844, 2);
     /** 16x16 */ public static final @NotNull Icon Kafka = load("providers/kafka.svg", 185527233, 2);
@@ -1232,11 +1235,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SqlServer = load("providers/sqlServer.svg", 33975713, 2);
     /** 16x16 */ public static final @NotNull Icon Sun = load("providers/sun.svg", -210021560, 2);
     /** 16x16 */ public static final @NotNull Icon Sybase = load("providers/sybase.svg", 174932757, 0);
+    /** 16x16 */ public static final @NotNull Icon Tair = load("providers/tair.svg", 1322700262, 2);
     /** 16x16 */ public static final @NotNull Icon Tarantool = load("providers/tarantool.svg", 1122877793, 0);
+    /** 16x16 */ public static final @NotNull Icon TaurusDB = load("providers/taurusDB.svg", -445140387, 2);
     /** 16x16 */ public static final @NotNull Icon Teradata = load("providers/teradata.svg", 2088926461, 0);
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", 1044999302, 2);
     /** 16x16 */ public static final @NotNull Icon Tidb = load("providers/tidb.svg", 32027773, 0);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 1032883598, 2);
+    /** 16x16 */ public static final @NotNull Icon Turso = load("providers/turso.svg", -988781978, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", 237190308, 2);
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
   }

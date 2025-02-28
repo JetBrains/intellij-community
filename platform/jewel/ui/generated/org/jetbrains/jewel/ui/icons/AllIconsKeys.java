@@ -1193,6 +1193,8 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Elasticsearch = new IntelliJIconKey("providers/elasticsearch.svg", "providers/elasticsearch.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Exasol = new IntelliJIconKey("providers/exasol.svg", "providers/exasol.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Firebird = new IntelliJIconKey("providers/firebird.svg", "providers/firebird.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey GaussDB = new IntelliJIconKey("providers/gaussDB.svg", "providers/gaussDB.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey GeminiDb = new IntelliJIconKey("providers/geminiDb.svg", "providers/geminiDb.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey GoogleCloudSpanner = new IntelliJIconKey("providers/googleCloudSpanner.svg", "providers/googleCloudSpanner.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Greenplum = new IntelliJIconKey("providers/greenplum.svg", "providers/greenplum.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey H2 = new IntelliJIconKey("providers/h2.svg", "providers/h2.svg", AllIconsKeys.class);
@@ -1201,6 +1203,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Hsqldb = new IntelliJIconKey("providers/hsqldb.svg", "providers/hsqldb.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Ibm = new IntelliJIconKey("providers/ibm.svg", "providers/ibm.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Impala = new IntelliJIconKey("providers/impala.svg", "providers/impala.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey InfluxDB = new IntelliJIconKey("providers/influxDB.svg", "providers/influxDB.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Informix = new IntelliJIconKey("providers/informix.svg", "providers/informix.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey IntersystemCache = new IntelliJIconKey("providers/intersystemCache.svg", "providers/intersystemCache.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Kafka = new IntelliJIconKey("providers/kafka.svg", "providers/kafka.svg", AllIconsKeys.class);
@@ -1225,11 +1228,14 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey SqlServer = new IntelliJIconKey("providers/sqlServer.svg", "providers/sqlServer.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Sun = new IntelliJIconKey("providers/sun.svg", "providers/sun.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Sybase = new IntelliJIconKey("providers/sybase.svg", "providers/sybase.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Tair = new IntelliJIconKey("providers/tair.svg", "providers/tair.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Tarantool = new IntelliJIconKey("providers/tarantool.svg", "providers/tarantool.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey TaurusDB = new IntelliJIconKey("providers/taurusDB.svg", "providers/taurusDB.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Teradata = new IntelliJIconKey("providers/teradata.svg", "providers/teradata.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Tibero = new IntelliJIconKey("providers/tibero.svg", "providers/tibero.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Tidb = new IntelliJIconKey("providers/tidb.svg", "providers/tidb.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Trino = new IntelliJIconKey("providers/trino.svg", "providers/trino.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Turso = new IntelliJIconKey("providers/turso.svg", "providers/turso.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Vertica = new IntelliJIconKey("providers/vertica.svg", "providers/vertica.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Yugabyte = new IntelliJIconKey("providers/yugabyte.svg", "providers/yugabyte.svg", AllIconsKeys.class);
   }
