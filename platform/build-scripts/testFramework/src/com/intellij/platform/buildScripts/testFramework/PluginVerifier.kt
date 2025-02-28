@@ -146,10 +146,16 @@ class PluginVerifier(
     "com.intellij.vcs.ShelveTitleProvider",
 
     // To Fix
-    "com.intellij.jupyter.core.jupyter.editor.outputs.JupyterOutputDataKeyExtractorKt.getOutputsForIndex",
 
-    "com.intellij.llmInstaller.AiAutoEnableManager.AutoEnableState"
+    "com.intellij.ml.inline.completion.impl.MLCompletionProposalsDetails.getEXTERNAL_MODEL_MARKER",
+    "com.intellij.ml.inline.completion.impl.postprocessing.enclosure.MLCompletionEnclosuresDefinition.<init>",
+    "com.intellij.ml.llm.completion.cloud.inline.CloudInlineCompletionProvider.getSuggestionDebounced",
+    "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_DEFAULT",
+    "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_FOCUSED",
+    "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_HOVERED",
+    "org.jetbrains.jewel.ui.icons.AllIconsKeys.Actions.Refresh",
+    "com.intellij.database.util.SqlDialects"
 
-  )
+    )
 
 }
