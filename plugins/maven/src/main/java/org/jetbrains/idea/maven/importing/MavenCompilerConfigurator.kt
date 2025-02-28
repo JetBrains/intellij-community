@@ -11,9 +11,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -381,7 +383,8 @@ private fun List<Element>?.findApplicable(module: Module, mavenProject: MavenPro
       StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> firstOrNull { el ->
         val sourceRoots = getSourceRoots(module)
         MavenJDOMUtil.findChildrenValuesByPath(el, "compileSourceRoots", "compileSourceRoot")
-          .any { it in sourceRoots.map { it.toString() } }
+          .map { Path.of(it) }
+          .any { it in sourceRoots }
       }
       StandardMavenModuleType.TEST_ONLY -> firstOrNull()
     }
