@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.psi.*
  * so that the reference is resolved and shortened successfully. After the shortening is finished, removes the space.
  */
 internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySuffix(string: String) {
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val targetFile = file as? KtFile ?: return
     val token = file.findElementAt(startOffset)
 
@@ -63,7 +62,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
 
     shortenReferencesInRange(targetFile, TextRange(startOffset, fqNameEndOffset))
     commitDocument()
-    psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
+    doPostponedOperationsAndUnblockDocument()
 
     if (temporarySuffix.isNotEmpty() && rangeMarker.isValid && fqNameRangeMarker.isValid) {
         document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)

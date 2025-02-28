@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
@@ -29,6 +27,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
@@ -423,8 +422,4 @@ private fun createExtensionCandidateChecker(
         nameExpression = nameExpression,
         explicitReceiver = nameExpression,
     )
-}
-
-private fun InsertionContext.doPostponedOperationsAndUnblockDocument() {
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
 }
