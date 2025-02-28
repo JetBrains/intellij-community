@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
@@ -25,6 +26,10 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   class State {
     var myShellPath: String? = null
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
+    var fontName: @NlsSafe String? = null
+    var fontSize: Float = 13.0f
+    var lineSpacing: Float = 1.0f
+    var columnSpacing: Float = 1.0f
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
@@ -64,6 +69,42 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     set(@Nls tabName) {
       if (state.myTabName != tabName) {
         state.myTabName = tabName
+        fireSettingsChanged()
+      }
+    }
+
+  var fontFamily: @NlsSafe String?
+    get() = state.fontName
+    set(@NlsSafe fontName) {
+      if (state.fontName != fontName) {
+        state.fontName = fontName
+        fireSettingsChanged()
+      }
+    }
+
+  var fontSize: Float
+    get() = state.fontSize
+    set(value) {
+      if (state.fontSize != value) {
+        state.fontSize = value
+        fireSettingsChanged()
+      }
+    }
+
+  var lineSpacing: Float
+    get() = state.lineSpacing
+    set(value) {
+      if (state.lineSpacing != value) {
+        state.lineSpacing = value
+        fireSettingsChanged()
+      }
+    }
+
+  var columnSpacing: Float
+    get() = state.columnSpacing
+    set(value) {
+      if (state.columnSpacing != value) {
+        state.columnSpacing = value
         fireSettingsChanged()
       }
     }

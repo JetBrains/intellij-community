@@ -96,8 +96,8 @@ object TerminalUiUtils {
 
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
-      editorFontSize = settings.terminalFont.size
-      lineSpacing = 1.0f
+      setEditorFontSize(settings.terminalFont.size2D)
+      lineSpacing = settings.lineSpacing
     }
 
     editor.settings.apply {
@@ -113,7 +113,7 @@ object TerminalUiUtils {
       isBlockCursor = true
       isWhitespacesShown = false
       isUseCustomSoftWrapIndent = false
-      characterGridWidthMultiplier = 1.0f
+      characterGridWidthMultiplier = settings.columnSpacing
     }
 
     editor.view.setDoubleWidthCharacterStrategy { codePoint ->

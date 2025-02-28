@@ -11,6 +11,7 @@ import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 
+import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
 public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
@@ -25,6 +26,28 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
     // Let's use "Terminal.SelectAll" action with default keyboard shortcut on macOS (Cmd+A). It allows users
     // to configure custom keyboard shortcuts and avoid conflicts with shell key-binding actions.
     return getSelectAllActionPresentation(false);
+  }
+
+  @Override
+  public Font getTerminalFont() {
+    var setFamily = TerminalOptionsProvider.getInstance().getFontFamily();
+    var defaultFont = super.getTerminalFont();
+    return new Font(setFamily == null ? defaultFont.getFamily() : setFamily, defaultFont.getStyle(), Math.round(getTerminalFontSize()));
+  }
+
+  @Override
+  public float getTerminalFontSize() {
+    return TerminalOptionsProvider.getInstance().getFontSize();
+  }
+
+  @Override
+  public float getLineSpacing() {
+    return TerminalOptionsProvider.getInstance().getLineSpacing();
+  }
+
+  @Override
+  public float getColumnSpacing() {
+    return TerminalOptionsProvider.getInstance().getColumnSpacing();
   }
 
   @Override
