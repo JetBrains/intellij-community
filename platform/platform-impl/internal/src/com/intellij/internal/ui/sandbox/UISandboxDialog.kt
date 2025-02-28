@@ -65,6 +65,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JBTabsPanel(),
       JBTextAreaPanel(),
       JCheckBoxPanel(),
+      JComboBoxPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
