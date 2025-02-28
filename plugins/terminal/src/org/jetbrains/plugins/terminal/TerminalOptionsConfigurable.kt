@@ -18,11 +18,13 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.TerminalUtil.*
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -47,7 +49,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       // so we bind the checkbox to a local var and then use its value in an onApply callback.
       var isGenOneTerminalEnabled = isGenOneTerminalEnabled()
 
-      val environmentVarsButton = EnvironmentVariablesTextFieldWithBrowseButton()
       lateinit var newTerminalCheckbox: Cell<JBCheckBox>
       lateinit var newTerminalConfigurables: List<Cell<JComponent>>
 
@@ -108,7 +109,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .align(AlignX.FILL)
         }
         row(message("settings.environment.variables")) {
-          cell(environmentVarsButton)
+          cell(EnvironmentVariablesTextFieldWithBrowseButton())
             .bind(
               componentGet = { component -> component.data },
               componentSet = { component, data -> component.data = data },
@@ -124,7 +125,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             project,
             FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
             historyProvider = {
-              detectShells(environmentVarsButton.envs)
+              TerminalShellsDetector.detectShells().map { shellInfo ->
+                val filteredOptions = shellInfo.options.filter {
+                  // Do not show login and interactive options in the UI.
+                  // They anyway will be substituted implicitly in the shell starting logic.
+                  // So, there is no need to specify them in the settings.
+                  it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+                }
+                val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+                ParametersListUtil.join(shellCommand)
+              }
             },
           )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
             .bindText(projectOptionsProvider::shellPath)

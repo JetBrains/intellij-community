@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jediterm.core.input.KeyEvent;
@@ -34,14 +32,9 @@ import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 public final class TerminalUtil {
@@ -147,66 +140,6 @@ public final class TerminalUtil {
   @Deprecated
   public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
     return hasRunningCommands((TtyConnector)connector);
-  }
-
-  /**
-   * Detects available shells
-   *
-   * @param environment the terminal environment variables, as configured in the settings
-   * @return the list of available shells based on the OS setup and the provided environment
-   */
-  static @NotNull List<String> detectShells(Map<String, String> environment) {
-    List<String> shells = new ArrayList<>();
-    if (SystemInfo.isUnix) {
-      addIfExists(shells, "/bin/bash");
-      addIfExists(shells, "/usr/bin/bash");
-      addIfExists(shells, "/usr/local/bin/bash");
-      addIfExists(shells, "/opt/homebrew/bin/bash");
-
-      addIfExists(shells, "/bin/zsh");
-      addIfExists(shells, "/usr/bin/zsh");
-      addIfExists(shells, "/usr/local/bin/zsh");
-      addIfExists(shells, "/opt/homebrew/bin/zsh");
-
-      addIfExists(shells, "/bin/fish");
-      addIfExists(shells, "/usr/bin/fish");
-      addIfExists(shells, "/usr/local/bin/fish");
-      addIfExists(shells, "/opt/homebrew/bin/fish");
-
-      addIfExists(shells, "/opt/homebrew/bin/pwsh");
-    }
-    else if (SystemInfo.isWindows) {
-      File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");
-      if (powershell != null && StringUtil.startsWithIgnoreCase(powershell.getAbsolutePath(), "C:\\Windows\\System32\\WindowsPowerShell\\")) {
-        shells.add(powershell.getAbsolutePath());
-      }
-      File cmd = PathEnvironmentVariableUtil.findInPath("cmd.exe");
-      if (cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
-        shells.add(cmd.getAbsolutePath());
-      }
-      File pwsh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
-      if (pwsh != null && StringUtil.startsWithIgnoreCase(pwsh.getAbsolutePath(), "C:\\Program Files\\PowerShell\\")) {
-        shells.add(pwsh.getAbsolutePath());
-      }
-      File gitBash = new File("C:\\Program Files\\Git\\bin\\bash.exe");
-      if (gitBash.isFile()) {
-        shells.add(gitBash.getAbsolutePath());
-      }
-      String cmderRoot = EnvironmentUtil.getValue("CMDER_ROOT");
-      if (cmderRoot == null) {
-        cmderRoot = environment.get("CMDER_ROOT");
-      }
-      if (cmderRoot != null && cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
-        shells.add("cmd.exe /k \"%CMDER_ROOT%\\vendor\\init.bat\"");
-      }
-    }
-    return shells;
-  }
-
-  private static void addIfExists(@NotNull List<String> shells, @NotNull String filePath) {
-    if (Files.exists(Path.of(filePath))) {
-      shells.add(filePath);
-    }
   }
 
   static boolean isGenOneTerminalEnabled() {
