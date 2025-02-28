@@ -3,12 +3,12 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 
+@Suppress("DEPRECATION")
 @State(name = "TerminalOptionsProvider",
        category = SettingsCategory.TOOLS,
        exportable = true,
@@ -35,6 +35,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
     var useOptionAsMetaKey: Boolean = false
+
+    @Deprecated("Use BlockTerminalOptions#promptStyle instead")
     var useShellPrompt: Boolean = false
   }
 
