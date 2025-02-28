@@ -165,5 +165,7 @@ class PluginVerifier(
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_FOCUSED",
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_HOVERED",
 
+    "com.intellij.jupyter.core.jupyter.helper.OtherKt.toJupyterCellType",
+
     )
 }
