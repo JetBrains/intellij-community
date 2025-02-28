@@ -3663,6 +3663,7 @@ f:com.intellij.microservices.oas.OasSchema
 - f:copy(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z):com.intellij.microservices.oas.OasSchema
 - bs:copy$default(com.intellij.microservices.oas.OasSchema,com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
 - equals(java.lang.Object):Z
+- f:getAreItemsUnique():Z
 - f:getDefault():java.lang.String
 - f:getEnum():java.util.List
 - f:getFormat():com.intellij.microservices.oas.OasSchemaFormat
@@ -3672,7 +3673,6 @@ f:com.intellij.microservices.oas.OasSchema
 - f:getRequired():java.util.List
 - f:getType():com.intellij.microservices.oas.OasSchemaType
 - hashCode():I
-- f:isItemsUnique():Z
 - f:isNullable():Z
 f:com.intellij.microservices.oas.OasSchema$Builder
 - <init>(com.intellij.microservices.oas.OasSchemaType):V
