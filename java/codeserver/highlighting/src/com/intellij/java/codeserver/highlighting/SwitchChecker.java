@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
+
 final class SwitchChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
@@ -34,6 +36,7 @@ final class SwitchChecker {
     if (!myVisitor.hasErrorResults()) checkFallthroughLegality(block);
     if (!myVisitor.hasErrorResults()) checkDominance(block);
     if (!myVisitor.hasErrorResults()) checkNoDefaultBranchAllowed(block);
+    if (!myVisitor.hasErrorResults()) checkExhaustiveness(block);
   }
 
   void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
@@ -632,4 +635,17 @@ final class SwitchChecker {
     }
   }
 
+  void checkExhaustiveness(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return;
+
+    if (!ExpressionUtil.isEnhancedSwitch(block)) return;
+    if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(block) != null) return;
+    if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return;
+    if (!hasExhaustivenessError(block)) return;
+
+    boolean hasAnyCaseLabels = JavaPsiSwitchUtil.hasAnyCaseLabels(block);
+    var kind = hasAnyCaseLabels ? JavaErrorKinds.SWITCH_INCOMPLETE : JavaErrorKinds.SWITCH_EMPTY;
+    myVisitor.report(kind.create(block));
+  }
 }

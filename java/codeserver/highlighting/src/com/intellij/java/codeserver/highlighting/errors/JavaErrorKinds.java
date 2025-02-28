@@ -1021,6 +1021,12 @@ public final class JavaErrorKinds {
     error("switch.default.and.boolean");
   public static final Simple<PsiCaseLabelElement> SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN = 
     error("switch.unconditional.pattern.and.boolean");
+  public static final Simple<PsiSwitchBlock> SWITCH_EMPTY = error(PsiSwitchBlock.class, "switch.empty")
+    .withAnchor(block -> requireNonNullElse(block.getExpression(), block.getFirstChild()))
+    .withDescription(block -> message("switch.empty", JavaElementKind.fromElement(block).subject()));
+  public static final Simple<PsiSwitchBlock> SWITCH_INCOMPLETE = error(PsiSwitchBlock.class, "switch.incomplete")
+    .withAnchor(block -> requireNonNullElse(block.getExpression(), block.getFirstChild()))
+    .withDescription(psi -> message("switch.incomplete", JavaElementKind.fromElement(psi).subject()));
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 

@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
@@ -19,17 +18,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Map;
@@ -43,12 +38,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, String> myTooltipStyles = initTooltipStyles();
 
   private @NotNull HighlightInfoHolder myHolder;
-  private @NotNull LanguageLevel myLanguageLevel;
 
   private @NotNull PsiFile myFile;
   private JavaErrorCollector myCollector;
-
-  private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   protected HighlightVisitorImpl() {
   }
@@ -66,11 +58,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()) + parameterBgStyle,
       JavaCompilationError.JAVA_DISPLAY_ERROR,
       "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()));
-  }
-
-  @Contract(pure = true)
-  private boolean hasErrorResults() {
-    return myHasError;
   }
 
   /**
@@ -99,7 +86,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    myHasError = false;
     element.accept(this);
   }
 
@@ -137,9 +123,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myHolder = holder;
     myFile = file;
-    myLanguageLevel = PsiUtil.getLanguageLevel(file);
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
-    myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
+    myCollector = new JavaErrorCollector(file, error -> reportError(error, errorFixProvider));
   }
 
   private void reportError(JavaCompilationError<?, ?> error, JavaErrorFixProvider errorFixProvider) {
@@ -178,7 +163,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
-    add(info);
+    myHolder.add(info.create());
   }
 
   @Override
@@ -186,32 +171,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myCollector.processElement(element);
   }
 
-  private boolean add(@Nullable HighlightInfo.Builder builder) {
-    if (builder != null) {
-      HighlightInfo info = builder.create();
-      if (info != null && info.getSeverity().compareTo(HighlightSeverity.ERROR) >= 0) {
-        myHasError = true;
-      }
-      return myHolder.add(info);
-    }
-    return false;
-  }
-
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     // Necessary to call visitElement, as super-implementation is empty
     visitElement(expression);
-  }
-
-  @Override
-  public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-    super.visitSwitchStatement(statement);
-    if (!hasErrorResults()) SwitchBlockHighlightingModel.checkExhaustiveness(statement, builder -> add(builder));
-  }
-
-  @Override
-  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
-    super.visitSwitchExpression(expression);
-    if (!hasErrorResults()) SwitchBlockHighlightingModel.checkExhaustiveness(expression, builder -> add(builder));
   }
 }

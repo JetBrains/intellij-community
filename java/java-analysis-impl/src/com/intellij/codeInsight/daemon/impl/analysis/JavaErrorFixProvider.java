@@ -765,6 +765,12 @@ final class JavaErrorFixProvider {
            : myFactory.createDeleteDefaultFix(null, error.psi()));
     fix(SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN, error -> myFactory.createDeleteSwitchLabelFix(error.psi()));
     fix(SWITCH_DEFAULT_AND_BOOLEAN, error -> myFactory.createDeleteDefaultFix(null, error.psi()));
+    JavaFixesPusher<PsiSwitchBlock, Void> switchFixes = (error, sink) -> {
+      sink.accept(myFactory.createAddSwitchDefaultFix(error.psi(), null));
+      HighlightFixUtil.addCompletenessFixes(error.psi(), sink);
+    };
+    fixes(SWITCH_EMPTY, switchFixes);
+    fixes(SWITCH_INCOMPLETE, switchFixes);
   }
 
   private void createAccessFixes() {
