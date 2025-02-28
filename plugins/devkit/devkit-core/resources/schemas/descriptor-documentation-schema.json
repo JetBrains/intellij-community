@@ -159,11 +159,18 @@
       "description": "Contexts in which the element or attribute can be rendered. If not specified, all contexts are applied by default: doc_provider (documentation provider in the IDE), sdk_docs (https://plugins.jetbrains.com/docs/intellij). Note that if a context is excluded in the element, its children elements and attributes are also excluded and can't override this.",
       "uniqueItems": true,
       "items": {
-        "type": "string",
         "enum": [
           "doc_provider",
           "sdk_docs"
-        ]
+        ],
+        "x-intellij-enum-metadata": {
+          "doc_provider": {
+            "description": "Documentation provider in the IDE."
+          },
+          "sdk_docs": {
+            "description": "IntelliJ Platform Plugin SDK Documentation (https://plugins.jetbrains.com/docs/intellij)."
+          }
+        }
       }
     },
     "AttributeWrapper": {
