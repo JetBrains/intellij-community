@@ -103,7 +103,7 @@ private class ElementsBuilder {
   }
 
   private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>): Collection<StructureViewTreeElement> {
-    if (hasSameModelParent(assembledModel)) return emptyList()
+    if (assembledModel.hasSameModelParent()) return emptyList()
     val result = mutableListOf<StructureViewTreeElement>()
     for (child in assembledModel.getChildren()) {
       val logicalModel = child.model
@@ -187,19 +187,6 @@ private class ElementsBuilder {
     presentationData.addText(propertyProvider.propertyName + ": ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     presentationData.addText("$value ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES)
     return presentationData
-  }
-
-  private fun hasSameModelParent(assembledModel: LogicalStructureAssembledModel<*>): Boolean {
-    var parentTmp = assembledModel.parent
-    while (parentTmp != null) {
-      val first = parentTmp.model
-      val second = assembledModel.model
-      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
-          || second is ExtendedLogicalObject && second.isTheSameParent(first)
-          || first == second) return true
-      parentTmp = parentTmp.parent
-    }
-    return false
   }
 
   inner class PsiElementStructureElement<T>(

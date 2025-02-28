@@ -27,18 +27,27 @@ class LogicalStructureYamlMapper {
 
     private fun <T> logicalModel(model: LogicalStructureAssembledModel<T>, visited: HashSet<Any> = HashSet()): Pair<String, HashMap<String, Any>> {
       val dataModel = model.model
+      val logicalModelMapperProvider = LogicalModelMapperProvider.getInstance(dataModel)
 
       visited.add(dataModel as Any)
-      val type =  if (dataModel is LogicalModelMapper) dataModel.type() else dataModel::class.java.simpleName
+      val type = if (dataModel is LogicalModelMapper)
+        dataModel.type()
+      else if (logicalModelMapperProvider != null)
+        logicalModelMapperProvider.type(dataModel)
+      else
+        dataModel::class.java.simpleName
 
       val allProperties = LinkedHashMap<String, Any>()
-      if (dataModel is LogicalModelMapper) {
-        dataModel.attributes().forEach { allProperties[it.key] = it.value }
-      }  else {
-        getDefaultAttributes(dataModel).forEach { allProperties[it.key] = it.value }
-      }
+      allProperties += if (dataModel is LogicalModelMapper)
+        dataModel.attributes()
+      else if (logicalModelMapperProvider != null)
+        logicalModelMapperProvider.attributes(dataModel)
+      else
+        getDefaultAttributes(dataModel)
 
-      allProperties.putAll(mapChildrenModels(model, visited))
+      if (!model.hasSameModelParent()) {
+        allProperties.putAll(mapChildrenModels(model, visited))
+      }
 
       return type to allProperties
     }
@@ -56,7 +65,7 @@ class LogicalStructureYamlMapper {
     private fun <T> mapChildrenModels(model: LogicalStructureAssembledModel<T>, visited: HashSet<Any> ): LinkedHashMap<String, Any> {
       val allProperties = LinkedHashMap<String, Any>()
       for (assembledModel in model.getChildren()) {
-        if (visited.contains(assembledModel.model)) continue
+        if (visited.contains(assembledModel.model) || assembledModel.hasSameModelParent()) continue
         if (assembledModel.model is ProvidedLogicalContainer<*>) {
           val assembled = assembledModel as LogicalStructureAssembledModel<ProvidedLogicalContainer<T>>
           if (assembledModel.model.provider is PropertyElementProvider) {

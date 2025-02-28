@@ -43,6 +43,19 @@ class LogicalStructureAssembledModel<T> private constructor(
     return result
   }
 
+  internal fun hasSameModelParent(): Boolean {
+    var parentTmp = parent
+    while (parentTmp != null) {
+      val first = parentTmp.model
+      val second = model
+      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
+          || second is ExtendedLogicalObject && second.isTheSameParent(first)
+          || first == second) return true
+      parentTmp = parentTmp.parent
+    }
+    return false
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
