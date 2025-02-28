@@ -515,8 +515,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
     int startX = myEditor.isInDistractionFreeMode() ? 0 : ExperimentalUI.isNewUI() ? getWhitespaceSeparatorOffset() + 1
                                                                                    : getWhitespaceSeparatorOffset();
-    var view = myEditor.myAdView != null ? myEditor.myAdView : myEditor.myView;
-    IterationState state = new IterationState(view, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
+    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
     while (!state.atEnd()) {
       drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
                                    defaultBackgroundColor, defaultForegroundColor, startX);

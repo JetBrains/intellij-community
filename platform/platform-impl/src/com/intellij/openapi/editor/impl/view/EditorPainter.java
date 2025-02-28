@@ -1482,7 +1482,7 @@ public final class EditorPainter implements TextDrawingCallback {
           boolean hasSoftWrap = softWrap != null;
           if (hasSoftWrap || myEditor.isRightAligned()) {
             prevEndOffset = offset;
-            it = new IterationState(myView, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
+            it = new IterationState(myEditor, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
                                     visualLineEndOffset,
                                     myCaretData, false, false, false, false);
             if (it.getEndOffset() <= offset) {
@@ -1498,7 +1498,7 @@ public final class EditorPainter implements TextDrawingCallback {
         FoldRegion foldRegion = fragment.getCurrentFoldRegion();
         if (foldRegion == null) {
           if (start != prevEndOffset) {
-            it = new IterationState(myView, start, fragment.isRtl() ? offset : visualLineEndOffset,
+            it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
                                     myCaretData, false, false, false, fragment.isRtl());
           }
           prevEndOffset = end;
@@ -1555,14 +1555,14 @@ public final class EditorPainter implements TextDrawingCallback {
         maxColumn = fragment.getEndVisualColumn();
       }
       if (firstFragment && myEditor.isRightAligned()) {
-        it = new IterationState(myView, offset, visualLineEndOffset, myCaretData, false, false, false, false);
+        it = new IterationState(myEditor, offset, visualLineEndOffset, myCaretData, false, false, false, false);
         if (it.getEndOffset() <= offset) {
           it.advance();
         }
         painter.paintBeforeLineStart(it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
-        it = new IterationState(myView,
+        it = new IterationState(myEditor,
                                 visualLineEndOffset == offset ? visualLineEndOffset
                                                               : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                                 visualLineEndOffset,
