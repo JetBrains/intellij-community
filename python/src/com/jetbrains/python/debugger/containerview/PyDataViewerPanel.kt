@@ -373,7 +373,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     fun onNameChanged(name: @NlsContexts.TabTitle String)
   }
 
-  private inner class PyDataViewCompletionProvider : TextFieldCompletionProvider() {
+  protected inner class PyDataViewCompletionProvider : TextFieldCompletionProvider() {
     override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
       val values = availableValues.sortedBy { obj: PyDebugValue -> obj.name }
       for (i in values.indices) {
@@ -403,7 +403,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
       }
   }
 
-  open fun closeEditorTabs() = Unit
+  open fun closeEditorTabs(): Unit = Unit
 
   companion object {
     private const val MODIFIED_VARIABLE_FORMAT = "%s*"
