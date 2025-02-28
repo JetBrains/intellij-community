@@ -16,7 +16,10 @@ class CodeGenerationReportGenerator(
   private val positionBasedColors: Boolean = true
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
 
-  override val scripts: List<Resource> = listOf(Resource("/diff.js", "../res/diff.js")) + super.scripts
+  override val scripts: List<Resource> = listOf(
+    Resource("/diff.js", "../res/diff.js"),
+    Resource("/highlight.js", "../res/highlight.js")
+  ) + super.scripts
 
   override fun textToInsert(session: Session) = session.expectedText.lines().first()
 

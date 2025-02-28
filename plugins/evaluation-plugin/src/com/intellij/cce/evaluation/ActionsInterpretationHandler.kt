@@ -82,6 +82,9 @@ class ActionsInterpretationHandler(
           }
         }
       }
+      catch (e: StopEvaluationException) {
+        throw e
+      }
       catch (e: Throwable) {
         try {
           workspace.errorsStorage.saveError(

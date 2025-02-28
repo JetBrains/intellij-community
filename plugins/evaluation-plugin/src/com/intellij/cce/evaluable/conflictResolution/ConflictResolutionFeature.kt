@@ -11,13 +11,12 @@ import com.intellij.cce.report.ConflictResolutionReportGenerator
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
-import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.FullLineLogsStorage
+import com.intellij.cce.workspace.EvaluationWorkspace
 
 class ConflictResolutionFeature : StandaloneFeature<ConflictResolutionStrategy>("conflict-resolution") {
   override fun getStrategySerializer(): StrategySerializer<ConflictResolutionStrategy> = ConflictResolutionStrategy.Serializer()
 
-  override fun prepareEnvironment(config: Config): SimpleFileEnvironment = ConflictEnvironment(
+  override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): SimpleFileEnvironment = ConflictEnvironment(
     DatasetRef.parse(config.fileDataset!!.url),
     TheirConflictResolver()
   )
@@ -30,13 +29,12 @@ class ConflictResolutionFeature : StandaloneFeature<ConflictResolutionStrategy>(
   override fun getFileReportGenerator(
     filterName: String,
     comparisonFilterName: String,
-    featuresStorages: List<FeaturesStorage>,
-    fullLineStorages: List<FullLineLogsStorage>,
+    inputWorkpaces: List<EvaluationWorkspace>,
     dirs: GeneratorDirectories
   ): FileReportGenerator = ConflictResolutionReportGenerator(
     filterName,
     comparisonFilterName,
-    featuresStorages,
+    inputWorkpaces.map { it.featuresStorage },
     dirs
   )
 }

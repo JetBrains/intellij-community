@@ -383,3 +383,55 @@ class HighlightResistantDiff extends Diff {
     return super.equals(left, right, options);
   }
 }
+
+function lineDiff() {
+  return typeof HIGHLIGHTS !== 'undefined' ? new HighlightResistantDiff(HIGHLIGHTS) : new Diff();
+}
+
+function highlightLine(text) {
+  if (typeof highlightedText !== 'undefined') {
+    return highlightedText(text);
+  }
+
+  const pre = document.createElement("pre");
+  pre.innerText = text;
+  return pre;
+}
+
+function renderDiff(originalText, suggestedText) {
+  const diffDiv = document.createElement("DIV");
+
+  const unifiedDiff = lineDiff().unifiedSlideDiff(originalText, suggestedText, 1);
+
+  unifiedDiff.forEach(line => {
+    const lineDiv = document.createElement("DIV");
+    lineDiv.style.display = "block ruby";
+    const text = highlightLine(line.content);
+    text.style.display = "inline";
+    lineDiv.appendChild(text);
+
+    const oldLineNumberSpan = document.createElement("pre");
+    oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
+    oldLineNumberSpan.style.width = '3.5em';
+    oldLineNumberSpan.style.display = 'inline-block';
+
+    const newLineNumberSpan = document.createElement("pre");
+    newLineNumberSpan.textContent = line.newLineNumber !== '' ? line.newLineNumber : ' ';
+    newLineNumberSpan.style.width = '3.5em';
+    newLineNumberSpan.style.display = 'inline-block';
+
+    if (line.type === "added") {
+      lineDiv.style.color = "green";
+    } else if (line.type === "removed") {
+      lineDiv.style.color = "red";
+    } else {
+      lineDiv.style.color = "black";
+    }
+
+    lineDiv.prepend(newLineNumberSpan);
+    lineDiv.prepend(oldLineNumberSpan);
+    diffDiv.appendChild(lineDiv);
+  });
+
+  return diffDiv;
+}

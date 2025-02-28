@@ -57,7 +57,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
     val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
     val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     val evaluationRootInfo = EvaluationRootInfo(true)
-    feature.prepareEnvironment(config).use { environment ->
+    feature.prepareEnvironment(config, workspace).use { environment ->
       check(environment is ProjectActionsEnvironment)
 
       val actions = environment.config

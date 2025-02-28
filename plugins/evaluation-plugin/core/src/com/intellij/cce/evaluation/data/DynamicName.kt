@@ -1,0 +1,35 @@
+package com.intellij.cce.evaluation.data
+
+import com.google.gson.*
+import java.lang.reflect.Type
+
+/**
+ * This class should be used in situations when we want to refer to evaluation data on context-dependent name.
+ */
+sealed interface DynamicName<in T> {
+  val serialName: String
+
+  fun resolve(props: DataProps, value: T): String?
+
+  data object CurrentFileName : DynamicName<Any> {
+    override val serialName: String = "current_file_name"
+    override fun resolve(props: DataProps, value: Any): String? = props.currentFileName
+  }
+
+  class Serializer : JsonSerializer<DynamicName<*>>, JsonDeserializer<DynamicName<*>> {
+    override fun serialize(src: DynamicName<*>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
+      val serialized = context?.serialize(src)
+      // work around to serialize objects correctly
+      return if (src == null || serialized?.asJsonObject?.get("serialName") != null) serialized else
+        JsonObject().also { it.addProperty("serialName", src.serialName) }
+    }
+
+    override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): DynamicName<*>? {
+      val type = json?.asJsonObject?.get("serialName")?.asString ?: return null
+      when (type) {
+        "current_file_name" -> return context?.deserialize(json, CurrentFileName::class.java)
+        else -> throw IllegalArgumentException("Unknown type: $type")
+      }
+    }
+  }
+}
