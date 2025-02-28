@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
 
@@ -331,7 +332,12 @@ interface InlineCompletionEvent {
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
-  val file = EditorUtil.getEditorDataContext(caret.editor).getData(CommonDataKeys.PSI_FILE)
+  val psiFileFromContext = when (EDT.isCurrentThreadEdt()) {
+    true -> EditorUtil.getEditorDataContext(caret.editor).getData(CommonDataKeys.PSI_FILE)
+    else -> null
+  }
+
+  val file = psiFileFromContext
              ?: PsiDocumentManager.getInstance(project).getCachedPsiFile(caret.editor.document)
              ?: return null
 
