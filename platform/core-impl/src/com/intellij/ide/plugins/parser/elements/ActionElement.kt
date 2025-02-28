@@ -3,7 +3,7 @@ package com.intellij.ide.plugins.parser.elements
 
 import com.intellij.util.xml.dom.XmlElement
 
-sealed class ActionElement(
+open class ActionElement(
   @JvmField val name: ActionElementName,
   @JvmField val element: XmlElement,
   @JvmField val resourceBundle: String?,
