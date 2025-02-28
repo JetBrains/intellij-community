@@ -27,6 +27,7 @@ private fun toInternalProblem(problem: Problem?): InternalProblem? {
     map(problem.contextualLabel),
     map(problem.details),
     emptyList(),
+    emptyList(),
     mapSolutions(problem.solutions),
     toInternalFailure(problem.failure),
     map(problem.additionalData)
