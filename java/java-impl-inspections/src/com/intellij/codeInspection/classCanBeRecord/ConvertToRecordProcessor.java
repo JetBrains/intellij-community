@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -132,7 +133,6 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
    * @return list of accessors which have not record-compatible names and need to be renamed separately.
    */
   private @NotNull List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
-    //noinspection UnnecessaryLocalVariable
     List<FieldAccessorCandidate> list = ContainerUtil.filter(
       myRecordCandidate.getFieldAccessors().values(),
       fieldAccessorCandidate -> fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()
@@ -289,7 +289,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
     generateJavaDocForDocumentedFields(result);
-    CodeStyleManager.getInstance(myProject).reformat(result);
+    CodeStyleManager.getInstance(myProject).reformat(JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(result));
   }
 
   private void useAccessorsWhenNecessary(UsageInfo @NotNull [] usages) {

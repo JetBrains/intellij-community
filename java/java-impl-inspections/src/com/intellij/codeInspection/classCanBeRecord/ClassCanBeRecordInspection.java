@@ -78,7 +78,8 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
             if (fqn != null) {
               fixes.add(new AddToInspectionOptionListFix<>(
                 this, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn),
-                fqn, tool -> tool.myIgnoredAnnotations));
+                fqn, tool -> tool.myIgnoredAnnotations)
+              );
             }
           }
         }
@@ -118,7 +119,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
       boolean necessaryCheckConflicts = myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
-                  myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
+                                        myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
       boolean isConflictFree = ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty();
       if (necessaryCheckConflicts && !isConflictFree) {
         if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST) {
