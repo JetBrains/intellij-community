@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.pasta.common.DocumentEntity
 import fleet.util.UID
@@ -19,8 +18,8 @@ interface AdEntityProvider {
   fun getDocEntityUid(document: DocumentEx): UID?
   suspend fun createDocEntity(uid: UID, document: DocumentEx): DocumentEntity
   suspend fun deleteDocEntity(docEntity: DocumentEntity)
-  suspend fun createMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity
-  suspend fun deleteMarkupEntity(markupEntity: AdMarkupEntity)
+  suspend fun createDocMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity
+  suspend fun deleteDocMarkupEntity(markupEntity: AdMarkupEntity)
 
   companion object {
     private val EP_NAME: ExtensionPointName<AdEntityProvider> = ExtensionPointName.create("com.intellij.adEntityProvider")

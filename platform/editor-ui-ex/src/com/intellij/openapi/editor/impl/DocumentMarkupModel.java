@@ -120,12 +120,12 @@ public final class DocumentMarkupModel {
   }
 
   private static void fireMarkupModelCreated(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupModelListener.TOPIC)
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC)
       .markupModelCreated(project, markupModel);
   }
 
   private static void fireMarkupModelDisposed(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupModelListener.TOPIC)
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC)
       .markupModelDisposed(project, markupModel);
   }
 }

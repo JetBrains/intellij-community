@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public interface DocumentMarkupModelListener {
+public interface DocumentMarkupListener {
 
   @Topic.AppLevel
-  Topic<DocumentMarkupModelListener> TOPIC = new Topic<>(DocumentMarkupModelListener.class);
+  Topic<DocumentMarkupListener> TOPIC = new Topic<>(DocumentMarkupListener.class);
 
   void markupModelCreated(@Nullable Project project, @NotNull MarkupModelEx markupModel);
 

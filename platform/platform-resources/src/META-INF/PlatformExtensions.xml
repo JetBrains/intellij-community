@@ -1950,11 +1950,11 @@
               topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
 
-    <listener class="com.intellij.openapi.editor.impl.ad.document.MyFileDocumentBindingListener"
+    <listener class="com.intellij.openapi.editor.impl.ad.document.AdDocumentManagerImpl$AdFileDocumentBindingListener"
               topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
 
-    <listener class="com.intellij.openapi.editor.impl.ad.markup.document.AdDocumentMarkupModelListener"
-              topic="com.intellij.openapi.editor.impl.DocumentMarkupModelListener" />
+    <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"
+              topic="com.intellij.openapi.editor.impl.DocumentMarkupListener" />
   </applicationListeners>
 
   <projectListeners>

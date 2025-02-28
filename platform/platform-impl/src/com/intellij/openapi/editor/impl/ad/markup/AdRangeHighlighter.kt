@@ -32,22 +32,19 @@ internal data class AdRangeHighlighter(
     }
 
     fun fromHighlighter(id: Long, highlighter: RangeHighlighterEx): AdRangeHighlighter? /*TODO null??*/ {
-      val textAttributeKey = highlighter.textAttributesKey?.externalName
-      if (textAttributeKey != null) {
-        return AdRangeHighlighter(
-          interval = AdIntervalData.fromRangeMarker(id, highlighter),
-          data = AdRangeHighlighterData(
-            textAttributeKey,
-            highlighter.layer,
-            highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
-            highlighter.isAfterEndOfLine,
-            highlighter.isVisibleIfFolded,
-            highlighter.isThinErrorStripeMark,
-            highlighter,
-          ),
-        )
-      }
-      return null
+      return AdRangeHighlighter(
+        interval = AdIntervalData.fromRangeMarker(id, highlighter),
+        data = AdRangeHighlighterData(
+          highlighter.textAttributesKey?.externalName,
+          highlighter.layer,
+          highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
+          highlighter.isAfterEndOfLine,
+          highlighter.isVisibleIfFolded,
+          highlighter.isThinErrorStripeMark,
+          highlighter.isPersistent,
+          highlighter,
+        ),
+      )
     }
   }
 
@@ -71,6 +68,7 @@ internal data class AdRangeHighlighter(
   override fun isAfterEndOfLine(): Boolean = data.isAfterEndOfLine
   override fun isVisibleIfFolded(): Boolean = data.isVisibleIfFolded
   override fun isThinErrorStripeMark(): Boolean = data.isThinErrorStripeMark
+  override fun isPersistent(): Boolean = data.isPersistent
   override fun getCustomRenderer(): CustomHighlighterRenderer? = data.origin?.customRenderer
 
   override fun getTextAttributesKey(): TextAttributesKey? = data.textAttributesKey()
@@ -105,10 +103,6 @@ internal data class AdRangeHighlighter(
   }
 
   override fun setVisibleIfFolded(value: Boolean) {
-    TODO("Not yet implemented")
-  }
-
-  override fun isPersistent(): Boolean {
     TODO("Not yet implemented")
   }
 

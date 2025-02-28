@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.ad.markup.document
+package com.intellij.openapi.editor.impl.ad.markup
 
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
@@ -7,42 +7,63 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModelListener
+import com.intellij.openapi.editor.impl.DocumentMarkupListener
 import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.document.AdEntityProvider
-import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
-import com.intellij.openapi.editor.impl.ad.markup.document.AdDocumentMarkupModelManager.Companion.getInstance
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityHandle
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectIdOrNull
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rd.util.assert
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.UUID
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 
 @Experimental
-@Service(Level.APP)
-internal class AdDocumentMarkupModelManager(private val coroutineScope: CoroutineScope) {
+interface AdDocumentMarkupManager {
 
   companion object {
-    fun getInstance(): AdDocumentMarkupModelManager = service()
-
-    private val MARKUP_ENTITY_HANDLE_KEY: Key<AsyncEntityHandle<AdMarkupEntity>> = Key.create("AD_MARKUP_ENTITY_HANDLE_KEY")
+    fun getInstance(): AdDocumentMarkupManager = service<AdDocumentMarkupManagerImpl>()
   }
 
-  private val lock = java.util.concurrent.locks.ReentrantLock()
+  suspend fun getMarkupEntity(markupModel: MarkupModelEx): AdMarkupEntity?
 
-  fun getMarkupEntityRunBlocking(markupModel: MarkupModelEx): AdMarkupEntity? {
+  @RequiresEdt
+  fun getMarkupEntityRunBlocking(markupModel: MarkupModelEx): AdMarkupEntity?
+}
+
+
+@Experimental
+@Service(Level.APP)
+private class AdDocumentMarkupManagerImpl(private val coroutineScope: CoroutineScope): AdDocumentMarkupManager {
+
+  companion object {
+    private val MARKUP_ENTITY_HANDLE_KEY: Key<AsyncEntityHandle<AdMarkupEntity>> = Key.create("AD_MARKUP_ENTITY_HANDLE_KEY")
+
+    private fun getInstance(): AdDocumentMarkupManagerImpl {
+      return AdDocumentMarkupManager.getInstance() as AdDocumentMarkupManagerImpl
+    }
+  }
+
+  // MARKUP_ENTITY_HANDLE_KEY guard
+  private val lock = ReentrantLock()
+
+  override suspend fun getMarkupEntity(markupModel: MarkupModelEx): AdMarkupEntity? {
+    return getMarkupHandle(markupModel)?.entity()
+  }
+
+  override fun getMarkupEntityRunBlocking(markupModel: MarkupModelEx): AdMarkupEntity? {
     return getMarkupHandle(markupModel)?.entityRunBlocking()
   }
 
-  fun createDocMarkupEntity(project: Project?, markupModel: MarkupModelEx) {
+  private fun createDocMarkupEntity(project: Project?, markupModel: MarkupModelEx) {
     if (isEnabled()) {
       val entityProvider = AdEntityProvider.getInstance()
       val debugName = markupModel.document.toString()
@@ -53,7 +74,7 @@ internal class AdDocumentMarkupModelManager(private val coroutineScope: Coroutin
         val docMarkupUid = getDocMarkupUid(project, markupModel, entityProvider)
         if (docMarkupUid != null) {
           val handle = AsyncEntityService.getInstance().createHandle(debugName) {
-            entityProvider.createMarkupEntity(docMarkupUid, markupModel)
+            entityProvider.createDocMarkupEntity(docMarkupUid, markupModel)
           }
           markupModel.putUserData(MARKUP_ENTITY_HANDLE_KEY, handle)
         }
@@ -61,18 +82,19 @@ internal class AdDocumentMarkupModelManager(private val coroutineScope: Coroutin
     }
   }
 
-  fun deleteDocMarkupEntity(project: Project?, markupModel: MarkupModelEx) {
+  private fun deleteDocMarkupEntity(markupModel: MarkupModelEx) {
     if (isEnabled()) {
       val provider = AdEntityProvider.getInstance()
       val debugName = markupModel.document.toString()
       lock.withLock {
         val handle = markupModel.getUserData(MARKUP_ENTITY_HANDLE_KEY)
         checkNotNull(handle) {
+          // TODO: investigate why happens
           "document markup entity not found $debugName"
         }
         coroutineScope.async(AdTheManager.AD_DISPATCHER) {
           val entity = handle.entity()
-          provider.deleteMarkupEntity(entity)
+          provider.deleteDocMarkupEntity(entity)
         }
       }
     }
@@ -99,25 +121,25 @@ internal class AdDocumentMarkupModelManager(private val coroutineScope: Coroutin
   }
 
   private fun getMarkupHandle(markupModel: MarkupModelEx): AsyncEntityHandle<AdMarkupEntity>? {
-    if (isEnabled()) {
-      return lock.withLock {
+    return if (isEnabled()) {
+      lock.withLock {
         markupModel.getUserData(MARKUP_ENTITY_HANDLE_KEY)
       }
+    } else {
+      null
     }
-    return null
   }
 
   private fun isEnabled(): Boolean {
     return isRhizomeAdEnabled
   }
-}
 
-private class AdDocumentMarkupModelListener : DocumentMarkupModelListener {
-  override fun markupModelCreated(project: Project?, markupModel: MarkupModelEx) {
-    getInstance().createDocMarkupEntity(project, markupModel)
-  }
-
-  override fun markupModelDisposed(project: Project?, markupModel: MarkupModelEx) {
-    getInstance().deleteDocMarkupEntity(project, markupModel)
+  private class AdDocumentMarkupListener : DocumentMarkupListener {
+    override fun markupModelCreated(project: Project?, markupModel: MarkupModelEx) {
+      getInstance().createDocMarkupEntity(project, markupModel)
+    }
+    override fun markupModelDisposed(project: Project?, markupModel: MarkupModelEx) {
+      getInstance().deleteDocMarkupEntity(markupModel)
+    }
   }
 }

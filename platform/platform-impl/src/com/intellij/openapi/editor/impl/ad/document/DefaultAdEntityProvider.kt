@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupEntity
 import com.intellij.openapi.editor.impl.ad.markup.AdMarkupSynchronizerService
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.jetbrains.rhizomedb.exists
@@ -18,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 
 
 @Experimental
@@ -54,8 +51,10 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
     }
   }
 
-  override suspend fun createMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity {
-    val docEntity = AdDocumentEntityManager.getInstance().getDocEntity(markupModel.document)
+  override suspend fun createDocMarkupEntity(uid: UID, markupModel: MarkupModelEx): AdMarkupEntity {
+    val document = markupModel.document as? DocumentEx
+                   ?: throw IllegalStateException("document is expected to be DocumentEx")
+    val docEntity = AdDocumentManager.getInstance().getDocEntity(document)
     checkNotNull(docEntity) { "doc entity not found" }
     val markupEntity = change {
       shared {
@@ -67,7 +66,7 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
     return markupEntity
   }
 
-  override suspend fun deleteMarkupEntity(markupEntity: AdMarkupEntity) {
+  override suspend fun deleteDocMarkupEntity(markupEntity: AdMarkupEntity) {
     markupToScope.remove(markupEntity)!!.cancel()
     change {
       shared {

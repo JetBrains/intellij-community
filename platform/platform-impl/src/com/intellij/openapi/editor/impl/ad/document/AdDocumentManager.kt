@@ -14,46 +14,62 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.pasta.common.DocumentEntity
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 
 @Experimental
-@Service(Level.APP)
-internal class AdDocumentEntityManager() {
+interface AdDocumentManager {
 
   companion object {
-    fun getInstance(): AdDocumentEntityManager = service()
-
-    private val DOC_ENTITY_HANDLE_KEY: Key<AsyncEntityHandle<DocumentEntity>> = Key("AD_DOC_ENTITY_KEY")
+    fun getInstance(): AdDocumentManager = service<AdDocumentManagerImpl>()
   }
 
-  // guard DOC_ENTITY_HANDLE_KEY
+  suspend fun getDocEntity(document: DocumentEx): DocumentEntity?
+
+  @RequiresEdt
+  fun getDocEntityRunBlocking(document: DocumentEx): DocumentEntity?
+}
+
+
+@Service(Level.APP)
+private class AdDocumentManagerImpl(): AdDocumentManager {
+
+  companion object {
+    private val DOC_ENTITY_HANDLE_KEY: Key<AsyncEntityHandle<DocumentEntity>> = Key("AD_DOCUMENT_ENTITY_KEY")
+
+    private fun getInstance(): AdDocumentManagerImpl {
+      return AdDocumentManager.getInstance() as AdDocumentManagerImpl
+    }
+  }
+
+  // DOC_ENTITY_HANDLE_KEY guard
   private val lock = ReentrantLock()
 
-  suspend fun getDocEntity(document: Document): DocumentEntity? {
+  override suspend fun getDocEntity(document: DocumentEx): DocumentEntity? {
     return getDocHandle(document)?.entity()
   }
 
-  fun getDocEntityRunBlocking(document: Document): DocumentEntity? {
+  override fun getDocEntityRunBlocking(document: DocumentEx): DocumentEntity? {
     return getDocHandle(document)?.entityRunBlocking()
   }
 
-  fun bindDocEntity(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+  private fun bindDocEntity(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
     if (isEnabled() && document is DocumentEx && oldFile == null && file != null) { // TODO: listen file reload
-      val provider = AdEntityProvider.getInstance()
-      val docUid = provider.getDocEntityUid(document)
+      val entityProvider = AdEntityProvider.getInstance()
+      val docUid = entityProvider.getDocEntityUid(document)
       if (docUid != null) {
-        lock.withLock { // ensure createEntity is called only once
+        lock.withLock {
           if (document.getUserData(DOC_ENTITY_HANDLE_KEY) == null) {
             val documentName = document.toString()
             val handle = AsyncEntityService.getInstance().createHandle(documentName) {
-              provider.createDocEntity(docUid, document)
+              entityProvider.createDocEntity(docUid, document)
             }
             EntityCleanService.getInstance().registerEntity(document, documentName) {
               val entity = handle.entity()
-              provider.deleteDocEntity(entity)
+              entityProvider.deleteDocEntity(entity)
             }
             document.putUserData(DOC_ENTITY_HANDLE_KEY, handle)
           }
@@ -62,22 +78,23 @@ internal class AdDocumentEntityManager() {
     }
   }
 
-  private fun getDocHandle(document: Document): AsyncEntityHandle<DocumentEntity>? {
-    if (isEnabled() && document is DocumentEx) {
-      return lock.withLock {
+  private fun getDocHandle(document: DocumentEx): AsyncEntityHandle<DocumentEntity>? {
+    return if (isEnabled()) {
+      lock.withLock {
         document.getUserData(DOC_ENTITY_HANDLE_KEY)
       }
+    } else {
+      null
     }
-    return null
   }
 
   private fun isEnabled(): Boolean {
     return isRhizomeAdEnabled
   }
-}
 
-private class MyFileDocumentBindingListener : FileDocumentBindingListener {
-  override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-    AdDocumentEntityManager.getInstance().bindDocEntity(document, oldFile, file)
+  private class AdFileDocumentBindingListener : FileDocumentBindingListener {
+    override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+      getInstance().bindDocEntity(document, oldFile, file)
+    }
   }
 }

@@ -12,12 +12,13 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 @Serializable
 internal data class AdRangeHighlighterData(
-  val textAttributesKey: String,
+  val textAttributesKey: String?,
   val layer: Int,
   val isExactRange: Boolean,
   val isAfterEndOfLine: Boolean,
   val isVisibleIfFolded: Boolean,
   val isThinErrorStripeMark: Boolean,
+  val isPersistent: Boolean,
   @Transient val origin: RangeHighlighterEx? = null,
 ) {
 
@@ -26,6 +27,6 @@ internal data class AdRangeHighlighterData(
   }
 
   fun textAttributesKey(): TextAttributesKey? {
-    return TextAttributesKey.find(textAttributesKey)
+    return textAttributesKey?.let { TextAttributesKey.find(it) }
   }
 }

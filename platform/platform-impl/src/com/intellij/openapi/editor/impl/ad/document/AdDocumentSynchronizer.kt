@@ -37,7 +37,7 @@ internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope
     val debugName = document.toString()
     val cs = coroutineScope.childScope("doc->entity sync $debugName")
     coroutineScope.launch(AdTheManager.AD_DISPATCHER) {
-      val entity = AdDocumentEntityManager.getInstance().getDocEntity(document)
+      val entity = AdDocumentManager.getInstance().getDocEntity(document)
       checkNotNull(entity) { "entity $debugName not found" }
       document.addDocumentListener(DocToEntitySynchronizer(debugName, entity, cs))
     }
