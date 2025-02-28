@@ -191,6 +191,11 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     }
 
     val java11Shim = Java11Shim.INSTANCE
+    fun isPluginModuleEnabled(module: IdeaPluginDescriptorImpl): Boolean {
+      if (module.moduleName == null) return module.isEnabled
+      return enabledModuleV2Ids[module.moduleName] === module
+    }
+
     return PluginSet(
       sortedModulesWithDependencies = sortedModulesWithDependencies, 
       allPlugins = allPlugins,
@@ -199,7 +204,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
         for (module in sortedModulesWithDependencies.modules) {
-          if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
+          if (isPluginModuleEnabled(module)) {
             result.add(module)
           }
         }
