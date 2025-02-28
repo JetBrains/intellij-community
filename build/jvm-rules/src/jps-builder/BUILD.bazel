@@ -70,6 +70,8 @@ java_binary(
     jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
+        "-XX:+HeapDumpOnOutOfMemoryError"
+#         "-agentpath:/Users/develar/async-profiler-3.0-cc76f05-macos/lib/libasyncProfiler.dylib=log=/Users/develar/dumps/p.log,quiet",
     ]),
     visibility = ["//visibility:public"],
 )

@@ -1,20 +1,19 @@
 package org.jetbrains.bazel.jvm.jps.storage
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.diff.Difference
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 
-// caffeine is not used as cache per target (so, a map is not big and closed quite often)
 internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiMapletImpl<K, V>) : MultiMaplet<K, V> {
-  private val cache = ConcurrentHashMap<K, Iterable<V>>()
+  private val cache = Caffeine.newBuilder().maximumSize(8_192).build(delegate::get)
 
   override fun containsKey(key: K): Boolean {
-    return cache.contains(key) || delegate.containsKey(key)
+    return cache.getIfPresent(key) != null || delegate.containsKey(key)
   }
 
   override fun get(key: K): Iterable<V> {
-    return cache.computeIfAbsent(key, delegate::get)
+    return cache.get(key)
   }
 
   override fun put(key: K, values: Iterable<V>) {
@@ -22,7 +21,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.put(key, values)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -31,7 +30,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.remove(key)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -40,7 +39,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.appendValue(key, value)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -49,7 +48,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.appendValues(key, values)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -58,7 +57,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.removeValue(key, value)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -67,7 +66,7 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
       delegate.removeValues(key, values)
     }
     finally {
-      cache.remove(key)
+      cache.invalidate(key)
     }
   }
 
@@ -77,6 +76,8 @@ internal class CachingMultiMaplet<K : Any, V : Any>(private val delegate: MultiM
 
   override fun close() {
     delegate.close()
+    // help GC
+    cache.invalidateAll()
   }
 
   override fun flush() {

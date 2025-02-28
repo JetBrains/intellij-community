@@ -10,11 +10,10 @@ interface PathRelativizer {
 
 enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
   KOTLIN_VERSION("kotlinc version"),
-  JPS_TRACK_LIB_DEPS("track changes in binary dependencies (libraries)"),
   TOOL_VERSION("bazel builder version or storage version"),
   COMPILER("kotlinc/javac configuration"),
   DEPENDENCY_PATH_LIST("dependency path list"),
-  DEPENDENCY_DIGEST_LIST("dependency digest list");
+  UNTRACKED_DEPENDENCY_DIGEST_LIST("untracked dependency digest list");
 }
 
 private fun emptyContainer(): LongArray {

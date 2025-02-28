@@ -7,8 +7,8 @@ import java.nio.file.Path
 
 data class SourceDescriptor(
   // absolute and normalized
-  @JvmField var sourceFile: Path,
-  @JvmField var digest: ByteArray,
+  @JvmField val sourceFile: Path,
+  @JvmField val digest: ByteArray,
   @JvmField var outputs: Array<String>,
   @JvmField var isChanged: Boolean,
 ) {

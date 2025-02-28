@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
+import org.jetbrains.bazel.jvm.jps.state.isDependencyTracked
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
-import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -60,8 +60,6 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-internal val isLibTracked = System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED).toBoolean()
-
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
@@ -72,8 +70,7 @@ internal fun loadJpsModel(
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
-  digests.set(TargetConfigurationDigestProperty.JPS_TRACK_LIB_DEPS, if (isLibTracked) 1 else 0)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 8)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 10)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)
@@ -105,11 +102,18 @@ internal fun loadJpsModel(
   // must be after configureJdk; otherwise, for some reason, module output dir is not included in classpath
   dependencyList.addModuleSourceDependency()
 
-  val classPathFiles = configureClasspath(
+
+  // no classpath if no source file (jvm_test without own sources)
+  val classPathRaw = args.optionalList(JvmBuilderFlags.CP)
+  val classPathFiles = Array<Path>(classPathRaw.size) {
+    classPathRootDir.resolve(classPathRaw[it]).normalize()
+  }
+
+  val trackableDependencyFiles = configureClasspath(
     module = module,
     dependencyList = dependencyList,
-    args = args,
-    baseDir = classPathRootDir,
+    classPathRaw = classPathRaw,
+    files = classPathFiles,
     dependencyFileToDigest = dependencyFileToDigest,
     digests = digests,
   )
@@ -132,6 +136,7 @@ internal fun loadJpsModel(
 
   module.container.setChild(BazelConfigurationHolder.KIND, BazelConfigurationHolder(
     classPath = classPathFiles,
+    trackableDependencyFiles = trackableDependencyFiles,
     args = args,
     kotlinArgs = kotlinArgs,
     classPathRootDir = classPathRootDir,
@@ -203,6 +208,7 @@ internal class BazelConfigurationHolder(
   @JvmField val kotlinArgs: K2JVMCompilerArguments,
   @JvmField val classPathRootDir: Path,
   @JvmField val sources: List<Path>,
+  @JvmField val trackableDependencyFiles: List<Path>,
 ) : JpsElementBase<BazelConfigurationHolder>() {
   companion object {
     @JvmField val KIND: JpsElementChildRoleBase<BazelConfigurationHolder> = JpsElementChildRoleBase.create<BazelConfigurationHolder>("kotlin facet extension")
@@ -230,16 +236,11 @@ private fun configureJdk(
 private fun configureClasspath(
   module: JpsModuleImpl<JpsDummyElement>,
   dependencyList: JpsDependenciesList,
-  args: ArgMap<JvmBuilderFlags>,
-  baseDir: Path,
+  files: Array<Path>,
   dependencyFileToDigest: Map<Path, ByteArray>,
   digests: TargetConfigurationDigestContainer,
-): Array<Path> {
-  // no classpath if no source file (jvm_test without own sources)
-  val classPathRaw = args.optionalList(JvmBuilderFlags.CP)
-  val files = Array<Path>(classPathRaw.size) {
-    baseDir.resolve(classPathRaw[it]).normalize()
-  }
+  classPathRaw: List<String>,
+): List<Path> {
   val lib = BazelJpsLibrary("class-path-lib", files.asList())
   module.addModuleLibrary(lib)
   dependencyList.addLibraryDependency(lib)
@@ -252,22 +253,27 @@ private fun configureClasspath(
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_PATH_LIST, hash.asLong)
   hash.reset()
 
-  if (isLibTracked) {
-    digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, -1)
-  }
-  else {
-    for (file in files) {
-      val digest = requireNotNull(dependencyFileToDigest.get(file)) {
-        "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
-      }
-      hash.putByteArray(digest)
+  var untrackedCount = 0
+  val trackableDependencyFiles = ArrayList<Path>(files.size)
+  for (file in files) {
+    if (isDependencyTracked(file)) {
+      trackableDependencyFiles.add(file)
+      continue
     }
-    hash.putInt(files.size)
-    digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, hash.asLong)
-    hash.reset()
-  }
 
-  return files
+    untrackedCount++
+
+    val digest = requireNotNull(dependencyFileToDigest.get(file)) {
+      "Missing digest for $file.\n" +
+        "Available digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+    }
+    hash.putByteArray(digest)
+  }
+  hash.putInt(untrackedCount)
+  digests.set(TargetConfigurationDigestProperty.UNTRACKED_DEPENDENCY_DIGEST_LIST, hash.asLong)
+  hash.reset()
+
+  return trackableDependencyFiles
 }
 
 @Suppress("SameParameterValue")

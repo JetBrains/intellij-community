@@ -5,12 +5,14 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.trace.Tracer
+import kotlinx.coroutines.AbstractCoroutine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.jps.api.GlobalOptions
+import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.Writer
 import java.nio.file.Path
@@ -30,18 +32,26 @@ fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
   System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
   System.setProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true")
   System.setProperty("idea.compression.enabled", "false")
+  System.setProperty("jps.track.library.dependencies", "true")
   System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
 }
 
-internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor<WorkRequestWithDigests> {
+internal class JpsBuildWorker private constructor(
+  private val allocator: RootAllocator,
+  coroutineScope: CoroutineScope,
+) : WorkRequestExecutor<WorkRequestWithDigests> {
+  private val dependencyAnalyzer = DependencyAnalyzer(coroutineScope)
+
   companion object {
     @JvmStatic
     fun main(startupArgs: Array<String>) {
       RootAllocator(Long.MAX_VALUE).use { allocator ->
         processRequests(
           startupArgs = startupArgs,
-          executor = JpsBuildWorker(allocator),
-          setup = { tracer, scope -> configureGlobalJps(tracer = tracer, scope = scope) },
+          executorFactory = { tracer, scope ->
+            configureGlobalJps(tracer = tracer, scope = scope)
+            JpsBuildWorker(allocator, scope)
+          },
           reader = WorkRequestWithDigestReader(System.`in`),
           serviceName = "jps-builder",
         )
@@ -50,6 +60,13 @@ internal class JpsBuildWorker private constructor(private val allocator: RootAll
   }
 
   override suspend fun execute(request: WorkRequestWithDigests, writer: Writer, baseDir: Path, tracer: Tracer): Int {
-    return incrementalBuild(request = request, baseDir = baseDir, tracer = tracer, writer = writer, allocator = allocator)
+    return incrementalBuild(
+      request = request,
+      baseDir = baseDir,
+      tracer = tracer,
+      writer = writer,
+      allocator = allocator,
+      dependencyAnalyzer = dependencyAnalyzer,
+    )
   }
 }

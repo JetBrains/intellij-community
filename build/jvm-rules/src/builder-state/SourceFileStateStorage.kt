@@ -79,7 +79,7 @@ fun loadBuildState(
   targetDigests: TargetConfigurationDigestContainer?,
   parentSpan: Span?,
 ): SourceFileStateResult? {
-  readArrowFile(buildStateFile, allocator, parentSpan) { fileReader ->
+  return readArrowFile(buildStateFile, allocator, parentSpan) { fileReader ->
     if (targetDigests != null) {
       val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
       if (rebuildRequested != null) {
@@ -87,7 +87,7 @@ fun loadBuildState(
           throw IOException(rebuildRequested)
         }
         else {
-          return SourceFileStateResult(
+          return@readArrowFile SourceFileStateResult(
             rebuildRequested = rebuildRequested,
             map = createInitialSourceMap(sourceFileToDigest),
             changedOrAddedFiles = emptyList(),
@@ -97,15 +97,13 @@ fun loadBuildState(
       }
     }
 
-    return doLoad(
+    doLoad(
       root = fileReader.vectorSchemaRoot,
       actualDigestMap = sourceFileToDigest,
       relativizer = relativizer,
       parentSpan = parentSpan,
     )
   }
-
-  return null
 }
 
 fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {

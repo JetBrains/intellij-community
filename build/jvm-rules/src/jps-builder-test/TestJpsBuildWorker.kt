@@ -14,6 +14,7 @@ import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.performTestInvocation
 import org.jetbrains.bazel.jvm.span
+import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
@@ -25,7 +26,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.PLATFORM_IMPL
+    val testModule = TestModules.LANG_IMPL
     val sources = testModule.sourcePaths.flatMap { collectSources(sourceDirPath = it, paths = testPaths) }
     require(sources.isNotEmpty())
     val testParams = testModule.getParams(baseDir)
@@ -68,6 +69,7 @@ internal object TestJpsBuildWorker {
             parentSpan = span,
             tracer = tracer,
             cachePrefix = "test-builder-",
+            dependencyAnalyzer = DependencyAnalyzer(coroutineScope),
           )
         }
       }

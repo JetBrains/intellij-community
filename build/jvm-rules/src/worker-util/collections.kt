@@ -31,6 +31,10 @@ fun <T : Any> linkedSet(collection: Collection<T>): ObjectLinkedOpenCustomHashSe
   return ObjectLinkedOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
 }
 
+fun <T : Any> linkedSet(collection: Array<T>): ObjectLinkedOpenCustomHashSet<T> {
+  return ObjectLinkedOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
+}
+
 fun <T : Any> hashSet(): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(slowEqualsAwareHashStrategy())
 
 fun <T : Any> hashSet(expectedSize: Int): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(expectedSize, slowEqualsAwareHashStrategy())

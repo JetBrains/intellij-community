@@ -4,7 +4,12 @@ package org.jetbrains.bazel.jvm
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.W_OVERWRITE
+import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
+import org.jetbrains.intellij.build.io.ZipIndexWriter
+import org.jetbrains.intellij.build.io.file
 import java.io.File
 import java.io.Writer
 import java.nio.channels.FileChannel
@@ -13,7 +18,12 @@ import java.nio.file.Path
 object JvmWorker : WorkRequestExecutor<WorkRequest> {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "jvm-worker")
+    processRequests(
+      startupArgs = startupArgs,
+      executorFactory = { _, _ -> this },
+      reader = WorkRequestReaderWithoutDigest(System.`in`),
+      serviceName = "jvm-worker",
+    )
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {

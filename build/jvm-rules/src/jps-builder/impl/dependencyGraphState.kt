@@ -26,7 +26,7 @@ import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Path
 
-internal fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer): NodeSource {
+internal fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer): PathSource {
   return PathSource(relativizer.toRelative(file, RelativePathType.SOURCE))
 }
 
@@ -41,7 +41,7 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   val relativizer = dataProvider.relativizer
 
   tracer.span("check lib deps") { span ->
-    val incremental = checkDependencies(
+    checkDependencies(
       context = context,
       chunk = chunk,
       target = target,
@@ -50,9 +50,6 @@ internal suspend fun markDirtyDependenciesForInitialRound(
       tracer = tracer,
       span = span,
     )
-    if (!incremental) {
-      throw RebuildRequestedException(RuntimeException("incremental lib deps update failed"))
-    }
   }
 
   val toCompile = hashSet<NodeSource>()

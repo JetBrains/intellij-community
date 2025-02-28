@@ -14,7 +14,12 @@ object KotlinBuildWorker : WorkRequestExecutor<WorkRequest> {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
     org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
-    processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "kotlin-builder")
+    processRequests(
+      startupArgs = startupArgs,
+      executorFactory = { _, _ -> this },
+      reader = WorkRequestReaderWithoutDigest(System.`in`),
+      serviceName = "kotlin-builder",
+    )
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
@@ -60,7 +65,7 @@ internal suspend fun buildKotlin(
 }
 
 private fun createBuildInfo(args: ArgMap<JvmBuilderFlags>): CompilationTaskInfo {
-  val ruleKind = args.mandatorySingle(JvmBuilderFlags.RULE_KIND).split('_')
+  val ruleKind = (args.optionalSingle(JvmBuilderFlags.RULE_KIND) ?: "kt_jvm_library)").split('_')
   check(ruleKind.size == 3 && ruleKind[0] == "kt") {
     "invalid rule kind $ruleKind"
   }

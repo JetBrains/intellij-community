@@ -45,12 +45,16 @@ internal class DeltaImpl internal constructor(baseSources: Iterable<NodeSource>,
     }
   }
 
-  fun associateSource(node: Node<*, *>, source: NodeSource) {
-    myNodeToSourcesMap.appendValues(node.referenceID, sources)
-    mySourceToNodesMap.appendValue(source, node)
+  fun associateNodes(source: NodeSource, nodes: List<Node<*, *>>) {
+    for (node in nodes) {
+      myNodeToSourcesMap.appendValue(node.referenceID, source)
+    }
+    mySourceToNodesMap.appendValues(source, nodes)
     // deduce dependencies
     for (index in indices) {
-      index.indexNode(node)
+      for (node in nodes) {
+        index.indexNode(node)
+      }
     }
   }
 }

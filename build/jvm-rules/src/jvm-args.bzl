@@ -2,7 +2,7 @@ def get_jvm_flags(flags):
     return [
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
-        "-Xms2g",
+        "-Xms4g",
         "-Xmx16g",
         "-XX:ReservedCodeCacheSize=512m",
         "-Djava.awt.headless=true",
@@ -21,5 +21,4 @@ def get_jvm_flags(flags):
         "-Dio.netty.allocator.type=pooled",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
-        "-Djps.track.library.dependencies=true",
     ] + flags

@@ -34,14 +34,14 @@ internal fun writeVectorToFile(file: Path, root: VectorSchemaRoot, metadata: Map
   }
 }
 
-internal inline fun readArrowFile(
+internal inline fun <T : Any> readArrowFile(
   file: Path,
   allocator: RootAllocator,
   parentSpan: Span?,
-  task: (ArrowFileReader) -> Unit,
-) {
+  crossinline task: (ArrowFileReader) -> T,
+): T? {
   try {
-    FileChannel.open(file, READ_FILE_OPTION).use { fileChannel ->
+    return FileChannel.open(file, READ_FILE_OPTION).use { fileChannel ->
       ArrowFileReader(fileChannel, allocator).use { fileReader ->
         // metadata is available only after loading batch
         fileReader.loadNextBatch()
@@ -50,7 +50,7 @@ internal inline fun readArrowFile(
     }
   }
   catch (_: NoSuchFileException) {
-    return
+    return null
   }
   catch (e: Throwable) {
     if (parentSpan == null) {
@@ -62,6 +62,6 @@ internal inline fun readArrowFile(
       AttributeKey.stringKey("stateFile"), file.toString(),
     ))
     // will be deleted by caller
-    return
+    return null
   }
 }

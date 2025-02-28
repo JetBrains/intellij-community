@@ -57,7 +57,7 @@ internal suspend fun nonIncrementalBuildUsingJps(
   )
 
   val context = BazelCompileContext(
-    scope = BazelCompileScope(isIncrementalCompilation = false, isRebuild = true),
+    scope = BazelCompileScope(isIncrementalCompilation = false, isRebuild = true, dependencyAnalyzer = null),
     projectDescriptor = projectDescriptor,
     delegateMessageHandler = log,
     coroutineContext = coroutineContext,

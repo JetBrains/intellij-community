@@ -39,7 +39,7 @@ internal class BuildDataManager private constructor(
   private val dataManager: BuildDataProvider,
   depGraph: DependencyGraph,
 ) {
-  private val depGraph = SynchronizedDependencyGraph(depGraph)
+  @JvmField val depGraph: DependencyGraph = SynchronizedDependencyGraph(depGraph)
   private val depGraphPathMapper: NodeSourcePathMapper
 
   private val targetToStorages = ConcurrentHashMap<Pair<BuildTarget<*>, StorageProvider<StorageOwner>>, StorageOwner>()

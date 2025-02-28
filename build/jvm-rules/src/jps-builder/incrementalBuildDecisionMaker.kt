@@ -5,12 +5,11 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.hashMap
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateResult
 import org.jetbrains.bazel.jvm.jps.state.PathRelativizer
 import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.jps.state.createNewDependencyList
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.loadDependencyState
 import org.jetbrains.bazel.jvm.span
@@ -35,7 +34,7 @@ internal fun validateFileExistence(outputs: OutputFiles, cacheDir: Path): String
 
 internal data class BuildStateResult(
   @JvmField val sourceFileState: SourceFileStateResult?,
-  @JvmField val dependencyState: DependencyStateResult?,
+  @JvmField val dependencyState: DependencyStateResult,
 
   @JvmField val rebuildRequested: String?,
 )
@@ -49,9 +48,9 @@ internal suspend fun computeBuildState(
   sourceFileToDigest: Map<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer,
   forceIncremental: Boolean,
-  log: RequestLog,
   tracer: Tracer,
-  classPath: Array<Path>,
+  trackableDependencyFiles: List<Path>,
+  dependencyFileToDigest: Map<Path, ByteArray>,
 ): BuildStateResult {
   val sourceFileStateResult = loadBuildState(
     buildStateFile = buildStateFile,
@@ -60,56 +59,56 @@ internal suspend fun computeBuildState(
     sourceFileToDigest = sourceFileToDigest,
     targetDigests = targetDigests,
     parentSpan = parentSpan,
-  ) ?: return BuildStateResult(null, null, "no source file state")
+  ) ?: return createCleanBuildStateResult(trackableDependencyFiles, dependencyFileToDigest, "no source file state")
 
   sourceFileStateResult.rebuildRequested?.let {
-    return BuildStateResult(null, null, it)
+    return createCleanBuildStateResult(trackableDependencyFiles, dependencyFileToDigest, it)
   }
 
   if (!forceIncremental) {
     val reason = checkIsFullRebuildRequired(
       buildState = sourceFileStateResult,
-      log = log,
       sourceFileCount = sourceFileToDigest.size,
       parentSpan = parentSpan,
     )
     if (reason != null) {
-      return BuildStateResult(null, null, reason)
+      return createCleanBuildStateResult(trackableDependencyFiles, dependencyFileToDigest, reason)
     }
   }
 
   return tracer.span("load and check dependency state") { span ->
     val result = loadDependencyState(
+      dependencyFileToDigest = dependencyFileToDigest,
+      trackableDependencyFiles = trackableDependencyFiles,
       storageFile = depStateStorageFile,
       allocator = allocator,
       relativizer = sourceRelativizer,
       span = span,
     )
-    if (result != null && classPath.size != result.size) {
-      BuildStateResult(null, null, "class path size (${classPath.size}) and dependency file size (${result.size}) must be equal")
-    }
-    else {
-      BuildStateResult(
-        sourceFileState = sourceFileStateResult,
-        dependencyState = DependencyStateResult(result ?: hashMap(classPath.size)),
-        rebuildRequested = null,
-      )
-    }
+    BuildStateResult(sourceFileState = sourceFileStateResult, dependencyState = result, rebuildRequested = null)
   }
+}
+
+internal fun createCleanBuildStateResult(
+  trackableDependencyFiles: List<Path>,
+  dependencyFileToDigest: Map<Path, ByteArray>,
+  rebuildRequested: String?,
+): BuildStateResult {
+  return BuildStateResult(
+    sourceFileState = null,
+    dependencyState = createNewDependencyList(trackableDependencyFiles, dependencyFileToDigest),
+    rebuildRequested = rebuildRequested,
+  )
 }
 
 private fun checkIsFullRebuildRequired(
   buildState: SourceFileStateResult,
-  log: RequestLog,
   sourceFileCount: Int,
   parentSpan: Span,
 ): String? {
   val incrementalEffort = buildState.changedOrAddedFiles.size + buildState.deletedFiles.size
   val rebuildThreshold = sourceFileCount * thresholdPercentage
   val forceFullRebuild = incrementalEffort >= rebuildThreshold
-  val reason = "incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild"
-  log.out.appendLine(reason)
-
   if (parentSpan.isRecording) {
     // do not use toRelative - print as is to show the actual path
     parentSpan.setAttribute(AttributeKey.stringArrayKey("changedFiles"), buildState.changedOrAddedFiles.map { it.toString() })
@@ -119,5 +118,5 @@ private fun checkIsFullRebuildRequired(
     parentSpan.setAttribute("rebuildThreshold", rebuildThreshold)
     parentSpan.setAttribute("forceFullRebuild", forceFullRebuild)
   }
-  return if (forceFullRebuild) reason else null
+  return if (forceFullRebuild) "incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=true" else null
 }

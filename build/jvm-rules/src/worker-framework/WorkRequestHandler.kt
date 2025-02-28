@@ -85,10 +85,9 @@ private val noopTracer = OpenTelemetry.noop().getTracer("noop")
 
 fun <T : WorkRequest> processRequests(
   startupArgs: Array<String>,
-  executor: WorkRequestExecutor<T>,
   serviceName: String?,
   reader: WorkRequestReader<T>,
-  setup: (Tracer, CoroutineScope) -> Unit = { _, _ -> },
+  executorFactory: (Tracer, CoroutineScope) -> WorkRequestExecutor<T>,
 ) {
   if (!startupArgs.contains("--persistent_worker")) {
     System.err.println("Only persistent worker mode is supported")
@@ -111,7 +110,7 @@ fun <T : WorkRequest> processRequests(
       }
 
       tracer.span("process requests") { span ->
-        setup(tracer, this@runBlocking)
+        val executor = executorFactory(tracer, this@runBlocking)
         WorkRequestHandler(requestExecutor = executor, out = System.out, tracer = tracer)
           .processRequests(reader)
       }

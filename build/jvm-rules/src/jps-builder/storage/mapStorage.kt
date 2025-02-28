@@ -57,9 +57,9 @@ internal class BazelPersistentMapletFactory private constructor(
   }
 
   // synchronized - we access data mostly in a single-threaded manner (cache per target)
-  private val stringEnumerator: StringEnumerator = object : StringEnumerator, ToIntFunction<String>, IntFunction<String> {
-    private val idToStringMap = Int2ObjectOpenHashMap<String>()
-    private val stringToIdMap = Object2IntOpenCustomHashMap<String>(slowEqualsAwareHashStrategy())
+  private val stringEnumerator = object : StringEnumerator, ToIntFunction<String>, IntFunction<String> {
+    private val idToStringCache = Int2ObjectOpenHashMap<String>()
+    private val stringToIdCache = Object2IntOpenCustomHashMap<String>(slowEqualsAwareHashStrategy())
 
     override fun applyAsInt(value: String): Int {
       return stringEnumeratorImpl.enumerate(value)
@@ -71,12 +71,20 @@ internal class BazelPersistentMapletFactory private constructor(
 
     @Synchronized
     override fun enumerate(string: String): Int {
-      return stringToIdMap.computeIfAbsent(string, this)
+      return stringToIdCache.computeIfAbsent(string, this)
     }
 
     @Synchronized
     override fun valueOf(id: Int): String {
-      return idToStringMap.computeIfAbsent(id, this)
+      return idToStringCache.computeIfAbsent(id, this)
+    }
+
+    @Synchronized
+    fun close() {
+      stringEnumeratorImpl.close()
+      // help GC
+      idToStringCache.clear()
+      stringToIdCache.clear()
     }
   }
 
@@ -114,7 +122,9 @@ internal class BazelPersistentMapletFactory private constructor(
       for (container in maps) {
         yield { container.close() }
       }
-      yield { stringEnumeratorImpl.close() }
+      yield {
+        stringEnumerator.close()
+      }
     })
   }
 }
