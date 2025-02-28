@@ -11,6 +11,7 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProjectAsync
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 import org.junit.jupiter.api.Test
 
 class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
@@ -30,7 +31,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/maven-app")
+      linkProject(project, "workspace/maven-app", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app")
       assertModuleEntity(project, "maven-app") { module ->
@@ -38,7 +39,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
                            "Maven: org.example:maven-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app", "maven-lib")
       assertModuleEntity(project, "maven-app") { module ->
@@ -63,9 +64,9 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/maven-app")
-      linkProject(project, "workspace/maven-lib")
-      unlinkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/maven-app", SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", SYSTEM_ID)
+      unlinkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app")
       assertModuleEntity(project, "maven-app") { module ->
@@ -100,7 +101,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/maven-app")
+      linkProject(project, "workspace/maven-app", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app")
       assertModuleEntity(project, "maven-app") { module ->
@@ -109,7 +110,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
                            "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app", "maven-lib")
       assertModuleEntity(project, "maven-app") { module ->
@@ -122,7 +123,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
                            "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
       }
 
-      linkProject(project, "workspace/maven-super-lib")
+      linkProject(project, "workspace/maven-super-lib", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app", "maven-lib", "maven-super-lib")
       assertModuleEntity(project, "maven-app") { module ->

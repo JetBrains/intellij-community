@@ -10,7 +10,9 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProjectAsync
-import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.SETTINGS_XML
+import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID as MAVEN_SYSTEM_ID
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID as GRADLE_SYSTEM_ID
 import org.junit.jupiter.api.Test
 
 class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
@@ -18,7 +20,7 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
   @Test
   fun `test library substitution with Maven application and Gradle library`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
     createMavenLibrary("workspace/repository", "org.example:gradle-lib:1.0-SNAPSHOT")
-    createMavenConfigFile("workspace/maven-app", "--settings=" + MavenConstants.SETTINGS_XML)
+    createMavenConfigFile("workspace/maven-app", "--settings=$SETTINGS_XML")
     createMavenSettingsFile("workspace/maven-app") {
       property("localRepository", testRoot.resolve("workspace/repository").toCanonicalPath())
     }
@@ -35,8 +37,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/maven-app")
-      linkProject(project, "workspace/gradle-lib")
+      linkProject(project, "workspace/maven-app", MAVEN_SYSTEM_ID)
+      linkProject(project, "workspace/gradle-lib", GRADLE_SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app",
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test")
@@ -61,8 +63,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/gradle-app", GRADLE_SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", MAVEN_SYSTEM_ID)
 
       assertModules(
         project, "workspace", "maven-lib",
@@ -92,8 +94,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
-      linkProject(project, "workspace/gradle-app")
-      linkProject(project, "workspace/maven-lib")
+      linkProject(project, "workspace/gradle-app", GRADLE_SYSTEM_ID)
+      linkProject(project, "workspace/maven-lib", MAVEN_SYSTEM_ID)
 
       assertModules(
         project, "workspace",
