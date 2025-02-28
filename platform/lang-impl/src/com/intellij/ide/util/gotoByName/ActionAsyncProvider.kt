@@ -28,8 +28,14 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
@@ -109,7 +115,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val list = collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
     LOG.debug { "Matched actions list is collected" }
 
-    awaitJob?.join() //wait until all items from previous step are processed
+    awaitJob?.join() // wait until all items from the previous step are processed
     LOG.debug { "Process matched actions for \"$pattern\"" }
     list.forEachConcurrentOrdered ({ matchedActionOrStub ->
       val action = matchedActionOrStub.action
@@ -128,11 +134,64 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     })
   }
 
+  /**
+   * Executes concurrent actions on the elements of the collection and applies a sequentially ordered action on the results.
+   * The concurrent actions run in parallel, but their results are processed in the same order as the collection elements.
+   *
+   * This implementation considers priorities of elements (what is good for delivering first results asap)
+   * but still runs many more concurrent actions at once than the approach with standard forEachConcurrent
+   * (what is good for performance in case of client-server communication)
+   */
   private suspend fun <TIn, TOut : Any> Collection<TIn>.forEachConcurrentOrdered(concurrentAction: suspend (TIn) -> TOut?, orderedAction: suspend (TOut) -> Unit) {
     coroutineScope {
-      this@forEachConcurrentOrdered.mapNotNull { async { concurrentAction(it) } }.forEach {
-        orderedAction(it.await() ?: return@forEach)
+      // PriorityDispatcher runs tasks with associated with contexts indexes
+      // The smaller index - the higher priority of the task
+      val dispatcher = PriorityDispatcher(this, size)
+
+      withContext(dispatcher.priorityDispatcher + IntElement(-1)) {
+        this@forEachConcurrentOrdered.asFlow().withIndex().map { (index, value) ->
+          async(dispatcher.priorityDispatcher + IntElement(index)) { concurrentAction(value) }
+        }.buffer(
+          // We limit the number of concurrently processing actions
+          // because in real life the original list contains up to 3000, but the consumer needs only the first 100-200 elements
+          // Without this limitation we may run approximately 500 unnecessary concurrent actions.
+          capacity = 100
+        ).collect {
+          orderedAction(it.await() ?: return@collect)
+        }
       }
+    }
+  }
+
+  private class IntElement(val value: Int) : CoroutineContext.Element {
+    companion object Key : CoroutineContext.Key<IntElement> // Unique key for this element
+    override val key: CoroutineContext.Key<*> get() = Key
+  }
+
+  private data class PriorityRunnable(val priority: Int, val runnable: Runnable)
+
+  @OptIn(ExperimentalStdlibApi::class)
+  private class PriorityDispatcher(scope: CoroutineScope, size: Int) {
+    private val context = scope.coroutineContext
+    private val dispatcher = context[CoroutineDispatcher]!!
+    private val priorityQueue = PriorityBlockingQueue<PriorityRunnable>(maxOf(1, size), compareBy { it.priority })
+
+    private val executeNext = Runnable {
+      val action = priorityQueue.poll()
+      action.runnable.run()
+    }
+
+    val priorityDispatcher: CoroutineDispatcher = object : CoroutineDispatcher() {
+      override fun dispatch(context: CoroutineContext, block: Runnable) {
+        val index = context[IntElement.Key]?.value ?: Int.MAX_VALUE
+        priorityQueue.add(PriorityRunnable(index, block))
+
+        dispatchNext()
+      }
+    }
+
+    private fun dispatchNext() {
+      dispatcher.dispatch(context, executeNext)
     }
   }
 
