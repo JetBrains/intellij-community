@@ -4,10 +4,10 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
+import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -359,7 +359,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
         PluginXmlConst.EXTENSION_IMPLEMENTATION_ATTR -> implementation = reader.getAttributeValue(i)
         PluginXmlConst.EXTENSION_IMPLEMENTATION_CLASS_ATTR -> implementation = reader.getAttributeValue(i)  // deprecated attribute
         PluginXmlConst.EXTENSION_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
-        PluginXmlConst.EXTENSION_ID_ATTR -> orderId = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.EXTENSION_ORDER_ID_ATTR -> orderId = getNullifiedAttributeValue(reader, i)
         PluginXmlConst.EXTENSION_ORDER_ATTR -> order = readOrder(reader.getAttributeValue(i))
         PluginXmlConst.EXTENSION_POINT_ATTR -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
         else -> hasExtraAttributes = true

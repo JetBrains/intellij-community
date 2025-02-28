@@ -84,7 +84,7 @@ object PluginXmlConst {
   const val EXTENSION_IMPLEMENTATION_ATTR: String = "implementation"
   const val EXTENSION_IMPLEMENTATION_CLASS_ATTR: String = "implementationClass"
   const val EXTENSION_OS_ATTR: String = "os"
-  const val EXTENSION_ID_ATTR: String = "id"
+  const val EXTENSION_ORDER_ID_ATTR: String = "id"
   const val EXTENSION_ORDER_ATTR: String = "order"
   const val EXTENSION_POINT_ATTR: String = "point"
 
