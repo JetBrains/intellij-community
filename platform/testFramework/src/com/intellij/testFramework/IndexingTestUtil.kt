@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.diagnostic.ThreadDumper
@@ -20,8 +20,27 @@ import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
 
-class IndexingTestUtil(private val project: Project) {
+class IndexingTestUtil private constructor() {
+  companion object { // companion object for keeping API compatibility
+    @JvmStatic
+    fun waitUntilIndexesAreReadyInAllOpenedProjects() {
+      for (project in ProjectManager.getInstance().openProjects) {
+        IndexWaiter(project).waitUntilFinished()
+      }
+    }
 
+    @JvmStatic
+    fun waitUntilIndexesAreReady(project: Project) {
+      IndexWaiter(project).waitUntilFinished()
+    }
+
+    suspend fun suspendUntilIndexesAreReady(project: Project) {
+      IndexWaiter(project).suspendUntilIndexesAreReady()
+    }
+  }
+}
+
+private class IndexWaiter(private val project: Project) {
   private fun waitAfterWriteAction() {
     if (project.isDisposed) return
 
@@ -123,7 +142,7 @@ class IndexingTestUtil(private val project: Project) {
     }
   }
 
-  private suspend fun suspendUntilIndexesAreReady() {
+  suspend fun suspendUntilIndexesAreReady() {
     if (shouldWait()) {
       thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
@@ -141,31 +160,13 @@ class IndexingTestUtil(private val project: Project) {
     }
   }
 
-  private fun waitUntilFinished() {
+  fun waitUntilFinished() {
     thisLogger().debug("waitUntilFinished, thread=${Thread.currentThread()}, WA=${ApplicationManager.getApplication().isWriteAccessAllowed}")
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       waitAfterWriteAction()
     }
     else {
       waitNow()
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun waitUntilIndexesAreReadyInAllOpenedProjects() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        IndexingTestUtil(project).waitUntilFinished()
-      }
-    }
-
-    @JvmStatic
-    fun waitUntilIndexesAreReady(project: Project) {
-      IndexingTestUtil(project).waitUntilFinished()
-    }
-
-    suspend fun suspendUntilIndexesAreReady(project: Project) {
-      IndexingTestUtil(project).suspendUntilIndexesAreReady()
     }
   }
 }
