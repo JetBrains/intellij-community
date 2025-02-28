@@ -92,6 +92,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
     private set
 
+  val hasPlatformSpecificResources: Boolean
+    get() = platformResourceGenerators.isNotEmpty()
+
   fun getMainJarName(): String = mainJarName
 
   companion object {
