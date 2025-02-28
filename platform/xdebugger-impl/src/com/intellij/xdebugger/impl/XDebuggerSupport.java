@@ -14,7 +14,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XBreakpointPanelProvider myBreakpointPanelProvider;
   private final XToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
   private final XToggleLineBreakpointActionHandler myToggleTemporaryLineBreakpointActionHandler;
-  private final XDebuggerSuspendedActionHandler myStepOverHandler;
   private final XDebuggerSuspendedActionHandler myStepIntoHandler;
   private final XDebuggerSuspendedActionHandler myStepOutHandler;
   private final XDebuggerSuspendedActionHandler myForceStepOverHandler;
@@ -39,12 +38,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     myToggleTemporaryLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(true);
     myAddToWatchesActionHandler = new XAddToWatchesFromEditorActionHandler();
     myAddToInlineWatchesActionHandler = new XAddToInlineWatchesFromEditorActionHandler();
-    myStepOverHandler = new XDebuggerSuspendedActionHandler() {
-      @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-        session.stepOver(false);
-      }
-    };
     myStepIntoHandler = new XDebuggerStepIntoHandler();
     myStepOutHandler = new XDebuggerSuspendedActionHandler() {
       @Override
@@ -82,11 +75,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public @NotNull BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
-  }
-
-  @Override
-  public @NotNull DebuggerActionHandler getStepOverHandler() {
-    return myStepOverHandler;
   }
 
   @Override

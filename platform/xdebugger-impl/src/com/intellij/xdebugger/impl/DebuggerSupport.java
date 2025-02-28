@@ -82,10 +82,6 @@ public abstract class DebuggerSupport {
     return EMPTY_PANEL_PROVIDER;
   }
 
-  public @NotNull DebuggerActionHandler getStepOverHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
   public @NotNull DebuggerActionHandler getStepIntoHandler() {
     return DisabledActionHandler.INSTANCE;
   }
