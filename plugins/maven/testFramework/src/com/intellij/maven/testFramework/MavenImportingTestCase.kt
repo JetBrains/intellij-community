@@ -63,7 +63,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.Throws
 
 /**
  * This test case uses the NIO API for handling file operations.

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -34,6 +35,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.ui.EDT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -703,7 +705,14 @@ internal open class WorkspaceProjectImporter(
         }
       }
       if (MavenUtil.isMavenUnitTestModeEnabled()) {
-        doRefreshFiles(files)
+        if (EDT.isCurrentThreadEdt()) {
+          WriteIntentReadAction.run {
+            doRefreshFiles(files)
+          }
+        }
+        else {
+          doRefreshFiles(files)
+        }
       }
       else {
         postTasks.add(RefreshingFilesTask(files))
