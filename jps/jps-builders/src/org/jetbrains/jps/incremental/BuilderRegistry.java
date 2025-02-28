@@ -98,6 +98,9 @@ public final class BuilderRegistry {
     return count;
   }
 
+  /**
+   * Returns the list of all available class-file instrumenters in the sorted order. 
+   */
   @ApiStatus.Internal
   public @NotNull List<JvmClassFileInstrumenter> getClassFileInstrumenters() {
     return myClassFileInstrumenters;
