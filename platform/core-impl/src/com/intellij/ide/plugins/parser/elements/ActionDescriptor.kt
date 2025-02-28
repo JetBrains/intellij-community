@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.parser.elements
 import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 sealed class ActionDescriptor(
   @JvmField val name: ActionDescriptorName,
   @JvmField val element: XmlElement,
