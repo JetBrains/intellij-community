@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.artifacts.ArtifactCompilerTestCase;
-import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -30,7 +29,6 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,15 +79,6 @@ public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
   }
   
   public void testDisableAndEnableSwingUiDesignerPlugin() throws IOException {
-    BuildProcessParametersProvider.EP_NAME.getPoint(myProject).registerExtension(
-      new BuildProcessParametersProvider() {
-        @Override
-        public @NotNull List<String> getVMArguments() {
-          return List.of("-Djps.rebuild.on.change.in.instrumenters=true");
-        }
-      }, 
-      getTestRootDisposable());
-      
     VirtualFile javaFileWithoutForm = createFile("src/A.java", "class A{}");
     VirtualFile srcRoot = javaFileWithoutForm.getParent();
     copyClassWithForm(srcRoot);
