@@ -144,11 +144,6 @@ object Urls {
       authority = if (hasUrlSeparator) "" else null
     }
 
-    // canonicalize only if authority is not empty or file url - we should not canonicalize URL with unknown scheme (webpack:///./modules/flux-orion-plugin/fluxPlugin.ts)
-    if (path != null && (!authority.isNullOrEmpty() || StandardFileSystems.FILE_PROTOCOL == scheme)) {
-      path = FileUtilRt.toCanonicalPath(path, '/', false)
-    }
-
     return UrlImpl(scheme, authority, path, matcher.group(5))
   }
 
