@@ -384,10 +384,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
       if (session != null) {
-        XDebugSessionTab tab = session.getSessionTab();
-        if (tab != null) {
-          tab.select();
-        }
         myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
       }
       else {

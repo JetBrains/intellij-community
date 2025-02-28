@@ -19,9 +19,12 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.id
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -36,6 +39,7 @@ interface XDebugSessionProxy {
   val extraActions: List<AnAction>
   val extraStopActions: List<AnAction>
   val processHandler: ProcessHandler
+  val coroutineScope: CoroutineScope
 
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
   fun getCurrentExecutionStack(): XExecutionStack?
@@ -51,6 +55,7 @@ interface XDebugSessionProxy {
   fun putKey(sink: DataSink)
   fun updateExecutionPosition()
   fun onTabInitialized(tab: XDebugSessionTab)
+  suspend fun sessionId(): XDebugSessionId
 
   companion object {
     @JvmField
@@ -78,6 +83,12 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.extraStopActions ?: emptyList()
     override val processHandler: ProcessHandler
       get() = session.debugProcess.processHandler
+    override val coroutineScope: CoroutineScope
+      get() = (session as XDebugSessionImpl).coroutineScope
+
+    override suspend fun sessionId(): XDebugSessionId {
+      return (session as XDebugSessionImpl).id()
+    }
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
       return (session as? XDebugSessionImpl)?.getFrameSourcePosition(frame)

@@ -5,12 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.util.messages.Topic
+import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -35,7 +34,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
       for (sessionDto in sessionsList) {
         createDebuggerSession(sessionDto)
       }
-      project.messageBus.connect(cs).subscribe(TOPIC, object : FrontendXDebuggerManagerListener {
+      project.messageBus.connect(cs).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
         override fun processStarted(sessionId: XDebugSessionId, sessionDto: XDebugSessionDto) {
           createDebuggerSession(sessionDto)
         }
@@ -47,13 +46,13 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
       eventFlow.toFlow().collect { event ->
         when (event) {
           is XDebuggerSessionEvent.ProcessStarted -> {
-            project.messageBus.syncPublisher(TOPIC).processStarted(event.sessionId, event.sessionDto)
+            project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).processStarted(event.sessionId, event.sessionDto)
           }
           is XDebuggerSessionEvent.ProcessStopped -> {
-            project.messageBus.syncPublisher(TOPIC).processStopped(event.sessionId)
+            project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).processStopped(event.sessionId)
           }
           is XDebuggerSessionEvent.CurrentSessionChanged -> {
-            project.messageBus.syncPublisher(TOPIC).activeSessionChanged(event.previousSession, event.currentSession)
+            project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(event.previousSession, event.currentSession)
           }
         }
       }
@@ -69,9 +68,5 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
   companion object {
     @JvmStatic
     fun getInstance(project: Project): FrontendXDebuggerManager = project.service()
-
-    @Topic.ProjectLevel
-    val TOPIC: Topic<FrontendXDebuggerManagerListener> =
-      Topic("FrontendXDebuggerManager events", FrontendXDebuggerManagerListener::class.java)
   }
 }
