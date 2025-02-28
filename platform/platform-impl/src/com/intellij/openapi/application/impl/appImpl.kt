@@ -2,6 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.ProcessCanceledException
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
@@ -75,5 +77,15 @@ internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runn
     if (caughtException != null) {
       throw caughtException
     }
+  }
+}
+
+@ApiStatus.Internal
+fun getGlobalThreadingSupport(): ThreadingSupport {
+  if (useNestedLocking) {
+    return NestedLocksThreadingSupport
+  }
+  else {
+    return AnyThreadWriteThreadingSupport
   }
 }

@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -494,6 +495,19 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         withContext(Dispatchers.EDT) {
           assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
         }
+      }
+    }
+  }
+
+  @Test
+  fun `pure read access in explicit read action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    Assumptions.assumeTrue(useNestedLocking)
+    runWithModalProgressBlocking {
+      ApplicationManager.getApplication().runReadAction {
+        assertFalse(application.isWriteIntentLockAcquired)
+        assertTrue(application.holdsReadLock())
+        assertFalse(application.isWriteAccessAllowed)
+        assertTrue(application.isReadAccessAllowed)
       }
     }
   }

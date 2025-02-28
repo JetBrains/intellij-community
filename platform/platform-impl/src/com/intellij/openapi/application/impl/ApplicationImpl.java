@@ -1502,6 +1502,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private static @NotNull ThreadingSupport getThreadingSupport() {
-    return AnyThreadWriteThreadingSupport.INSTANCE;
+    return AppImplKt.getGlobalThreadingSupport();
   }
 }
