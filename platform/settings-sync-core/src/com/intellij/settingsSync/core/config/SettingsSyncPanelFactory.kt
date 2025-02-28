@@ -13,6 +13,8 @@ import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
@@ -25,6 +27,7 @@ import java.awt.BorderLayout
 import javax.swing.BoxLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JPanel
 
 internal class SettingsSyncPanelHolder() {
@@ -100,6 +103,74 @@ internal class SettingsSyncPanelHolder() {
     }
   }
 
+  private fun Row.createSyncCategoryCheckbox(holder: SyncCategoryHolder) {
+    val checkBox = checkBox(holder.name)
+    if (!isModifiable(holder)) {
+      checkBox.enabled(false)
+      comment(holder.description)
+      return
+    }
+
+    checkBox
+      .bindSelected(holder::isSynchronized)
+      .onReset {
+        holder.reset()
+        checkBox.component.isSelected = holder.isSynchronized
+      }
+      .onApply {
+        holder.apply()
+      }
+      .onIsModified {
+        holder.isModified()
+      }
+    comment(holder.description)
+  }
+
+  private fun Row.createTopSyncCategoryCheckbox(holder: SyncCategoryHolder) {
+    fun Row.addComment(): Cell<JEditorPane> {
+      return comment(holder.description).visible(!holder.description.isEmpty())
+    }
+
+    val topCheckBox = ThreeStateCheckBox(holder.name)
+    topCheckBox.isThirdStateEnabled = false
+    topCheckBox.isEnabled = isModifiable(holder)
+    if (!isModifiable(holder)) {
+      cell(topCheckBox)
+      topCheckBox.state = State.NOT_SELECTED
+      addComment()
+      return
+    }
+
+    cell(topCheckBox)
+      .onReset {
+        holder.reset()
+        topCheckBox.state = getGroupState(holder)
+      }
+      .onApply {
+        holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+        holder.apply()
+      }
+      .onIsModified { holder.isModified() }
+    val c = addComment()
+    val subcategoryLink = configureLink(holder.secondaryGroup!!, c.component.font.size2D) {
+      topCheckBox.state = getGroupState(holder)
+      holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+    }
+    val subcategoryLinkCell = cell(subcategoryLink)
+    subcategoryLinkCell
+      .visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
+      .onReset {
+        subcategoryLinkCell.visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
+      }
+    topCheckBox.addActionListener {
+      holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+      holder.secondaryGroup!!.getDescriptors().forEach {
+        it.isSelected = holder.isSynchronized
+      }
+      subcategoryLink.isEnabled = holder.secondaryGroup!!.isComplete() || holder.isSynchronized
+    }
+  }
+
   private fun createSyncCategoriesPanel(syncLabel: @Nls String): DialogPanel {
     return panel {
       onApply {
@@ -116,56 +187,10 @@ internal class SettingsSyncPanelHolder() {
         indent {
           row {
             if (holder.secondaryGroup == null) {
-              val checkBox = checkBox(
-                holder.name
-              )
-              checkBox
-                .bindSelected(holder::isSynchronized)
-                .onReset {
-                  holder.reset()
-                  checkBox.component.isSelected = holder.isSynchronized
-                }
-                .onApply {
-                  holder.apply()
-                }
-                .onIsModified {
-                  holder.isModified()
-                }
-                .enabled(isModifiable(holder))
-              comment(holder.description)
+              createSyncCategoryCheckbox(holder)
             }
             else {
-              val topCheckBox = ThreeStateCheckBox(holder.name)
-              topCheckBox.isThirdStateEnabled = false
-              topCheckBox.isEnabled = isModifiable(holder)
-              cell(topCheckBox)
-                .onReset {
-                  holder.reset()
-                  topCheckBox.state = getGroupState(holder)
-                }
-                .onApply {
-                  holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                  holder.apply()
-                }
-                .onIsModified { holder.isModified() }
-              val c = comment(holder.description).visible(!holder.description.isEmpty())
-              val subcategoryLink = configureLink(holder.secondaryGroup!!, c.component.font.size2D) {
-                topCheckBox.state = getGroupState(holder)
-                holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-              }
-              val subcategoryLinkCell = cell(subcategoryLink)
-              subcategoryLinkCell
-                .visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
-                .onReset {
-                  subcategoryLinkCell.visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
-                }
-              topCheckBox.addActionListener {
-                holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                holder.secondaryGroup!!.getDescriptors().forEach {
-                  it.isSelected = holder.isSynchronized
-                }
-                subcategoryLink.isEnabled = holder.secondaryGroup!!.isComplete() || holder.isSynchronized
-              }
+              createTopSyncCategoryCheckbox(holder)
             }
           }
         }
