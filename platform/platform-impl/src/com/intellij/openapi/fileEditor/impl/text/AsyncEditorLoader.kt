@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -38,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG: Logger = logger<AsyncEditorLoader>()
 
 @Internal
-class AsyncEditorLoader internal constructor(
+class  AsyncEditorLoader internal constructor(
   private val project: Project,
   private val provider: TextEditorProvider,
   @JvmField val coroutineScope: CoroutineScope,
@@ -63,6 +64,12 @@ class AsyncEditorLoader internal constructor(
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)
+      performWhenLoaded(asyncLoader, runnable)
+    }
+
+    @Internal
+    @RequiresEdt
+    fun performWhenLoaded(asyncLoader: AsyncEditorLoader?, runnable: Runnable) {
       if (asyncLoader == null || asyncLoader.isLoaded()) {
         runnable.run()
       }
