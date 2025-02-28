@@ -7,6 +7,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -29,7 +30,29 @@ import kotlin.system.measureTimeMillis
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
+    fun logJpsEntities(state: String) {
+      val logger = thisLogger()
+      if (logger.isDebugEnabled) {
+        try {
+          fun <T> List<T>.safeSubList(fromIndex: Int, toIndex: Int): List<T> =
+            this.subList(fromIndex.coerceAtLeast(0), toIndex.coerceAtMost(this.size))
+
+          val wsm = WorkspaceModel.getInstance(project).currentSnapshot
+          val jpsEntities = wsm.entitiesBySource { entitySource -> entitySource is JpsFileEntitySource }.toList()
+          val sampleSize = 50
+          val entitySources = jpsEntities.stream().map { e -> e.entitySource }.distinct().limit(sampleSize.toLong()).toList()
+          logger.warn("$state: ${jpsEntities.size} entities.\n" +
+                      "First $sampleSize entities are: ${jpsEntities.safeSubList(0, sampleSize)}.\n" +
+                      "First $sampleSize entity sources are: ${entitySources}")
+        } catch (_: Throwable) {
+          // do nothing. Imagine that this code was never existed. We are debugging BAZEL-1750.
+        }
+      }
+    }
+
+    logJpsEntities("Before Util.doSync")
     Util.doSync(project)
+    logJpsEntities("After Util.doSync")
   }
 
   object Util {
