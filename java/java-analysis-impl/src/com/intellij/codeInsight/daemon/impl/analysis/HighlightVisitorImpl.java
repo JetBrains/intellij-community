@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -123,11 +124,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myHolder = holder;
     myFile = file;
-    JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
-    myCollector = new JavaErrorCollector(file, error -> reportError(error, errorFixProvider));
+    List<@NotNull JavaErrorFixProvider> fixProviders = JavaErrorFixProvider.EP_NAME.getExtensionList();
+    myCollector = new JavaErrorCollector(file, error -> reportError(error, fixProviders));
   }
 
-  private void reportError(JavaCompilationError<?, ?> error, JavaErrorFixProvider errorFixProvider) {
+  private void reportError(JavaCompilationError<?, ?> error, List<@NotNull JavaErrorFixProvider> fixProviders) {
     JavaErrorHighlightType javaHighlightType = error.highlightType();
     HighlightInfoType type = switch (javaHighlightType) {
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
@@ -156,8 +157,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
-    errorFixProvider.processFixes(error, consumer);
-    ErrorFixExtensionPoint.registerFixes(consumer, error.psi(), error.kind().key());
+    fixProviders.forEach(provider -> provider.registerFixes(error, consumer));
     error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
       .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED).map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))

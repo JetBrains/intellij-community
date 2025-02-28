@@ -21,9 +21,8 @@
     <!-- See com.intellij.codeInspection.visibility.VisibilityInspection -->
     <extensionPoint qualifiedName="com.intellij.visibility" interface="com.intellij.codeInspection.visibility.VisibilityExtension" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.CommonIntentionAction"/>
-    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.java.errorFixProvider" dynamic="true" 
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorFixProvider"/>
 
     <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>
 
@@ -75,6 +74,7 @@
     <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
                         serviceImplementation="com.intellij.openapi.roots.impl.InternalPersistentJavaLanguageLevelReaderServiceImpl"
                         overrides="true"/>
+    <java.errorFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultJavaErrorFixProvider"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"

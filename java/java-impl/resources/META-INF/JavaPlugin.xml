@@ -928,8 +928,6 @@
     <jvm.logging implementation="com.intellij.lang.logging.UnspecifiedLogger"/>
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
-    <java.error.fix errorCode="variable.must.be.effectively.final.lambda"
-                    implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
@@ -1572,10 +1570,7 @@
     <lang.namesValidator language="JAVA" implementationClass="com.intellij.lang.refactoring.JavaNamesValidator"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaNextParameterActionPromoter"/>
-    <java.error.fix errorCode="variable.must.be.effectively.final.lambda"
-                    implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
-    <java.error.fix errorCode="variable.must.be.effectively.final.guard"
-                    implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
+    <java.errorFixProvider implementation="com.intellij.codeInspection.AdditionalJavaErrorFixProvider"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
     <advancedSetting id="java.show.irrelevant.templates.in.source.roots" default="false"
