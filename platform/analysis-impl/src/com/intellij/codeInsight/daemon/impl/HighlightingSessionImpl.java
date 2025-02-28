@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -138,15 +137,14 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @ApiStatus.Internal
   public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
-                                                                    @NotNull CodeInsightContext codeInsightContext,
-                                                                    @Nullable Editor editor,
-                                                                    @Nullable EditorColorsScheme editorColorsScheme,
-                                                                    @NotNull DaemonProgressIndicator progressIndicator,
-                                                                    @NotNull Number daemonCancelEventCount,
-                                                                    @NotNull TextRange compositeDocumentDirtyRange) {
+                                                                           @NotNull CodeInsightContext codeInsightContext,
+                                                                           @Nullable Editor editor,
+                                                                           @Nullable EditorColorsScheme editorColorsScheme,
+                                                                           @NotNull DaemonProgressIndicator progressIndicator,
+                                                                           @NotNull Number daemonCancelEventCount,
+                                                                           @NotNull TextRange compositeDocumentDirtyRange) {
     ThreadingAssertions.assertEventDispatchThread();
-    TextRange fileRange = psiFile.getTextRange();
-    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE))
+    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(0, psiFile.getViewProvider().getDocument().getTextLength())
                                   : editor.calculateVisibleRange();
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return createHighlightingSession(psiFile, codeInsightContext, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
