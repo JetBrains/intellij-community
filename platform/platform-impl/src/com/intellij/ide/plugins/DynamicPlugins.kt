@@ -18,7 +18,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.ActionDescriptor.ActionDescriptorName
+import com.intellij.ide.plugins.parser.elements.ActionDescriptor.ActionDescriptorName
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache

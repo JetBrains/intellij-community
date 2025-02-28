@@ -4,7 +4,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.ActionDescriptor.*
+import com.intellij.ide.plugins.parser.elements.ActionDescriptor.*
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.parser.elements.ActionDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
