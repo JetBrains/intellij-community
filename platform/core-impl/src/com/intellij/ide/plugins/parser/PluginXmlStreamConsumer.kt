@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import javax.xml.stream.XMLStreamException
 
-@ApiStatus.Internal
 interface PluginXmlStreamConsumer {
   @Throws(XMLStreamException::class)
   fun consume(reader: XMLStreamReader2)
@@ -16,12 +15,10 @@ interface PluginXmlStreamConsumer {
 /**
  * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
  */
-@ApiStatus.Internal
 @Throws(XMLStreamException::class)
 fun PluginXmlStreamConsumer.consume(input: InputStream, locationSource: String?): Unit =
   consume(createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource))
 
-@ApiStatus.Internal
 @Throws(XMLStreamException::class)
 fun PluginXmlStreamConsumer.consume(byteArray: ByteArray, locationSource: String?): Unit =
   consume(createNonCoalescingXmlStreamReader(input = byteArray, locationSource = locationSource))
