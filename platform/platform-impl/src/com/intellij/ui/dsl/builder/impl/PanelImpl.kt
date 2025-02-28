@@ -263,10 +263,6 @@ internal class PanelImpl(
     this.init()
   }
 
-  override fun useNewComboBoxRenderer() {
-    dialogPanelConfig.useComboBoxNewRenderer = true
-  }
-
   @Deprecated("Use customize(UnscaledGaps) instead")
   @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): PanelImpl {

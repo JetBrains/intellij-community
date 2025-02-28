@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ContextHelpLabel
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
@@ -23,7 +24,6 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
-import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.IconUtil
@@ -376,7 +376,16 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
-    component.renderer = renderer ?: createDefaultComboBoxRenderer()
+
+    if (renderer == null) {
+      if (!ExperimentalUI.isNewUI()) {
+        component.renderer = SimpleListCellRenderer.create("") { it.toString() }
+      }
+    }
+    else {
+      component.renderer = renderer
+    }
+
     return cell(component)
   }
 
@@ -392,12 +401,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   fun getIndent(): Int {
     return panelContext.indentCount * parent.spacingConfiguration.horizontalIndent
-  }
-
-  private fun <T> createDefaultComboBoxRenderer(): ListCellRenderer<in T?> {
-    // todo remove useComboBoxNewRenderer and related code. Use default ComboBox renderer, which should support round selection etc
-    return if (dialogPanelConfig.useComboBoxNewRenderer) textListCellRenderer("") { it.toString() }
-    else SimpleListCellRenderer.create("") { it.toString() }
   }
 
   private fun doVisible(isVisible: Boolean) {

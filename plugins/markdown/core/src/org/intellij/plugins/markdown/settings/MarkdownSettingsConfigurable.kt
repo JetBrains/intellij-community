@@ -73,8 +73,6 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
 
   override fun createPanel(): DialogPanel {
     return panel {
-      useNewComboBoxRenderer()
-
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
         if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {

@@ -156,11 +156,4 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
-  /**
-   * Forces to use new [com.intellij.ui.dsl.listCellRenderer.textListCellRenderer] as the default renderer in combo boxes inside panel.
-   * In the near release [textListCellRenderer] will be used by default in Kotlin UI DSL and this method will be removed
-   */
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  fun useNewComboBoxRenderer()
 }

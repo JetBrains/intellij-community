@@ -43,8 +43,6 @@ internal class BrowserSettingsPanel {
   private var customPathValue: String? = null
 
   private val root: JPanel = panel {
-    useNewComboBoxRenderer()
-
     val itemEditor: DialogItemEditor<ConfigurableWebBrowser> = object : DialogItemEditor<ConfigurableWebBrowser> {
       override fun getItemClass(): Class<ConfigurableWebBrowser> {
         return ConfigurableWebBrowser::class.java

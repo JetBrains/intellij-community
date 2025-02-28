@@ -19,8 +19,6 @@ class PostfixTemplatesConfigurableUi {
   val descriptionPanel: JPanel = JPanel()
 
   val panel: JPanel = panel {
-    useNewComboBoxRenderer()
-
     row {
       postfixTemplatesEnabled = checkBox(CodeInsightBundle.message("postfix.completion.option.enabled"))
         .component

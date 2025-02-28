@@ -32,8 +32,6 @@ internal class ComboBoxPanel : UISandboxPanel {
     val items = items(10)
 
     val result = panel {
-      useNewComboBoxRenderer()
-
       withStateLabel {
         comboBox(items)
       }
