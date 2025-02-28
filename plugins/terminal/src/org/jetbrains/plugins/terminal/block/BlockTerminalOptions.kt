@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 
 /**
@@ -23,15 +22,6 @@ class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOptions.State
   @Suppress("DEPRECATION")
   override fun loadState(state: State) {
     this.state = state
-
-    // Migrate the value from the previously existing setting if it was non default.
-    // So, if 'useShellPrompt' was set to true, we need to follow it.
-    val options = TerminalOptionsProvider.instance
-    if (options.useShellPrompt) {
-      // Access state directly, no need to fire settings changed event now.
-      this.state.promptStyle = TerminalPromptStyle.SHELL
-      options.useShellPrompt = false
-    }
   }
 
   var promptStyle: TerminalPromptStyle
