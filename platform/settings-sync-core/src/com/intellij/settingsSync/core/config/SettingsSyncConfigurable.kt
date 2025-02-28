@@ -2,12 +2,13 @@ package com.intellij.settingsSync.core.config
 
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -17,7 +18,11 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -29,14 +34,20 @@ import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvi
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
+import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.listCellRenderer.groupedTextListCellRenderer
+import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.builder.components.DslLabelType
+import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Consumer
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil.labelFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.event.ItemEvent
@@ -44,6 +55,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.swing.*
+import javax.swing.event.HyperlinkEvent
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
@@ -57,6 +69,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private lateinit var statusLabel: JLabel
   private lateinit var userDropDownLink: DropDownLink<UserProviderHolder?>
   private lateinit var syncTypeLabel: JEditorPane
+  private lateinit var syncConfigPanel: DialogPanel
+
 
   private val syncEnabler = SettingsSyncEnabler()
   private val enabledStatus = AtomicBooleanProperty(false)
@@ -74,9 +88,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   override fun createPanel(): DialogPanel {
-    val syncConfigPanel = syncPanelHolder.createCombinedSyncSettingsPanel(message("configurable.what.to.sync.label"),
-                                                                          SettingsSyncSettings.getInstance(),
-                                                                          SettingsSyncLocalSettings.getInstance())
+    syncConfigPanel = syncPanelHolder.createCombinedSyncSettingsPanel(message("configurable.what.to.sync.label"),
+                                                                      SettingsSyncSettings.getInstance(),
+                                                                      SettingsSyncLocalSettings.getInstance())
 
     configPanel = panel {
       enabledStatus.set(SettingsSyncSettings.getInstance().syncEnabled)
@@ -128,20 +142,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           iconTextGap = 6
         }.gap(RightGap.SMALL)
         statusLabel = label.component
-        cell(object: DropDownLink<UserProviderHolder?>(userProviderHolder, userAccountsList) {
-          override fun createRenderer(): ListCellRenderer<in UserProviderHolder?> {
-            return groupedTextListCellRenderer({
-                                                 if (it == UserProviderHolder.addAccount) {
-                                                   message("enable.sync.add.account")
-                                                 } else {
-                                                   it.toString()
-                                                 }
-
-                                               }, {
-                                                 it?.separatorString
-            })
-          }
-        }).onChangedContext { component, context ->
+        userDropDownLink = DropDownLink<UserProviderHolder?>(userProviderHolder) { link: DropDownLink<UserProviderHolder?>? -> showAccounts(link) }
+        cell(userDropDownLink).onChangedContext { component, context ->
           val event = context.event
           if (event is ItemEvent && event.item == UserProviderHolder.addAccount) {
             val syncTypeDialog = AddAccountDialog(configPanel)
@@ -155,10 +157,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           } else {
             component.text = component.selectedItem.toString()
           }
-        }.apply {
-          userDropDownLink = this.component
         }
-
       }.visibleIf(wasUsedBefore)
 
       row {
@@ -343,6 +342,94 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     syncTypeLabel.text ="<div>$message</div> <div style='margin-top: 5px'><a>${message("enable.dialog.change")}</a></div>"
   }
 
+  private fun showAccounts(link: DropDownLink<UserProviderHolder?>?): JBPopup {
+    val accounts = object : BaseListPopupStep<UserProviderHolder>() {
+      private var stepSelectedValue: UserProviderHolder? = null
+      override fun onChosen(selectedValue: UserProviderHolder, finalChoice: Boolean): PopupStep<*>? {
+        stepSelectedValue = selectedValue
+        return PopupStep.FINAL_CHOICE
+      }
+
+      override fun getTextFor(value: UserProviderHolder?): String {
+        return if (value == UserProviderHolder.addAccount) {
+          message("enable.sync.add.account")
+        }
+        else {
+          value?.toString() ?: ""
+        }
+      }
+
+      override fun getSeparatorAbove(value: UserProviderHolder?): ListSeparator? {
+        return value?.separatorString?.let { ListSeparator(it) }
+      }
+
+      override fun getFinalRunnable(): Runnable? {
+        if (stepSelectedValue != null) {
+          return Runnable { tryChangeAccount(stepSelectedValue!!) }
+        }
+        return null
+      }
+
+      init {
+        init(null, userAccountsList, emptyList())
+        defaultOptionIndex = userAccountsList.indexOf(userDropDownLink.selectedItem)
+      }
+    }
+
+    val currentProviderCode = link?.selectedItem?.providerCode
+
+    val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(configPanel))
+    val listPopup = object : ListPopupImpl(project, accounts) {
+
+      override fun setFooterComponent(c: JComponent?) {
+        val thePopup = this
+        super.setFooterComponent(DslLabel(DslLabelType.LABEL).apply {
+          text = "<a>${message("logout.link.text", currentProviderCode ?: "")}</a>"
+
+          addHyperlinkListener {
+            if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+              thePopup.cancel()
+              if (currentProviderCode == null) return@addHyperlinkListener
+              coroutineScope.launch(ModalityState.current().asContextElement()) {
+                withContext(Dispatchers.EDT) {
+                  val provider = RemoteCommunicatorHolder.getProvider(currentProviderCode) ?: return@withContext
+                  val authService = provider.authService
+                  authService.logout(configPanel)
+                }
+              }
+            }
+          }
+
+          foreground = JBUI.CurrentTheme.Advertiser.foreground()
+          background = JBUI.CurrentTheme.Advertiser.background()
+
+          setOpaque(true)
+          setFont(RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get(), scale(11f)).derive(labelFont))
+          setBorder(JBUI.CurrentTheme.Advertiser.border())
+        })
+      }
+    }
+    if (currentProviderCode != null) {
+      listPopup.setAdText(message("logout.link.text", currentProviderCode)) // doesn't matter, will be changed
+    }
+
+    return listPopup
+  }
+
+  private fun tryChangeAccount(selectedValue: UserProviderHolder) {
+    if (selectedValue == UserProviderHolder.addAccount) {
+      val syncTypeDialog = AddAccountDialog(configPanel)
+      if (syncTypeDialog.showAndGet()) {
+        val providerCode = syncTypeDialog.providerCode
+        val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: return
+        login(provider, syncConfigPanel)
+      }
+    } else {
+      userDropDownLink.selectedItem = selectedValue
+    }
+
+  }
+
 
   private fun updateUserAccountsList() {
     userAccountsList.clear()
@@ -378,7 +465,6 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               SettingsSyncEvents.getInstance().fireLoginStateChanged()
               userDropDownLink.selectedItem = UserProviderHolder(userData.id, userData, provider.authService.providerCode,
                                                                  provider.authService.providerName, null)
-              userDropDownLink.text
               enabledStatus.set(true)
               wasUsedBefore.set(true)
               syncConfigPanel.reset()
