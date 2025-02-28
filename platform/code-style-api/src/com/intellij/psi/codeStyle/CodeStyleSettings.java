@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -67,6 +67,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     private static final CodeStyleSettings myDefaults = Cancellation.forceNonCancellableSectionInClassInitializer(
       () -> new CodeStyleSettings(true, false)
     );
+  }
+
+  /**
+   * Produces the default configurable id for the configurables that didn't override it, produced by {@link CodeStyleSettingsProvider}.
+   */
+  public static String generateConfigurableIdByLanguage(@NotNull Language language) {
+    return "preferences.sourceCode." + language.getID();
   }
 
   private final SoftMargins mySoftMargins = new SoftMargins();
