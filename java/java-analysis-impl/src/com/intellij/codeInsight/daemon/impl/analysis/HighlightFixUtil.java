@@ -1048,14 +1048,8 @@ public final class HighlightFixUtil {
     else {
       if (kind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN) {
         QuickFixFactory factory = QuickFixFactory.getInstance();
-        IntentionAction fix = factory.createAddMissingBooleanPrimitiveBranchesFix(block);
-        if (fix != null) {
-          info.accept(fix);
-          IntentionAction fixWithNull = factory.createAddMissingBooleanPrimitiveBranchesFixWithNull(block);
-          if (fixWithNull != null) {
-            info.accept(fixWithNull);
-          }
-        }
+        info.accept(factory.createAddMissingBooleanPrimitiveBranchesFix(block));
+        info.accept(factory.createAddMissingBooleanPrimitiveBranchesFixWithNull(block));
       }
     }
   }
@@ -1095,9 +1089,7 @@ public final class HighlightFixUtil {
       IntentionAction fix =
         QuickFixFactory.getInstance().createAddMissingRecordClassBranchesFix(
           block, selectorClass, exhaustivenessResult.getMissedBranchesByType(), elements);
-      if (fix != null) {
-        info.accept(fix);
-      }
+      info.accept(fix);
     }
   }
 
@@ -1135,10 +1127,7 @@ public final class HighlightFixUtil {
     Set<String> missingCases = ContainerUtil.map2LinkedSet(missedClasses, PsiClass::getQualifiedName);
     QuickFixFactory factory = QuickFixFactory.getInstance();
     info.accept(factory.createAddMissingSealedClassBranchesFix(block, missingCases, allNames));
-    IntentionAction fixWithNull = factory.createAddMissingSealedClassBranchesFixWithNull(block, missingCases, allNames);
-    if (fixWithNull != null) {
-      info.accept(fixWithNull);
-    }
+    info.accept(factory.createAddMissingSealedClassBranchesFixWithNull(block, missingCases, allNames));
   }
 
   private static @NotNull List<String> collectLabelElementNames(@NotNull List<? extends PsiCaseLabelElement> elements,
