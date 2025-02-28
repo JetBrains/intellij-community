@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
@@ -926,6 +927,88 @@ public final class SwitchUtils {
     }
     return unreachableElements;
   }
+
+  /**
+   * Evaluates the exhaustiveness state of a switch block.
+   *
+   * @param switchBlock                          the PsiSwitchBlock to evaluate
+   * @param considerNestedDeconstructionPatterns flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
+   *                                             because nested deconstruction patterns don't cover null values
+   * @return exhaustiveness state.
+   */
+  public static @NotNull SwitchExhaustivenessState evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock,
+                                                                              boolean considerNestedDeconstructionPatterns) {
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return SwitchExhaustivenessState.MALFORMED;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return SwitchExhaustivenessState.MALFORMED;
+    PsiCodeBlock switchBody = switchBlock.getBody();
+    if (switchBody == null) return SwitchExhaustivenessState.MALFORMED;
+    List<PsiCaseLabelElement> labelElements = StreamEx.of(JavaPsiSwitchUtil.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
+      .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
+    if (labelElements.isEmpty()) return SwitchExhaustivenessState.EMPTY;
+    boolean needToCheckCompleteness = ExpressionUtil.isEnhancedSwitch(switchBlock);
+    boolean isEnumSelector = JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType) == JavaPsiSwitchUtil.SelectorKind.ENUM;
+    if (ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, selectorType)) != null) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
+    }
+    if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(switchBlock)) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT;
+    }
+    if (!needToCheckCompleteness && !isEnumSelector) return SwitchExhaustivenessState.INCOMPLETE;
+    // It is necessary because deconstruction patterns don't cover cases 
+    // when some of their components are null and deconstructionPattern too
+    if (!considerNestedDeconstructionPatterns) {
+      labelElements = ContainerUtil.filter(
+        labelElements, label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
+                                  ContainerUtil.or(
+                                    deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                    component -> component instanceof PsiDeconstructionPattern)));
+    }
+    boolean hasError = hasExhaustivenessError(switchBlock, labelElements);
+    // if a switch block is needed to check completeness and switch is incomplete we let highlighting to inform about it as it's a compilation error
+    if (!hasError) {
+      return SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT;
+    }
+    if (needToCheckCompleteness) {
+      return SwitchExhaustivenessState.UNNECESSARY;
+    }
+    return SwitchExhaustivenessState.INCOMPLETE;
+  }
+
+  /**
+   * State of switch exhaustiveness.
+   */
+  public enum SwitchExhaustivenessState {
+    /**
+     * Switch is malformed and produces a compilation error (no body, no selector, etc.),
+     * no exhaustiveness analysis is performed
+     */
+    MALFORMED,
+    /**
+     * Switch contains no labels (except probably default label)
+     */
+    EMPTY,
+    /**
+     * Switch should not be exhaustive (classic switch statement)
+     */
+    UNNECESSARY,
+    /**
+     * Switch is not exhaustive
+     */
+    INCOMPLETE,
+    /**
+     * Switch is exhaustive (complete), and adding a default branch would be a compilation error.
+     * This includes a switch over boolean having both true and false branches, 
+     * or a switch that has an unconditional pattern branch.
+     */
+    EXHAUSTIVE_NO_DEFAULT,
+    /**
+     * Switch is exhaustive (complete), but it's possible to add a default branch.
+     */
+    EXHAUSTIVE_CAN_ADD_DEFAULT
+  }
+
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;

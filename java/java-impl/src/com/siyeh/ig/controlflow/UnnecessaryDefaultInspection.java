@@ -40,12 +40,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.SwitchExhaustivenessState;
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.ig.psiutils.SwitchUtils.SwitchExhaustivenessState;
+import static com.siyeh.ig.psiutils.SwitchUtils.evaluateSwitchCompleteness;
 
 public final class UnnecessaryDefaultInspection extends BaseInspection {
 

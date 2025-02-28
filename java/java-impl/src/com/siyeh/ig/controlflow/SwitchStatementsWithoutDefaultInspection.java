@@ -30,10 +30,10 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.SwitchExhaustivenessState;
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.ig.psiutils.SwitchUtils.SwitchExhaustivenessState;
+import static com.siyeh.ig.psiutils.SwitchUtils.evaluateSwitchCompleteness;
 
 public final class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
