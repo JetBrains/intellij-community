@@ -102,9 +102,9 @@
         "references": {
           "type": "array",
           "description": "Array of reference page links associated with the element. Supports Writerside Markdown format.",
-          "x-intellij-language-injection": "Markdown",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
         },
         "requirement": {
@@ -118,9 +118,9 @@
         "examples": {
           "type": "array",
           "description": "Examples for the element. Supports Writerside Markdown format.",
-          "x-intellij-language-injection": "Markdown",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
         },
         "renderContexts": {
@@ -146,9 +146,9 @@
         "details": {
           "type": "array",
           "description": "Additional details about the requirement. Supports Writerside Markdown format.",
-          "x-intellij-language-injection": "Markdown",
           "items": {
-            "type": "string"
+            "type": "string",
+            "x-intellij-language-injection": "Markdown"
           }
         }
       },
