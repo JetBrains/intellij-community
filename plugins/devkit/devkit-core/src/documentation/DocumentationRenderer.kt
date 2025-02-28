@@ -129,7 +129,11 @@ internal class DocumentationRenderer(private val project: Project) {
       "info" -> "Information"
       else -> "Tip"
     }
-    return "${indent}> ${HtmlChunk.tag("icon").attr("src", icon)}&nbsp;<b>$text</b><br>"
+    return "${indent}> ${buildIconTitle(icon, text)}<br>"
+  }
+
+  private fun buildIconTitle(icon: String, text: String): String {
+    return "${HtmlChunk.tag("icon").attr("src", icon)}&nbsp;<b>$text</b>"
   }
 
   private fun String.isAttributesLine(): Boolean {
@@ -159,6 +163,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendChildren(element)
     appendExamples(element.examples)
     appendReferences(element.references)
+    appendInternalNote(element.internalNote)
     return this
   }
 
@@ -324,6 +329,13 @@ internal class DocumentationRenderer(private val project: Project) {
     append(references.joinToString(separator = "\n") { "- $it" })
   }
 
+  private fun StringBuilder.appendInternalNote(internalNote: String?) {
+    internalNote ?: return
+    append("<hr>")
+    append("<h6>${buildIconTitle("AllIcons.General.Warning", "Internal Use Only")}</h6>")
+    append(internalNote.trim())
+  }
+
   @NlsSafe
   fun renderAttribute(attribute: Attribute, baseUrl: String): String {
     return StringBuilder().appendAttribute(attribute).toDocHtml(baseUrl, attribute.path)
@@ -341,6 +353,7 @@ internal class DocumentationRenderer(private val project: Project) {
     attribute.defaultValue?.trim()?.let {
       append("Default value: $it")
     }
+    appendInternalNote(attribute.internalNote)
     return this
   }
 

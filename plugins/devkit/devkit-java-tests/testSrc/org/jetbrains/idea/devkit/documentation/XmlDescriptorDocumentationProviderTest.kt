@@ -44,6 +44,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__elementNotIncludedInDocumentationProvider\"><code>&lt;elementNotIncludedInDocumentationProvider&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a></li>" +
       "</ul>"
     )
   }
@@ -317,6 +318,44 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <code>*</code> / <a href=\"psi_element://#element:root__*__childUnderWildcard\"><code>&lt;childUnderWildcard&gt;</code></a> / <b><code>@attributeOfElementUnderWildcard</code></b><hr/>\n" +
       "Description of <code>attributeOfElementUnderWildcard</code>."
+    )
+  }
+
+  fun `test an internal element`() {
+    doTestDocContains(
+      """
+        <root>
+          <internal<caret>Element/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;internalElement&gt;</code></b><hr/>\n" +
+      "An internal element description." +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__internalElement__internalAttribute\"><code>internalAttribute</code></a></li>" +
+      "</ul>" +
+      "<h5>Children</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#element:root__internalElement__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "</ul>" +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An internal note for the element."
+    )
+  }
+
+  fun `test an internal attribute`() {
+    doTestDocContains(
+      """
+        <root>
+          <internalElement internal<caret>Attribute="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> / <b><code>@internalAttribute</code></b><hr/>\n" +
+      "Description of <code>internalAttribute</code>." +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An internal note for the attribute."
     )
   }
 

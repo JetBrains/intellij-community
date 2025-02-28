@@ -245,6 +245,19 @@ elements:
               - element:
                   name: child2
         - element:
+            name: internalElement
+            description: An internal element description.
+            internalNote: An internal note for the element.
+            attributes:
+              - attribute:
+                  name: internalAttribute
+                  description: Description of `internalAttribute`.
+                  internalNote: An internal note for the attribute.
+            children:
+              - element:
+                  name: internalChildElement
+                  description: Description of `internalChildElement`.
+        - element:
             name: "*"
             attributes:
               - attribute:
