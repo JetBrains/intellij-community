@@ -368,7 +368,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
-      val permitCtx = getLockPermitContext(true)
+      val (permitCtx, cleanup) = getLockPermitContext(true)
       val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
         progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
         // an unhandled exception in `async` can kill the entire computation tree
@@ -399,7 +399,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         taskJob.getCompleted().getOrThrow()
       }
       finally {
-        closeLockPermitContext(permitCtx)
+        cleanup.finish()
       }
     }
   }

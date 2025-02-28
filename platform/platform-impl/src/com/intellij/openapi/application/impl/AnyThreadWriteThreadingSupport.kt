@@ -131,9 +131,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @Volatile
   private var myWriteIntentAcquired: Thread? = null
 
-  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): CoroutineContext {
+  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
     if (!isLockStoredInContext) {
-      return EmptyCoroutineContext
+      return EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
     }
 
     val element = baseContext[LockStateContextElement]
@@ -141,7 +141,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       if (shared) {
         element.threadState.fork()
       }
-      return element
+      return element to object : AccessToken() {
+        override fun finish() {
+          if (shared) {
+            element.threadState.join()
+          }
+        }
+      }
     }
 
     val ts = myState.get()
@@ -149,21 +155,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       if (shared) {
         ts.fork()
       }
-      return LockStateContextElement(ts)
+      return LockStateContextElement(ts) to object : AccessToken() {
+        override fun finish() {
+          if (shared) {
+            ts.join()
+          }
+        }
+      }
     }
 
-    return EmptyCoroutineContext
-  }
-
-  override fun returnPermitFromContextElement(ctx: CoroutineContext) {
-    if (!isLockStoredInContext) {
-      return
-    }
-
-    if (ctx is LockStateContextElement) {
-      val ts = ctx.threadState
-      ts.join()
-    }
+    return EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
   }
 
   override fun hasPermitAsContextElement(context: CoroutineContext): Boolean = isLockStoredInContext && context[LockStateContextElement] != null

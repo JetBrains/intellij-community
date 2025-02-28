@@ -1673,11 +1673,12 @@ private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause: Throwable) {
 
 private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X): X {
   return prepareThreadContext { ctx -> // reset thread context
+    val (lockPermitContext, cleanup) = getLockPermitContext(ctx, false)
     try {
       val contextForInitializer =
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
-        getLockPermitContext(ctx, false) + // capture whether the caller holds the read lock
+        lockPermitContext + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @OptIn(InternalCoroutinesApi::class)
@@ -1688,6 +1689,9 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
     }
     catch (e: CancellationException) {
       throw CeProcessCanceledException(e)
+    }
+    finally {
+      cleanup.finish()
     }
   }
 }

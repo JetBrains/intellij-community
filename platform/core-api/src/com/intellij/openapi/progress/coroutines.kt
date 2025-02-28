@@ -5,15 +5,11 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.isLockStoredInContext
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.*
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.concurrency.BlockingJob
@@ -145,14 +141,15 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
+    val (lockContext, cleanup) = getLockContext(ctx)
     try {
       if (compensateParallelism) {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + getLockPermitContext(), action)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
       }
       else {
         @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + getLockPermitContext(), action)
+        runBlocking(ctx + lockContext, action)
       }
     }
     catch (pce: ProcessCanceledException) {
@@ -161,7 +158,14 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
+    finally {
+      cleanup.finish()
+    }
   }
+}
+
+private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
+  return getLockPermitContext(currentThreadContext, false)
 }
 
 /**
@@ -204,15 +208,19 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
+    val (lockContext, cleanup) = getLockPermitContext()
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context + getLockPermitContext(), action)
+      runBlocking(context + lockContext, action)
     }
     catch (pce: ProcessCanceledException) {
       throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
+    }
+    finally {
+      cleanup.finish()
     }
   }
 }
@@ -490,42 +498,35 @@ private fun assertBackgroundThreadAndNoWriteAction() {
 
 @IntellijInternalApi
 @Internal
-fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
+fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, AccessToken> {
   return getLockPermitContext(currentThreadContext(), forSharing)
 }
 
 @IntellijInternalApi
 @Internal
-fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): CoroutineContext {
+fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
     if (isLockStoredInContext) {
-      if (EDT.isCurrentThreadEdt()) {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing) + LockLeakedFromEDTMarker
+      val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
+      val targetContext = if (EDT.isCurrentThreadEdt()) {
+        context + LockLeakedFromEDTMarker
       }
       else {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing)
+        context
       }
+      targetContext to cleanup
     }
     else if (application.isReadAccessAllowed) {
-      RunBlockingUnderReadActionMarker
+      RunBlockingUnderReadActionMarker to AccessToken.EMPTY_ACCESS_TOKEN
     }
     else {
-      EmptyCoroutineContext
+      EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
     }
   }
   else {
-    EmptyCoroutineContext
+    EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
   }
-}
-
-@IntellijInternalApi
-@Internal
-fun closeLockPermitContext(ctx: CoroutineContext) {
-  if (!isLockStoredInContext) {
-    return
-  }
-  ApplicationManager.getApplication().returnPermitFromContextElement(ctx.minusKey(LockLeakedFromEDTMarker))
 }
 
 @IntellijInternalApi
@@ -533,7 +534,7 @@ fun closeLockPermitContext(ctx: CoroutineContext) {
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
   return if (isLockStoredInContext) {
     val application = ApplicationManager.getApplication()
-    application != null && application.hasLockStateInContext(this) && this[LockLeakedFromEDTMarker] == null
+    application != null && application.hasLockStateInContext(this) && application.isReadAccessAllowed && this[LockLeakedFromEDTMarker] == null
   }
   else {
     this[RunBlockingUnderReadActionMarker] != null
