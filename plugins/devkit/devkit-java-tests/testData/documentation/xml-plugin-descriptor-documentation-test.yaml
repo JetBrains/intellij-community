@@ -237,6 +237,7 @@ elements:
         - element:
             name: elementWithChildrenDescription
             description: any
+            #language=Markdown
             childrenDescription: Test children description.
             # should not be rendered
             children:
@@ -246,28 +247,58 @@ elements:
                   name: child2
         - element:
             name: internalElement
+            #language=Markdown
             description: An internal element description.
+            #language=Markdown
             internalNote: An internal note for the element.
             attributes:
               - attribute:
                   name: internalAttribute
+                  #language=Markdown
                   description: Description of `internalAttribute`.
+                  #language=Markdown
                   internalNote: An internal note for the attribute.
             children:
               - element:
                   name: internalChildElement
+                  #language=Markdown
+                  description: Description of `internalChildElement`.
+        - element:
+            name: elementWithInternalLinks
+            #language=Markdown
+            description: |
+              [First](https://example.com) and [`second` internal](https://example.com){internal}.
+            #language=Markdown
+            internalNote: |
+              An [internal link note](https://example.com/2){internal} for the [`element`](#element:root__any).
+            attributes:
+              - attribute:
+                  name: attributeWithInternalLinks
+                  #language=Markdown
+                  description: |
+                    [First](https://example.com) and [`second` internal](https://example.com){internal}.
+                  #language=Markdown
+                  internalNote: |
+                    An [internal link note](https://example.com/2){internal} for the [`attribute`](#attribute:root__any).
+            children:
+              - element:
+                  name: internalChildElement
+                  #language=Markdown
                   description: Description of `internalChildElement`.
         - element:
             name: "*"
             attributes:
               - attribute:
                   name: attributeUnderWildcard
+                  #language=Markdown
                   description: Description of `attributeUnderWildcard`.
             children:
               - element:
                   name: childUnderWildcard
+                  #language=Markdown
                   description: Description of `childUnderWildcard`.
                   attributes:
                     - attribute:
                         name: attributeOfElementUnderWildcard
+                        #language=Markdown
                         description: Description of `attributeOfElementUnderWildcard`.

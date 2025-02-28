@@ -6,6 +6,7 @@ import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
@@ -32,6 +33,7 @@ internal class DocumentationRenderer(private val project: Project) {
     val markdownContent = this
       .adjustLinks(baseUrl)
       .deleteSelfLinks(elementPath)
+      .deleteInternalLinks()
       .adjustClassLinks()
       .convertCallouts()
     return runReadAction { DocMarkdownToHtmlConverter.convert(project, markdownContent) }
@@ -70,6 +72,15 @@ internal class DocumentationRenderer(private val project: Project) {
       else {
         matchResult.value
       }
+    }
+  }
+
+  private fun CharSequence.deleteInternalLinks(): String {
+    val internalLinkRegex = Regex("\\[([^]]*)]\\(([^ )]*)\\)\\{internal}")
+    return internalLinkRegex.replace(this) { matchResult ->
+      val text = matchResult.groupValues[1]
+      val url = matchResult.groupValues[2]
+      if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) "[$text]($url)" else text
     }
   }
 

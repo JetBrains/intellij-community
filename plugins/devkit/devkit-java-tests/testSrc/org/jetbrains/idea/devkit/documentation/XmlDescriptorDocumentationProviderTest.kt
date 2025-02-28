@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
@@ -45,6 +46,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a></li>" +
       "</ul>"
     )
   }
@@ -356,6 +358,86 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
       "An internal note for the attribute."
+    )
+  }
+
+  fun `test element with internal links in IntelliJ Platform project should be preserved`() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+    doTestDocContains(
+      """
+        <root>
+          <element<caret>WithInternalLinks/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;elementWithInternalLinks&gt;</code></b><hr/>\n" +
+      "<a href=\"https://example.com\">First</a> and <a href=\"https://example.com\"><code>second</code> internal</a>." +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a></li>" +
+      "</ul>" +
+      "<h5>Children</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "</ul>" +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
+    )
+  }
+
+  fun `test element with internal links in a not IntelliJ Platform project should be cleared`() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, false)
+    doTestDocContains(
+      """
+        <root>
+          <element<caret>WithInternalLinks/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;elementWithInternalLinks&gt;</code></b><hr/>\n" +
+      "<a href=\"https://example.com\">First</a> and <code>second</code> internal." +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a></li>" +
+      "</ul>" +
+      "<h5>Children</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "</ul>" +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An internal link note for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
+    )
+  }
+
+  fun `test attribute with internal links in IntelliJ Platform project should be preserved`() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+    doTestDocContains(
+      """
+        <root>
+          <elementWithInternalLinks attribute<caret>WithInternalLinks="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> / <b><code>@attributeWithInternalLinks</code></b><hr/>\n" +
+      "<a href=\"https://example.com\">First</a> and <a href=\"https://example.com\"><code>second</code> internal</a>." +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
+    )
+  }
+
+  fun `test attribute with internal links in a not IntelliJ Platform project should be cleared`() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, false)
+    doTestDocContains(
+      """
+        <root>
+          <elementWithInternalLinks attribute<caret>WithInternalLinks="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> / <b><code>@attributeWithInternalLinks</code></b><hr/>\n" +
+      "<a href=\"https://example.com\">First</a> and <code>second</code> internal." +
+      "<hr>" +
+      "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
+      "An internal link note for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
     )
   }
 
