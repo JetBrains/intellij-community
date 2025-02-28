@@ -51,7 +51,6 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration
 
 internal val isRhizomeProgressEnabled
   get() = Registry.`is`("rhizome.progress")
@@ -325,7 +324,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
-    modalWindowDelay: Duration,
     action: suspend CoroutineScope.() -> T,
   ): T {
     check(isModalAwareContext()) {
@@ -335,7 +333,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     @OptIn(ExperimentalStdlibApi::class)
     val dispatcher = currentCoroutineContext()[CoroutineDispatcher.Key]
     return withContext(Dispatchers.EDT) {
-      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation, modalWindowDelay)
+      val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
       runWithModalProgressBlockingInternal(dispatcher, descriptor, action)
     }
   }
@@ -344,10 +342,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
-    modalWindowDelay: Duration,
     action: suspend CoroutineScope.() -> T,
   ): T = prepareThreadContext { ctx ->
-    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation, modalWindowDelay)
+    val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
       scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
@@ -509,7 +506,6 @@ private class ModalIndicatorDescriptor(
   val owner: ModalTaskOwner,
   val title: @ProgressTitle String,
   val cancellation: TaskCancellation,
-  val delay: Duration,
 )
 
 private fun CoroutineScope.showModalIndicator(
@@ -523,7 +519,7 @@ private fun CoroutineScope.showModalIndicator(
       if (isHeadlessEnv()) {
         return@supervisorScope
       }
-      delay(descriptor.delay)
+      delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
       doShowModalIndicator(taskJob, descriptor, stateFlow, deferredDialog)
     }
   }

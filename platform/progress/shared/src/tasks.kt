@@ -13,8 +13,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 suspend fun <T> withBackgroundProgress(
   project: Project,
@@ -89,15 +87,6 @@ suspend fun <T> withModalProgress(
   return withModalProgress(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
-suspend fun <T> withModalProgress(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return withModalProgress(owner, title, cancellation, MODAL_WINDOW_DEFAULT_DELAY, action)
-}
-
 /**
  * Shows a modal progress indicator, and runs the specified [action].
  * The action receives [a fresh progress step][com.intellij.platform.util.progress.currentProgressStep] in the coroutine context,
@@ -115,7 +104,6 @@ suspend fun <T> withModalProgress(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @param modalWindowDelay controls the delay between task execution start and showing the modal window
  * @throws CancellationException if the calling coroutine was canceled,
  * or if the indicator was canceled by the user in the UI
  */
@@ -123,10 +111,9 @@ suspend fun <T> withModalProgress(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
-  modalWindowDelay: Duration,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().withModalProgressInternal(owner, title, cancellation, modalWindowDelay, action)
+  return taskSupport().withModalProgressInternal(owner, title, cancellation, action)
 }
 
 @RequiresBlockingContext
@@ -137,17 +124,6 @@ fun <T> runWithModalProgressBlocking(
   action: suspend CoroutineScope.() -> T,
 ): T {
   return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
-}
-
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runWithModalProgressBlocking(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return runWithModalProgressBlocking(owner, title, cancellation, MODAL_WINDOW_DEFAULT_DELAY, action)
 }
 
 /**
@@ -211,7 +187,6 @@ fun <T> runWithModalProgressBlocking(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @param modalWindowDelay controls the delay between task execution start and showing the modal window
  * @throws com.intellij.openapi.progress.ProcessCanceledException if the calling coroutine was canceled,
  * or if the indicator was canceled by the user in the UI
  */
@@ -220,13 +195,10 @@ fun <T> runWithModalProgressBlocking(
 fun <T> runWithModalProgressBlocking(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation,
-  modalWindowDelay: Duration,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().runWithModalProgressBlockingInternal(owner, title, cancellation, modalWindowDelay, action)
+  return taskSupport().runWithModalProgressBlockingInternal(owner, title, cancellation, action)
 }
-
-private val MODAL_WINDOW_DEFAULT_DELAY = 300.milliseconds
 
 private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
