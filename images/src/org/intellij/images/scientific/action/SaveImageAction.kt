@@ -42,7 +42,7 @@ class SaveImageAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
     private val LOG = thisLogger()
