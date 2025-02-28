@@ -21,12 +21,6 @@ import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.ha
 import static java.util.Objects.requireNonNullElse;
 
 public final class SwitchBlockHighlightingModel {
-  public static boolean shouldAddDefault(@NotNull PsiSwitchBlock block) {
-    if (!ExpressionUtil.isEnhancedSwitch(block)) return false;
-    if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(block) != null) return false;
-    if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return false;
-    return hasExhaustivenessError(block);
-  }
 
   static void checkExhaustiveness(@NotNull PsiSwitchBlock block, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     PsiCodeBlock body = block.getBody();
