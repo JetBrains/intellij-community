@@ -15,7 +15,8 @@ import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerActio
 /**
  * @deprecated Don't use this action directly, implement your own instead by using XDebugSession.pause
  */
-@Deprecated(forRemoval = true)
+// This action should be migrated to FrontendPauseAction when debugger toolwindow won't be LUXed in Remote Dev
+@Deprecated
 public class PauseAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

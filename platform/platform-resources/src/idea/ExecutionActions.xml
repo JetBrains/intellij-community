@@ -99,9 +99,16 @@
     <!--endregion-->
 
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
-    <group id="Resume.Ref"/>
-    <group id="Pause.Ref"/>
-    <group id="StepOver.Ref"/>
+    <group id="Resume.Ref">
+      <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
+    </group>
+    <group id="Pause.Ref">
+      <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
+    </group>
+    <group id="StepOver.Ref">
+      <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction"
+              icon="AllIcons.Actions.TraceOver"/>
+    </group>
     <group id="DebugMainMenu">
       <separator/>
       <group id="DebuggingActionsGroup" popup="true">

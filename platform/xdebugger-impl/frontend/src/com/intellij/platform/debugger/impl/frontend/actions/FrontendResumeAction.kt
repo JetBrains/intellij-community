@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import java.awt.event.KeyEvent
 
+@Suppress("unused") // Should be used when debugger toolwindow won't be LUXed
 private class FrontendResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(e: AnActionEvent) {
     val project = e.project

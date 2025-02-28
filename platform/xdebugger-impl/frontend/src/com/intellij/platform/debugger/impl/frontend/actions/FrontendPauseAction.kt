@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
+@Suppress("unused") // Should be used when debugger toolwindow won't be LUXed
 private class FrontendPauseAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(e: AnActionEvent) {
     val session = e.frontendDebuggerSession

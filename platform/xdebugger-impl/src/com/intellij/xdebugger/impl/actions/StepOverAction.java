@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Don't inherit from the action, implement your own
  */
+// This action should be migrated to FrontendStepOverAction when debugger toolwindow won't be LUXed in Remote Dev
 @Deprecated(forRemoval = true)
 public class StepOverAction extends XDebuggerActionBase implements DumbAware {
   private static final DebuggerActionHandler ourHandler = new XDebuggerSuspendedActionHandler() {

@@ -7,11 +7,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 
+// This action should be migrated to FrontendResumeAction when debugger toolwindow won't be LUXed in Remote Dev
 @Deprecated("Don't use this action directly, implement your own instead by using XDebugSession.resume")
-@ApiStatus.ScheduledForRemoval
 open class ResumeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
