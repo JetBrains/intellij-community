@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.collaboration.async.collectScoped
@@ -21,6 +21,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -218,7 +220,7 @@ object AsyncDiffRequestProcessorFactory {
     if (current.size != vms.size || !current.containsAll(vms.keys)) {
       val blocks = mutableListOf<CombinedBlockProducer>()
       for ((id, vm) in vms) {
-        blocks += CombinedBlockProducer(id, vm.asProducer(id))
+        blocks += CombinedBlockProducer(id, AsyncDiffViewModelRequestProducer(vm, id))
       }
       processor.setNewBlocks(blocks)
     }
@@ -232,15 +234,18 @@ object AsyncDiffRequestProcessorFactory {
     }
   }
 
-  private fun AsyncDiffViewModel.asProducer(id: CombinedPathBlockId): DiffRequestProducer {
-    return object : DiffRequestProducer {
-      override fun getName(): String = id.path.path
+  private class AsyncDiffViewModelRequestProducer(val model: AsyncDiffViewModel, val id: CombinedPathBlockId)
+    : DiffRequestProducer, PresentableChange {
 
-      override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest =
-        runBlockingCancellable {
-          request.mapNotNull { it?.result }.first().getOrThrow()
-        }
-    }
+    override fun getFilePath(): FilePath = id.path
+    override fun getFileStatus(): FileStatus = id.fileStatus ?: FileStatus.UNKNOWN
+
+    override fun getName(): String = id.path.path
+
+    override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest =
+      runBlockingCancellable {
+        model.request.mapNotNull { it?.result }.first().getOrThrow()
+      }
   }
   //endregion
 }
