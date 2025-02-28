@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -17,8 +17,16 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.DetectedShellInfo
+import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
+import org.jetbrains.plugins.terminal.TerminalTabState
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.function.Predicate
@@ -29,10 +37,13 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
     val project = e.project ?: return
 
     val popupPoint = getPreferredPopupPoint(e)
-    ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+    terminalProjectScope(project).launch {
       val shells = detectShells()
       val customActions = OpenPredefinedTerminalActionProvider.collectAll(project)
-      ApplicationManager.getApplication().invokeLater(Runnable {
+
+      withContext(Dispatchers.EDT) {
+        if (project.isDisposed) return@withContext
+
         val popup = createPopup(shells, customActions, e.dataContext)
         if (popupPoint != null) {
           popup.show(popupPoint)
@@ -44,8 +55,8 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
         if (inputEvent?.component != null) {
           PopupUtil.setPopupToggleComponent(popup, inputEvent.component)
         }
-      }, project.getDisposed())
-    })
+      }
+    }
   }
 
   private fun getPreferredPopupPoint(e: AnActionEvent): RelativePoint? {
@@ -75,8 +86,10 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, true, false, null, -1, null)
   }
 
-  private fun detectShells(): List<OpenShellAction> {
-    return TerminalShellsDetector.detectShells()
+  private suspend fun detectShells(): List<OpenShellAction> {
+    // Fetch shells from the backend
+    return TerminalShellsDetectorApi.getInstance()
+      .detectShells()
       .groupByTo(LinkedHashMap(), DetectedShellInfo::name)
       .values
       .flatMap { shellInfos ->
