@@ -24,6 +24,7 @@ import com.intellij.ui.NewUI;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,13 +35,14 @@ import java.util.function.Consumer;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-// java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
+/**
+ * Java highlighting: reports compilation errors in Java code.
+ * Internal class; do not use directly. 
+ * If you need to check whether a block of code contains Java errors, use {@link JavaErrorCollector}.
+ */
+@ApiStatus.Internal
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
-  private final Map<String, String> myTooltipStyles = initTooltipStyles();
-
-  private @NotNull HighlightInfoHolder myHolder;
-
-  private @NotNull PsiFile myFile;
+  private Map<String, String> myTooltipStyles;
   private JavaErrorCollector myCollector;
 
   protected HighlightVisitorImpl() {
@@ -109,8 +111,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     finally {
-      myFile = null;
-      myHolder = null;
       myCollector = null;
     }
 
@@ -122,13 +122,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
-    myHolder = holder;
-    myFile = file;
     List<@NotNull JavaErrorFixProvider> fixProviders = JavaErrorFixProvider.EP_NAME.getExtensionList();
-    myCollector = new JavaErrorCollector(file, error -> reportError(error, fixProviders));
+    myCollector = new JavaErrorCollector(file, error -> reportError(error, holder, fixProviders));
   }
 
-  private void reportError(JavaCompilationError<?, ?> error, List<@NotNull JavaErrorFixProvider> fixProviders) {
+  private void reportError(JavaCompilationError<?, ?> error,
+                           @NotNull HighlightInfoHolder holder,
+                           List<@NotNull JavaErrorFixProvider> fixProviders) {
     JavaErrorHighlightType javaHighlightType = error.highlightType();
     HighlightInfoType type = switch (javaHighlightType) {
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
@@ -141,6 +141,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (tooltip.isEmpty()) {
       info.descriptionAndTooltip(error.description());
     } else {
+      if (myTooltipStyles == null) {
+        myTooltipStyles = initTooltipStyles();
+      }
       info.description(error.description()).escapedToolTip(
         tooltip.applyStyles(myTooltipStyles).toString());
     }
@@ -151,7 +154,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     info.range(range);
     if (range.getLength() == 0) {
       int offset = range.getStartOffset();
-      CharSequence sequence = myFile.getFileDocument().getCharsSequence();
+      CharSequence sequence = holder.getContextFile().getFileDocument().getCharsSequence();
       if (offset >= sequence.length() || sequence.charAt(offset) == '\n') {
         info.endOfLine();
       }
@@ -163,7 +166,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
-    myHolder.add(info.create());
+    holder.add(info.create());
   }
 
   @Override
