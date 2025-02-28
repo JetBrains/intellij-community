@@ -22,18 +22,12 @@ public final class GlassPanel extends JComponent {
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
   private static final JBColor SPOTLIGHT_BORDER_COLOR = JBColor.namedColor(
     "Settings.Spotlight.borderColor",
-    new JBColor(
-      JBColor.namedColor("ColorPalette.Orange6", 0xE08855),
-      JBColor.namedColor("ColorPalette.Orange4", 0xA36B4E)
-    )
+    ColorUtil.toAlpha(new JBColor(0xf2b181, 0xa36B4e), 100)
   );
 
   private static final JBColor SPOTLIGHT_BACKGROUND_COLOR = JBColor.namedColor(
     "Settings.Spotlight.backgroundColor",
-    new JBColor(
-      ColorUtil.toAlpha(JBColor.namedColor("ColorPalette.Gray13", 0xf7f8fA), 128),
-      ColorUtil.toAlpha(JBColor.namedColor("ColorPalette.Gray2", 0x2b2d30), 128)
-    )
+    ColorUtil.toAlpha(new JBColor(0xf7f8fA, 0x2b2d30), 50)
   );
 
 
@@ -83,11 +77,11 @@ public final class GlassPanel extends JComponent {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g2.setColor(SPOTLIGHT_BACKGROUND_COLOR);
+        g2.setColor(SPOTLIGHT_BACKGROUND_COLOR.getDefaultColor());
         g2.fill(mask);
 
         g2.setStroke(new BasicStroke(stroke));
-        g2.setColor(SPOTLIGHT_BORDER_COLOR);
+        g2.setColor(SPOTLIGHT_BORDER_COLOR.getDefaultColor());
         g2.draw(mask);
       }
       finally {
