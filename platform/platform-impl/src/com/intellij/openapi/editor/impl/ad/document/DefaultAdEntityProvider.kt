@@ -55,7 +55,13 @@ internal class DefaultAdEntityProvider() : AdEntityProvider {
     val document = markupModel.document as? DocumentEx
                    ?: throw IllegalStateException("document is expected to be DocumentEx")
     val docEntity = AdDocumentManager.getInstance().getDocEntity(document)
-    checkNotNull(docEntity) { "doc entity not found" } // TODO: investigate why happens in vcs shift+ctrl+option
+
+    checkNotNull(docEntity) {
+      // TODO: investigate why happens in vcs shift+ctrl+option
+      //  clue - failed to create editor model EditorImpl[LightVirtualFile: /Dummy.txt]
+      "doc entity not found"
+    }
+
     val markupEntity = change {
       shared {
         AdMarkupEntity.empty(uid, docEntity)

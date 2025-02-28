@@ -113,4 +113,8 @@ internal class AdMarkupModel(private val debugName: String, private val entity: 
   }
 
   // endregion
+
+  override fun toString(): String {
+    return "AdMarkupModel(debugName='$debugName', entity=$entity)"
+  }
 }

@@ -18,7 +18,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import fleet.kernel.change
 import fleet.kernel.shared
-import fleet.util.AtomicRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -26,6 +25,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 
@@ -40,7 +40,7 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
   fun createSynchronizer(markupEntity: AdMarkupEntity, markupModel: MarkupModelEx): CoroutineScope {
     val cs = coroutineScope.childScope("markup->entity sync", AD_DISPATCHER)
     val disposable = cs.asDisposable()
-    val delay = if (markupModel is EditorMarkupModel) 0L else 100L
+    val delay = if (markupModel is EditorMarkupModel) 5L else 100L
     val sync = AdMarkupSynchronizer(markupEntity, markupModel, delay, cs)
     markupModel.document.addDocumentListener(sync, disposable)
     markupModel.addMarkupModelListener(disposable, sync)
@@ -57,7 +57,7 @@ private class AdMarkupSynchronizer(
   private val coroutineScope: CoroutineScope,
 ) : MarkupModelListener, DocumentListener {
 
-  private val scheduledCollect = AtomicRef<Job>()
+  private val scheduledCollect = AtomicReference<Job>(READY_TO_COLLECT)
   private val id2RemovedId = TreeMap<Long, Long>()
   private val lastSeenNoveltyId = AtomicLong()
 
@@ -65,6 +65,7 @@ private class AdMarkupSynchronizer(
     private const val MAX_DEAD_MARKERS_SIZE = 10_000
     private val HIGHLIGHTER_TIMESTAMP: Key<Long> = Key.create("AD_RANGE_HIGHLIGHTER_TIMESTAMP")
     private val TIMESTAMPS = AtomicLong()
+    private val READY_TO_COLLECT = Job()
   }
 
   override fun beforeDocumentChange(event: DocumentEvent) {
@@ -110,17 +111,15 @@ private class AdMarkupSynchronizer(
   }
 
   private fun scheduleCollect() {
-    // TODO: do not cancel scheduled
-    scheduledCollect.getAndSet(null)?.cancel()
-    val scheduled = coroutineScope.launch {
-      if (delay > 0) {
-        delay(delay)
+    if (scheduledCollect.compareAndSet(READY_TO_COLLECT, null)) {
+      coroutineScope.launch {
+        if (delay > 0) {
+          delay(delay)
+        }
+        collectBatch(lastSeenNoveltyId.get())
+        // TODO: why I do this???
+        scheduledCollect.set(READY_TO_COLLECT)
       }
-      collectBatch(lastSeenNoveltyId.get())
-    }
-    val alreadyScheduled = !scheduledCollect.compareAndSet(null, scheduled)
-    if (alreadyScheduled) {
-      scheduled.cancel()
     }
   }
 
@@ -128,7 +127,6 @@ private class AdMarkupSynchronizer(
     val (invalidateOldMarkup, toRemove) = highlightersToRemove(lastSeenNoveltyId)
     val toAdd = highlighterToAdd(invalidateOldMarkup, lastSeenNoveltyId)
     val newNoveltyId = nextNoveltyId(lastSeenNoveltyId, toAdd, toRemove)
-    this.lastSeenNoveltyId.set(newNoveltyId)
     change {
       shared {
         // TODO: offsets may be outdated!!
@@ -138,6 +136,7 @@ private class AdMarkupSynchronizer(
         )
       }
     }
+    this.lastSeenNoveltyId.set(newNoveltyId)
   }
 
   private fun highlightersToRemove(lastSeenNoveltyId: Long): Pair<Boolean, List<RemovedHighlighter>> {

@@ -61,16 +61,6 @@ internal data class AsyncEntityHandle<E : Entity>(
   private val refCount: Int,
 ) {
 
-  fun incRefCount(): AsyncEntityHandle<E> {
-    assert(refCount > 0)
-    return copy(refCount = refCount + 1)
-  }
-
-  fun decRefCount(): AsyncEntityHandle<E>? {
-    assert(refCount > 0)
-    return if (refCount > 1) copy(refCount = refCount - 1) else null
-  }
-
   suspend fun entity(): E {
     val (deferred, entity) = entityPair()
     if (entity != null) {
