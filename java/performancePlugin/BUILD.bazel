@@ -26,6 +26,8 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
     "//plugins/performanceTesting/vcs",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/openapi:java",
   ],
   runtime_deps = [":performancePlugin_resources"]
 )

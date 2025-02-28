@@ -3271,8 +3271,8 @@ java_library(
 
 java_import(
   name = "jvm-native-trusted-roots",
-  jars = ["@jvm-native-trusted-roots-1_0_21_http//file"],
-  srcjar = "@jvm-native-trusted-roots-1_0_21-sources_http//file",
+  jars = ["@jvm-native-trusted-roots-1_0_23_http//file"],
+  srcjar = "@jvm-native-trusted-roots-1_0_23-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
