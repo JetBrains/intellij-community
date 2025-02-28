@@ -79,40 +79,6 @@ public final class SwitchBlockHighlightingModel {
     return elementsToCheckCompleteness;
   }
 
-  private static boolean hasExhaustivenessError(@NotNull PsiSwitchBlock block, @NotNull List<PsiCaseLabelElement> elements) {
-    PsiExpression selector = block.getExpression();
-    if (selector == null) return false;
-    PsiType selectorType = selector.getType();
-    if (selectorType == null) return false;
-    PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(TypeConversionUtil.erasure(selectorType));
-    if (unboxedType != null) {
-      for (PsiCaseLabelElement t : elements) {
-        if (JavaPsiPatternUtil.findUnconditionalPattern(t) instanceof PsiTypeTestPattern testPattern &&
-            JavaPsiPatternUtil.getPatternType(testPattern) instanceof PsiPrimitiveType primitiveType &&
-            JavaPsiPatternUtil.isUnconditionallyExactForType(t, unboxedType, primitiveType)) {
-          return false;
-        }
-      }
-    }
-    if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(block)) return false;
-    //enums are final; checking intersections is not needed
-    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
-    if (selectorClass != null && JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType) == JavaPsiSwitchUtil.SelectorKind.ENUM) {
-      List<PsiEnumConstant> enumElements = getEnumConstants(elements);
-      return enumElements.isEmpty() || !findMissingEnumConstant(selectorClass, enumElements).isEmpty();
-    }
-    List<PsiType> sealedTypes = getAbstractSealedTypes(JavaPsiPatternUtil.deconstructSelectorType(selectorType));
-    if (!sealedTypes.isEmpty()) {
-      return !findMissedClasses(block, selectorType, elements).isEmpty();
-    }
-    //records are final; checking intersections is not needed
-    if (selectorClass != null && selectorClass.isRecord()) {
-      if (!checkRecordCaseSetNotEmpty(elements)) return true;
-      return !checkRecordExhaustiveness(elements, selectorType, block).isExhaustive();
-    }
-    return true;
-  }
-
   static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
     if (element instanceof PsiReferenceExpression referenceExpression &&
         referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
@@ -211,7 +177,7 @@ public final class SwitchBlockHighlightingModel {
   }
 
   private static boolean checkRecordCaseSetNotEmpty(@NotNull List<? extends PsiCaseLabelElement> elements) {
-    return ContainerUtil.exists(elements, element -> extractPattern(element) != null);
+    return ContainerUtil.exists(elements, element -> element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern));
   }
 
   private static @NotNull List<PsiEnumConstant> getEnumConstants(@NotNull List<? extends PsiCaseLabelElement> elements) {
@@ -318,13 +284,6 @@ public final class SwitchBlockHighlightingModel {
     return QuickFixFactory.getInstance();
   }
 
-
-  private static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
-    if (element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern)) {
-      return pattern;
-    }
-    return null;
-  }
 
   /**
    * State of switch exhaustiveness.

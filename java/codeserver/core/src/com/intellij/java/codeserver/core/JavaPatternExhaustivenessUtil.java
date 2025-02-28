@@ -574,10 +574,14 @@ public final class JavaPatternExhaustivenessUtil {
                                                          @NotNull PsiType selectorType,
                                                          @NotNull List<? extends PsiCaseLabelElement> elements) {
     List<PatternDescriptor> descriptions = preparePatternDescriptors(elements);
-    List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(JavaPsiSwitchUtil::getEnumConstant).nonNull().toList();
+    List<PsiEnumConstant> enumConstants = getEnumConstants(elements);
     return findMissedClasses(selectorType, descriptions, enumConstants, block);
   }
-  
+
+  private static @NotNull List<PsiEnumConstant> getEnumConstants(@NotNull List<? extends PsiCaseLabelElement> elements) {
+    return StreamEx.of(elements).map(JavaPsiSwitchUtil::getEnumConstant).nonNull().toList();
+  }
+
   /**
    * Finds the missed and covered classes for a sealed selector type.
    * If a selector type is not sealed classes, it will be checked if it is covered by one of the elements or enumConstants
@@ -727,6 +731,48 @@ public final class JavaPatternExhaustivenessUtil {
     else {
       throw new IllegalArgumentException("Unknown type for createDescription for exhaustiveness: " + pattern.getClass());
     }
+  }
+
+  /**
+   * @param block switch block to analyze
+   * @param elements list of labels to analyze (can be a subset of all labels of block)
+   * @return true if this block is not exhaustive while it should be
+   */
+  public static boolean hasExhaustivenessError(@NotNull PsiSwitchBlock block, @NotNull List<PsiCaseLabelElement> elements) {
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return false;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return false;
+    PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(TypeConversionUtil.erasure(selectorType));
+    if (unboxedType != null) {
+      for (PsiCaseLabelElement t : elements) {
+        if (JavaPsiPatternUtil.findUnconditionalPattern(t) instanceof PsiTypeTestPattern testPattern &&
+            JavaPsiPatternUtil.getPatternType(testPattern) instanceof PsiPrimitiveType primitiveType &&
+            JavaPsiPatternUtil.isUnconditionallyExactForType(t, unboxedType, primitiveType)) {
+          return false;
+        }
+      }
+    }
+    if (JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(block)) return false;
+    //enums are final; checking intersections is not needed
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(selectorType));
+    if (selectorClass != null && JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType) == JavaPsiSwitchUtil.SelectorKind.ENUM) {
+      List<PsiEnumConstant> enumElements = getEnumConstants(elements);
+      if (enumElements.isEmpty()) return true;
+      return StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).anyMatch(e -> !enumElements.contains(e));
+    }
+    boolean hasAbstractSealedType = StreamEx.of(JavaPsiPatternUtil.deconstructSelectorType(selectorType))
+      .map(type -> PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(type)))
+      .nonNull()
+      .anyMatch(JavaPsiSealedUtil::isAbstractSealed);
+    if (hasAbstractSealedType) {
+      return !findMissedClasses(block, selectorType, elements).isEmpty();
+    }
+    //records are final; checking intersections is not needed
+    boolean recordExhaustive = selectorClass != null &&
+                               selectorClass.isRecord() &&
+                               checkRecordExhaustiveness(elements, selectorType, block).isExhaustive();
+    return !recordExhaustive;
   }
 
   /**
