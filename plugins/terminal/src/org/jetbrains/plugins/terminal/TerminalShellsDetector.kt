@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.io.File
@@ -114,6 +115,7 @@ object TerminalShellsDetector {
 }
 
 @ApiStatus.Internal
+@Serializable
 data class DetectedShellInfo(
   /** Name of the shell, for example, zsh or Windows PowerShell */
   val name: @NlsSafe String,

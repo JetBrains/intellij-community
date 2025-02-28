@@ -125,6 +125,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             project,
             FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
             historyProvider = {
+              // Use shells detector directly because this code is executed on backend.
+              // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
               TerminalShellsDetector.detectShells().map { shellInfo ->
                 val filteredOptions = shellInfo.options.filter {
                   // Do not show login and interactive options in the UI.
