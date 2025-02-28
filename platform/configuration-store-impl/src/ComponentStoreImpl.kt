@@ -230,6 +230,20 @@ abstract class ComponentStoreImpl : IComponentStore {
     saveSessionManager.save(saveResult)
   }
 
+  private fun getClientAwareComponentInfo(name: String): ComponentInfo? {
+    val info = components.get(name) ?: return null
+    if (info.stateSpec?.perClient != true || ClientId.isCurrentlyUnderLocalId)
+      return info
+
+    val componentManager = storageManager.componentManager ?: application
+    val componentClass = info.component.javaClass
+    val clientComponent = componentManager.getService(componentClass)
+    if (clientComponent == null || clientComponent === info.component)
+      return info
+
+    return ComponentInfoImpl(info.pluginId, clientComponent, info.stateSpec)
+  }
+
   internal open suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
     val names = ArrayUtilRt.toStringArray(components.keys)
     if (names.isEmpty()) {
@@ -248,7 +262,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (name in names) {
       val start = System.currentTimeMillis()
       try {
-        val info = components.get(name) ?: continue
+        val info = getClientAwareComponentInfo(name) ?: continue
         var currentModificationCount = -1L
 
         if (info.lastSaved != -1) {
