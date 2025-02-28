@@ -487,7 +487,7 @@ private fun CheckboxImpl(
     val toggleableModifier =
         modifier.triStateToggleable(
             state = state,
-            onClick = { onClick() },
+            onClick = onClick,
             enabled = enabled,
             role = Role.Checkbox,
             interactionSource = interactionSource,
