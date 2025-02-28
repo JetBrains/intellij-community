@@ -4,7 +4,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.parser.elements.ActionDescriptor.*
+import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
@@ -263,8 +263,8 @@ private fun readIdeaVersion(reader: XMLStreamReader2, descriptor: RawPluginDescr
 }
 
 private val actionNameToEnum = run {
-  val entries = ActionDescriptorName.entries
-  entries.associateByTo(HashMap<String, ActionDescriptorName>(entries.size), ActionDescriptorName::name)
+  val entries = ActionElementName.entries
+  entries.associateByTo(HashMap<String, ActionElementName>(entries.size), ActionElementName::name)
 }
 
 private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader2, readContext: ReadModuleContext) {
@@ -291,7 +291,7 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
 
     val attributes = element.attributes
     when (name) {
-      ActionDescriptorName.action -> {
+      ActionElementName.action -> {
         val className = attributes["class"]
         if (className.isNullOrEmpty()) {
           LOG.error("action element should have specified \"class\" attribute at ${reader.location}")
@@ -300,7 +300,7 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
         }
         actionElements.add(ActionDescriptorAction(className, isInternal = attributes["internal"].toBoolean(), element, resourceBundle))
       }
-      ActionDescriptorName.group -> {
+      ActionElementName.group -> {
         var className = attributes["class"]
         if (className.isNullOrEmpty()) {
           className = if (attributes["compact"] == "true") "com.intellij.openapi.actionSystem.DefaultCompactActionGroup" else null
@@ -311,10 +311,10 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
           reader.skipElement()
           return@consumeChildElements
         }
-        actionElements.add(ActionDescriptorGroup(className, id, element, resourceBundle))
+        actionElements.add(ActionElementGroup(className, id, element, resourceBundle))
       }
       else -> {
-        actionElements.add(ActionDescriptorMisc(name, element, resourceBundle))
+        actionElements.add(ActionElementMisc(name, element, resourceBundle))
       }
     }
   }

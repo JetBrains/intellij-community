@@ -2,35 +2,34 @@
 package com.intellij.ide.plugins.parser.elements
 
 import com.intellij.util.xml.dom.XmlElement
-import org.jetbrains.annotations.ApiStatus
 
-sealed class ActionDescriptor(
-  @JvmField val name: ActionDescriptorName,
+sealed class ActionElement(
+  @JvmField val name: ActionElementName,
   @JvmField val element: XmlElement,
   @JvmField val resourceBundle: String?,
 ) {
   @Suppress("EnumEntryName")
-  enum class ActionDescriptorName {
+  enum class ActionElementName {
     action, group, separator, reference, unregister, prohibit,
   }
 
-  class ActionDescriptorMisc(
-    name: ActionDescriptorName,
+  class ActionElementMisc(
+    name: ActionElementName,
     element: XmlElement,
     resourceBundle: String?,
-  ) : ActionDescriptor(name, element, resourceBundle)
+  ) : ActionElement(name, element, resourceBundle)
 
   class ActionDescriptorAction(
     @JvmField val className: String,
     @JvmField val isInternal: Boolean,
     element: XmlElement,
     resourceBundle: String?,
-  ) : ActionDescriptor(name = ActionDescriptorName.action, element = element, resourceBundle = resourceBundle)
+  ) : ActionElement(name = ActionElementName.action, element = element, resourceBundle = resourceBundle)
 
-  class ActionDescriptorGroup(
+  class ActionElementGroup(
     @JvmField val className: String?,
     @JvmField val id: String?,
     element: XmlElement,
     resourceBundle: String?,
-  ) : ActionDescriptor(name = ActionDescriptorName.group, element = element, resourceBundle = resourceBundle)
+  ) : ActionElement(name = ActionElementName.group, element = element, resourceBundle = resourceBundle)
 }

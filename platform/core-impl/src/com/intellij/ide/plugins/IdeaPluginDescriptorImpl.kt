@@ -5,7 +5,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.elements.ActionDescriptor
+import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -125,7 +125,7 @@ class IdeaPluginDescriptorImpl(
   private var _pluginClassLoader: ClassLoader? = null
 
   @JvmField
-  val actions: List<ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
+  val actions: List<ActionElement> = raw.actions ?: Java11Shim.INSTANCE.listOf()
 
   // extension point name -> list of extension descriptors
   @JvmField

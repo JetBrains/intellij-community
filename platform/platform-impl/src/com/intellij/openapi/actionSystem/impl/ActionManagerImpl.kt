@@ -14,7 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.ProhibitAWTEvents
-import com.intellij.ide.plugins.parser.elements.ActionDescriptor.*
+import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManager
@@ -377,7 +377,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                keymapToOperations = keymapToOperations,
                                classLoader = module.classLoader)
         }
-        is ActionDescriptorGroup -> {
+        is ActionElementGroup -> {
           processGroupElement(className = descriptor.className,
                               id = descriptor.id,
                               element = element,
@@ -389,17 +389,17 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
         else -> {
           when (descriptor.name) {
-            ActionDescriptorName.separator -> processSeparatorNode(parentGroup = null,
-                                                                   element = element,
-                                                                   module = module,
-                                                                   bundleSupplier = bundleSupplier,
-                                                                   actionRegistrar = actionRegistrar)
-            ActionDescriptorName.reference -> processReferenceNode(element = element,
-                                                                   module = module,
-                                                                   bundleSupplier = bundleSupplier,
-                                                                   actionRegistrar = actionRegistrar)
-            ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
-            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
+            ActionElementName.separator -> processSeparatorNode(parentGroup = null,
+                                                                element = element,
+                                                                module = module,
+                                                                bundleSupplier = bundleSupplier,
+                                                                actionRegistrar = actionRegistrar)
+            ActionElementName.reference -> processReferenceNode(element = element,
+                                                                module = module,
+                                                                bundleSupplier = bundleSupplier,
+                                                                actionRegistrar = actionRegistrar)
+            ActionElementName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
+            ActionElementName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
             else -> LOG.error("${descriptor.name} is unknown")
           }
         }
@@ -899,9 +899,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       val descriptor = descriptors[i]
       val element = descriptor.element
       when (descriptor.name) {
-        ActionDescriptorName.action -> unloadActionElement(element)
-        ActionDescriptorName.group -> unloadGroupElement(element)
-        ActionDescriptorName.reference -> {
+        ActionElementName.action -> unloadActionElement(element)
+        ActionElementName.group -> unloadGroupElement(element)
+        ActionElementName.reference -> {
           val action = processReferenceElement(element = element, module = module, actionRegistrar = actionPostInitRegistrar) ?: return
           val actionId = getReferenceActionId(element)
           for ((name, attributes) in element.children) {

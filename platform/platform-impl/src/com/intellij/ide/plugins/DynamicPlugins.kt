@@ -18,7 +18,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.parser.elements.ActionDescriptor.ActionDescriptorName
+import com.intellij.ide.plugins.parser.elements.ActionElement.ActionElementName
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
@@ -1448,8 +1448,8 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
   for (descriptor in module.actions) {
     val element = descriptor.element
     val elementName = descriptor.name
-    if (elementName != ActionDescriptorName.action &&
-        !(elementName == ActionDescriptorName.group && canUnloadActionGroup(element)) && elementName != ActionDescriptorName.reference) {
+    if (elementName != ActionElementName.action &&
+        !(elementName == ActionElementName.group && canUnloadActionGroup(element)) && elementName != ActionElementName.reference) {
       return "Plugin $module is not unload-safe because of action element $elementName"
     }
   }

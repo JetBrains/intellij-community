@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.parser.elements.ActionDescriptor
+import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
@@ -49,7 +49,7 @@ class RawPluginDescriptor {
   @JvmField var pluginAliases: MutableList<PluginId>? = null
 
   @JvmField var depends: MutableList<PluginDependency>? = null
-  @JvmField var actions: MutableList<ActionDescriptor>? = null
+  @JvmField var actions: MutableList<ActionElement>? = null
 
   @JvmField var incompatibilities: MutableList<PluginId>? = null
 
