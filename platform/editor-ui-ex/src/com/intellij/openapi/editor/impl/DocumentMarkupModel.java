@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.MarkupModelWindow;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -120,12 +121,24 @@ public final class DocumentMarkupModel {
   }
 
   private static void fireMarkupModelCreated(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC)
-      .markupModelCreated(project, markupModel);
+    Application app = getApplication();
+    if (app != null) {
+      app.getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC).markupModelCreated(project, markupModel);
+    }
   }
 
   private static void fireMarkupModelDisposed(@Nullable Project project, @NotNull MarkupModelEx markupModel) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC)
-      .markupModelDisposed(project, markupModel);
+    Application app = getApplication();
+    if (app != null) {
+      app.getMessageBus().syncPublisher(DocumentMarkupListener.TOPIC).markupModelDisposed(project, markupModel);
+    }
+  }
+
+  private static @Nullable Application getApplication() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null && !app.isDisposed()) {
+      return app;
+    }
+    return null;
   }
 }
