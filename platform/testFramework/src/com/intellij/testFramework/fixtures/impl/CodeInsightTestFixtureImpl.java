@@ -93,6 +93,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -949,7 +950,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DataContext context = CustomizedDataContext.withSnapshot(editorContext, sink -> {
       sink.set(PsiElementRenameHandler.DEFAULT_NAME, newName);
     });
-    RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+    RenameHandler renameHandler = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      return ReadAction.compute(() -> RenameHandlerRegistry.getInstance().getRenameHandler(context));
+    }, "", true, getProject());
     assertNotNull("No handler for this context", renameHandler);
 
     renameHandler.invoke(getProject(), editor, getFile(), context);
