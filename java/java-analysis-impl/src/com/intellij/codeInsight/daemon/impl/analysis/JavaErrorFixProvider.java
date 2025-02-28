@@ -251,7 +251,7 @@ final class JavaErrorFixProvider {
                                  myFactory.createMethodReturnFix(method, PsiTypes.voidType(), true) : null);
     fixes(STATEMENT_BAD_EXPRESSION, (error, sink) -> {
       if (error.psi() instanceof PsiExpressionStatement expressionStatement) {
-        HighlightFixUtil.registerFixesForExpressionStatement(expressionStatement, sink);
+        HighlightFixUtil.registerFixesForExpressionStatement(sink, expressionStatement);
         PsiElement parent = expressionStatement.getParent();
         if (parent instanceof PsiCodeBlock ||
             parent instanceof PsiIfStatement ||
@@ -269,7 +269,7 @@ final class JavaErrorFixProvider {
       return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
     });
     fixes(SWITCH_SELECTOR_TYPE_INVALID, (error, sink) -> {
-      HighlightFixUtil.registerFixesOnInvalidSelector(error.psi(), sink);
+      HighlightFixUtil.registerFixesOnInvalidSelector(sink, error.psi());
       JavaFeature feature = error.context().getFeature();
       if (feature != null) {
         HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), feature).forEach(sink);
@@ -767,7 +767,7 @@ final class JavaErrorFixProvider {
     fix(SWITCH_DEFAULT_AND_BOOLEAN, error -> myFactory.createDeleteDefaultFix(null, error.psi()));
     JavaFixesPusher<PsiSwitchBlock, Void> switchFixes = (error, sink) -> {
       sink.accept(myFactory.createAddSwitchDefaultFix(error.psi(), null));
-      HighlightFixUtil.addCompletenessFixes(error.psi(), sink);
+      HighlightFixUtil.addCompletenessFixes(sink, error.psi());
     };
     fixes(SWITCH_EMPTY, switchFixes);
     fixes(SWITCH_INCOMPLETE, switchFixes);
@@ -798,7 +798,7 @@ final class JavaErrorFixProvider {
                                                      error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {
-        HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
+        HighlightFixUtil.registerCallInferenceFixes(sink, callExpression);
       }
     });
     fixes(LAMBDA_INFERENCE_ERROR, (error, sink) -> {
@@ -810,7 +810,7 @@ final class JavaErrorFixProvider {
         if (!PsiTypesUtil.mentionsTypeParameters(((PsiExpression)callExpression.copy()).getType(), Set.of(method.getTypeParameters()))) {
           HighlightFixUtil.registerMethodReturnFixAction(sink, resolveResult, callExpression);
         }
-        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(callExpression, resolveResult, method, sink);
+        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(sink, callExpression, resolveResult, method);
         LambdaUtil.getReturnExpressions(error.psi())
           .stream().map(PsiExpression::getType).distinct()
           .map(type -> AdjustFunctionContextFix.createFix(type, error.psi()))
@@ -843,10 +843,10 @@ final class JavaErrorFixProvider {
           AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, methodCall, expectedTypeByParent, actualType);
         }
         HighlightFixUtil.registerQualifyMethodCallFix(
-          resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, sink);
+          sink, resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list);
         HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, list);
         HighlightFixUtil.registerMethodReturnFixAction(sink, candidate, methodCall);
-        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidate, candidate.getElement(), sink);
+        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(sink, methodCall, candidate, candidate.getElement());
         HighlightFixUtil.registerImplementsExtendsFix(sink, methodCall, candidate.getElement());
       }
       if (parent instanceof PsiConstructorCall constructorCall) {
