@@ -28,6 +28,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/platform-frontend:frontend",
+    "//platform/execution-impl",
   ],
   runtime_deps = [":debugger-impl-frontend_resources"]
 )

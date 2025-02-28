@@ -158,6 +158,7 @@ jvm_library(
     "//platform/platform-resources-en:resources-en",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-i18n:i18n",
   ]
 )
 
