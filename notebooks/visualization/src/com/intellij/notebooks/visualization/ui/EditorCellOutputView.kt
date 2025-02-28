@@ -26,7 +26,7 @@ class EditorCellOutputView internal constructor(
     }
 
   // Real UI Panel will be created lazily when folding became visible.
-  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, ::getFoldingBounds) {
+  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, null, ::getFoldingBounds) {
     component.isSeen = !component.isSeen
   }
     .also {
@@ -56,7 +56,7 @@ class EditorCellOutputView internal constructor(
   override fun calculateBounds(): Rectangle {
     val allCellOutputs = parent as? EditorCellOutputsView ?: return Rectangle(0, 0, 0, 0)
 
-    //Need validate because swing component can be invalid on update
+    // Need to validate because a swing component can be invalid on update
     allCellOutputs.innerComponent.validate()
 
     val inlayBounds = allCellOutputs.inlay?.bounds ?: Rectangle(0, 0, 0, 0)
