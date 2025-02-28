@@ -13,8 +13,8 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.execution.ExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -327,7 +327,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         val debuggerSession = vmAttacher.attachVirtualMachine(this, javaParameters, environment)
 
         val processHandler = debuggerSession.process.processHandler
-        debuggerSession.process.addProcessListener(object : ProcessAdapter() {
+        debuggerSession.process.addProcessListener(object : ProcessListener {
             private val errorOutput = StringBuilder()
 
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -12,8 +12,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -78,7 +78,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     }
 
     ProcessOutput processOutput = new ProcessOutput();
-    process.addProcessListener(new ProcessAdapter() {
+    process.addProcessListener(new ProcessListener() {
       final OutputEventSplitter splitter = new OutputEventSplitter() {
         @Override
         public void onTextAvailable(@NotNull String text, @NotNull Key<?> outputType) {

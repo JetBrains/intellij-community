@@ -6,9 +6,9 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
@@ -353,7 +353,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
 
 
-    myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+    myDebugProcess.getProcessHandler().addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(final @NotNull ProcessEvent event) {
         stopImpl();

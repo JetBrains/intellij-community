@@ -30,7 +30,10 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -176,9 +179,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, disposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
     CompoundRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
-    addDebugProcessListener(new DebugProcessAdapterImpl() {
+    addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processAttached(DebugProcessImpl process) {
+      public void processAttached(@NotNull DebugProcess process) {
         reloadRenderers();
       }
     }, disposable);
@@ -2635,7 +2638,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void afterProcessStarted(final Runnable run) {
-    class MyProcessAdapter extends ProcessAdapter {
+    class MyProcessAdapter implements ProcessListener {
       private boolean alreadyRun = false;
 
       public synchronized void run() {

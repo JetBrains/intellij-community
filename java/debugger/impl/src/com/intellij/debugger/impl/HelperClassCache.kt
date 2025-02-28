@@ -8,7 +8,6 @@ import com.intellij.debugger.impl.ClassLoaderInfo.DefinedInCompanionClassLoader
 import com.intellij.debugger.impl.ClassLoaderInfo.LoadFailedMarker
 import com.sun.jdi.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.URLClassLoader
@@ -40,8 +39,8 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
   private val evaluationClassLoaderMapping = HashMap<ClassLoaderReference?, ClassLoaderInfo>()
 
   init {
-    debugProcess.addDebugProcessListener(object : DebugProcessAdapterImpl() {
-      override fun processDetached(process: DebugProcessImpl?, closedByUser: Boolean) {
+    debugProcess.addDebugProcessListener(object : DebugProcessListener {
+      override fun processDetached(process: DebugProcess, closedByUser: Boolean) {
         releaseAllClassLoaders()
       }
     })

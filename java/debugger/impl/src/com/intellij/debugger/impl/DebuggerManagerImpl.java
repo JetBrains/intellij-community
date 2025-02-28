@@ -14,9 +14,9 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -199,7 +199,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       // so we need to call debugProcess.stop() explicitly for graceful termination.
       // RemoteProcessHandler on the other hand will call debugProcess.stop() as a part of destroyProcess() and detachProcess() implementation,
       // so we shouldn't add the listener to avoid calling stop() twice
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           ProcessHandler processHandler = event.getProcessHandler();
@@ -266,7 +266,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       debugProcess.addDebugProcessListener(listener);
     }
     else {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
@@ -286,7 +286,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       debugProcess.removeDebugProcessListener(listener);
     }
     else {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);

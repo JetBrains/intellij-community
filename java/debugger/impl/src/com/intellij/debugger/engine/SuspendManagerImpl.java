@@ -46,9 +46,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public SuspendManagerImpl(@NotNull DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myEventContexts.forEach(Disposer::dispose);
         myEventContexts.clear();
         myPausedContexts.forEach(Disposer::dispose);
