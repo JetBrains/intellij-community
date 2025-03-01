@@ -177,7 +177,6 @@ internal abstract class TerminalEventDispatcher(
       "ResizeToolWindowUp",
       "ResizeToolWindowDown",
       "MaximizeToolWindow",
-      "MaintenanceAction",
       // terminal actions, but included here because they're not essential
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",

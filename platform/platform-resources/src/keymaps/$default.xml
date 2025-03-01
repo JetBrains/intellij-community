@@ -1102,9 +1102,6 @@
   <action id="PopupHector">
     <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
   </action>
-  <action id="MaintenanceAction">
-    <keyboard-shortcut first-keystroke="ctrl alt shift SLASH"/>
-  </action>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="ctrl TAB"/>
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>

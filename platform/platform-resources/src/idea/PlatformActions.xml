@@ -1245,8 +1245,6 @@
       <action id="ChangeIdeScale" class="com.intellij.ide.actions.QuickChangeIdeScaleAction"/>
     </group>
 
-    <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>
-
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
