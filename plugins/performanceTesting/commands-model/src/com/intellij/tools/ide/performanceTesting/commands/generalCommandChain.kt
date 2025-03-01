@@ -1010,10 +1010,6 @@ fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T = apply {
   addCommand("${CMD_PREFIX}checkResponseContains ${textToCheck}")
 }
 
-fun <T : CommandChain> T.authenticateInGrazie(token: String): T = apply {
-  addCommand("${CMD_PREFIX}authenticateInGrazie ${token}")
-}
-
 fun <T : CommandChain> T.waitFullLineModelLoaded(language: String): T = apply {
   addCommand("${CMD_PREFIX}waitFullLineModelLoaded ${language}")
 }
