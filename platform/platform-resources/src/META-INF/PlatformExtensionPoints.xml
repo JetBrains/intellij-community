@@ -64,7 +64,7 @@
                     interface="com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeUsageSchemaDescriptor"
-                    beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeUsageSchemaDescriptorEP"
+                    beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptorEP"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor"/>
     </extensionPoint>

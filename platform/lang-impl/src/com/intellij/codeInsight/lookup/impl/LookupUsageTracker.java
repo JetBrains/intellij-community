@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.FileTypeSchemaValidator;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;

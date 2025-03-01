@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -23,9 +22,13 @@ import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-// todo disable in guest (no file types)
+import static java.util.Collections.emptySet;
+
 @ApiStatus.Internal
 public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
@@ -34,7 +37,7 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 
-  // temporary not collected
+  // temporary is not collected
   private final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private final IntEventField PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_SCHEME_PERCENT = new ObjectListEventField("file_schema", SCHEMA, PERCENT);
@@ -54,9 +57,7 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @Override
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
-    if (project.isDisposed()) {
-      return Collections.emptySet();
-    }
+    if (project.isDisposed()) return emptySet();
 
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     IProjectStore stateStore = ProjectKt.getStateStore(project);
