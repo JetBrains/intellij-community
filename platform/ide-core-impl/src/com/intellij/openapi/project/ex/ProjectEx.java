@@ -24,10 +24,6 @@ public interface ProjectEx extends Project {
     return true;
   }
 
-  default ComponentManager getComponentManagerImpl() {
-    return this;
-  }
-
   /**
    * {@link Disposable} that will be disposed right after container started to be disposed.
    * Use it to dispose something that need to be disposed very early, e.g. {@link com.intellij.util.Alarm}.

@@ -43,7 +43,7 @@ private val LOG: Logger
 open class ModuleImpl @ApiStatus.Internal constructor(
   name: String,
   project: Project,
-) : ComponentManagerImpl(parent = (project as ProjectEx).componentManagerImpl as ComponentManagerImpl), ModuleEx, Queryable {
+) : ComponentManagerImpl(parent = project.actualComponentManager as ComponentManagerImpl), ModuleEx, Queryable {
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
