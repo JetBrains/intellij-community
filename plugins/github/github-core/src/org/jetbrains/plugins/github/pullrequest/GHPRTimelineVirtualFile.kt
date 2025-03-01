@@ -44,4 +44,22 @@ internal data class GHPRTimelineVirtualFile(
     project.service<GHPRProjectViewModel>().connectedProjectVm.value?.takeIf { it.repository == repository }
 
   private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPRTimelineVirtualFile) return false
+    if (!super.equals(other)) return false
+
+    if (project != other.project) return false
+    if (repository != other.repository) return false
+    return pullRequest == other.pullRequest
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + project.hashCode()
+    result = 31 * result + repository.hashCode()
+    result = 31 * result + pullRequest.hashCode()
+    return result
+  }
 }
