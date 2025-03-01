@@ -4,7 +4,7 @@ package org.intellij.images.scientific.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -14,12 +14,13 @@ import org.intellij.images.scientific.ScientificUtils
 import java.io.IOException
 import java.nio.file.Files
 
-class SaveImageAction : DumbAwareAction() {
+internal class SaveImageAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     if (virtualFile == null || project == null) {
-      LOG.error("Missing project or image file.")
+      logger.error("Missing project or image file.")
       return
     }
 
@@ -33,7 +34,7 @@ class SaveImageAction : DumbAwareAction() {
       Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
     }
     catch (e: IOException) {
-      LOG.warn("Failed to save image", e)
+      logger.warn("Failed to save image", e)
     }
   }
 
@@ -45,8 +46,9 @@ class SaveImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
-    private val LOG = thisLogger()
     private const val IMAGE_FORMAT = "png"
     private const val IMAGE_DEFAULT_NAME: String = "myimg"
   }
 }
+
+private val logger = Logger.getInstance(SaveImageAction::class.java)
