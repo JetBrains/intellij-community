@@ -1,16 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.createParentDirectories
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -315,21 +311,6 @@ internal class PluginXIncludeTest {
           ${includes.xml()}
           </idea-plugin>
         """.trimIndent())
-    }
-
-    lateinit var loggerFactory: Logger.Factory
-
-    @JvmStatic
-    @BeforeAll
-    fun setupLogger() {
-      loggerFactory = Logger.getFactory()
-      Logger.setFactory(TestLoggerFactory::class.java)
-    }
-
-    @JvmStatic
-    @AfterAll
-    fun resetLogger() {
-      Logger.setFactory(loggerFactory)
     }
   }
 }
