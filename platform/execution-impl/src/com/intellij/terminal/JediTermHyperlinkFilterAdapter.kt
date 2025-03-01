@@ -30,7 +30,7 @@ import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.HoverConsumer
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.PopupMenuGroupProvider
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
@@ -44,12 +44,7 @@ internal class JediTermHyperlinkFilterAdapter(
 
   private val filterWrapper = CompositeFilterWrapper(project, console, widget)
 
-  private val requestFlow: MutableSharedFlow<Request> = MutableSharedFlow(
-    // don't lose initial requests due to adding a subscriber asynchronously
-    replay = MAX_BUFFERED_REQUESTS,
-    extraBufferCapacity = 0,
-    BufferOverflow.DROP_OLDEST
-  )
+  private val requestChannel: Channel<Request> = Channel(MAX_BUFFERED_REQUESTS, BufferOverflow.DROP_OLDEST)
 
   init {
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,10 +57,11 @@ internal class JediTermHyperlinkFilterAdapter(
     )
     Disposer.register(widget) {
       coroutineScope.cancel()
+      requestChannel.close()
     }
     coroutineScope.launch {
-      requestFlow.collect {
-        processRequest(it.lineInfo, it.future)
+      for (request in requestChannel) {
+        processRequest(request.lineInfo, request.future)
       }
     }
   }
@@ -76,7 +72,7 @@ internal class JediTermHyperlinkFilterAdapter(
 
   override fun apply(lineInfo: AsyncHyperlinkFilter.LineInfo): CompletableFuture<LinkResult?> {
     val future = CompletableFuture<LinkResult?>()
-    requestFlow.tryEmit(Request(lineInfo, future))
+    requestChannel.trySend(Request(lineInfo, future))
     return future
   }
 
