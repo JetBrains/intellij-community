@@ -254,6 +254,23 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(7));
   }
 
+  public void testWithoutStaticImportWithoutModuleAndStaticNotSeparate() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(6));
+  }
+
   public void testEmptyConfigImport() throws SchemeImportException {
     CodeStyleSettings settings = importSettings();
 
