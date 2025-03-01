@@ -16,7 +16,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl" preload="true"/>
+    <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
+    <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
 
     <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
     <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
@@ -27,7 +28,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.UploadLogsService"/>
 
-    <applicationService serviceImplementation="org.jetbrains.ide.ToolboxRestServiceConfig" preload="true"/>
+    <applicationActivity implementation="org.jetbrains.ide.ToolboxRestLauncher"/>
     <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>

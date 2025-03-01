@@ -1,14 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.ide.ApplicationActivity
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -30,6 +33,12 @@ import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
 
+private const val PORTS_COUNT = 20
+private const val PROPERTY_RPC_PORT = "rpc.port"
+private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
+
+private val LOG = logger<BuiltInServerManager>()
+
 class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
   private val authService = service<BuiltInWebServerAuth>()
   private var serverStartFuture: Job? = null
@@ -46,19 +55,15 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     val app = ApplicationManager.getApplication()
     serverStartFuture = when {
       app.isUnitTestMode -> null
-      else -> coroutineScope.launch(Dispatchers.IO) { startServerInPooledThread() }
+      else -> coroutineScope.launch(Dispatchers.IO) {
+        startServerInPooledThread()
+      }
     }
   }
 
   override fun createClientBootstrap(): Bootstrap = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
 
   companion object {
-    private const val PORTS_COUNT = 20
-    private const val PROPERTY_RPC_PORT = "rpc.port"
-    private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
-
-    private val LOG = logger<BuiltInServerManager>()
-
     internal const val NOTIFICATION_GROUP = "Built-in Server"
 
     @JvmStatic
@@ -119,6 +124,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
       return
     }
 
+    // extensions may use registry to enable/disable URL handlers
+    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
@@ -169,5 +177,14 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
       SubServer(customPortServerManager, server).bind(customPortServerManager.port)
     }
+  }
+}
+
+/**
+ * Instead of preloading too early, we explicitly start the server at the end of the application boot sequence.
+ */
+internal class BuiltInServerManagerLauncher : ApplicationActivity {
+  override suspend fun execute() {
+    serviceAsync<BuiltInServerManager>()
   }
 }
