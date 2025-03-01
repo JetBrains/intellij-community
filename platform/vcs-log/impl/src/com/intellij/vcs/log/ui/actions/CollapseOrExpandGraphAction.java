@@ -18,12 +18,10 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.visible.VisiblePack;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private final Supplier<@NlsActions.ActionText String> myLinearBranchesAction;
   private final Supplier<@NlsActions.ActionDescription String> myLinearBranchesDescription;
