@@ -76,7 +76,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11, 22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
@@ -122,7 +122,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals("com.jetbrains.First", repeatAnno.get(0));
     assertEquals("com.jetbrains.Second", repeatAnno.get(1));
   }
-  
+
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
@@ -152,6 +152,110 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
     assertEquals(7, commonSettings.BLANK_LINES_AROUND_FIELD);
     assertEquals(7, customSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+  }
+
+  public void testWithoutModulesAndOtherImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModulesAndOtherImportAndStaticImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(4));
+    assertEquals("javax", table.getEntryAt(5).getPackageName());
+    assertEquals("java", table.getEntryAt(6).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModules() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutOtherImportWithModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutStaticImportWithoutModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testEmptyConfigImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(6));
   }
 
   private static boolean isPrimitiveOrString(Class type) {
