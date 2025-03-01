@@ -468,7 +468,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
     else {
       //if something is missed, restore it
-      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)) {
+      if (LAYOUT_STATIC_IMPORTS_SEPARATELY && !ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)) {
         if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
           IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 1);
         }
