@@ -73,13 +73,7 @@ public final class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspe
                            DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.extension.point",
                                                 extensionPoint.getEffectiveQualifiedName()));
     }
-    else if (Boolean.FALSE == extensionPoint.getDynamic().getValue()) {
-      holder.createProblem(extensionPoint,
-                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.explicit.non.dynamic.extension.point",
-                                                extensionPoint.getEffectiveQualifiedName()));
-    }
   }
-
 
   private static void highlightGroup(DomElementAnnotationHolder holder, Group group) {
     if (!DomUtil.hasXml(group.getId())) {
