@@ -7,8 +7,9 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.ui.*
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -39,7 +40,7 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
     if (newValue != null) centerPanel.addToBottom(newValue)
   }
 
-  private val changesScrollPane = createScrollPane(changesView)
+  private val changesScrollPane = createScrollPane(changesView, true)
   private val centerPanel = simplePanel(changesScrollPane).andTransparent()
 
   init {
