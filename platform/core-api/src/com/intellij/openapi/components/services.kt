@@ -66,13 +66,11 @@ inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): L
   return getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
   return (this as ComponentManagerEx).getServiceAsync(T::class.java)
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> serviceAsync(): T {
   return (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(T::class.java)
