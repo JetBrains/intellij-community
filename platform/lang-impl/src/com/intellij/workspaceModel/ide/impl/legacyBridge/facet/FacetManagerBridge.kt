@@ -5,6 +5,7 @@ import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.impl.invalid.InvalidFacet
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -199,7 +200,7 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
         name = entity.name
         setFacetType(entity.typeId.name)
         configuration = entity.configurationXmlTag?.let { JDOMUtil.load(it) }
-      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.typeId.name), true, true)
+      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.typeId.name), true, !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID))
     }
 
     val configuration = facetType.createDefaultConfiguration()

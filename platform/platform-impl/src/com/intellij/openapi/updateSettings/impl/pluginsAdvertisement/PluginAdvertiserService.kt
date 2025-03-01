@@ -392,8 +392,9 @@ open class PluginAdvertiserServiceImpl(
       FUSEventSource.NOTIFICATION.logPluginSuggested(project, plugin.id)
     }
 
-    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
-      val action = if (disabledDescriptors.isEmpty()) {
+    val promoteDisabledPlugins = if (PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) emptyList() else disabledDescriptors
+    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || promoteDisabledPlugins.isNotEmpty()) {
+      val action = if (promoteDisabledPlugins.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
 
@@ -401,7 +402,7 @@ open class PluginAdvertiserServiceImpl(
         }
       }
       else {
-        val title = if (disabledDescriptors.size == 1)
+        val title = if (promoteDisabledPlugins.size == 1)
           IdeBundle.message("plugins.advertiser.action.enable.plugin")
         else
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
@@ -409,20 +410,20 @@ open class PluginAdvertiserServiceImpl(
         NotificationAction.createSimpleExpiring(title) {
           cs.launch(Dispatchers.EDT) {
             FUSEventSource.NOTIFICATION.logEnablePlugins(
-              disabledDescriptors.map { it.pluginId.idString },
+              promoteDisabledPlugins.map { it.pluginId.idString },
               project,
             )
 
-            PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
+            PluginBooleanOptionDescriptor.togglePluginState(promoteDisabledPlugins, true)
           }
         }
       }
 
       val notificationActions = listOf(
         action,
-        createIgnoreUnknownFeaturesAction(suggestionPlugins, disabledDescriptors, allUnknownFeatures, dependencies),
+        createIgnoreUnknownFeaturesAction(suggestionPlugins, promoteDisabledPlugins, allUnknownFeatures, dependencies),
       )
-      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, disabledDescriptors, featuresMap)
+      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, promoteDisabledPlugins, featuresMap)
 
       Pair(messagePresentation, notificationActions)
     }
