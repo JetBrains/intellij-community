@@ -1264,7 +1264,9 @@
     </group>
 
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
-    <action id="CreateAllServicesAndExtensions" internal="true" class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"/>
+    <action id="CreateAllServicesAndExtensions" internal="true"
+            class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
+            text="Create All Services And Extensions"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
     <action id="ShowTrustProjectDialog" class="com.intellij.ide.impl.ShowTrustProjectDialogAction"/>
 
@@ -1286,7 +1288,9 @@
         <action id="UntrustProject" internal="true" class="com.intellij.internal.NoTrustAction"/>
       </group>
       <group id="Internal.WorkspaceModel" popup="true">
-        <action id="PrintModulesAndEntitySources" internal="true" class="com.intellij.internal.PrintModulesAndEntitySources"/>
+        <action id="PrintModulesAndEntitySources" internal="true"
+                class="com.intellij.internal.PrintModulesAndEntitySources"
+                text="Print Modules and Entity Sources to Log"/>
       </group>
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
@@ -1299,11 +1303,13 @@
       </action>
       <action id="TriggerProjectIndexableFilesFilterHealthCheckAction" internal="true"
               class="com.intellij.util.indexing.projectFilter.TriggerProjectIndexableFilesFilterHealthCheckAction"/>
-      <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
+      <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction" internal="true">
         <synonym text="Exit Tremble Dumb Mode"/>
         <synonym text="Enter Tremble Dumb Mode"/>
       </action>
-      <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
+      <action id="ShowPoweredProgress" internal="true"
+              class="com.intellij.internal.ShowPoweredProgressAction"
+              text="Show Powered Progress"/>
       <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
         <synonym text="Disable ProcessCanceledException"/>
       </action>

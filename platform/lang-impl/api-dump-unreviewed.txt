@@ -14307,14 +14307,6 @@ c:com.intellij.openapi.util.registry.RegistryUi
 - <init>():V
 - dispose():V
 - show():Z
-f:com.intellij.openapi.util.registry.ShowRegistryAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.ide.lightEdit.LightEditCompatible
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.changes.PsiChangeTracker
 - s:getElementsChanged(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.psi.util.PsiFilter):java.util.Map
 com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener

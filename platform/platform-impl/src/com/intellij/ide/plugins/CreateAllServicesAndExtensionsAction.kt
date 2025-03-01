@@ -9,7 +9,10 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -18,7 +21,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -32,7 +35,7 @@ import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
-private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
+private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {
@@ -43,9 +46,7 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
     Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private fun checkLightServices(
