@@ -149,7 +149,7 @@ class EventId3<in T1, in T2, in T3>(
 }
 
 class EventDataCollector : ArrayList<EventPair<*>>() {
-  var skipped = false
+  var skipped: Boolean = false
 
   fun skip() {
     skipped = true
@@ -184,7 +184,7 @@ class VarargEventId internal constructor(
   /**
    * Introduced to simplify usage from java
    * */
-  fun log(project: Project?, dataBuilder: Consumer<List<EventPair<*>>>) {
+  fun log(project: Project?, dataBuilder: Consumer<MutableList<EventPair<*>>>) {
     log(project, dataBuilder::accept)
   }
 
