@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @ApiStatus.Experimental
 object OptionalExclusionUtil {
-  val EP_NAME: ExtensionPointName<OptionalExclusionContributor> =
+  private val EP_NAME: ExtensionPointName<OptionalExclusionContributor> =
     ExtensionPointName("com.intellij.workspaceModel.optionalExclusionContributor")
 
   @JvmStatic
