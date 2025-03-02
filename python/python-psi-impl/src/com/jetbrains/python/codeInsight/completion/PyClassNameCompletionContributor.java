@@ -279,6 +279,9 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                                  @NotNull PsiElement position,
                                                                  @NotNull TypeEvalContext typeEvalContext) {
     if (position.getParent() instanceof PyStringLiteralExpression) {
+      if (isInsideAllInInitPy(position)) {
+        return getImportingInsertHandler();
+      }
       return getStringLiteralInsertHandler();
     }
     // Some names in typing are defined as functions, this rule needs to have priority
@@ -289,6 +292,35 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       return getFunctionInsertHandler();
     }
     return getImportingInsertHandler();
+  }
+
+  private static boolean isInsideAllInInitPy(@NotNull PsiElement position) {
+    PsiFile originalFile = position.getContainingFile();
+    if (originalFile == null) {
+      return false;
+    }
+
+    if (!PyNames.INIT_DOT_PY.equals(originalFile.getName())) {
+      return false;
+    }
+
+    PyAssignmentStatement assignment =
+      PsiTreeUtil.getParentOfType(position, PyAssignmentStatement.class);
+    if (assignment == null) {
+      return false;
+    }
+
+    PyExpression[] targets = assignment.getTargets();
+    if (targets.length != 1) {
+      return false;
+    }
+
+    PyExpression target = targets[0];
+    if (!(target instanceof PyTargetExpression firstTarget)) {
+      return false;
+    }
+
+    return PyNames.ALL.equals(firstTarget.getName());
   }
 
   private static class Counters {
