@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.core.fileIndex
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -11,10 +11,10 @@ interface OptionalExclusionContributor {
   /**
    * @return true if the url has been excluded
    */
-  fun exclude(project: Project, url: VirtualFileUrl): Boolean
+  fun requestExclusion(project: Project, url: VirtualFileUrl): Boolean
 
   /**
    * @return true if exclusion of the url has been canceled
    */
-  fun cancelExclusion(project: Project, url: VirtualFileUrl): Boolean
+  fun requestExclusionCancellation(project: Project, url: VirtualFileUrl): Boolean
 }

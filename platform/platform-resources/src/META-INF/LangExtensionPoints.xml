@@ -587,6 +587,8 @@
     <extensionPoint name="projectView.externalLibraries.workspaceModelNodesProvider"
                     interface="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNodesProvider"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.optionalExclusionContributor" dynamic="true"
+                    interface="com.intellij.workspaceModel.ide.OptionalExclusionContributor"/>
 
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
 
