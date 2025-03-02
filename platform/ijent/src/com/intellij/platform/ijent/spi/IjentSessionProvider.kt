@@ -4,7 +4,10 @@ package com.intellij.platform.ijent.spi
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentSessionRegistry
+import com.intellij.platform.ijent.IjentWindowsApi
 
 /**
  * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
@@ -54,7 +57,7 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  */
 suspend fun connectToRunningIjent(strategy: IjentConnectionStrategy, platform: EelPlatform, descriptor: EelDescriptor, mediator: IjentSessionMediator): IjentApi {
-  mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
+  mediator.myExitPolicy = IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
   return IjentSessionProvider.instanceAsync().connect(strategy, platform, descriptor, mediator)
 }
 
