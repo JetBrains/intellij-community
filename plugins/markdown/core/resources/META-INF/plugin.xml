@@ -19,6 +19,7 @@
     <module name="intellij.markdown.model"/>
     <module name="intellij.markdown.spellchecker"/>
     <module name="intellij.markdown.compose.preview"/>
+    <module name="intellij.markdown.frontend"/>
   </content>
 
   <description><![CDATA[

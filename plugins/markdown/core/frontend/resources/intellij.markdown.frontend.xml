@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.markdown"/>
+  </dependencies>
+</idea-plugin>
