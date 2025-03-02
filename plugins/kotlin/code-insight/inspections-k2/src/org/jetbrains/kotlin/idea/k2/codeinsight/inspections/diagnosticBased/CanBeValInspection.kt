@@ -22,10 +22,10 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ): KtVisitor<*, *> = declarationVisitor(fun(declaration) {
-        if (declaration !is KtProperty && declaration !is KtDestructuringDeclaration) return
-        visitTargetElement(declaration, holder, isOnTheFly)
-    })
+    ): KtVisitor<*, *> = declarationVisitor { declaration ->
+        if (declaration is KtProperty || declaration is KtDestructuringDeclaration)
+            visitTargetElement(declaration, holder, isOnTheFly)
+    }
 
     override fun getProblemDescription(
         element: KtDeclaration,
