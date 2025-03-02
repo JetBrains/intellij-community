@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,15 +32,25 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.size.Size
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
@@ -106,6 +118,8 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    private data class ImageSize(val width: Int, val height: Int)
+
     @Composable
     override fun render(
         block: Paragraph,
@@ -128,6 +142,7 @@ public open class DefaultMarkdownBlockRenderer(
                     .clickable(interactionSource = interactionSource, indication = null, onClick = onTextClick),
             text = renderedContent,
             style = mergedStyle,
+            inlineContent = renderedImages(block),
         )
     }
 
@@ -448,6 +463,50 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> =
+        getImages(blockInlineContent).associate { image -> image.source to imageContent(image) }
+
+    @Composable
+    private fun imageContent(image: InlineMarkdown.Image): InlineTextContent {
+        val knownSize = remember(image.source) { mutableStateOf<ImageSize?>(null) }
+        return InlineTextContent(
+            with(LocalDensity.current) {
+                // `toSp` ensures that the placeholder size matches the original image size in
+                // pixels.
+                // This approach doesn't allow images from appearing larger with different screen
+                // scaling,
+                // but simply maintains behavior consistent with standalone AsyncImage rendering.
+                Placeholder(
+                    width = knownSize.value?.width?.dp?.toSp() ?: 0.sp,
+                    height = knownSize.value?.height?.dp?.toSp() ?: 1.sp,
+                    placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom,
+                )
+            }
+        ) {
+            AsyncImage(
+                model =
+                    ImageRequest.Builder(LocalPlatformContext.current)
+                        .data(image.source)
+                        // make sure image doesn't get downscaled to the placeholder size
+                        .size(Size.ORIGINAL)
+                        .build(),
+                contentDescription = image.title,
+                onSuccess = { state ->
+                    // onSuccess should only be called once, but adding additional protection from
+                    // unnecessary rerender
+                    if (knownSize.value == null) {
+                        knownSize.value = state.result.image.let { ImageSize(it.width, it.height) }
+                    }
+                },
+                onError = { error ->
+                    JewelLogger.getInstance("Jewel").warn("AsyncImage loading: ${error.result.throwable}")
+                },
+                modifier = knownSize.value?.let { Modifier.height(it.height.dp).width(it.width.dp) } ?: Modifier,
+            )
+        }
+    }
+
+    @Composable
     protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
@@ -474,4 +533,22 @@ public open class DefaultMarkdownBlockRenderer(
     @ExperimentalJewelApi
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
+}
+
+private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = buildList {
+    fun collectImagesRecursively(items: List<InlineMarkdown>) {
+        for (item in items) {
+            when (item) {
+                is InlineMarkdown.Image -> {
+                    if (item.source.isNotBlank()) add(item)
+                }
+                is WithInlineMarkdown -> {
+                    collectImagesRecursively(item.inlineContent)
+                }
+
+                else -> {}
+            }
+        }
+    }
+    collectImagesRecursively(input.inlineContent)
 }
