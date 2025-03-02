@@ -112,11 +112,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(2, commonJavaSettings.getIndentOptions().INDENT_SIZE);
     assertTrue(javaSettings.JD_ALIGN_PARAM_COMMENTS);
     PackageEntryTable importsTable = javaSettings.getImportLayoutTable();
-    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(0));
-    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(1));
-    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
-    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
-    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, importsTable.getEntryAt(0));
+    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(2));
+    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(3));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(4));
+    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(5));
     List<String> repeatAnno = javaSettings.getRepeatAnnotations();
     assertEquals(2, repeatAnno.size());
     assertEquals("com.jetbrains.First", repeatAnno.get(0));
