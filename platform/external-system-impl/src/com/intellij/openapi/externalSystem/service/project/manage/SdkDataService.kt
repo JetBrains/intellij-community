@@ -13,8 +13,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 
 internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
+
+  private val keepProjectSdkAlignedWithBuild = Registry.`is`("external.system.project.sdk.matches.build.config")
+
   override fun getTargetDataKey() = ProjectSdkData.KEY
 
   override fun importData(
@@ -25,7 +29,7 @@ internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData
   ) {
     if (toImport.isEmpty() || projectData == null) return
     require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
-    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
+    if (!keepProjectSdkAlignedWithBuild && !ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
     for (sdkDataNode in toImport) {
       ExternalSystemApiUtil.executeProjectChangeAction(project) {
         importProjectSdk(project, sdkDataNode.data)
@@ -39,7 +43,7 @@ internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData
     val sdk = projectJdkTable.findJdk(sdkName)
     val projectRootManager = ProjectRootManager.getInstance(project)
     val projectSdk = projectRootManager.projectSdk
-    if (projectSdk == null) {
+    if (projectSdk == null || (keepProjectSdkAlignedWithBuild && projectSdk != sdk)) {
       projectRootManager.projectSdk = sdk
     }
   }
