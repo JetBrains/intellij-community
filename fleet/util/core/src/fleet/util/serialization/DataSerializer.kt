@@ -6,6 +6,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import fleet.multiplatform.shims.ThreadLocal
 
 abstract class DelegateSerializer<T, D>(
   val t2d: (T) -> D,
@@ -44,7 +45,7 @@ abstract class StringSerializer<T>(val toString: (T) -> String,
   }
 }
 
-val SerializationCallbackThreadLocal: ThreadLocal<(Any) -> Unit> = ThreadLocal()
+val SerializationCallbackThreadLocal: ThreadLocal<((Any) -> Unit)?> = ThreadLocal()
 
 fun <T> withSerializationCallback(callback: (Any) -> Unit, body: () -> T): T {
   return (SerializationCallbackThreadLocal.get()).let { oldRestrictions ->

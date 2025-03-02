@@ -4,6 +4,7 @@ package com.jetbrains.rhizomedb
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.jvm.JvmStatic
+import fleet.multiplatform.shims.ThreadLocal
 
 //fun getStack(): Throwable = Throwable("dbcontext creation stack")
 
