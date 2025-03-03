@@ -39,4 +39,6 @@ interface SettingsSyncAuthService {
   fun getUserData(userId: String): SettingsSyncUserData?
 
   fun getAvailableUserAccounts(): List<SettingsSyncUserData>
+
+  fun crossSyncSupported(): Boolean = true
 }

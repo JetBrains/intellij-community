@@ -97,6 +97,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       var userProviderHolder: UserProviderHolder? = null
       if (SettingsSyncLocalSettings.getInstance().userId != null && SettingsSyncLocalSettings.getInstance().providerCode != null) {
         val authService = RemoteCommunicatorHolder.getProvider(SettingsSyncLocalSettings.getInstance().providerCode!!)?.authService
+        syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
         if (authService != null) {
           authService.getAvailableUserAccounts().find {
             it.id == SettingsSyncLocalSettings.getInstance().userId
@@ -176,7 +177,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
                 return@runWithModalProgressBlocking
               }
-              if (checkServerState(syncPanelHolder, remoteCommunicator)) {
+              if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
                 enabledStatus.set(true)
                 triggerUpdateConfigurable()
               }
@@ -461,7 +462,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           withContext(Dispatchers.EDT) {
             updateUserAccountsList()
             val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id) ?: return@withContext
-            if (checkServerState(syncPanelHolder, remoteCommunicator)) {
+            if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
               SettingsSyncEvents.getInstance().fireLoginStateChanged()
               userDropDownLink.selectedItem = UserProviderHolder(userData.id, userData, provider.authService.providerCode,
                                                                  provider.authService.providerName, null)
@@ -540,7 +541,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime())
 
 
-  private fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder, communicator: SettingsSyncRemoteCommunicator) : Boolean {
+  private fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder,
+                               communicator: SettingsSyncRemoteCommunicator,
+                               crossSyncAvailable: Boolean,
+                               ) : Boolean {
     communicator.setTemporary(true)
     val updateResult = try {
       communicator.receiveUpdates()
@@ -553,6 +557,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       NoFileOnServer, FileDeletedFromServer -> {
         syncPanelHolder.setSyncSettings(null)
         syncPanelHolder.setSyncScopeSettings(null)
+        syncPanelHolder.crossSyncSupported.set(crossSyncAvailable)
         enableSyncOption.set(InitSyncType.PUSH_LOCAL)
         remoteSettingsExist.set(false)
         return true
@@ -560,6 +565,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       is Success -> {
         syncPanelHolder.setSyncSettings(updateResult.settingsSnapshot.getState())
         syncPanelHolder.setSyncScopeSettings(SettingsSyncLocalStateHolder(updateResult.isCrossIdeSyncEnabled))
+        syncPanelHolder.crossSyncSupported.set(crossSyncAvailable)
         enableSyncOption.set(InitSyncType.GET_FROM_SERVER)
         remoteSettingsExist.set(true)
         return true
