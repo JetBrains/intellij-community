@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import org.assertj.core.api.InstanceOfAssertFactories
+import org.assertj.core.api.InstanceOfAssertFactories.list
 import org.assertj.core.api.ObjectAssert
 
 
@@ -29,3 +30,23 @@ fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveTransitiveParentClassloade
     .asInstanceOf(InstanceOfAssertFactories.ARRAY)
     .doesNotContain(*parentDescriptors.map { it.classLoader }.toTypedArray())
 }
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.isMarkedEnabled() = apply {
+  extracting { it.isEnabled }
+    .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+    .isTrue
+}
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
+  extracting { it.isEnabled }
+    .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+    .isFalse
+}
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
+  extracting { it.content.modules.mapNotNull { it.getDescriptorOrNull()?.takeIf { it.isEnabled }?.moduleName } }
+    .asInstanceOf(list(String::class.java))
+    .hasSameElementsAs(ids.toList())
+}
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveEnabledContentModules() = hasExactlyEnabledContentModules()

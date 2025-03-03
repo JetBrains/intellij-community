@@ -2,8 +2,6 @@
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -12,7 +10,6 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.xml.dom.NoOpXmlInterner
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
@@ -198,6 +195,66 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar.module.xml")
+      .build(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar/module")
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar/module.xml")
+      .build(pluginDirPath)
+    assertThatThrownBy {
+      val descriptor = loadDescriptorInTest(pluginDirPath)
+      assertThat(descriptor).isNotNull
+        .isNotMarkedEnabled()
+        .doesNotHaveEnabledContentModules()
+    }.hasMessageContaining("Cannot resolve bar.module.xml")
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module/sub",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module.sub"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar.module.sub.xml")
+      .build(pluginDirPath)
+    assertThatThrownBy {
+      val descriptor = loadDescriptorInTest(pluginDirPath)
+      assertThat(descriptor).isNotNull
+        .isNotMarkedEnabled()
+        .doesNotHaveEnabledContentModules()
+    }.hasMessageContaining("Cannot resolve bar/module.sub.xml") // note that only the last slash is substituted
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module/sub",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module.sub"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar/module.sub.xml")
+      .build(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar/module/sub")
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out

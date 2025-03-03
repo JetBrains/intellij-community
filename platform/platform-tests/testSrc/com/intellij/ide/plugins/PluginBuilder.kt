@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import org.intellij.lang.annotations.Language
@@ -118,9 +119,8 @@ class PluginBuilder private constructor() {
   }
 
   fun module(moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-             separateJar: Boolean = false): PluginBuilder {
-    val fileName = "$moduleName.xml"
-    subDescriptors.add(SubDescriptor(fileName, moduleDescriptor, separateJar))
+             separateJar: Boolean = false, moduleFile: String = "$moduleName.xml"): PluginBuilder {
+    subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor, separateJar))
     content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
 
     // remove default dependency on lang
@@ -279,7 +279,7 @@ class PluginBuilder private constructor() {
     else {
       path.resolve(PluginManagerCore.PLUGIN_XML_PATH).write(text())
       for (subDescriptor in allDescriptors) {
-        path.resolve(subDescriptor.filename).write(subDescriptor.builder.text(requireId = false))
+        path.resolve(subDescriptor.filename).createParentDirectories().write(subDescriptor.builder.text(requireId = false))
       }
     }
     return this

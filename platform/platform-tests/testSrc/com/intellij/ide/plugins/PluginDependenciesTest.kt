@@ -413,6 +413,33 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
   }
 
+  @Test
+  fun `plugin is loaded if it has a module dependency on v2 module with slash in its name`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar.module.xml")
+      .build(pluginDirPath.resolve("bar"))
+    PluginBuilder.empty().id("foo").dependency("bar/module").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("bar/module")
+  }
+
+  @Test
+  fun `plugin is not loaded if it has a module dependency on v2 module with slash in its name but dependency has a dot instead`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar/module",
+              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              loadingRule = ModuleLoadingRule.REQUIRED,
+              moduleFile = "bar.module.xml")
+      .build(pluginDirPath.resolve("bar"))
+    PluginBuilder.empty().id("foo").dependency("bar.module").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+  }
+
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
   private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")

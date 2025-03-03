@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 @ApiStatus.Internal
@@ -40,6 +41,9 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     internal var descriptor: IdeaPluginDescriptorImpl? = null
 
     fun requireDescriptor(): IdeaPluginDescriptorImpl = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
+
+    @TestOnly
+    fun getDescriptorOrNull(): IdeaPluginDescriptorImpl? = descriptor
 
     override fun toString(): String = "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
   }
