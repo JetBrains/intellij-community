@@ -25,15 +25,6 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object SettingsSyncPanelFactory {
-  fun createCombinedSyncSettingsPanel(
-    syncLabel: @Nls String,
-    syncSettings: SettingsSyncState,
-    syncScopeSettings: SettingsSyncLocalState,
-  ): DialogPanel {
-    return SettingsSyncPanelHolder().createCombinedSyncSettingsPanel(syncLabel, syncSettings, syncScopeSettings)
-  }
-}
 internal class SettingsSyncPanelHolder() {
   private lateinit var panel : DialogPanel
   private var isCrossIdeSyncEnabled = false
