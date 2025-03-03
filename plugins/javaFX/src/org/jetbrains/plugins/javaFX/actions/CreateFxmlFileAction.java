@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -19,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.Arrays;
@@ -38,16 +36,8 @@ import java.util.Set;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION;
 
-/**
- * @author pdolgov
- */
 public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
-
-  public CreateFxmlFileAction() {
-    super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"),
-          AllIcons.FileTypes.Xml);
-  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -148,7 +138,7 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       boolean hasClass = JavaPsiFacade.getInstance(module.getProject())
                            .findClass(JAVAFX_APPLICATION_APPLICATION, moduleWithDependenciesAndLibrariesScope(module)) != null;
-      return CachedValueProvider.Result.create(hasClass, ProjectRootManager.getInstance(module.getProject()));
+      return Result.create(hasClass, ProjectRootManager.getInstance(module.getProject()));
     });
   }
 }

@@ -70,7 +70,7 @@
     </intentionAction>
 
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>
-    <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
+    <psi.referenceContributor language="JAVA" implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
     <getterSetterProvider implementation="org.jetbrains.plugins.javaFX.codeInsight.JavaFxGetterSetterPrototypeProvider"/>
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
@@ -114,8 +114,10 @@
     </action>
 
     <group id="JavaFxCreateActions">
-      <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile"/>
-      <action class="org.jetbrains.plugins.javaFX.actions.CreateJavaFxApplicationAction" id="NewJavaFXApplication"/>
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile"
+              icon="AllIcons.FileTypes.Xml"/>
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateJavaFxApplicationAction" id="NewJavaFXApplication"
+              icon="AllIcons.Nodes.Class"/>
 
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </group>
