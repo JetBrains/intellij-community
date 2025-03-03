@@ -11,8 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -56,7 +55,7 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
         ScriptConfigurationsProviderImpl.getInstance(project).notifySourceUpdated()
 
         edtWriteAction {
-            project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
 
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()

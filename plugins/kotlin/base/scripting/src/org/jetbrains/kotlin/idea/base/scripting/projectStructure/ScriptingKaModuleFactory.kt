@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -52,7 +53,7 @@ private class KtScriptModuleByModuleInfo(
     override val file: KtFile
         get() = getScriptFile(moduleInfo.scriptFile)
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = moduleInfo.moduleContentScope
 
     override val languageVersionSettings: LanguageVersionSettings
@@ -81,7 +82,7 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val project: Project
         get() = moduleInfo.project
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = moduleInfo.contentScope
 
     override val libraryName: String
@@ -137,7 +138,7 @@ private class KtScriptDependencySourceModuleByModuleInfo(
     override val project: Project
         get() = moduleInfo.project
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = moduleInfo.sourceScope()
 
     override val libraryName: String

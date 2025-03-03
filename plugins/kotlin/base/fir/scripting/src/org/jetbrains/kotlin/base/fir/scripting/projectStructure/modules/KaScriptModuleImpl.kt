@@ -7,6 +7,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
@@ -34,7 +35,7 @@ import java.util.*
 internal class KaScriptModuleImpl(
     override val project: Project,
     private val scriptFile: VirtualFile,
-) : KaScriptModule {
+) : KaScriptModule, KaModuleBase() {
 
     private val scriptDefinition: ScriptDefinition by lazy {
         findScriptDefinition(project, KtFileScriptSource(file))
@@ -66,7 +67,7 @@ internal class KaScriptModuleImpl(
             .mapNotNull { it.toKaSourceModuleForProduction() }
     }
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() {
             val basicScriptScope = GlobalSearchScope.fileScope(project, scriptFile)
             return KotlinScriptSearchScope(project, basicScriptScope)

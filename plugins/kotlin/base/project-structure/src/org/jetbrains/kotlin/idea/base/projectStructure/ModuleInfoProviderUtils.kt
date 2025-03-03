@@ -38,7 +38,7 @@ private fun cachedModuleInfo(
       ModuleInfoProvider.getInstance(project).firstOrNull(anchorElement),
       ProjectRootModificationTracker.getInstance(project),
       JavaLibraryModificationTracker.getInstance(project),
-      KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
+      KotlinModificationTrackerFactory.getInstance(project).createProjectWideSourceModificationTracker(),
     )
 }
 

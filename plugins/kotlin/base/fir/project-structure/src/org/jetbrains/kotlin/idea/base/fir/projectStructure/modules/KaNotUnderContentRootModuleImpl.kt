@@ -9,6 +9,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -18,13 +19,13 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 class KaNotUnderContentRootModuleImpl(
     file: PsiFile?,
     override val project: Project,
-) : KaNotUnderContentRootModule {
+) : KaNotUnderContentRootModule, KaModuleBase() {
     private val filePointer = file?.createSmartPointer()
 
     override val name: String get() = "Non under content root module"
     override val moduleDescription: String get() = name
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = file?.let { GlobalSearchScope.fileScope(it) }
             ?: GlobalSearchScope.EMPTY_SCOPE
 

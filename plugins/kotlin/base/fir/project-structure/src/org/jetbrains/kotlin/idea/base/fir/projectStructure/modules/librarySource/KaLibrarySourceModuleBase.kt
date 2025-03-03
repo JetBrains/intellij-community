@@ -13,12 +13,13 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 @ApiStatus.Internal
-abstract class KaLibrarySourceModuleBase : KaLibrarySourceModule {
+abstract class KaLibrarySourceModuleBase : KaLibrarySourceModule, KaModuleBase() {
     abstract override val binaryLibrary: KaLibraryModuleBase<*, *>
 
     override val libraryName: String get() = binaryLibrary.libraryName
@@ -34,7 +35,7 @@ abstract class KaLibrarySourceModuleBase : KaLibrarySourceModule {
     override val targetPlatform: TargetPlatform get() = binaryLibrary.targetPlatform
     override val project: Project get() = binaryLibrary.project
 
-    override val contentScope: GlobalSearchScope by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    override val baseContentScope: GlobalSearchScope by lazy(LazyThreadSafetyMode.PUBLICATION) {
         KaLibrarySourceScope(binaryLibrary.entityId, sourceRoots, project)
     }
 

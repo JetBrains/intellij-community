@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.ClassId
 
 internal class IdeKotlinJavaModuleAnnotationsProvider(private val project: Project) : KotlinJavaModulePsiAnnotationsProvider {
     private val virtualFileFinder by lazy {
-        IdeVirtualFileFinder(GlobalSearchScope.allScope(project))
+        IdeVirtualFileFinder(GlobalSearchScope.allScope(project), project)
     }
 
     override fun getAnnotationsForModuleOwnerOfClass(classId: ClassId): List<PsiAnnotation>? {

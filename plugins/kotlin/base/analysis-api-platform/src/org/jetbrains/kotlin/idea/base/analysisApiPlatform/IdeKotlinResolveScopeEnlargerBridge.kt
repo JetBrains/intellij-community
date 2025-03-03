@@ -2,23 +2,23 @@
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeEnlarger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 
-/** Bridges FE1.0 [KotlinResolveScopeEnlarger] to AA [KotlinResolutionScopeEnlarger]. */
-class IdeKotlinResolveScopeEnlargerBridge : KotlinResolutionScopeEnlarger {
-    override fun getAdditionalResolutionScope(module: KaModule): GlobalSearchScope? {
-        if (module !is KaSourceModule) return null
+/** Bridges FE1.0 [KotlinResolveScopeEnlarger] to AA [KotlinContentScopeRefiner]. */
+class IdeKotlinResolveScopeEnlargerBridge : KotlinContentScopeRefiner {
+    override fun getEnlargementScopes(module: KaModule): List<GlobalSearchScope> {
+        if (module !is KaSourceModule) return emptyList()
 
-        return KotlinResolveScopeEnlarger.enlargeScope(
+        return listOf(KotlinResolveScopeEnlarger.enlargeScope(
             GlobalSearchScope.EMPTY_SCOPE,
             module.openapiModule,
             isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST,
-        )
+        ))
     }
 }
