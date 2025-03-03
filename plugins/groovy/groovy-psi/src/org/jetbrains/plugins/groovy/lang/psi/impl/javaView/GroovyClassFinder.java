@@ -9,9 +9,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class GroovyClassFinder extends PsiElementFinder {
@@ -26,13 +29,10 @@ public class GroovyClassFinder extends PsiElementFinder {
     final List<PsiClass> classes = myCache.getClassesByFQName(qualifiedName, scope, true);
     if (classes.isEmpty()) return null;
     if (classes.size() == 1) return classes.get(0);
-    PsiClass bestClass = null;
-    for (PsiClass candidateClass : classes) {
-      if (bestClass == null || PsiClassUtil.createScopeComparator(scope).compare(candidateClass, bestClass) < 0) {
-        bestClass = candidateClass;
-      }
-    }
-    return bestClass;
+    return Collections.min(classes, PsiClassUtil.createScopeComparator(scope)
+      .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
+      .thenComparing(c -> c.getContainingFile() instanceof GroovyFileBase groovyFile ? groovyFile.getPackageName() : "",
+                     Comparator.reverseOrder()));
   }
 
   @Override
@@ -40,5 +40,4 @@ public class GroovyClassFinder extends PsiElementFinder {
     final Collection<PsiClass> classes = myCache.getClassesByFQName(qualifiedName, scope, true);
     return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
-
 }

@@ -351,7 +351,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
 
     PsiClass clazz = ((PsiMember)resolved).getContainingClass();
-    assertEquals(clazz.getContainingFile().getName(), "Bar.groovy");
+    assertEquals("Bar.groovy", clazz.getContainingFile().getName());
   }
 
   public void testCollisionOfClassAndPackage3() {
