@@ -28,15 +28,13 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderBaseImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
@@ -81,7 +79,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             if (jarPath != null && jarPath in builtinsFiles) {
                 runWriteAction {
                     PsiManager.getInstance(project).dropPsiCaches()
-                    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+                    project.publishGlobalModuleStateModificationEvent()
                 }
             }
         }
@@ -106,7 +104,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 is VFileDeleteEvent -> KotlinModuleStateModificationKind.REMOVAL
                 else -> KotlinModuleStateModificationKind.UPDATE
             }
-            module.publishModuleStateModification(modificationKind)
+            module.publishModuleStateModificationEvent(modificationKind)
         }
     }
 
@@ -117,7 +115,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
         override fun before(events: List<VFileEvent>) {
             if (mayBuiltinsHaveChanged(events) || !project.isInitialized) {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
                 return
             }
 
@@ -130,7 +128,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 if (!file.extension.equals("jar", ignoreCase = true)) return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (fileIndex.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
-            }.distinct().forEach { it.publishModuleStateModification(project) }
+            }.distinct().forEach { it.publishModuleStateModificationEvent(project) }
         }
 
         private fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean {
@@ -145,7 +143,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
             // fine-grained here because SDK modules aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on a
             // module-level modification event may not work as expected with an SDK module.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
@@ -156,7 +154,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // The cases described in `isCausedByWorkspaceModelChangesOnly` are rare enough to publish global module state modification
             // events for simplicity. `NonWorkspaceModuleRootListener` can eventually be removed once the APIs described in
             // `isCausedByWorkspaceModelChangesOnly` are removed.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
@@ -177,20 +175,20 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // the `PsiTreeChangeEvent.PROP_UNLOADED_PSI` event. If the PSI was loaded, then `FileManagerImpl.reloadPsiAfterTextChange` is
             // fired which doesn't provide any explicit changes, so we need to publish a global modification event because the file's
             // content may have been changed externally.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
     internal class MyDynamicPluginListener(private val project: Project) : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
             runWriteAction {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
             }
         }
 
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
             runWriteAction {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
             }
         }
     }
@@ -216,7 +214,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     private fun handleChangesInsideModule(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
         for (changedModule in event.getChangesInsideModules()) {
             if (changedModule in alreadyInvalidatedModules) continue
-            changedModule.publishModuleStateModification()
+            changedModule.publishModuleStateModificationEvent()
         }
     }
 
@@ -294,14 +292,14 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                     change.oldEntity
                         .takeIf { it.tableId !is GlobalLibraryTableId }
                         ?.findLibraryBridge(event.storageBefore)
-                        ?.publishModuleStateModification(project, KotlinModuleStateModificationKind.REMOVAL)
+                        ?.publishModuleStateModificationEvent(project, KotlinModuleStateModificationKind.REMOVAL)
                 }
 
                 is EntityChange.Replaced -> {
                     change.newEntity()
                         ?.takeIf { it.tableId !is GlobalLibraryTableId }
                         ?.findLibraryBridge(event.storageAfter)
-                        ?.publishModuleStateModification(project)
+                        ?.publishModuleStateModificationEvent(project)
                 }
             }
         }
@@ -320,14 +318,14 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         toModule(change.oldEntity)?.findModule(event.storageBefore)?.let { module ->
-                            module.publishModuleStateModification(KotlinModuleStateModificationKind.REMOVAL)
+                            module.publishModuleStateModificationEvent(KotlinModuleStateModificationKind.REMOVAL)
                             add(module)
                         }
                     }
 
                     is EntityChange.Replaced -> {
                         toModule(change.newEntity)?.findModule(event.storageAfter)?.let { module ->
-                            module.publishModuleStateModification()
+                            module.publishModuleStateModificationEvent()
                             add(module)
                         }
                     }
@@ -349,26 +347,20 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 }
 
-private fun Module.publishModuleStateModification(
+private fun Module.publishModuleStateModificationEvent(
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {
     toKaModulesForModificationEvents().forEach { kaModule ->
-        kaModule.publishModuleStateModification(modificationKind)
+        kaModule.publishModuleStateModificationEvent(modificationKind)
     }
 }
 
-private fun Library.publishModuleStateModification(
+private fun Library.publishModuleStateModificationEvent(
     project: Project,
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {
     toKaLibraryModules(project).forEach { module ->
-        module.publishModuleStateModification(modificationKind)
-        module.librarySources?.publishModuleStateModification(modificationKind)
+        module.publishModuleStateModificationEvent(modificationKind)
+        module.librarySources?.publishModuleStateModificationEvent(modificationKind)
     }
-}
-
-private fun KaModule.publishModuleStateModification(modificationKind: KotlinModuleStateModificationKind) {
-    ThreadingAssertions.assertWriteAccess()
-
-    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_STATE_MODIFICATION).onModification(this, modificationKind)
 }

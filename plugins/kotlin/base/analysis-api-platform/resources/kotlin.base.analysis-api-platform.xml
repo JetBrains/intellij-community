@@ -1,5 +1,12 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform">
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            defaultValue="true"
+            description="Enables support for Analysis API-based resolution during dumb mode."
+            key="kotlin.analysis.allowRestrictedAnalysis"
+            restartRequired="true"
+    />
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinDefaultAnalysisPermissionOptions"/>
@@ -37,11 +44,11 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinByModulesResolutionScopeProvider"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinGlobalSearchScopeMerger"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinRestrictedAnalysisService"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinOpenTelemetryProvider"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinGlobalOpenTelemetryProvider"/>
@@ -54,15 +61,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinResolutionScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
+    <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
   </extensions>
 
   <projectListeners>
     <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener"/>
-    <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$GlobalModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener"/>
+            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModificationEventListener"
+            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener"/>
   </projectListeners>
 </idea-plugin>

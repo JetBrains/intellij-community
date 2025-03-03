@@ -27,7 +27,7 @@ abstract class KaLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : Symb
     override val binaryRoots: Collection<Path>
         get() = binaryVirtualFiles.mapNotNull { it.toNioPathOrNull() }
 
-    override val contentScope: GlobalSearchScope by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    override val baseContentScope: GlobalSearchScope by lazy(LazyThreadSafetyMode.PUBLICATION) {
         KaLibraryModuleScope(entityId, binaryVirtualFiles.toTypedArray(), project)
     }
 

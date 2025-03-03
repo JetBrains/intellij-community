@@ -360,7 +360,7 @@ private fun <T> cachedKtModule(
             arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
                 JavaLibraryModificationTracker.getInstance(project),
-                KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker()
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideSourceModificationTracker(),
             )
         }
         CachedValueProvider.Result.create(

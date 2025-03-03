@@ -14,8 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
@@ -39,16 +40,12 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
     private fun invalidateCaches(project: Project, invalidationMode: InvalidationMode) = runWriteAction {
         if (invalidationMode.invalidateSources) {
             ProjectStructureProviderService.getInstance(project).incOutOfBlockModificationCount()
-            project.analysisMessageBus.apply {
-                syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
-                syncPublisher(KotlinModificationTopics.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION).onModification()
-            }
+            project.publishGlobalSourceOutOfBlockModificationEvent()
+            project.publishGlobalScriptModuleStateModificationEvent()
         }
         if (invalidationMode.invalidateLibraries) {
             JavaLibraryModificationTracker.incModificationCount(project)
-            project.analysisMessageBus.apply {
-                syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
-            }
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 

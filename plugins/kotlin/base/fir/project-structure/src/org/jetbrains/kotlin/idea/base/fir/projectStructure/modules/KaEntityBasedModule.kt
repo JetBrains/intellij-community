@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 
@@ -29,7 +30,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
  * @see com.intellij.platform.workspace.storage.WorkspaceEntity
  */
 @ApiStatus.Internal
-abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>> : KaModule {
+abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>> : KaModule, KaModuleBase() {
     abstract val entityId: EID
 
     protected val workspaceModel: WorkspaceModel get() = project.workspaceModel
@@ -38,10 +39,6 @@ abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : Symb
     internal val entity: E
         get() = entityId.resolve(currentSnapshot)
             ?: error("Could not resolve $entityId")
-
-    override val transitiveDependsOnDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        computeTransitiveDependsOnDependencies(directDependsOnDependencies)
-    }
 
     /**
      * Should be directly overridden by the final inheritor.

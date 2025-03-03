@@ -13,6 +13,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.analysis.api.platform.declarations.*
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.withRestrictedDataAccess
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
@@ -63,6 +65,10 @@ private class IdeKotlinDeclarationProvider(
     private val stubIndex: StubIndex = StubIndex.getInstance()
     private val psiManager = PsiManager.getInstance(project)
 
+    private val restrictedAnalysisService by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        KotlinRestrictedAnalysisService.getInstance(project)
+    }
+
     private inline fun <IndexKey : Any, reified Psi : PsiElement> firstMatchingOrNull(
         stubKey: StubIndexKey<IndexKey, Psi>,
         key: IndexKey,
@@ -82,11 +88,15 @@ private class IdeKotlinDeclarationProvider(
         return result
     }
 
-    override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
+    override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? = withRestrictedDataAccess {
         val classOrObject = firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
         }
         val typeAlias = getTypeAliasByClassId(classId)
+        selectClassLikeDeclaration(classOrObject, typeAlias)
+    }
+
+    private fun selectClassLikeDeclaration(classOrObject: KtClassOrObject?, typeAlias: KtTypeAlias?): KtClassLikeDeclaration? {
         if (classOrObject != null && typeAlias != null) {
             if (scope.compare(classOrObject.containingFile.virtualFile, typeAlias.containingFile.virtualFile) < 0) {
                 return typeAlias
@@ -95,47 +105,49 @@ private class IdeKotlinDeclarationProvider(
         return classOrObject ?: typeAlias
     }
 
-    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
+    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> = withRestrictedDataAccess {
         KotlinFullClassNameIndex.getAllElements(
             classId.asStringForIndexes(),
             project,
             scope
         ) { it.getClassId() == classId }
             .toList()
-
-    override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
-        return listOfNotNull(getTypeAliasByClassId(classId)) //todo
     }
 
-    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
-        return getNamesInPackage(KotlinTopLevelCallableByPackageShortNameIndex.NAME, packageFqName, scope)
+    override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> = withRestrictedDataAccess {
+        listOfNotNull(getTypeAliasByClassId(classId)) //todo
     }
 
-    override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
-        return getNamesInPackage(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.NAME, packageFqName, scope)
+    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> = withRestrictedDataAccess {
+        getNamesInPackage(KotlinTopLevelCallableByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
-    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
+    override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> = withRestrictedDataAccess {
+        getNamesInPackage(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.NAME, packageFqName, scope)
+    }
+
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
+        KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
     override val hasSpecificClassifierPackageNamesComputation: Boolean get() = false
     override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
 
-    override fun computePackageNames(): Set<String>? =
+    override fun computePackageNames(): Set<String>? = withRestrictedDataAccess {
         contextualModule?.let { KotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
+    }
 
-    override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+    override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
         //TODO original LC has platformSourcesFirst()
-        return KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, scope]
+        KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, scope]
     }
 
-    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
-        return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
+    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
+        KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
     }
 
-    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
-        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> = withRestrictedDataAccess {
+        KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
     }
 
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
@@ -146,27 +158,33 @@ private class IdeKotlinDeclarationProvider(
         ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.indexKey, key = classId.asString())
     }
 
-    override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
+    override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = withRestrictedDataAccess {
         KotlinTopLevelPropertyFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+    }
 
-    override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
+    override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withRestrictedDataAccess {
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+    }
 
-    override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
+    override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
-        return buildSet {
-            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
-                //check canceled is done inside findFile
-                psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
-            }
-            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
-                //check canceled is done inside findFile
-                psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
-            }
+        buildSet {
+            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope)
+                .forEach { file ->
+                    //check canceled is done inside findFile
+                    psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+                }
+            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope)
+                .forEach { file ->
+                    //check canceled is done inside findFile
+                    psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+                }
         }
     }
 
+    private inline fun <R> withRestrictedDataAccess(crossinline action: () -> R): R =
+        restrictedAnalysisService.withRestrictedDataAccess(action)
 
     companion object {
         private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)

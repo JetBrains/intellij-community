@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions
 
 import com.intellij.openapi.application.runWriteAction
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 
 /**
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 abstract class AbstractGlobalSessionInvalidationTest : AbstractSessionInvalidationTest() {
     override fun publishModificationEvents() {
         runWriteAction {
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
