@@ -7,7 +7,7 @@ import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PluginXmlFromXmlStreamBuilder(
+class PluginDescriptorFromXmlStreamBuilder(
   val readContext: ReadModuleContext,
   val dataLoader: DataLoader,
   val pathResolver: PathResolver?,

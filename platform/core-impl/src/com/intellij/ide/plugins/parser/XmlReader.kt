@@ -38,7 +38,7 @@ import javax.xml.stream.events.XMLEvent
 
 
 internal fun readModuleDescriptor(
-  builder: PluginXmlFromXmlStreamBuilder,
+  builder: PluginDescriptorFromXmlStreamBuilder,
   reader: XMLStreamReader2,
 ) {
   try {
@@ -150,7 +150,7 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
 ))
 
 private fun readRootElementChild(
-  builder: PluginXmlFromXmlStreamBuilder,
+  builder: PluginDescriptorFromXmlStreamBuilder,
   reader: XMLStreamReader2,
   localName: String
 ) {
@@ -419,14 +419,14 @@ private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolea
 
 @Suppress("DuplicatedCode")
 private fun readExtensionPoints(
-  builder: PluginXmlFromXmlStreamBuilder,
+  builder: PluginDescriptorFromXmlStreamBuilder,
   reader: XMLStreamReader2,
 ) {
   val descriptor = builder.raw
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
-        val partial = PluginXmlFromXmlStreamBuilder(
+        val partial = PluginDescriptorFromXmlStreamBuilder(
           builder.readContext,
           builder.dataLoader,
           builder.pathResolver,
@@ -766,7 +766,7 @@ interface ReadModuleContext {
 }
 
 private fun readInclude(
-  builder: PluginXmlFromXmlStreamBuilder,
+  builder: PluginDescriptorFromXmlStreamBuilder,
   reader: XMLStreamReader2,
   allowedPointer: String,
 ) {
