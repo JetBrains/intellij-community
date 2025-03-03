@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
 import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;
 
 @ApiStatus.Internal
@@ -107,7 +108,14 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       requestHint(myXQuickEvaluateHandler, editor, point, e, type);
       return;
     }
-    // otherwise, handle plugin handlers
+    // otherwise, handle custom plugin handlers
+    QuickEvaluateHandler customHandler = getEnabledCustomQuickEvaluateActionHandler(myProject);
+    if (customHandler != null) {
+      requestHint(customHandler, editor, point, e, type);
+      return;
+    }
+
+    // otherwise, handle old plugin handlers through DebuggerSupport (should be removed ASAP)
     // for remote dev: specific DebuggerSupport with remote bridge will be used
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();

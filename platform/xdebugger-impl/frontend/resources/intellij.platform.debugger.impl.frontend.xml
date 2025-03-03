@@ -3,6 +3,10 @@
     <plugin id="com.intellij.platform.experimental.frontend"/>
     <module name="intellij.platform.frontend"/>
   </dependencies>
+  <extensionPoints>
+    <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
+  </extensionPoints>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
     <action id="XDebugger.Inspect.Frontend"
