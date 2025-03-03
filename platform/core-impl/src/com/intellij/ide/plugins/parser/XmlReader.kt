@@ -645,10 +645,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     }
     assert(reader.isEndElement)
 
-    if (containerDescriptor._components == null) {
-      containerDescriptor._components = ArrayList()
-    }
-    containerDescriptor._components!!.add(ComponentConfig(interfaceClass, implementationClass, headlessImplementationClass, isApplicableForDefaultProject, os, overrides, options))
+    containerDescriptor.addComponent(ComponentConfig(interfaceClass, implementationClass, headlessImplementationClass, isApplicableForDefaultProject, os, overrides, options))
   }
 }
 

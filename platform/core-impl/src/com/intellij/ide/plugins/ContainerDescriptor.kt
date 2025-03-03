@@ -15,7 +15,7 @@ class ContainerDescriptor {
   val services: List<ServiceDescriptor>
     get() = _services ?: Java11Shim.INSTANCE.listOf()
 
-  @JvmField internal var _components: MutableList<ComponentConfig>? = null
+  private var _components: MutableList<ComponentConfig>? = null
   val components: List<ComponentConfig>
     get() = _components ?: Java11Shim.INSTANCE.listOf()
 
@@ -31,6 +31,13 @@ class ContainerDescriptor {
       _services = ArrayList()
     }
     _services!!.add(serviceDescriptor)
+  }
+
+  internal fun addComponent(componentConfig: ComponentConfig) {
+    if (_components == null) {
+      _components = ArrayList()
+    }
+    _components!!.add(componentConfig)
   }
 
   override fun toString(): String {
