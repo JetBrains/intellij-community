@@ -360,7 +360,13 @@ internal class BazelBuildFileGenerator(
         visibility(arrayOf("//visibility:public"))
 
         if (moduleDescriptor.testSources.isEmpty()) {
-          renderDeps(deps = moduleList.deps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = false)
+          val deps = moduleList.deps.get(moduleDescriptor)
+          renderDeps(
+            deps = deps?.copy(plugins = emptyList()), // do not apply plugins to an empty library regardless of dependencies
+            target = this,
+            resourceDependencies = resourceDependencies,
+            forTests = false
+          )
         }
       }
     }
