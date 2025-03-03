@@ -197,25 +197,25 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    val editorTag = dataContext.editorTag
     if (component is JComponent) {
       component.installPopupMenu()
     }
     val manager = FrontendHotSwapManager.getInstance(project)
     val job = manager.coroutineScope.launch {
       manager.currentStatusFlow.collectLatest { status ->
-        onStatusChanged(component, status?.status, dataContext)
+        onStatusChanged(component, status?.status, editorTag)
       }
     }
     Disposer.register(parentDisposable, Disposable {
       if (logger.isDebugEnabled) {
-        val editor = dataContext.getData(CommonDataKeys.EDITOR)
-        logger.debug("Floating toolbar disposed ($editor)")
+        logger.debug("Floating toolbar disposed ($editorTag)")
       }
       job.cancel("disposed")
     })
   }
 
-  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, dataContext: DataContext) =
+  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?) =
     withContext(Dispatchers.EDT) {
       fun updateActions() {
         if (component is ActionToolbarImpl) {
@@ -225,16 +225,14 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
       if (!showFloatingToolbar()) {
         if (logger.isDebugEnabled) {
-          val editor = dataContext.getData(CommonDataKeys.EDITOR)
-          logger.debug("Hide button because it is disabled ($editor)")
+          logger.debug("Hide button because it is disabled ($editorTag)")
         }
         component.scheduleHide()
         return@withContext
       }
 
       if (logger.isDebugEnabled) {
-        val editor = dataContext.getData(CommonDataKeys.EDITOR)
-        logger.debug("Button status changed: $status ($editor)")
+        logger.debug("Button status changed: $status ($editorTag)")
       }
       when (status) {
         HotSwapVisibleStatus.IN_PROGRESS -> {
@@ -263,7 +261,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override fun onHiddenByEsc(dataContext: DataContext) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     if (logger.isDebugEnabled) {
-      logger.debug("Button is hidden by Esc button: ${dataContext.getData(CommonDataKeys.EDITOR)}")
+      logger.debug("Button is hidden by Esc button: ${dataContext.editorTag}")
     }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
   }
@@ -278,7 +276,7 @@ private class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (logger.isDebugEnabled) {
-      logger.debug("Button is hidden by user: ${e.dataContext.getData(CommonDataKeys.EDITOR)}")
+      logger.debug("Button is hidden by user: ${e.dataContext.editorTag}")
     }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
   }
@@ -290,5 +288,7 @@ private class HideAction : AnAction() {
     e.presentation.text = XDebuggerBundle.message("action.hotswap.hide.text")
   }
 }
+
+private val DataContext.editorTag: String? get() = getData(PlatformCoreDataKeys.FILE_EDITOR)?.file?.path
 
 private val XDebugHotSwapCurrentSessionStatus.hasChanges get() = status == HotSwapVisibleStatus.CHANGES_READY
