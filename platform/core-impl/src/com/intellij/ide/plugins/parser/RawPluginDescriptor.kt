@@ -49,7 +49,7 @@ class RawPluginDescriptor {
   @JvmField var releaseDate: LocalDate? = null
   @JvmField var releaseVersion: Int = 0
 
-  @JvmField var pluginAliases: MutableList<PluginId>? = null
+  @JvmField var pluginAliases: MutableList<String>? = null
 
   @JvmField var depends: MutableList<PluginDependency>? = null
   @JvmField var actions: MutableList<ActionElement>? = null

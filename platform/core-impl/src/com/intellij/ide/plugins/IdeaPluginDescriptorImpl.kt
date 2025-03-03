@@ -176,7 +176,7 @@ class IdeaPluginDescriptorImpl(
   val dependencies: ModuleDependenciesDescriptor = raw.dependencies
 
   @JvmField
-  var pluginAliases: List<PluginId> = raw.pluginAliases ?: Java11Shim.INSTANCE.listOf()
+  var pluginAliases: List<PluginId> = raw.pluginAliases?.map(PluginId::getId) ?: Java11Shim.INSTANCE.listOf()
 
   private val descriptionChildText = raw.description
 

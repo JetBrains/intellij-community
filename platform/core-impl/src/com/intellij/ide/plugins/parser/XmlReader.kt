@@ -192,7 +192,7 @@ private fun readRootElementChild(
         if (descriptor.pluginAliases == null) {
           descriptor.pluginAliases = ArrayList()
         }
-        descriptor.pluginAliases!!.add(PluginId.getId(moduleName))
+        descriptor.pluginAliases!!.add(moduleName)
       }
       reader.skipElement()
     }
