@@ -438,9 +438,9 @@ private fun readExtensionPoints(
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
-        applyPartialContainer(partial.raw, descriptor) { it.appContainerDescriptor }
-        applyPartialContainer(partial.raw, descriptor) { it.projectContainerDescriptor }
-        applyPartialContainer(partial.raw, descriptor) { it.moduleContainerDescriptor }
+        copyExtensionPoints(partial.raw, descriptor) { it.appContainerDescriptor }
+        copyExtensionPoints(partial.raw, descriptor) { it.projectContainerDescriptor }
+        copyExtensionPoints(partial.raw, descriptor) { it.moduleContainerDescriptor }
       }
       else {
         LOG.error("Unknown element: $elementName (${reader.location})")
@@ -501,7 +501,7 @@ private fun readExtensionPoints(
   }
 }
 
-private inline fun applyPartialContainer(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
+private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
   extractor(from).extensionPoints.takeIf { !it.isNullOrEmpty() }?.let {
     val toContainer = extractor(to)
     if (toContainer.extensionPoints == null) {
