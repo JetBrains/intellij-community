@@ -258,11 +258,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   private static @Nullable String getMarkdownDescription(@NotNull JsonSchemaObject schema) {
     String rawValue = schema.readChildNodeValue("markdownDescription");
-    if (rawValue != null && rawValue.length() >= 2 &&
-        rawValue.startsWith("\"") && rawValue.endsWith("\"")) {
-      return rawValue.substring(1, rawValue.length() - 1);
-    }
-    return null;
+    if (rawValue == null) return null;
+    return StringUtil.unquoteString(rawValue, '\"');
   }
 
   @Override
