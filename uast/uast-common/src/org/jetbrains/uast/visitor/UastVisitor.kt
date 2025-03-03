@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.visitor
 
 import org.jetbrains.uast.*
@@ -6,22 +6,18 @@ import org.jetbrains.uast.*
 /**
  * A visitor for UAST elements.
  *
- * When an instance is passed to any [UElement]'s [UElement.accept] function, the approrpiate
- * `visit*` function will be called, depending on the actual type of the element.
+ * When an instance is passed to any [UElement]'s [UElement.accept] function, the appropriate `visit*` function will be called, depending
+ * on the actual type of the element.
  *
- * The default implementation for each `visit*` function other than [visitElement] is to delegate to
- * the `visit*` function for the element's supertype. That lets you implement only the most general
- * `visit*` method that applies to your use case. For example, if you want to visit all variables,
- * you can implement [visitVariable] instead of [visitParameter], [visitField], and
- * [visitLocalVariable].
+ * The default implementation for each `visit*` function other than [visitElement] is to delegate to the `visit*` function for the element's
+ * supertype. That lets you implement only the most general `visit*` method that applies to your use case. For example, if you want to visit
+ * all variables, you can implement [visitVariable] instead of [visitParameter], [visitField], and [visitLocalVariable].
  *
  * To visit the element's children as well, return `false` from the `visit*` function.
  *
- * If the `visit*` function returns `false`, then the visitor will be passed to the `accept`
- * function of each of the direct children of the element, and then the visitor's `afterVisit*` will
- * be called for the element's type. The default implementation for each `afterVisit*` function
- * other than [afterVisitElement] is to delegate to the `afterVisit*` function for the element's
- * supertype.
+ * If the `visit*` function returns `false`, then the visitor will be passed to the `accept` function of each of the direct children of the
+ * element, and then the visitor's `afterVisit*` will be called for the element's type. The default implementation for each `afterVisit*`
+ * function other than [afterVisitElement] is to delegate to the `afterVisit*` function for the element's supertype.
  */
 interface UastVisitor {
   fun visitElement(node: UElement): Boolean
@@ -146,21 +142,22 @@ interface UastVisitor {
   fun afterVisitComment(node: UComment) = afterVisitElement(node)
 }
 
-/** A [UastVisitor] that visits each element's children by default. */
+/**
+ * A [UastVisitor] that visits each element's children by default.
+ */
 abstract class AbstractUastVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = false
 }
 
 /**
  * A [UastVisitor] that does not visit each element's children by default.
- *
- * If passing an instance to [com.intellij.uast.UastVisitorAdapter], make sure that no implemented
- * function returns `false`, since that class requires a never-traversing visitor.
  */
 abstract class AbstractUastNonRecursiveVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = true
 }
 
-/** A [UastVisitor] that visits each element's children but does nothing at each element. */
+/**
+ * A [UastVisitor] that visits each element's children but does nothing at each element.
+ */
 @Suppress("unused")
 object EmptyUastVisitor : AbstractUastVisitor()
