@@ -235,7 +235,7 @@ object AsyncDiffRequestProcessorFactory {
     }
   }
 
-  private class AsyncDiffViewModelRequestProducer(val model: AsyncDiffViewModel, val id: CombinedPathBlockId)
+  private class AsyncDiffViewModelRequestProducer(private val model: AsyncDiffViewModel, private val id: CombinedPathBlockId)
     : DiffRequestProducer, PresentableChange {
 
     override fun getFilePath(): FilePath = id.path
