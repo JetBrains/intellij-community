@@ -36,6 +36,27 @@ elements:
             description: |
               The boolean value determining whether the plugin installation, update, or uninstallation requires an IDE restart
               (see [Dynamic Plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html) for details).
+        - attribute:
+            name: package
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Defines a JVM package where all module's classes are located.
+              Packages are included recursively, for example, `com.example` implies `com.example.sub`.
+              
+              If a package is specified, then:
+              1. All module [dependencies](#element:idea-plugin__dependencies) of the plugin must also specify a package, and it must be
+                 different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
+                 module dependency.
+              2. Icon class generator uses the specified package instead of `icons`.
+                 
+                 For an existing icon class, it is recommended to move it before running the icon class generator.
+                 It ensures that all references to the icon class are updated correctly during the refactoring action.
+                 Also, the generator uses the same icon class name as before if the old class is detected in place.
+            internalNote: &plugin_model_v2_internal_note |
+              The item is a part of the [_Plugin Model v2_](https://youtrack.jetbrains.com/articles/IJPL-A-1037){internal},
+              which is not recommended to use in 3rd-party plugins in the current state.
       children:
         - element:
             name: id
@@ -65,6 +86,32 @@ elements:
                 ```xml
                 <id>com.example.framework</id>
                 ```
+
+        - element:
+            name: module
+            renderContexts: [doc_provider]
+            description: |
+              Defines the current plugin's alias.
+              
+              The alias can be used instead of the plugin [ID](#element:idea-plugin__id) in [`depends`](#element:idea-plugin__depends)
+              or [`dependencies/plugin@id`](#element:idea-plugin__dependencies__plugin__id).
+              
+              Aliases are usually added to core plugins and work as markers of the corresponding IDEs.
+              For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IDEA Ultimate and RubyMine,
+              and the Ruby plugin has a dependency on that alias.
+              It makes the Ruby plugin compatible with IDEA Ultimate and RubyMine only and prevents it from being installed in other IDEs.
+              
+              Aliases can be also used for compatibility reasons in regular plugins and modules.
+              
+              Avoid adding new aliases and using them for other reasons.
+            internalNote: *plugin_model_v2_internal_note
+            attributes:
+              - attribute:
+                  name: value
+                  requirement:
+                    required: yes
+                  description: |
+                    The alias value. It must be unique.
 
         - element:
             name: name
@@ -372,6 +419,57 @@ elements:
                   ```
 
         - element:
+            name: dependencies
+            renderContexts: [doc_provider]
+            description: |
+              Defines the dependencies of the module.
+              
+              A dependency from an `optional` or `on-demand`
+              [content](#element:idea-plugin__content) [module](#element:idea-plugin__content__module)
+              to the main module of the containing plugin is added automatically.
+              
+              Circular dependencies aren't allowed: if a set of modules forms a dependency cycle, plugins which contain modules
+              from the cycle will fail to load.
+            internalNote: *plugin_model_v2_internal_note
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A dependency on another module.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <module name="com.example.core"/>
+                      </dependencies>
+                      ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        requirement:
+                          required: yes
+                        description: |
+                          The name of the module to depend on.
+              - element:
+                  name: plugin
+                  description: |
+                    Declares a dependency on the main module of another plugin.
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: yes
+                        description: |
+                          The [ID](#element:idea-plugin__id) or [alias](#element:idea-plugin__module) of the plugin to depend on.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <plugin id="com.example.plugin.id"/>
+                      </dependencies>
+                      ```
+
+        - element:
             name: incompatible-with
             since: "2020.2"
             references:
@@ -390,6 +488,80 @@ elements:
                   com.intellij.modules.appcode.ide
                 </incompatible-with>
                 ```
+
+        - element:
+            name: content
+            renderContexts: [doc_provider]
+            description: |
+              Defines the content modules of the plugin.
+              
+              The module which contains the plugin descriptor (<path>plugin.xml</path>) is included implicitly.
+            internalNote: *plugin_model_v2_internal_note
+            requirement:
+              required: no
+            examples:
+              - |
+                ```xml
+                <content>
+                  <module name="com.example.core"/>
+                  <module name="com.example.git" loading="optional"/>
+                  <module name="com.example.i18n"/>
+                </content>
+                ```
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A content module to include in the plugin.<br/>
+                    Content modules contain components implementing the plugin functionality.
+                    Each content module's components are loaded with its own classloader (unless overridden with
+                    [`loading="embedded"`](#attribute:idea-plugin__content__module__loading)).
+                  requirement:
+                    required: no
+                  examples:
+                    - |
+                      A module with the implicit `optional` [`loading`](#attribute:idea-plugin__content__module__loading) behavior:
+                          ```xml
+                          <module name="com.example.core"/>
+                          ```
+                    - |
+                      A required module that will fail to load the plugin if it is unavailable:
+                          ```xml
+                          <module name="com.example.git" loading="required"/>
+                          ```
+                    - |
+                      An embedded module that will be loaded by the main plugin classloader:
+                          ```xml
+                          <module name="com.example.i18n" loading="embedded"/>
+                          ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        description: The name of a JPS module to include in the plugin.
+                        requirement:
+                          required: yes
+                    - attribute:
+                        name: loading
+                        description: |
+                          Specifies when a content module of a plugin should be loaded.
+                          Allowed values:
+                          - `required` - the module is the required part of the plugin.
+                            If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
+                            loaded, and an error is shown to the user.
+                          - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
+                            by the main plugin classloader.
+                            **This is an internal temporary option added to simplify the migration of some existing plugins.
+                            For new modules, use `required` instead.**
+                          - `optional` - the module is an optional part of the plugin.
+                            If the module cannot be loaded, it is skipped and doesn't prevent other modules from the plugin from being
+                            loaded.
+                          - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
+                            itself.
+                            The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
+                            **This option isn't implemented yet and currently behaves the same way as `optional`.**
+                        defaultValue: |
+                          `optional`
+
         - element:
             name: extensions
             references:
