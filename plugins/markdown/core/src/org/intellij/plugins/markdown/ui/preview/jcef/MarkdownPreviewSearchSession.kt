@@ -5,6 +5,8 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.find.SearchSession
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 import com.intellij.find.editorHeaderActions.ToggleMatchCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
@@ -22,9 +24,22 @@ internal class MarkdownPreviewSearchSession(
   override fun getFindModel(): FindModel = findModel
   override fun getComponent(): SearchReplaceComponent = searchComponent
 
-  override fun hasMatches(): Boolean = false
-  override fun searchForward() {}
-  override fun searchBackward() {}
+  override fun hasMatches(): Boolean = searchComponent.isVisible
+
+  override fun searchForward() {
+    search(findModel, true)
+  }
+
+  override fun searchBackward() {
+    search(findModel, false)
+  }
+
+  private fun search(model: FindModel, forward: Boolean) {
+    val stringToFind = model.stringToFind
+    if (stringToFind.isNotEmpty()) {
+      browser.find(stringToFind, forward, model.isCaseSensitive, true)
+    }
+  }
 
   internal fun showSearchBar() {
     searchComponent.isVisible = true
@@ -47,7 +62,7 @@ internal class MarkdownPreviewSearchSession(
       browser.stopFinding(true)
     }
     else {
-      browser.find(stringToFind, true, findModel.isCaseSensitive, false)
+      search(findModel, true)
     }
   }
 
@@ -65,8 +80,12 @@ internal class MarkdownPreviewSearchSession(
   private fun createSearchComponent(): SearchReplaceComponent {
     val component = SearchReplaceComponent
       .buildFor(project, targetComponent, this)
-      .addExtraSearchActions(ToggleMatchCase())
-      .withShowOnlySearchPanel()
+      .addExtraSearchActions(
+        ToggleMatchCase(),
+        PrevOccurrenceAction(),
+        NextOccurrenceAction(),
+      )
+      .withMaximizeLeftPanelOnResize()
       .withCloseAction { close() }
       .build()
 
