@@ -8,7 +8,7 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 object ThrowingDecompiler : ClassFileDecompilers.Light() {
   @JvmStatic
   fun disableDecompilers(parentDisposable: Disposable) {
-    ClassFileDecompilers.getInstance().EP_NAME.point.registerExtension(this, parentDisposable)
+    ClassFileDecompilers.EP_NAME.point.registerExtension(this, parentDisposable)
   }
 
   override fun accepts(file: VirtualFile): Boolean = true
