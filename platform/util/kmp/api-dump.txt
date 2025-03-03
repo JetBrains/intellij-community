@@ -1,3 +1,73 @@
+@:com.intellij.openapi.util.NlsContext
+- java.lang.annotation.Annotation
+- a:prefix():java.lang.String
+- a:suffix():java.lang.String
+f:com.intellij.openapi.util.NlsContexts
+- <init>():V
+@:com.intellij.openapi.util.NlsContexts$AttributeDescriptor
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$BorderTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Button
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Checkbox
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ColumnName
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Command
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ConfigurableName
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$DetailedDescription
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$DialogMessage
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$DialogTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$HintText
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Label
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$LinkLabel
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ListItem
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$NotificationContent
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$NotificationSubtitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$NotificationTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ParsingError
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$PopupAdvertisement
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$PopupContent
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$PopupTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ProgressDetails
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ProgressText
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ProgressTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$RadioButton
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Separator
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$StatusBarText
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$StatusText
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$SystemNotificationText
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$SystemNotificationTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$TabTitle
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$Tooltip
+- java.lang.annotation.Annotation
 f:com.intellij.util.BitUtil
 - sf:INSTANCE:com.intellij.util.BitUtil
 - sf:assertOneBitMask(I):V
