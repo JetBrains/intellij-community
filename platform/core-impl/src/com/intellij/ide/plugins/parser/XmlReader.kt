@@ -875,12 +875,6 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 }
 
 private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptor) {
-  var result = containerDescriptor.listeners
-  if (result == null) {
-    result = ArrayList()
-    containerDescriptor.listeners = result
-  }
-
   reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
     var os: ExtensionDescriptor.Os? = null
     var listenerClassName: String? = null
@@ -901,7 +895,7 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
       LOG.error("Listener descriptor is not correct as ${reader.location}")
     }
     else {
-      result.add(ListenerDescriptor(os, listenerClassName, topicClassName, activeInTestMode, activeInHeadlessMode))
+      containerDescriptor.addListener(ListenerDescriptor(os, listenerClassName, topicClassName, activeInTestMode, activeInHeadlessMode))
     }
     reader.skipElement()
   }

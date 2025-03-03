@@ -19,7 +19,7 @@ class ContainerDescriptor {
   val components: List<ComponentConfig>
     get() = _components ?: Java11Shim.INSTANCE.listOf()
 
-  @JvmField var listeners: MutableList<ListenerDescriptor>? = null
+  private var listeners: MutableList<ListenerDescriptor>? = null
   val readOnlyListeners: List<ListenerDescriptor>
     get() = listeners ?: Java11Shim.INSTANCE.listOf()
 
@@ -40,6 +40,13 @@ class ContainerDescriptor {
       _components = ArrayList()
     }
     _components!!.add(componentConfig)
+  }
+
+  internal fun addListener(listenerDescriptor: ListenerDescriptor) {
+    if (listeners == null) {
+      listeners = ArrayList()
+    }
+    listeners!!.add(listenerDescriptor)
   }
 
   override fun toString(): String {
