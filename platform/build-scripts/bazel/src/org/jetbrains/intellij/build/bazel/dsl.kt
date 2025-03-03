@@ -62,6 +62,10 @@ internal class Target(private val type: String) : Renderable {
 
   // Support for setting key-value pairs with arrays
   fun option(key: String, value: Any) {
+    if (attributes.containsKey(key)) {
+      error("Duplicate key: $key. Old value: ${attributes[key]}, new value: $value")
+    }
+
     attributes[key] = value
   }
 
