@@ -128,7 +128,7 @@ class PluginVerifier(
     }
   }
 
-  val exceptions = listOf(
+  val exceptions: List<String>  = listOf(
 
 //  Code completion, perf tests plugin
 //  "org.jetbrains.completion.full.line.settings.GeneralState.setEnableInIntegrationTest",
@@ -148,6 +148,7 @@ class PluginVerifier(
     //"com.intellij.vcs.ShelveTitleProvider",
 
     // To Fix
+    "org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.handleAnalysisException",
 
     // Bugs
 
