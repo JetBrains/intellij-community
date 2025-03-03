@@ -101,11 +101,13 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                                 embeddersManager: MavenEmbeddersManager) {
     val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
+    val updateSnapshots = projectsManager.forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     resolver.resolve(true,
                      listOf(mavenProject),
                      tree,
                      tree.workspaceMap,
-                     generalSettings,
+                     generalSettings.effectiveRepositoryPath,
+                     updateSnapshots =
                      embeddersManager,
                      progressReporter,
                      MavenLogEventHandler)
