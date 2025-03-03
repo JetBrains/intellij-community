@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
 import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.DisposableUpdate;
@@ -34,8 +35,9 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class GitUntrackedFilesHolder implements Disposable {
   private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
@@ -392,6 +394,8 @@ public class GitUntrackedFilesHolder implements Disposable {
 
   @TestOnly
   public static class Waiter {
+    private static final int WAITING_TIMEOUT_MS = 10_000;
+
     private final MergingUpdateQueue myQueue;
 
     public Waiter(@NotNull MergingUpdateQueue queue) {
@@ -401,9 +405,18 @@ public class GitUntrackedFilesHolder implements Disposable {
     public void waitFor() {
       CountDownLatch waiter = new CountDownLatch(1);
       myQueue.queue(Update.create(waiter, () -> waiter.countDown()));
-      ProgressIndicatorUtils.awaitWithCheckCanceled(waiter);
+      long start = System.currentTimeMillis();
+      ProgressIndicatorUtils.awaitWithCheckCanceled(() -> {
+        if (!myQueue.isActive()) {
+          throw new RuntimeException("Queue is not active");
+        }
+        if (System.currentTimeMillis() - start > WAITING_TIMEOUT_MS) {
+          throw new RuntimeException("Update wasn't performed in " + WAITING_TIMEOUT_MS + "ms");
+        }
+        return waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS);
+      });
       try {
-        myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
+        myQueue.waitForAllExecuted(WAITING_TIMEOUT_MS, MILLISECONDS);
       }
       catch (TimeoutException e) {
         throw new RuntimeException(e);
