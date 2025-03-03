@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots.kind
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
@@ -47,7 +46,6 @@ interface SyntheticLibraryOrigin : IndexableSetOrigin {
 
 @Internal
 interface SdkOrigin : IndexableSetOrigin {
-  val sdk: Sdk
   val rootsToIndex: Collection<VirtualFile>
 }
 

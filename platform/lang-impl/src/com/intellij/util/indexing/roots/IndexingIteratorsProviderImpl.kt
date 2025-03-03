@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -102,10 +103,12 @@ class IndexingIteratorsProviderImpl(
           }
         }
         else if (entity is SdkEntity) {
-          val sdkBridge = storage.sdkMap.getDataByEntity(entity)
-          if (sdkBridge != null) {
-            iterators.add(SdkIndexableFilesIteratorImpl.createIterator(sdkBridge, listOf(root)))
-          }
+          val sdkType = SdkType.findByName(entity.type)
+          iterators.add(SdkIndexableFilesIteratorImpl.createIterator(
+            entity.name,
+            sdkType,
+            entity.homePath?.url,
+            listOf(root)))
         }
         else if (fileSet.kind == WorkspaceFileKind.CUSTOM) {
           val rootHolder: IndexingRootHolder
