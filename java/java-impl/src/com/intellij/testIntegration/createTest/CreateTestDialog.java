@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
@@ -366,9 +366,11 @@ public class CreateTestDialog extends DialogWrapper {
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
     Set<String> frameworkSet = new HashSet<>();
     for (final TestFramework descriptor : descriptors) {
-      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)
-          && ContainerUtil.count(descriptors, (e) -> e.getName().equals(descriptor.getName())) >= 2
-      ) continue;
+      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor) && ContainerUtil.exists(descriptors, framework -> {
+        return framework.getName().equals(descriptor.getName()) && TestFrameworks.isSuitableByLanguage(myTargetClass, framework);
+      })) {
+        continue;
+      }
       if (!frameworkSet.add(descriptor.getName())) continue;
 
       model.addElement(descriptor);
