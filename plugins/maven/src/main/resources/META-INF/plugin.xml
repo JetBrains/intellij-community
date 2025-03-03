@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.idea.maven</id>
   <name>Maven</name>
   <category>Build Tools</category>
