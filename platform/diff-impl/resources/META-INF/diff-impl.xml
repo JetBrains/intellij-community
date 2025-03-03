@@ -41,7 +41,8 @@
             class="com.intellij.diff.actions.impl.DiffNextDifferenceAction"
             icon="AllIcons.Actions.NextOccurence"/>
     <action id="Diff.OpenInEditor"
-            class="com.intellij.diff.actions.impl.OpenInEditorAction"/>
+            class="com.intellij.diff.actions.impl.OpenInEditorAction"
+            use-shortcut-of="EditSource"/>
 
     <group id="Diff.NavigationActions">
       <reference ref="PreviousDiff"/>
