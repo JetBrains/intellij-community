@@ -96,27 +96,7 @@ class IdeaPluginDescriptorImpl(
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
     }
-    // https://youtrack.jetbrains.com/issue/IDEA-206274
-    val list = raw.depends
-    if (list.isNullOrEmpty()) {
-      pluginDependencies = Java11Shim.INSTANCE.listOf()
-    }
-    else {
-      val iterator = list.iterator()
-      while (iterator.hasNext()) {
-        val item = iterator.next()
-        if (!item.isOptional) {
-          for (a in list) {
-            if (a.isOptional && a.pluginId == item.pluginId) {
-              a.isOptional = false
-              iterator.remove()
-              break
-            }
-          }
-        }
-      }
-      pluginDependencies = list
-    }
+    pluginDependencies = fixDepends(raw.depends)
   }
 
   @Transient
@@ -641,6 +621,29 @@ class IdeaPluginDescriptorImpl(
         throw RuntimeException("Plugin $descriptor optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
       }
       i++
+    }
+  }
+
+  private companion object {
+    /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
+    private fun fixDepends(list: MutableList<PluginDependency>?): List<PluginDependency> {
+      if (list.isNullOrEmpty()) {
+        return Java11Shim.INSTANCE.listOf()
+      }
+      val iterator = list.iterator()
+      while (iterator.hasNext()) {
+        val item = iterator.next()
+        if (!item.isOptional) {
+          for (a in list) {
+            if (a.isOptional && a.pluginId == item.pluginId) {
+              a.isOptional = false
+              iterator.remove()
+              break
+            }
+          }
+        }
+      }
+      return list
     }
   }
 }
