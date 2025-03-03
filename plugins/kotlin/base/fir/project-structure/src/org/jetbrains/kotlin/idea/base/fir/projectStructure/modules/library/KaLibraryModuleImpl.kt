@@ -6,11 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.librarySource.KaLibrarySourceModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.safeRead
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
@@ -75,6 +77,12 @@ internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
             )
         }
     }
+
+    override val directRegularDependencies: List<KaModule>
+        get() = super.directRegularDependencies + listOf(
+            // Library modules have to specify fallback dependencies so that they can be used as a use-site module for a resolvable session.
+            KaLibraryFallbackDependenciesModuleImpl(this),
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
