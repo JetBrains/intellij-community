@@ -250,6 +250,9 @@ final class SettingsHelper {
   }
 
   static String getLogPath() {
+    if (Utils.getBoolean("JCEF_USE_IDE_LOG")) // just for convenient debugging
+      return PathManager.getLogPath() + Platform.current().fileSeparator + "idea.log";
+
     final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log";
     final String result = Utils.getString("ide.browser.jcef.log.path", def).trim();
     return result.isEmpty() || result.equals("null") ? null : result;
