@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
+import com.intellij.java.codeserver.highlighting.JavaErrorFilter;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -39,6 +40,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Java highlighting: reports compilation errors in Java code.
  * Internal class; do not use directly. 
  * If you need to check whether a block of code contains Java errors, use {@link JavaErrorCollector}.
+ * If you want to filter out some error messages, implement {@link JavaErrorFilter} extension.
  */
 @ApiStatus.Internal
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
