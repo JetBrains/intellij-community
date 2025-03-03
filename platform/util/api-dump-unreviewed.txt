@@ -2017,18 +2017,6 @@ f:com.intellij.util.BeforeAfter
 - <init>(java.lang.Object,java.lang.Object):V
 - getAfter():java.lang.Object
 - getBefore():java.lang.Object
-f:com.intellij.util.BitUtil
-- <init>():V
-- s:assertOneBitMask(I):V
-- s:clear(B,B):B
-- s:clear(I,I):I
-- s:clear(J,J):J
-- s:isSet(B,B):Z
-- s:isSet(I,I):Z
-- s:isSet(J,J):Z
-- s:set(B,B,Z):B
-- s:set(I,I,Z):I
-- s:set(J,J,Z):J
 com.intellij.util.BooleanFunction
 - java.util.function.Predicate
 - a:fun(java.lang.Object):Z

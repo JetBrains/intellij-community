@@ -1,3 +1,15 @@
+f:com.intellij.util.BitUtil
+- sf:INSTANCE:com.intellij.util.BitUtil
+- sf:assertOneBitMask(I):V
+- sf:clear(B,B):B
+- sf:clear(I,I):I
+- sf:clear(J,J):J
+- sf:isSet(B,B):Z
+- sf:isSet(I,I):Z
+- sf:isSet(J,J):Z
+- sf:set(B,B,Z):B
+- sf:set(I,I,Z):I
+- sf:set(J,J,Z):J
 f:com.intellij.util.lang.JavaVersion
 - java.lang.Comparable
 - sf:Companion:com.intellij.util.lang.JavaVersion$Companion
