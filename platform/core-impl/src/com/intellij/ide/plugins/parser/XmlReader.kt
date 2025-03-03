@@ -9,14 +9,15 @@ import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.ide.plugins.parser.elements.DependsElement
+import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
+import com.intellij.ide.plugins.parser.elements.OS
+import com.intellij.ide.plugins.parser.elements.asExtensionOS
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
-import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.extensions.LoadingOrder.Companion.readOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
@@ -347,9 +348,9 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
     }
 
     var implementation: String? = null
-    var os: ExtensionDescriptor.Os? = null
+    var os: OS? = null
     var qualifiedExtensionPointName: String? = null
-    var order = LoadingOrder.ANY
+    var order: String? = null
     var orderId: String? = null
 
     var hasExtraAttributes = false
@@ -357,9 +358,9 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.EXTENSION_IMPLEMENTATION_ATTR -> implementation = reader.getAttributeValue(i)
         PluginXmlConst.EXTENSION_IMPLEMENTATION_CLASS_ATTR -> implementation = reader.getAttributeValue(i)  // deprecated attribute
-        PluginXmlConst.EXTENSION_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.EXTENSION_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
         PluginXmlConst.EXTENSION_ORDER_ID_ATTR -> orderId = getNullifiedAttributeValue(reader, i)
-        PluginXmlConst.EXTENSION_ORDER_ATTR -> order = readOrder(reader.getAttributeValue(i))
+        PluginXmlConst.EXTENSION_ORDER_ATTR -> order = reader.getAttributeValue(i)
         PluginXmlConst.EXTENSION_POINT_ATTR -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
         else -> hasExtraAttributes = true
       }
@@ -387,7 +388,14 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           }
         }
 
-        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
+        val extensionElement = MiscExtensionElement(
+          implementation = implementation,
+          os = os,
+          orderId = orderId,
+          order = order,
+          element = element,
+          hasExtraAttributes = hasExtraAttributes,
+        )
 
         var epNameToExtensions = descriptor.miscExtensions
         if (epNameToExtensions == null) {
@@ -395,14 +403,14 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           descriptor.miscExtensions = epNameToExtensions
         }
 
-        epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionDescriptor)
+        epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionElement)
 
         assert(reader.isEndElement)
         return@consumeChildElements
       }
     }
 
-    containerDescriptor.addService(readServiceDescriptor(reader, os))
+    containerDescriptor.addService(readServiceDescriptor(reader, os?.asExtensionOS()))
     reader.skipElement()
   }
 }
@@ -911,6 +919,17 @@ private fun readOs(value: String): ExtensionDescriptor.Os {
     PluginXmlConst.OS_WINDOWS_VALUE -> ExtensionDescriptor.Os.windows
     PluginXmlConst.OS_UNIX_VALUE -> ExtensionDescriptor.Os.unix
     PluginXmlConst.OS_FREEBSD_VALUE -> ExtensionDescriptor.Os.freebsd
+    else -> throw IllegalArgumentException("Unknown OS: $value")
+  }
+}
+
+private fun readOSValue(value: String): OS {
+  return when (value) {
+    PluginXmlConst.OS_MAC_VALUE -> OS.MAC
+    PluginXmlConst.OS_LINUX_VALUE -> OS.LINUX
+    PluginXmlConst.OS_WINDOWS_VALUE -> OS.WINDOWS
+    PluginXmlConst.OS_UNIX_VALUE -> OS.UNIX
+    PluginXmlConst.OS_FREEBSD_VALUE -> OS.FREEBSD
     else -> throw IllegalArgumentException("Unknown OS: $value")
   }
 }

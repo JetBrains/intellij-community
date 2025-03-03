@@ -7,11 +7,14 @@ import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.ide.plugins.parser.elements.DependsElement
+import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
+import com.intellij.ide.plugins.parser.elements.asExtensionOS
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.BuildNumber
@@ -112,7 +115,9 @@ class IdeaPluginDescriptorImpl(
 
   // extension point name -> list of extension descriptors
   @JvmField
-  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
+  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
+    ?.let(::convertExtensions)
+    ?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
 
   @JvmField
   val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
@@ -646,6 +651,25 @@ class IdeaPluginDescriptorImpl(
         result.put(key, rawMap[key]!!)
       }
       return result
+    }
+
+    private fun convertExtensions(rawMap: Map<String, List<MiscExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, exts) ->
+      exts.mapNotNull {
+        try {
+          val order = LoadingOrder.readOrder(it.order) // throws AssertionError
+          ExtensionDescriptor(
+            implementation = it.implementation,
+            os = it.os?.asExtensionOS(),
+            orderId = it.orderId,
+            order = order,
+            element = it.element,
+            hasExtraAttributes = it.hasExtraAttributes
+          )
+        } catch (e: Throwable) {
+          LOG.error(e)
+          null
+        }
+      }
     }
   }
 }
