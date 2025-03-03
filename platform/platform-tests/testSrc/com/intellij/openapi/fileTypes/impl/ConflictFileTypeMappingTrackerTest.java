@@ -3,7 +3,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -73,6 +73,6 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     String input = "<idea-plugin>" +
                    "  <vendor>" + vendor + "</vendor>" +
                    "</idea-plugin>";
-    return PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
+    return PluginDescriptorLoadUtilsKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
   }
 }

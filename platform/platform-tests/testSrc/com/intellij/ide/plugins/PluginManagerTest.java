@@ -376,7 +376,7 @@ public class PluginManagerTest {
       else {
         pluginPath = Path.of(Strings.trimStart(Objects.requireNonNull(url), "file://"));
       }
-      var descriptor = PluginDescriptorTestKt.createFromDescriptor(
+      var descriptor = PluginDescriptorLoadUtilsKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       list.add(descriptor);
       descriptor.jarFiles = List.of();

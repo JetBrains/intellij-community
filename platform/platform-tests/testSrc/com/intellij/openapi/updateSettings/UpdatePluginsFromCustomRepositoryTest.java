@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
@@ -27,7 +27,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     Path base = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "updates/customRepositories", getTestName(true));
     BuildNumber buildNumber = BuildNumber.fromString("IU-142.100");
     for (String name : new String[]{"plugin1.xml", "plugin2.xml"}) {
-      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoadUtilsKt
         .readDescriptorForTest(base.resolve(name), false, Files.readAllBytes(base.resolve(name)),
                      PluginId.getId("UpdatePluginsFromCustomRepositoryTest"));
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
