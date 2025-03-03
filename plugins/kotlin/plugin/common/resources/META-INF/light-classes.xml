@@ -4,5 +4,9 @@
             serviceInterface="org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.IdeLightClassInheritanceHelper"
     />
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledClassCustomization"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.IdeaDecompiledClassCustomization"
+    />
   </extensions>
 </idea-plugin>
