@@ -19,6 +19,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.*
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
 import java.security.cert.X509Certificate
@@ -153,6 +154,7 @@ class PluginCertificateManager :
         showCard(getCardName(certificate))
       }
     }
+    myRootPanel.minimumSize = JBUI.size(500, 260)
   }
 
   private fun chooseFileAndAdd() {
