@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.tail
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
@@ -36,13 +37,13 @@ import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
- * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
+ * At the moment, this implementation of [KtReferenceMutateService] is not able to do some of the
  * required operations. It is OK and on purpose - this functionality will be added later.
  */
 @Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     companion object {
-        private val ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_NAME = Name.identifier(ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE)
+        private val ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_NAME: Name = Name.identifier(ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE)
     }
 
 
@@ -88,45 +89,47 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private class ReplaceResult(val replacedElement: KtElement, val isUnQualifiable: Boolean)
 
     private fun FqName.withoutRootPrefix(): FqName {
-        if (!startsWith(ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_NAME)) {
-            return this
-        }
-        return FqName.fromSegments(pathSegments().drop(1).map { it.identifier })
+        return tail(FqName.topLevel(ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_NAME))
     }
 
     /**
      * Removes the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] from this expression if it exists.
      */
-    private fun KtDotQualifiedExpression.removeRootPrefix() {
+    private fun KtDotQualifiedExpression.removeRootPrefix(): PsiElement {
         val selectorExpression = selectorExpression
         val receiverExpression = receiverExpression
-        if (selectorExpression != null &&
+        return if (selectorExpression != null &&
             receiverExpression is KtReferenceExpression &&
             receiverExpression.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
         ) {
             this.replace(selectorExpression)
         } else if (receiverExpression is KtDotQualifiedExpression) {
             receiverExpression.removeRootPrefix()
+        } else {
+            this
         }
     }
 
     /**
      * Removes the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] from this type qualifier if it exists.
      */
-    private fun KtUserType.removeRootPrefix() {
+    private fun KtUserType.removeRootPrefix(): PsiElement {
         val qualifier = qualifier
-        if (qualifier != null && qualifier.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
+        return if (qualifier != null && qualifier.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
             deleteQualifier()
-        } else qualifier?.removeRootPrefix()
+            this
+        } else {
+            qualifier?.removeRootPrefix() ?: this
+        }
     }
 
     /**
      * Removes the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] from this element, if it is prefixed with it.
      */
-    private fun PsiElement.removeRootPrefix() = when (this) {
+    private fun PsiElement.removeRootPrefix(): PsiElement = when (this) {
         is KtUserType -> removeRootPrefix()
         is KtDotQualifiedExpression -> removeRootPrefix()
-        else -> {}
+        else -> this
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
@@ -156,7 +159,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             // Note: When adding an import, we never want to add the root prefix, so we need to drop it before importing.
             val fqNameWithRootPrefix = if (shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING) {
                 fqName.withRootPrefixIfNeeded()
-            } else fqName
+            } else {
+                fqName
+            }
             val result = when (elementToReplace) {
                 is KtUserType -> elementToReplace.replaceWith(fqNameWithRootPrefix, targetElement)
                 is KtQualifiedExpression -> elementToReplace.replaceWith(fqNameWithRootPrefix, targetElement)
@@ -168,15 +173,18 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             val shouldShorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && !result.isUnQualifiable
             val shortenResult = if (shouldShorten) {
                 shortenReferences(result.replacedElement) ?: result.replacedElement
-            } else result.replacedElement
+            } else {
+                result.replacedElement
+            }
             // There are some circumstances where the reference shortener does not shorten an expression we added the root prefix to.
             // This can happen if the reference shortener is unable to add an import because the declaration's name is already
             // being used in the target package.
             // In these cases, we need to manually remove the added root prefix.
-            if (shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING) {
+            return if (shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING) {
                 shortenResult.removeRootPrefix()
+            } else {
+                shortenResult
             }
-            return shortenResult
         }
     }
 
@@ -208,11 +216,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         } else false
     }
 
-    /**
-     * Returns true if the FqName is either empty (i.e., root) or only the root prefix.
-     */
-    private fun FqName.isRootOrOnlyRootPrefix(): Boolean = withoutRootPrefix().parent() == FqName.ROOT
-
     private fun KtQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val isImport = parentOfType<KtImportDirective>(withSelf = false) != null
         if (isImport) return ReplaceResult(replaced(KtPsiFactory(project).createExpression(fqName.quoteIfNeeded().asString())), true)
@@ -223,7 +226,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             else -> null
         } ?: return null
         if (selectorReplacement.isUnQualifiable) return selectorReplacement
-        if (fqName.isRootOrOnlyRootPrefix()) return ReplaceResult(replaced(selectorReplacement.replacedElement), false)
+        if (fqName.withoutRootPrefix().parent() == FqName.ROOT) return ReplaceResult(replaced(selectorReplacement.replacedElement), false)
         val newSelectorExpression = selectorReplacement.replacedElement as? KtExpression ?: return null
         return ReplaceResult(replaceWithQualified(fqName, newSelectorExpression), false)
     }
@@ -246,7 +249,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtCallableReferenceExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         if (targetElement == null) return null
         val isUnQualifiable = targetElement.nameDeterminant().isTopLevelKtOrJavaMember()
-        val callableReference = if (isUnQualifiable || fqName.isRootOrOnlyRootPrefix()) {
+        val callableReference = if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             containingKtFile.addImport(fqName.withoutRootPrefix())
             val receiverExpr = receiverExpression
             if (receiverExpr != null && targetElement.isCallableAsExtensionFunction()) {
@@ -266,7 +269,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val newName = psiFactory.createSimpleName(fqName.quoteIfNeeded().shortName().asString())
         val newCall = calleeExpression?.replaced(newName)?.parent as? KtCallExpression ?: return null
         val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
-        return if (isUnQualifiable || fqName.isRootOrOnlyRootPrefix()) {
+        return if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             newCall.containingKtFile.addImport(fqName.withoutRootPrefix())
             ReplaceResult(newCall, isUnQualifiable)
         } else ReplaceResult(newCall, false)
@@ -286,7 +289,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtSimpleNameExpression.replaceShortNameOrImport(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val replacedExpr = replaceShortName(fqName)
         val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
-        return if (isUnQualifiable || fqName.isRootOrOnlyRootPrefix()) {
+        return if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             replacedExpr.containingKtFile.addImport(fqName.withoutRootPrefix())
             ReplaceResult(replacedExpr, isUnQualifiable)
         } else ReplaceResult(replacedExpr, false)
@@ -320,7 +323,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             binaryExpression.replaced(psiFactory.createExpression("${binaryExpression.left?.text}.$shortName(${binaryExpression.right?.text})"))
         }
         val isUnQualifiable = targetElement.isCallableAsExtensionFunction() || replacedExpr is KtOperationReferenceExpression
-        return if (isUnQualifiable || fqName.isRootOrOnlyRootPrefix()) {
+        return if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             replacedExpr.containingKtFile.addImport(fqName.withoutRootPrefix())
             ReplaceResult(replacedExpr, isUnQualifiable)
         } else ReplaceResult(replacedExpr, false)
