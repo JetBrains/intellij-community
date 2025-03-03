@@ -6,7 +6,7 @@ import java.lang.reflect.Type
 /**
  * Represents a way of rendering raw data of a certain type.
  */
-sealed interface DataRenderer<T> {
+sealed interface DataRenderer<in T> {
   val serialName: String
 
   data object InlineBoolean : DataRenderer<Boolean> {
@@ -60,3 +60,5 @@ interface TextUpdate {
 
   private class Impl(override val originalText: String, override val updatedText: String) : TextUpdate
 }
+
+data class FileUpdate(val filePath: String, override val originalText: String, override val updatedText: String) : TextUpdate

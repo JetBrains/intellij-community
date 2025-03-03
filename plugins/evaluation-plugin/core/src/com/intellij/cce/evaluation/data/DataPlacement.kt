@@ -84,6 +84,25 @@ sealed interface DataPlacement<In, Out> {
       props.lookup.suggestions.map { TextUpdate(props.currentFileContent ?: "", it.presentationText) }
   }
 
+  data object FileUpdates : DataPlacement<List<FileUpdate>, FileUpdate> {
+    override val serialName: String = "file_updates"
+
+    val propertyKey: String = "file_updates"
+
+    private val gson = Gson()
+
+    override fun dump(lookup: Lookup, t: List<FileUpdate>): Lookup {
+      return lookup.copy(
+        additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
+      )
+    }
+
+    override fun restore(props: DataProps): List<FileUpdate> {
+      val rawUpdates = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      val updates = rawUpdates as? JsonElement ?: gson.toJsonTree(rawUpdates)
+      return gson.fromJson(updates, Array<FileUpdate>::class.java).toList()
+    }
+  }
 
   class Serializer : JsonSerializer<DataPlacement<*, *>>, JsonDeserializer<DataPlacement<*, *>> {
     override fun serialize(src: DataPlacement<*, *>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
@@ -101,6 +120,7 @@ sealed interface DataPlacement<In, Out> {
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
+        "file_updates" -> FileUpdates
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }

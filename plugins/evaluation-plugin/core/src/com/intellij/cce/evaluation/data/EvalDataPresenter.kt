@@ -13,10 +13,11 @@ data class EvalDataPresenter<T>(
 /**
  * Presentation details such as category, renderer, and dynamic naming.
  */
-data class EvalDataPresentation<T>(
+data class EvalDataPresentation<in T>(
   val category: PresentationCategory,
   val renderer: DataRenderer<T>? = null,
   val dynamicName: DynamicName<T>? = null,
+  val ignoreMissingData: Boolean = false,
 )
 
 /**

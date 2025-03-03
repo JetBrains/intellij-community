@@ -7,13 +7,25 @@ import com.intellij.cce.metric.context.MeanContextSize
 
 object Result {
   val CURRENT_FILE_UPDATE: EvalDataDescription<String, TextUpdate> = EvalDataDescription(
-    name = "Current file change",
-    description = "Bind with the updated source code",
+    name = "Current file update",
+    description = "Bind with the result content of the current file",
     DataPlacement.CurrentFileUpdate,
     presentation = EvalDataPresentation(
       PresentationCategory.RESULT,
       DataRenderer.TextDiff,
       DynamicName.CurrentFileName,
+    )
+  )
+
+  val FILE_UPDATES: EvalDataDescription<List<FileUpdate>, FileUpdate> = EvalDataDescription(
+    name = "File updates",
+    description = "Bind with all updated files",
+    DataPlacement.FileUpdates,
+    presentation = EvalDataPresentation(
+      PresentationCategory.RESULT,
+      DataRenderer.TextDiff,
+      DynamicName.FileName,
+      ignoreMissingData = true
     )
   )
 }

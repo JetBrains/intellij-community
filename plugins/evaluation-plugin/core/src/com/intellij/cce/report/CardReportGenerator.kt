@@ -226,6 +226,7 @@ private data class ResolvedProperty<T>(
   val suffix: String?,
   val category: PresentationCategory,
   val placement: DataPlacement<*, T>?,
+  val placementIndex: Int,
   val value: T?,
   val renderer: DataRenderer<T>?,
   val hasProblems: Boolean = false,
@@ -237,6 +238,7 @@ private data class ResolvedProperty<T>(
         ResolvedProperty(
           name = presenter.presentation.dynamicName?.resolve(props, value) ?: presenter.data.name,
           placement = presenter.data.placement,
+          placementIndex = index,
           category = presenter.presentation.category,
           suffix = null,
           value = value,
@@ -245,12 +247,13 @@ private data class ResolvedProperty<T>(
         )
       }
 
-      if (resolved.isEmpty()) {
+      if (resolved.isEmpty() && !presenter.presentation.ignoreMissingData) {
         val unresolved = ResolvedProperty(
           name = presenter.data.name,
           suffix = "missing",
           category = presenter.presentation.category,
           placement = presenter.data.placement,
+          placementIndex = -1,
           value = null,
           renderer = null,
           hasProblems = false
@@ -272,6 +275,7 @@ private data class ResolvedProperty<T>(
         suffix = DecimalFormat("#.##").format(score),
         category = PresentationCategory.METRIC,
         placement = null,
+        placementIndex = -1,
         dependencies.renderableValue(props),
         dependencies.renderer,
         hasProblems = metric.hasProblem(score)
@@ -301,7 +305,7 @@ private data class PropertyValue(
 
       val element = """document.getElementById("${lookupId(sessionId, lookupIndex, property.category)}")"""
       val stringValues =
-        if (property.placement != null) nativeTexts(property.placement, fileIndex, sessionId, lookupIndex)
+        if (property.placement != null) nativeTexts(property.placement, fileIndex, sessionId, lookupIndex, property.placementIndex)
         else embeddedTexts(property.renderer, property.value)
 
       return when (property.renderer) {
@@ -313,7 +317,13 @@ private data class PropertyValue(
       }
     }
 
-    private fun <T> nativeTexts(placement: DataPlacement<*, T>, fileIndex: Int, sessionId: String, lookupIndex: Int): List<String> {
+    private fun <T> nativeTexts(
+      placement: DataPlacement<*, T>,
+      fileIndex: Int,
+      sessionId: String,
+      lookupIndex: Int,
+      placementIndex: Int,
+    ): List<String> {
       return when (placement) {
         is DataPlacement.AdditionalBoolean -> listOf(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"].toString()"""
@@ -330,6 +340,10 @@ private data class PropertyValue(
         is DataPlacement.CurrentFileUpdate -> listOf(
           fileVariable(fileIndex),
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}].suggestions[0].presentationText"""
+        )
+        is DataPlacement.FileUpdates -> listOf(
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].originalText""",
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].updatedText"""
         )
       }
     }
