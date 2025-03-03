@@ -11,3 +11,9 @@
   - name: intellij.markdown.model
   - name: intellij.markdown.spellchecker
   - name: intellij.markdown.compose.preview
+- name: lib/modules/intellij.markdown.backend.jar
+  contentModules:
+  - name: intellij.markdown.backend
+- name: lib/modules/intellij.markdown.frontend.jar
+  contentModules:
+  - name: intellij.markdown.frontend
