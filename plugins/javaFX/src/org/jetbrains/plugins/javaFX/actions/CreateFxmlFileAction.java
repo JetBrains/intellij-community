@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.actions;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
@@ -110,26 +109,25 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   }
 
   static boolean isJavaFxTemplateAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> requiredRootTypes) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+    var project = CommonDataKeys.PROJECT.getData(dataContext);
+    var view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null) {
       return false;
     }
 
-    final PsiDirectory[] directories = view.getDirectories();
-    if (directories.length == 0) {
-      return false;
-    }
+    var directories = view.getDirectories();
+    if (directories.length == 0) return false;
 
-    Module module = ModuleUtilCore.findModuleForFile(directories[0].getVirtualFile(), project);
-    if (!hasJavaFxDependency(module)) {
-      return false;
-    }
-
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    return Arrays.stream(directories)
+    var index = ProjectRootManager.getInstance(project).getFileIndex();
+    var underRoot = Arrays.stream(directories)
       .map(PsiDirectory::getVirtualFile)
       .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, requiredRootTypes));
+
+    if (!underRoot) return false;
+
+    // root types check is less expensive on start toolbar update than checking module dependencies
+    var module = ModuleUtilCore.findModuleForFile(directories[0].getVirtualFile(), project);
+    return hasJavaFxDependency(module);
   }
 
   private static boolean hasJavaFxDependency(@Nullable Module module) {
