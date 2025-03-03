@@ -60,6 +60,7 @@ import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.storeXDebugSessionInDb
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit
@@ -68,6 +69,7 @@ import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+import fleet.kernel.withEntities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.cancel
@@ -136,7 +138,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon?
-  val entity: Deferred<XDebugSessionEntity>
+  private val entity: Deferred<XDebugSessionEntity>
   private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager
 
   @get:ApiStatus.Internal
@@ -1037,6 +1039,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
         .onSuccess(Consumer { aVoid: Any? ->
           processStopped()
         })
+    }
+  }
+
+  @ApiStatus.Internal
+  suspend fun id(): XDebugSessionId {
+    val entity = entity.await()
+    return withEntities(entity) {
+      entity.sessionId
     }
   }
 

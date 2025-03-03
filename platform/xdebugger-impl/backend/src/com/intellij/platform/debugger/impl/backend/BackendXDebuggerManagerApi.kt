@@ -14,7 +14,6 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
-import com.intellij.xdebugger.impl.id
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
