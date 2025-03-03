@@ -130,12 +130,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myVirtualMachine;
   }
 
-  /**
-   * Returns coroutine scope tied to the lifetime of this suspend context.
-   * <p>
-   * The scope is canceled when this suspend context is resumed.
-   */
-  @ApiStatus.Experimental
+  @Override
   public @NotNull CoroutineScope getCoroutineScope() {
     return myCoroutineScope;
   }
