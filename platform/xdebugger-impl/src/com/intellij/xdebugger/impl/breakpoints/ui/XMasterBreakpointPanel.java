@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
@@ -6,10 +6,9 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
     List<BreakpointItem> items = new ArrayList<>();
-    DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
+    XBreakpointUtil.PANEL_PROVIDER.provideBreakpointItems(myProject, items);
     for (BreakpointItem item : items) {
       if (item.getBreakpoint() == myBreakpoint) {
         items.remove(item);

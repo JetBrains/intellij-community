@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.icons.AllIcons;
@@ -21,6 +21,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.actions.handlers.XToggleLineBreakpointActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +32,15 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable {
+  private static final XToggleLineBreakpointActionHandler ourHandler = new XToggleLineBreakpointActionHandler(false);
+
   public ToggleLineBreakpointAction() {
     super(true);
   }
 
   @Override
   protected @NotNull DebuggerActionHandler getHandler(final @NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getToggleLineBreakpointHandler();
+    return ourHandler;
   }
 
   @Override

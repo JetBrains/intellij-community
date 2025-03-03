@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -12,20 +12,21 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class EditBreakpointAction extends XDebuggerActionBase implements DumbAware {
+  @ApiStatus.Internal
+  public static final EditBreakpointActionHandler HANDLER = new XDebuggerEditBreakpointActionHandler();
 
   public static class ContextAction extends DumbAwareAction {
     private final GutterIconRenderer myRenderer;
     private final Object myBreakpoint;
-    private final DebuggerSupport myDebuggerSupport;
 
-    public ContextAction(GutterIconRenderer breakpointRenderer, Object breakpoint, DebuggerSupport debuggerSupport) {
+    public ContextAction(GutterIconRenderer breakpointRenderer, Object breakpoint) {
       super(ActionsBundle.actionText("EditBreakpoint"));
       myRenderer = breakpointRenderer;
       myBreakpoint = breakpoint;
-      myDebuggerSupport = debuggerSupport;
       AnAction action = ActionManager.getInstance().getAction("ViewBreakpoints");
       copyShortcutFrom(action);
     }
@@ -35,12 +36,12 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
       final Editor editor = e.getData(CommonDataKeys.EDITOR);
       Project project = getEventProject(e);
       if (editor == null || project == null) return;
-      myDebuggerSupport.getEditBreakpointAction().editBreakpoint(project, editor, myBreakpoint, myRenderer);
+      HANDLER.editBreakpoint(project, editor, myBreakpoint, myRenderer);
     }
   }
 
   @Override
   protected @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getEditBreakpointAction();
+    return HANDLER;
   }
 }
