@@ -626,12 +626,12 @@ class IdeaPluginDescriptorImpl(
 
   private companion object {
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
-    private fun fixDepends(list: MutableList<PluginDependency>): List<PluginDependency> {
-      val iterator = list.iterator()
+    private fun fixDepends(depends: MutableList<PluginDependency>): List<PluginDependency> {
+      val iterator = depends.iterator()
       while (iterator.hasNext()) {
         val item = iterator.next()
         if (!item.isOptional) {
-          for (a in list) {
+          for (a in depends) {
             if (a.isOptional && a.pluginId == item.pluginId) {
               a.isOptional = false
               iterator.remove()
@@ -640,7 +640,7 @@ class IdeaPluginDescriptorImpl(
           }
         }
       }
-      return list
+      return depends
     }
   }
 }
