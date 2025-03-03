@@ -192,6 +192,16 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
+  @ApiStatus.Internal
+  public void showProgressBar() {
+    myProgressBar.setVisible(true);
+  }
+
+  @ApiStatus.Internal
+  public void hideProgressBar() {
+    myProgressBar.setVisible(false);
+  }
+
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
