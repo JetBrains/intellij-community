@@ -585,7 +585,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     var headlessImplementationClass: String? = null
     var os: ExtensionDescriptor.Os? = null
     var overrides = false
-    var options: MutableMap<String, String?>? = null
+    var options: MutableMap<String, String>? = null
 
     reader.consumeChildElements { elementName ->
       when (elementName) {
