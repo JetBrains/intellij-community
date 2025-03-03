@@ -68,7 +68,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
   ): MavenProjectChanges {
     val keepPreviousPlugins = keepPreviousArtifacts
@@ -82,7 +82,7 @@ class MavenProject(val file: VirtualFile) {
       readerResult.activatedProfiles,
       setOf(),
       readerResult.nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       false,
       keepPreviousPlugins,
@@ -103,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
     activatedProfiles: MavenExplicitProfiles,
     unresolvedArtifactIds: Set<MavenId>,
     nativeModelMap: Map<String, String>,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
@@ -116,7 +116,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles,
       unresolvedArtifactIds,
       nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
       keepPreviousPlugins,
@@ -839,7 +839,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
       nativeModelMap: Map<String, String>,
-      settings: MavenGeneralSettings,
+      effectiveRepositoryPath: Path,
       keepPreviousArtifacts: Boolean,
       keepPreviousProfiles: Boolean,
       keepPreviousPlugins: Boolean,
@@ -906,7 +906,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveRepositoryPath.toFile(),
+        localRepository = effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,

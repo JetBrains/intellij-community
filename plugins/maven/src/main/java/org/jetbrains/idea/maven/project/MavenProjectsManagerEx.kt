@@ -6,8 +6,8 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -479,11 +479,13 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
           val res = tracer.spanBuilder("resolution").useWithScope {
+            val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
             resolver.resolve(spec.resolveIncrementally(),
                              projectsToResolve,
                              projectsTree,
                              getWorkspaceMap(),
-                             generalSettings,
+                             generalSettings.effectiveRepositoryPath,
+                             updateSnapshots,
                              embeddersManager,
                              reporter,
                              syncConsole)

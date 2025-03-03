@@ -70,7 +70,7 @@ internal class MavenProjectsTreeUpdater(
       val readerResult = tracer.spanBuilder("readPom").useWithScope {
         reader.readProjectAsync(mavenProject.file)
       }
-      val readChanges = mavenProject.updateFromReaderResult(readerResult, reader.generalSettings, true)
+      val readChanges = mavenProject.updateFromReaderResult(readerResult, reader.generalSettings.effectiveRepositoryPath, true)
 
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 

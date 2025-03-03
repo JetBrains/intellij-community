@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.lang.reflect.InvocationTargetException
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -83,12 +84,12 @@ class MavenProjectResolver(private val myProject: Project) {
     mavenProjects: Collection<MavenProject>,
     tree: MavenProjectsTree,
     workspaceMap: MavenWorkspaceMap,
-    generalSettings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
+    updateSnapshots: Boolean,
     embeddersManager: MavenEmbeddersManager,
     progressReporter: RawProgressReporter,
     eventHandler: MavenEventHandler,
   ): MavenProjectResolutionResult {
-    val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
@@ -108,7 +109,7 @@ class MavenProjectResolver(private val myProject: Project) {
               pomToDependencyHash,
               mavenProjectsInBaseDir,
               tree,
-              generalSettings,
+              effectiveRepositoryPath,
               embedder,
               progressReporter,
               eventHandler,
@@ -155,7 +156,7 @@ class MavenProjectResolver(private val myProject: Project) {
     pomToDependencyHash: Map<VirtualFile, String?>,
     mavenProjects: Collection<MavenProject>,
     tree: MavenProjectsTree,
-    generalSettings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     embedder: MavenEmbedderWrapper,
     progressReporter: RawProgressReporter,
     eventHandler: MavenEventHandler,
@@ -213,7 +214,7 @@ class MavenProjectResolver(private val myProject: Project) {
     coroutineScope {
       results.forEach {
         launch {
-          collectProjectWithUnresolvedPlugins(it, fileToMavenProject, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
+          collectProjectWithUnresolvedPlugins(it, fileToMavenProject, effectiveRepositoryPath, embedder, tree, projectsWithUnresolvedPlugins)
         }
       }
     }
@@ -399,7 +400,7 @@ class MavenProjectResolver(private val myProject: Project) {
   private suspend fun collectProjectWithUnresolvedPlugins(
     result: MavenProjectResolverResult,
     fileToMavenProjects: Map<VirtualFile, MavenProject>,
-    generalSettings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     embedder: MavenEmbedderWrapper,
     tree: MavenProjectsTree,
     projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProject>,
@@ -437,7 +438,7 @@ class MavenProjectResolver(private val myProject: Project) {
       result.activatedProfiles,
       result.unresolvedArtifactIds,
       result.nativeModelMap,
-      generalSettings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       keepPreviousResolutionResults)
 
