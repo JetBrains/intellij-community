@@ -106,7 +106,10 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       }
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
+    if (!ActionPlaces.TOOLWINDOW_TITLE.equals(e.getPlace())) {
+      // always enabled in title, no need to extra check that slow down update
+      presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
+    }
   }
 
   protected boolean isEnabled(@NotNull AnActionEvent e) {
