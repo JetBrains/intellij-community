@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongSetMap
+import it.unimi.dsi.fastutil.Hash.DEFAULT_INITIAL_SIZE
 import org.jetbrains.annotations.TestOnly
 
 //typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
@@ -14,9 +15,12 @@ internal typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>
 
 internal open class EntityStorageInternalIndex<T> private constructor(
   internal open val index: EntityStorageIndex<T>,
-  protected val oneToOneAssociation: Boolean
+  protected val oneToOneAssociation: Boolean,
 ) {
-  constructor(oneToOneAssociation: Boolean) : this(EntityStorageIndex<T>(), oneToOneAssociation)
+  constructor(oneToOneAssociation: Boolean, expectedSize: Int = DEFAULT_INITIAL_SIZE) : this(
+    EntityStorageIndex<T>(expectedSize),
+    oneToOneAssociation
+  )
 
   internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)?.toList()
 
@@ -29,7 +33,7 @@ internal open class EntityStorageInternalIndex<T> private constructor(
   class MutableEntityStorageInternalIndex<T> private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: EntityStorageIndex<T>,
-    oneToOneAssociation: Boolean
+    oneToOneAssociation: Boolean,
   ) : EntityStorageInternalIndex<T>(index, oneToOneAssociation) {
 
     private var freezed = true

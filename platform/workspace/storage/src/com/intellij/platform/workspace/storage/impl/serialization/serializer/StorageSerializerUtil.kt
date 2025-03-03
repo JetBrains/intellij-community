@@ -207,8 +207,9 @@ internal class StorageSerializerUtil(
       override fun read(kryo: Kryo,
                         input: Input,
                         type: Class<out EntityStorageInternalIndex<EntitySource>>): EntityStorageInternalIndex<EntitySource> {
-        val res = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(EntityStorageInternalIndex<EntitySource>(false))
-        repeat(input.readInt()) {
+        val size = input.readInt()
+        val res = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(EntityStorageInternalIndex<EntitySource>(false, size))
+        repeat(size) {
           val key = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classCache)
           val value = kryo.readClassAndObject(input) as EntitySource
           res.index(key, value)
@@ -257,8 +258,9 @@ internal class StorageSerializerUtil(
     }
 
     override fun read(kryo: Kryo, input: Input, type: Class<out Vfu2EntityId>): Vfu2EntityId {
-      val vfu2EntityId = Vfu2EntityId(getHashingStrategy())
-      repeat(input.readInt()) {
+      val vfu2EntityIdSize = input.readInt()
+      val vfu2EntityId = Vfu2EntityId(vfu2EntityIdSize, getHashingStrategy())
+      repeat(vfu2EntityIdSize) {
         val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
         val size = input.readInt()
         val data = Object2LongWithDefaultMap<EntityIdWithProperty>(size)

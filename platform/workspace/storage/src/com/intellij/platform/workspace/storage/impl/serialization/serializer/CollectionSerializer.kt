@@ -128,7 +128,7 @@ internal class Int2IntWithDefaultMapSerializer : Serializer<Int2IntWithDefaultMa
   @Suppress("UNCHECKED_CAST")
   override fun read(kryo: Kryo, input: Input, type: Class<out Int2IntWithDefaultMap>): Int2IntWithDefaultMap {
     val des = kryo.readClassAndObject(input) as Map<Int, Int>
-    val res = Int2IntWithDefaultMap()
+    val res = Int2IntWithDefaultMap(des.size)
     des.forEach { key, value ->
       res.put(key, value)
     }
