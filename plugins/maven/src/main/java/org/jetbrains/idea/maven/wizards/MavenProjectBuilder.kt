@@ -176,7 +176,10 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     tree.addManagedFilesWithProfiles(parameters.myFiles!!, MavenExplicitProfiles.NONE)
 
     runBlockingMaybeCancellable {
-      tree.updateAll(false, generalSettings, process.indicator)
+      val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(projectOrDefault)
+      mavenEmbedderWrappers.use {
+        tree.updateAll(false, generalSettings, mavenEmbedderWrappers, process.indicator)
+      }
     }
 
     parameters.myMavenProjectTree = tree

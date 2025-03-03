@@ -44,6 +44,8 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.PrefixStringEncoder
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -671,5 +673,28 @@ object MavenImportUtil {
 
   private fun MavenProject.findCompilerPlugin(): MavenPlugin? {
     return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+  }
+
+  internal fun guessExistingEmbedderDir(project: Project, multiModuleProjectDirectory: String): String {
+    var dir: String? = multiModuleProjectDirectory
+    if (dir!!.isBlank()) {
+      MavenLog.LOG.warn("Maven project directory is blank. Using project base path")
+      dir = project.getBasePath()
+    }
+    if (null == dir || dir.isBlank()) {
+      MavenLog.LOG.warn("Maven project directory is blank. Using tmp dir")
+      dir = System.getProperty("java.io.tmpdir")
+    }
+    val originalPath = Path.of(dir).toAbsolutePath()
+    var path: Path? = originalPath
+    while (null != path && !Files.exists(path)) {
+      MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path))
+      path = path.parent
+    }
+    if (null == path) {
+      MavenLog.LOG.warn("Could not determine maven project directory: $multiModuleProjectDirectory")
+      return originalPath.toString()
+    }
+    return path.toString()
   }
 }

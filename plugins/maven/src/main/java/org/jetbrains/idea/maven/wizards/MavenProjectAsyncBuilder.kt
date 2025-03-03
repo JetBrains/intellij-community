@@ -166,7 +166,10 @@ class MavenProjectAsyncBuilder {
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
       reportRawProgress { reporter ->
-        tree.updateAll(false, generalSettings, reporter)
+        val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+        mavenEmbedderWrappers.use {
+          tree.updateAll(false, generalSettings, mavenEmbedderWrappers, reporter)
+        }
       }
     }
     val projects = tree.rootProjects
