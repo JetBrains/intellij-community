@@ -2,7 +2,6 @@
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,14 +11,13 @@ internal open class DiffPreviousDifferenceAction : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    if (DiffUtil.isFromShortcut(e)) {
-      e.presentation.setEnabledAndVisible(true)
+    val iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
+    if (iterable == null) {
+      e.presentation.setEnabledAndVisible(false)
       return
     }
-
-    val iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
-    if (iterable != null && iterable.canGoPrev()) {
-      e.presentation.setEnabled(true)
+    else if (iterable.canGoPrev()) {
+      e.presentation.setEnabledAndVisible(true)
       return
     }
 

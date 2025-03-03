@@ -14,6 +14,8 @@
                          order="before hide-hints"/>
 
     <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
+
+    <actionPromoter implementation="com.intellij.diff.actions.impl.DiffNavigationActionPromoter"/>
   </extensions>
 
   <applicationListeners>

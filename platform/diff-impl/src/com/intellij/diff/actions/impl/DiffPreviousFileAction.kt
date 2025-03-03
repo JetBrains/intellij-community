@@ -2,7 +2,6 @@
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,11 +11,6 @@ internal class DiffPreviousFileAction : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    if (DiffUtil.isFromShortcut(e)) {
-      e.presentation.setEnabledAndVisible(true)
-      return
-    }
-
     val iterable = e.getData(DiffDataKeys.PREV_NEXT_FILE_ITERABLE)
     if (iterable == null) {
       e.presentation.setEnabledAndVisible(false)
