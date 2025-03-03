@@ -150,6 +150,7 @@ internal object SettingsSnapshotZipSerializer {
       date = formattedDate
       applicationId = snapshotMetaInfo.appInfo?.applicationId.toString()
       buildNumber = snapshotMetaInfo.appInfo?.buildNumber?.asString() ?:""
+      appName = snapshotMetaInfo.appInfo?.fullApplicationName ?:""
       userName = snapshotMetaInfo.appInfo?.userName.toString()
       hostName = snapshotMetaInfo.appInfo?.hostName.toString()
       configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
@@ -169,7 +170,7 @@ internal object SettingsSnapshotZipSerializer {
         val appInfo = SettingsSnapshot.AppInfo(
           UUID.fromString(metaInfo.applicationId),
           BuildNumber.fromString(metaInfo.buildNumber),
-          metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
+          metaInfo.appName, metaInfo.userName, metaInfo.hostName, metaInfo.configFolder, )
         return SettingsSnapshot.MetaInfo(date, appInfo, metaInfo.isDeleted)
       }
       else {
@@ -186,6 +187,7 @@ internal object SettingsSnapshotZipSerializer {
     lateinit var date: String
     lateinit var applicationId: String
     var buildNumber: String = ""
+    var appName: String = ""
     var userName: String = ""
     var hostName: String = ""
     var configFolder: String = ""

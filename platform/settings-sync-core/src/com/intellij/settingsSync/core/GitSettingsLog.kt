@@ -254,6 +254,7 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
       val baseMessage = "\n\n" + """
             id:       $thisOrThat ${it.applicationId}
             build:    ${it.buildNumber}
+            appName:  ${it.fullApplicationName}
             user:     ${it.userName}
             host:     ${it.hostName}
             config:   ${it.configFolder}

@@ -75,7 +75,7 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
 
   private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
     LOG.info("Initializing settings sync. Mode: $initMode")
-    val settingsSyncMain = serviceAsync<SettingsSyncMain>()
+    val settingsSyncMain = SettingsSyncMain.getInstanceAsync()
     blockingContext {
       settingsSyncMain.controls.bridge.initialize(initMode)
       val settingsSyncEvents = SettingsSyncEvents.getInstance()
@@ -118,7 +118,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   override fun applicationActivated(ideFrame: IdeFrame) {
-    if (!true || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
+    if (!isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 

@@ -159,7 +159,7 @@ internal class GitSettingsLogTest {
 
     val instant = Instant.ofEpochSecond(100500)
     settingsLog.applyCloudState(
-      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), null, "", "", ""))) {
+      settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), null, "FULL_NAME", "", "", "" ))) {
         fileState("options/editor.xml", "moreCloudEditorContent")
       }, "Remote changes"
     )
@@ -179,7 +179,7 @@ internal class GitSettingsLogTest {
     val masterPosition = settingsLog.getMasterPosition()
 
     settingsLog.applyCloudState(
-      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null, "", "", ""))) {
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null,"FULL_NAME", "", "", ""))) {
         fileState("options/editor.xml", "moreCloudEditorContent")
       }, "Remote changes"
     )
@@ -200,7 +200,7 @@ internal class GitSettingsLogTest {
 
     val editorXmlFileState = "options/editor.xml"
     settingsLog.applyCloudState(
-      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null, "", "", ""))) {
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), null,"FULL_NAME", "", "", ""))) {
         fileState(editorXmlFileState, "moreCloudEditorContent")
       }, "Remote changes"
     )
