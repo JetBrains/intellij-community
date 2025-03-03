@@ -20,6 +20,8 @@ class ContainerDescriptor {
     get() = _components ?: Java11Shim.INSTANCE.listOf()
 
   @JvmField var listeners: MutableList<ListenerDescriptor>? = null
+  val readOnlyListeners: List<ListenerDescriptor>
+    get() = listeners ?: Java11Shim.INSTANCE.listOf()
 
   @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
 
