@@ -5,7 +5,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 
 public interface MavenSpyFilter {
-  default ProcessListener filtered(ProcessListener listener, ProcessHandler processHandler) {
-    return new ProcessListenerWithFilteredSpyOutput(listener, processHandler);
+  default ProcessListener filtered(ProcessListener listener, ProcessHandler processHandler, boolean withLoggingOutputStream) {
+    return new ProcessListenerWithFilteredSpyOutput(listener, processHandler, withLoggingOutputStream);
   }
 }

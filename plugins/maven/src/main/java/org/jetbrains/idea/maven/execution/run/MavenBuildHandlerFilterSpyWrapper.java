@@ -13,9 +13,11 @@ import java.io.OutputStream;
 /* this class is needed to implement build process handler and support running delegate builds*/
 public class MavenBuildHandlerFilterSpyWrapper extends BuildProcessHandler {
   private final ProcessHandler myOriginalHandler;
+  private final boolean myWithLoggingOutputStream;
 
-  public MavenBuildHandlerFilterSpyWrapper(ProcessHandler original) {
+  public MavenBuildHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream) {
     myOriginalHandler = original;
+    myWithLoggingOutputStream = withLoggingOutputStream;
   }
 
 
@@ -80,6 +82,6 @@ public class MavenBuildHandlerFilterSpyWrapper extends BuildProcessHandler {
   }
 
   private ProcessListener filtered(ProcessListener listener) {
-    return new ProcessListenerWithFilteredSpyOutput(listener, this);
+    return new ProcessListenerWithFilteredSpyOutput(listener, this, myWithLoggingOutputStream);
   }
 }

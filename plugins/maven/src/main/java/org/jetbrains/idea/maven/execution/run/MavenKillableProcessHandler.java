@@ -14,11 +14,14 @@ import java.util.Set;
 
 class MavenKillableProcessHandler extends KillableProcessHandler implements MavenSpyFilter {
 
+  private final boolean myWithLoggingOutputStream;
+
   MavenKillableProcessHandler(@NotNull Process process,
-                                      String commandLine,
-                                      @NotNull Charset charset,
-                                      @Nullable Set<File> filesToDelete) {
+                              String commandLine,
+                              @NotNull Charset charset,
+                              @Nullable Set<File> filesToDelete, boolean withLoggingOutputStream) {
     super(process, commandLine, charset, filesToDelete);
+    myWithLoggingOutputStream = withLoggingOutputStream;
   }
 
   @Override
@@ -28,11 +31,11 @@ class MavenKillableProcessHandler extends KillableProcessHandler implements Mave
 
   @Override
   public void addProcessListener(@NotNull ProcessListener listener) {
-    super.addProcessListener(filtered(listener, this));
+    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream));
   }
 
   @Override
   public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
-    super.addProcessListener(filtered(listener, this), parentDisposable);
+    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream), parentDisposable);
   }
 }

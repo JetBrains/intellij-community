@@ -41,10 +41,7 @@ import org.jetbrains.idea.maven.execution.*
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.DaemonedMavenDistribution
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.MavenServerEmbedder
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Function
@@ -58,8 +55,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private fun startProcess(debug: Boolean): ProcessHandler {
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
-
-      val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
 
       val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
@@ -120,10 +115,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       MavenLog.LOG.warn("buildView is null for " + myConfiguration.getName())
     }
     val eventProcessor =
-      MavenBuildEventProcessor(myConfiguration, buildView!!, descriptor, taskId, { it }, Function { ctx: MavenParsingContext? -> StartBuildEventImpl(descriptor, "") })
+      MavenBuildEventProcessor(myConfiguration, buildView!!, descriptor, taskId, { it }, Function { ctx: MavenParsingContext? -> StartBuildEventImpl(descriptor, "") }, isWrapperedOutput())
 
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
-    buildView.attachToProcess(MavenHandlerFilterSpyWrapper(processHandler))
+    buildView.attachToProcess(MavenHandlerFilterSpyWrapper(processHandler, isWrapperedOutput()))
 
     return DefaultExecutionResult(buildView, processHandler)
   }
@@ -158,12 +153,13 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   ): ExecutionResult {
     val consoleView = createConsole()
     val viewManager = environment.project.getService<BuildViewManager?>(BuildViewManager::class.java)
-    descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler), null)
+
+    descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWrapperedOutput()), null)
     descriptor.withExecutionEnvironment(environment)
     val startBuildEvent = StartBuildEventImpl(descriptor, "")
     val eventProcessor =
       MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                               { it }, { startBuildEvent })
+                               { it }, { startBuildEvent }, isWrapperedOutput())
 
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     val res = DefaultExecutionResult(consoleView, processHandler, DefaultActionGroup())
@@ -298,4 +294,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun isWindows() =
     myConfiguration.project.getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS
+
+  private fun isWrapperedOutput(): Boolean {
+    val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
+    return mavenDistribution.isMaven4() || mavenDistribution is DaemonedMavenDistribution
+  }
 }

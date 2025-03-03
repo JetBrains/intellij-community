@@ -11,9 +11,15 @@ import java.io.OutputStream;
 
 class MavenHandlerFilterSpyWrapper extends ProcessHandler implements MavenSpyFilter {
   private final ProcessHandler myOriginalHandler;
+  private final boolean myWithLoggingOutputStream;
 
-  MavenHandlerFilterSpyWrapper(ProcessHandler original) {
+  /**
+   * @param original                original process handler to wrap
+   * @param withLoggingOutputStream is maven output stream is wrapped with  Maven LoggingOutputStream which adds prefix [INFO] [stdout] to process
+   */
+  MavenHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream) {
     myOriginalHandler = original;
+    myWithLoggingOutputStream = withLoggingOutputStream;
   }
 
   @Override
@@ -58,11 +64,11 @@ class MavenHandlerFilterSpyWrapper extends ProcessHandler implements MavenSpyFil
 
   @Override
   public void addProcessListener(@NotNull ProcessListener listener) {
-    myOriginalHandler.addProcessListener(filtered(listener, this));
+    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream));
   }
 
   @Override
   public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
-    myOriginalHandler.addProcessListener(filtered(listener, this), parentDisposable);
+    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream), parentDisposable);
   }
 }

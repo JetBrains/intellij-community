@@ -54,6 +54,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import static org.jetbrains.idea.maven.server.MavenDistributionKt.isMaven4;
+
 public class MavenCommandLineState extends JavaCommandLineState implements RemoteConnectionCreator {
 
   private final MavenRunConfiguration myConfiguration;
@@ -165,13 +167,14 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
                                                 Function<String, String> targetFileMapper) throws ExecutionException {
     ConsoleView consoleView = createConsole(executor, processHandler, myConfiguration.getProject());
     BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
-    descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
+    descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler, useMaven4()), null);
     descriptor.withExecutionEnvironment(getEnvironment());
     StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
     boolean withResumeAction = MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
     MavenBuildEventProcessor eventProcessor =
       new MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                                   targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
+                                   targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction),
+                                   useMaven4()
       );
 
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
@@ -193,14 +196,14 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
     }
     MavenBuildEventProcessor eventProcessor =
       new MavenBuildEventProcessor(myConfiguration, buildView, descriptor, taskId, targetFileMapper, ctx ->
-        new StartBuildEventImpl(descriptor, ""));
+        new StartBuildEventImpl(descriptor, ""), useMaven4());
 
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
     if (emulateTerminal()) {
       buildView.attachToProcess(processHandler);
     }
     else {
-      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
+      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4()));
     }
 
     AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
@@ -215,6 +218,12 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
     }
     res.setRestartActions(restartActions.toArray(AnAction.EMPTY_ARRAY));
     return res;
+  }
+
+  private boolean useMaven4() {
+    var mavenCache = MavenDistributionsCache.getInstance(myConfiguration.getProject());
+    var mavenDistribution = mavenCache.getMavenDistribution(myConfiguration.getRunnerParameters().getWorkingDirPath());
+    return isMaven4(mavenDistribution);
   }
 
   private @NotNull Function<MavenParsingContext, StartBuildEvent> getStartBuildEventSupplier(@NotNull ProgramRunner runner,
@@ -384,7 +393,8 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
       return new MavenKillableProcessHandler(process,
                                                                    targetedCommandLine.getCommandPresentation(remoteEnvironment),
                                                                    targetedCommandLine.getCharset(),
-                                                                   targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+                                                                   targetedCommandLineBuilder.getFilesToDeleteOnTermination(),
+                                             useMaven4());
     }
     else {
       return new KillableColoredProcessHandler.Silent(process,

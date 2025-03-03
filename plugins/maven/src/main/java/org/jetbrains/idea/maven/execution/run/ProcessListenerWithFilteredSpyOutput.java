@@ -9,15 +9,18 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenSimpleConsoleEventsBuffer;
 
+//this listener used for proper console output in buildtools - to hide or show spy log in process out, it is unrelated to build events processing
 public class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
   private final ProcessListener myListener;
   private final MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
 
-  ProcessListenerWithFilteredSpyOutput(ProcessListener listener, ProcessHandler processHandler) {
+
+  ProcessListenerWithFilteredSpyOutput(ProcessListener listener, ProcessHandler processHandler, boolean withLoggingOutputStream) {
     myListener = listener;
     mySimpleConsoleEventsBuffer = new MavenSimpleConsoleEventsBuffer(
       (l, k) -> myListener.onTextAvailable(new ProcessEvent(processHandler, l), k),
-      Registry.is("maven.spy.events.debug")
+      Registry.is("maven.spy.events.debug"),
+      withLoggingOutputStream
     );
   }
 
