@@ -25,10 +25,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,7 +173,7 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
       withCellComponentProvider(CellComponentProvider.forTable(myTable)).
       installOn(myTable);
 
-    return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().createPanel();
+    return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().setMinimumSize(JBUI.size(470, 220)).createPanel();
   }
 
   @Override
