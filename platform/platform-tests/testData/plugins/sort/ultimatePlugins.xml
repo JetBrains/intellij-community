@@ -1198,19 +1198,6 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>-JavaScript-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.plugin/META-INF/plugin.xml">
-    <id>-com-intellij-idea-clion-</id>
-    <name>C/C++ (Internal Preview)</name>
-    <module value="com.intellij.modules.cidr.lang"/>
-    <module value="com.intellij.modules.cidr.debugger"/>
-    <module value="com.intellij.modules.cidr.doxygen"/>
-    <module value="com.intellij.modules.clion"/>
-    <module value="com.intellij.modules.cmake"/>
-    <module value="org.jetbrains.plugins.gradle.native"/>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.c-capable</depends>
-    <depends>-com-intellij-gradle-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.performanceTesting/META-INF/plugin.xml">
     <id>-com-jetbrains-performancePlugin-</id>
     <name>Performance Testing</name>

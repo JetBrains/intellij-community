@@ -213,7 +213,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           && pluginId.idString != "com.intellij.clion.performanceTesting"
           && pluginId.idString != "com.intellij.appcode"
           && pluginId.idString != "com.intellij.kmm"
-          && pluginId.idString != "com.intellij.clion.plugin"
           && pluginId.idString != "com.jetbrains.codeWithMe"
           && pluginId.idString != "intellij.rider.plugins.cwm"
           && pluginId.idString != "org.jetbrains.plugins.clion.radler"
