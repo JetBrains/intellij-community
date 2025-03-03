@@ -112,29 +112,7 @@ class IdeaPluginDescriptorImpl(
 
   // extension point name -> list of extension descriptors
   @JvmField
-  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions.let { rawMap ->
-    if (rawMap == null) {
-      Java11Shim.INSTANCE.mapOf()
-    }
-    else if (rawMap.size < 2 || !rawMap.containsKey(registryEpName)) {
-      rawMap
-    }
-    else {
-      /*
-       * What's going on: see `com.intellij.ide.plugins.DynamicPluginsTest.registry access of key from same plugin`
-       * This is an ad-hoc solution to the problem, it doesn't fix the root cause. This may also break if this map gets copied
-       * or transformed into a HashMap somewhere, but it seems it's not the case right now.
-       * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
-       */
-      val result = LinkedHashMap<String, List<ExtensionDescriptor>>(rawMap.size)
-      val keys = rawMap.keys.toTypedArray()
-      keys.sortWith(extensionPointNameComparator)
-      for (key in keys) {
-        result.put(key, rawMap[key]!!)
-      }
-      result
-    }
-  }
+  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
 
   @JvmField
   val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
@@ -649,6 +627,25 @@ class IdeaPluginDescriptorImpl(
         }
       }
       return depends
+    }
+
+    private fun sortExtensions(rawMap: Map<String, List<ExtensionDescriptor>>): Map<String, List<ExtensionDescriptor>> {
+      if (rawMap.size < 2 || !rawMap.containsKey(registryEpName)) {
+        return rawMap
+      }
+      /*
+       * What's going on: see `com.intellij.ide.plugins.DynamicPluginsTest.registry access of key from same plugin`
+       * This is an ad-hoc solution to the problem, it doesn't fix the root cause. This may also break if this map gets copied
+       * or transformed into a HashMap somewhere, but it seems it's not the case right now.
+       * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
+       */
+      val result = LinkedHashMap<String, List<ExtensionDescriptor>>(rawMap.size)
+      val keys = rawMap.keys.toTypedArray()
+      keys.sortWith(extensionPointNameComparator)
+      for (key in keys) {
+        result.put(key, rawMap[key]!!)
+      }
+      return result
     }
   }
 }
