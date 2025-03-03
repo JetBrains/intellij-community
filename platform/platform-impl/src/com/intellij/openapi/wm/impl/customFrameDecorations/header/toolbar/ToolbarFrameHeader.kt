@@ -339,6 +339,7 @@ internal class ToolbarFrameHeader(
     ideMenuBar.addComponentListener(contentResizeListener)
     this.addComponentListener(resizeListener)
     ideMenuHelper.installListeners()
+    toolbar?.addWidthCalculationListener(widthCalculationListener)
   }
 
   override fun uninstallListeners() {

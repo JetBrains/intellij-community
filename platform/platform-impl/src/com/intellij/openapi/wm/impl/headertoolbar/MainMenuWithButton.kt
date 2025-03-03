@@ -55,8 +55,8 @@ class MainMenuWithButton(
     coroutineScope.launch(Dispatchers.EDT) {
       var wasChanged = false
       if (toolbarMainMenu.rootMenuItems.isEmpty() && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
-        toolbarMainMenu.pollNextInvisibleItem(expandableMenu)?.let {
-          toolbarMainMenu.add(it)
+        toolbarMainMenu.pollNextInvisibleItem(expandableMenu)?.let { itemToWidth ->
+          toolbarMainMenu.add(itemToWidth.first)
         }
         wasChanged = true
       }
@@ -86,8 +86,9 @@ class MainMenuWithButton(
 
       else if (availableWidth > widthLimit) {
         while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
-          val item = toolbarMainMenu.pollNextInvisibleItem(expandableMenu) ?: break // Remove the last item (LIFO order)
-          val itemWidth = if(item.size.width > 0) item.size.width else item.preferredSize.width
+          val itemToWidth = toolbarMainMenu.pollNextInvisibleItem(expandableMenu) ?: break
+          val item = itemToWidth.first
+          val itemWidth = if (item.size.width > 0) item.size.width else  itemToWidth.second
           if (availableWidth - itemWidth < widthLimit) {
             toolbarMainMenu.addInvisibleItem(item)
             break
@@ -102,8 +103,9 @@ class MainMenuWithButton(
       menuButton.isVisible = toolbarMainMenu.hasInvisibleItems(expandableMenu)
       if (wasChanged) {
         if (toolbarMainMenu.rootMenuItems.isEmpty()) {
-          val item = toolbarMainMenu.pollNextInvisibleItem(expandableMenu)
-          toolbarMainMenu.add(item)
+          toolbarMainMenu.pollNextInvisibleItem(expandableMenu)?.let {
+            toolbarMainMenu.add(it.first)
+          }
         }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
       }
@@ -157,15 +159,13 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar
     invisibleItems.offerLast(item) // Add to removed items (LIFO behavior)
   }
 
-  internal fun pollNextInvisibleItem(expandableMenu: ExpandableMenu?): ActionMenu? {
+  internal fun pollNextInvisibleItem(expandableMenu: ExpandableMenu?): Pair<ActionMenu, Int>? {
     val expandableMenuNextItem = expandableMenu?.ideMenu?.rootMenuItems?.getOrNull(rootMenuItems.size) ?: return null
     val lastItem = invisibleItems.last()
-    val matchingItem = if (lastItem.text == expandableMenuNextItem?.text) lastItem else invisibleItems.find { it.text == expandableMenuNextItem?.text }
-    matchingItem?.let {
-      invisibleItems.remove(it)
-    }
-    return matchingItem
-
+    val matchingItem = if (lastItem.text == expandableMenuNextItem.text) lastItem
+    else invisibleItems.find { it.text == expandableMenuNextItem.text } ?: return null
+    invisibleItems.remove(matchingItem)
+    return Pair(matchingItem, expandableMenuNextItem.preferredSize.width)
   }
 
   internal fun hasInvisibleItems(expandableMenu: ExpandableMenu?): Boolean {
