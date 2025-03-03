@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -37,8 +38,21 @@ import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 
+import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandlerKt.getAvailableCustomEvaluateHandler;
+import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandlerKt.showCustomEvaluateDialog;
+
 @ApiStatus.Internal
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
+  @Override
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
+    XDebuggerCustomEvaluateHandler customHandler = getAvailableCustomEvaluateHandler(project, event);
+    if (customHandler != null) {
+      showCustomEvaluateDialog(customHandler, project, event);
+      return;
+    }
+    super.perform(project, event);
+  }
+
   @Override
   protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
@@ -177,6 +191,16 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     }
     String text = expressionInfo.getDisplayText();
     return text == null ? document.getText(expressionInfo.getTextRange()) : text;
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    // enable action if custom evaluate handler will handle the action
+    if (getAvailableCustomEvaluateHandler(project, event) != null) {
+      return true;
+    }
+
+    return super.isEnabled(project, event);
   }
 
   @Override

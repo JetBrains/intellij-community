@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -21,26 +20,9 @@ import java.util.List;
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.xdebugger.debuggerSupport");
 
-  protected static final class DisabledActionHandler extends DebuggerActionHandler {
-    public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
-
-    @Override
-    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
-    }
-
-    @Override
-    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
-      return false;
-    }
-  }
-
   @ApiStatus.Internal
   public static @NotNull List<@NotNull DebuggerSupport> getDebuggerSupports() {
     return EXTENSION_POINT.getExtensionList();
-  }
-
-  public @NotNull DebuggerActionHandler getEvaluateHandler() {
-    return DisabledActionHandler.INSTANCE;
   }
 
   public @NotNull QuickEvaluateHandler getQuickEvaluateHandler() {
