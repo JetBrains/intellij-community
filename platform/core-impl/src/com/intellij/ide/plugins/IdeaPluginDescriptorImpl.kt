@@ -96,7 +96,7 @@ class IdeaPluginDescriptorImpl(
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
     }
-    pluginDependencies = fixDepends(raw.depends)
+    pluginDependencies = raw.depends?.let(::fixDepends) ?: Java11Shim.INSTANCE.listOf()
   }
 
   @Transient
@@ -626,10 +626,7 @@ class IdeaPluginDescriptorImpl(
 
   private companion object {
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
-    private fun fixDepends(list: MutableList<PluginDependency>?): List<PluginDependency> {
-      if (list.isNullOrEmpty()) {
-        return Java11Shim.INSTANCE.listOf()
-      }
+    private fun fixDepends(list: MutableList<PluginDependency>): List<PluginDependency> {
       val iterator = list.iterator()
       while (iterator.hasNext()) {
         val item = iterator.next()
