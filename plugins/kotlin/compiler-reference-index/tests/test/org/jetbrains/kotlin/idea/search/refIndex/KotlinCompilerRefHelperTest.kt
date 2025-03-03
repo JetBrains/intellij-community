@@ -10,6 +10,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
@@ -24,6 +25,7 @@ open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedP
         setUpWithKotlinPlugin { super.setUp() }
         if (pluginMode == KotlinPluginMode.K2) {
             project.enableK2Compiler()
+            ConfigLibraryUtil.configureKotlinRuntime(module)
         } else {
             project.enableK1Compiler()
         }
