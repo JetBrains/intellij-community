@@ -27,7 +27,8 @@ internal const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_
  * [SDK docs](https://plugins.jetbrains.com/docs/intellij).
  *
  * To implement a new documentation provider:
- * 1. Create a documentation YAML containing the descriptor content.
+ * 1. Create a documentation YAML containing the descriptor content (the YAML file should be automatically mapped to
+ *    the `schemas/descriptor-documentation-schema.json` schema; all elements are documented).
  * 2. Extend this class.
  * 3. Provide a documentation YAML URL and path in [docYamlCoordinates].
  * 4. Register the provider in `com.intellij.platform.backend.documentation.psiTargetProvider` extension point.
