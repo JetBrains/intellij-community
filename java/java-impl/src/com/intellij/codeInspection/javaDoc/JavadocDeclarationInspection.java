@@ -2,13 +2,13 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.highlighting.JavaSyntaxErrorChecker;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -97,7 +97,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
       @Override
       public void visitErrorElement(@NotNull PsiErrorElement element) {
-        if (IGNORE_SYNTAX_ERRORS || !JavaHighlightErrorFilter.isJavaDocProblem(element)) return;
+        if (IGNORE_SYNTAX_ERRORS || !JavaSyntaxErrorChecker.isJavaDocProblem(element)) return;
         PsiElement parent = element.getParent();
         TextRange range = element.getTextRangeInParent();
         if (range.isEmpty()) {

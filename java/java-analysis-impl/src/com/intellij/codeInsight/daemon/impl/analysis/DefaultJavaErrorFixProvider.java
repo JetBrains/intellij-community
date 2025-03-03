@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
@@ -246,6 +247,10 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       }
       return null;
     });
+    fix(SYNTAX_ERROR, error -> error.psi().getParent() instanceof PsiSwitchLabeledRuleStatement rule &&
+                               error.psi().getErrorDescription().equals(JavaPsiBundle.message("expected.switch.rule"))
+                               ? myFactory.createWrapSwitchRuleStatementsIntoBlockFix(rule)
+                               : null);
   }
 
   private void createMethodFixes() {

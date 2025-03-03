@@ -144,6 +144,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitErrorElement(@NotNull PsiErrorElement element) {
+    super.visitErrorElement(element);
+    if (JavaSyntaxErrorChecker.shouldHighlightErrorElement(element)) {
+      report(JavaErrorKinds.SYNTAX_ERROR.create(element));
+    }
+  }
+
+  @Override
   public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
     super.visitRecordComponent(recordComponent);
     if (!hasErrorResults()) myRecordChecker.checkRecordComponentWellFormed(recordComponent);

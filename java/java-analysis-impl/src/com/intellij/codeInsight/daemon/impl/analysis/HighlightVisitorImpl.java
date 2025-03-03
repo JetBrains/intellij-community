@@ -29,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -124,13 +123,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
-    List<@NotNull JavaErrorFixProvider> fixProviders = JavaErrorFixProvider.EP_NAME.getExtensionList();
-    myCollector = new JavaErrorCollector(file, error -> reportError(error, holder, fixProviders));
+    myCollector = new JavaErrorCollector(file, error -> reportError(error, holder));
   }
 
   private void reportError(JavaCompilationError<?, ?> error,
-                           @NotNull HighlightInfoHolder holder,
-                           List<@NotNull JavaErrorFixProvider> fixProviders) {
+                           @NotNull HighlightInfoHolder holder) {
+    if (error.kind() == SYNTAX_ERROR) return; // reported by DefaultHighlightVisitor
     JavaErrorHighlightType javaHighlightType = error.highlightType();
     HighlightInfoType type = switch (javaHighlightType) {
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
@@ -162,7 +160,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
-    fixProviders.forEach(provider -> provider.registerFixes(error, consumer));
+    JavaErrorFixProvider.EP_NAME.forEachExtensionSafe(provider -> provider.registerFixes(error, consumer));
     error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
       .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED).map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))

@@ -80,6 +80,9 @@ public final class JavaErrorKinds {
         @NlsSafe String hex = String.format("U+%04X", (int)c);
         return message("illegal.character", printable ? c + " (" + hex + ")" : hex);
       });
+  public static final Simple<PsiErrorElement> SYNTAX_ERROR =
+    error(PsiErrorElement.class, "syntax.error")
+      .withDescription(e -> message("syntax.error", e.getErrorDescription()));
   public static final Parameterized<PsiElement, JavaPreviewFeatureUtil.PreviewFeatureUsage> PREVIEW_API_USAGE =
     parameterized(PsiElement.class, JavaPreviewFeatureUtil.PreviewFeatureUsage.class, "preview.api.usage")
       .withDescription((e, c) -> message("preview.api.usage", c.targetName()));
