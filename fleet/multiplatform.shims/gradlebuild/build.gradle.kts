@@ -15,6 +15,5 @@ plugins {
 jpsModule {
   location {
     moduleName = "fleet.multiplatform.shims"
-    isDefaultSrcFolderCommon = true
   }
 }

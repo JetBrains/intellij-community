@@ -11,9 +11,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.1/expects-compiler-plugin-2.1.10-0.1.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.1/expects-compiler-plugin-2.1.10-0.1.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -23,7 +21,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/srcCommonMain" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/srcJvmMain" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
     </content>
