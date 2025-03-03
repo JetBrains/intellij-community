@@ -2,10 +2,15 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.MavenServerManager
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile, vararg profiles: String): MavenModel {
@@ -17,8 +22,9 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile,
                                     locator: MavenProjectReaderProjectLocator,
                                     vararg profiles: String): MavenProjectReaderResult {
-    val reader = MavenProjectReader(project, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator)
-    val result = reader.use { reader.readProjectAsync(file) }
+    val mavenEmbedderWrappers = MavenEmbedderWrappersTestImpl(project)
+    val reader = MavenProjectReader(project, mavenEmbedderWrappers, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val result = mavenEmbedderWrappers.use { reader.readProjectAsync(file) }
     return result
   }
 
@@ -34,5 +40,21 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
       actualProblems.add(each.description)
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
+  }
+}
+
+internal class MavenEmbedderWrappersTestImpl(private val myProject: Project) : MavenEmbedderWrappers {
+  private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
+
+  override fun getEmbedder(baseDir: Path): MavenEmbedderWrapper {
+    val embedderDir = baseDir.toString()
+    return myEmbedders.computeIfAbsent(baseDir) {
+      MavenServerManager.getInstance().createEmbedder(myProject, false, embedderDir)
+    }
+  }
+
+  override fun close() {
+    myEmbedders.values.forEach { it.release() }
+    myEmbedders.clear()
   }
 }

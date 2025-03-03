@@ -86,14 +86,14 @@ class MavenProjectResolver(private val myProject: Project) {
     workspaceMap: MavenWorkspaceMap,
     effectiveRepositoryPath: Path,
     updateSnapshots: Boolean,
-    embeddersManager: MavenEmbeddersManager,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
     progressReporter: RawProgressReporter,
     eventHandler: MavenEventHandler,
   ): MavenProjectResolutionResult {
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
-      val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)
+      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
       try {
         val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
@@ -122,15 +122,12 @@ class MavenProjectResolver(private val myProject: Project) {
       catch (t: Throwable) {
         processResolverException(t, true)
       }
-      finally {
-        embeddersManager.release(embedder)
-      }
     }
     MavenUtil.restartConfigHighlighting(mavenProjects)
 
     val pomToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
     if (incrementally && updateSnapshots) {
-      updateSnapshotsAfterIncrementalSync(tree, pomToDependencyHash, embeddersManager, progressReporter, eventHandler)
+      updateSnapshotsAfterIncrementalSync(tree, pomToDependencyHash, mavenEmbedderWrappers, progressReporter, eventHandler)
     }
     return MavenProjectResolutionResult(projectsWithUnresolvedPlugins)
   }
@@ -226,19 +223,14 @@ class MavenProjectResolver(private val myProject: Project) {
   private suspend fun updateSnapshotsAfterIncrementalSync(
     tree: MavenProjectsTree,
     fileToDependencyHash: Map<VirtualFile, String?>,
-    embeddersManager: MavenEmbeddersManager,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
     progressReporter: RawProgressReporter,
     eventHandler: MavenEventHandler,
   ) {
     val projectMultiMap = MavenUtil.groupByBasedir(tree.projects, tree)
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir)
-      try {
-        updateSnapshotsAfterIncrementalSync(mavenProjectsForBaseDir, fileToDependencyHash, embedder, progressReporter, eventHandler)
-      }
-      finally {
-        embeddersManager.release(embedder)
-      }
+      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
+      updateSnapshotsAfterIncrementalSync(mavenProjectsForBaseDir, fileToDependencyHash, embedder, progressReporter, eventHandler)
     }
   }
 

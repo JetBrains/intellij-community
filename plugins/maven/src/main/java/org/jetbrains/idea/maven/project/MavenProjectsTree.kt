@@ -343,48 +343,60 @@ class MavenProjectsTree(val project: Project) {
 
 
   @Deprecated("use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead")
-  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, process: MavenProgressIndicator) {
-    runBlockingMaybeCancellable { updateAll(force, generalSettings, process.indicator) }
+  fun updateAll(
+    force: Boolean,
+    generalSettings: MavenGeneralSettings,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    process: MavenProgressIndicator
+  ) {
+    runBlockingMaybeCancellable { updateAll(force, generalSettings, mavenEmbedderWrappers, process.indicator) }
   }
 
   @ApiStatus.Internal
-  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
-    return updateAll(force, generalSettings, toRawProgressReporter(process))
+  suspend fun updateAll(
+    force: Boolean,
+    generalSettings: MavenGeneralSettings,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    process: ProgressIndicator
+  ): MavenProjectsTreeUpdateResult {
+    return updateAll(force, generalSettings, mavenEmbedderWrappers, toRawProgressReporter(process))
   }
 
   @ApiStatus.Internal
-  suspend fun updateAll(force: Boolean,
-                        generalSettings: MavenGeneralSettings,
-                        progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+  suspend fun updateAll(
+    force: Boolean,
+    generalSettings: MavenGeneralSettings,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    progressReporter: RawProgressReporter,
+  ): MavenProjectsTreeUpdateResult {
     val managedFiles = existingManagedFiles
 
-    val projectReader = MavenProjectReader(project, generalSettings, explicitProfiles, projectLocator)
+    val projectReader = MavenProjectReader(project, mavenEmbedderWrappers, generalSettings, explicitProfiles, projectLocator)
 
-    projectReader.use {
-      val updated = tracer.spanBuilder("updateProjectTree").useWithScope {
-        update(managedFiles, true, force, projectReader, progressReporter)
-      }
-
-      val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, managedFiles)
-      val deleted = tracer.spanBuilder("cleanupProjectTree").useWithScope {
-        delete(projectReader, obsoleteFiles, progressReporter)
-      }
-
-      val updateResult = updated.plus(deleted)
-      MavenLog.LOG.debug("Maven tree update result: updated ${updateResult.updated}, deleted ${updateResult.deleted}")
-      return updateResult
+    val updated = tracer.spanBuilder("updateProjectTree").useWithScope {
+      update(managedFiles, true, force, projectReader, progressReporter)
     }
+
+    val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, managedFiles)
+    val deleted = tracer.spanBuilder("cleanupProjectTree").useWithScope {
+      delete(projectReader, obsoleteFiles, progressReporter)
+    }
+
+    val updateResult = updated.plus(deleted)
+    MavenLog.LOG.debug("Maven tree update result: updated ${updateResult.updated}, deleted ${updateResult.deleted}")
+    return updateResult
   }
 
   @ApiStatus.Internal
-  suspend fun update(files: Collection<VirtualFile>,
-                     force: Boolean,
-                     generalSettings: MavenGeneralSettings,
-                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
-    val projectReader = MavenProjectReader(project, generalSettings, explicitProfiles, projectLocator)
-    projectReader.use {
-      return update(files, false, force, projectReader, progressReporter)
-    }
+  suspend fun update(
+    files: Collection<VirtualFile>,
+    force: Boolean,
+    generalSettings: MavenGeneralSettings,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    progressReporter: RawProgressReporter,
+  ): MavenProjectsTreeUpdateResult {
+    val projectReader = MavenProjectReader(project, mavenEmbedderWrappers, generalSettings, explicitProfiles, projectLocator)
+    return update(files, false, force, projectReader, progressReporter)
   }
 
   private suspend fun update(files: Collection<VirtualFile>,
@@ -467,13 +479,14 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @ApiStatus.Internal
-  suspend fun delete(files: List<VirtualFile>,
-                     generalSettings: MavenGeneralSettings,
-                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
-    val projectReader = MavenProjectReader(project, generalSettings, explicitProfiles, projectLocator)
-    projectReader.use {
-      return delete(projectReader, files, progressReporter)
-    }
+  suspend fun delete(
+    files: List<VirtualFile>,
+    generalSettings: MavenGeneralSettings,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    progressReporter: RawProgressReporter,
+  ): MavenProjectsTreeUpdateResult {
+    val projectReader = MavenProjectReader(project, mavenEmbedderWrappers, generalSettings, explicitProfiles, projectLocator)
+    return delete(projectReader, files, progressReporter)
   }
 
   private suspend fun delete(projectReader: MavenProjectReader,

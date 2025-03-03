@@ -6,12 +6,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.importing.MavenImportUtil.guessExistingEmbedderDir
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir
-import java.nio.file.Files
-import java.nio.file.Path
 
 class MavenEmbeddersManager(private val project: Project) {
   private val myPool: MutableMap<Pair<Key<*>, String>, MavenEmbedderWrapper> = ContainerUtil.createSoftValueMap<Pair<Key<*>, String>, MavenEmbedderWrapper>()
@@ -31,7 +30,7 @@ class MavenEmbeddersManager(private val project: Project) {
 
   @Synchronized
   fun getEmbedder(kind: Key<*>, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
-    val embedderDir = guessExistingEmbedderDir(multiModuleProjectDirectory)
+    val embedderDir = guessExistingEmbedderDir(project, multiModuleProjectDirectory)
 
     val key = Pair.create<Key<*>, String>(kind, embedderDir)
     var result = myPool[key]
@@ -57,31 +56,8 @@ class MavenEmbeddersManager(private val project: Project) {
     return result
   }
 
-  private fun guessExistingEmbedderDir(multiModuleProjectDirectory: String): String {
-    var dir: String? = multiModuleProjectDirectory
-    if (dir!!.isBlank()) {
-      MavenLog.LOG.warn("Maven project directory is blank. Using project base path")
-      dir = project.getBasePath()
-    }
-    if (null == dir || dir.isBlank()) {
-      MavenLog.LOG.warn("Maven project directory is blank. Using tmp dir")
-      dir = System.getProperty("java.io.tmpdir")
-    }
-    val originalPath = Path.of(dir).toAbsolutePath()
-    var path: Path? = originalPath
-    while (null != path && !Files.exists(path)) {
-      MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path))
-      path = path.parent
-    }
-    if (null == path) {
-      MavenLog.LOG.warn("Could not determine maven project directory: $multiModuleProjectDirectory")
-      return originalPath.toString()
-    }
-    return path.toString()
-  }
-
   private fun createEmbedder(multiModuleProjectDirectory: String, alwaysOnline: Boolean): MavenEmbedderWrapper {
-    return getInstance().createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
+    return MavenServerManager.getInstance().createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
   }
 
   @Synchronized
@@ -130,8 +106,6 @@ class MavenEmbeddersManager(private val project: Project) {
     val FOR_FOLDERS_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_FOLDERS_RESOLVE")
     @JvmField
     val FOR_POST_PROCESSING: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_POST_PROCESSING")
-    @JvmField
-    val FOR_MODEL_READ: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_MODEL_READ")
 
     // will always regardless to 'work offline' setting
     @JvmField

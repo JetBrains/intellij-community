@@ -11,13 +11,13 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -29,29 +29,27 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
 import java.io.File
 import java.io.IOException
-import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 private const val UNKNOWN = MavenId.UNKNOWN_VALUE
 
+@ApiStatus.Internal
 class MavenProjectReader(
   private val myProject: Project,
+  private val mavenEmbedderWrappers: MavenEmbedderWrappers,
   val generalSettings: MavenGeneralSettings,
   val explicitProfiles: MavenExplicitProfiles,
   private val locator: MavenProjectReaderProjectLocator,
-) : AutoCloseable {
+) {
   private val myCache = MavenReadProjectCache()
   private val myReadHelper: MavenProjectModelReadHelper = MavenUtil.createModelReadHelper(myProject)
   private val mySettingsProfilesCache: AtomicReference<SettingsProfilesCache?> = AtomicReference(null)
-  private val embeddersManager = MavenProjectsManager.getInstance(myProject).embeddersManager
-  private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
 
   suspend fun readProjectAsync(file: VirtualFile): MavenProjectReaderResult {
     val recursionGuard: MutableSet<VirtualFile> = HashSet()
     val readResult = readProjectModel(file, recursionGuard)
     val baseDir = MavenUtil.getBaseDir(file)
-    val embedder = getEmbedder(baseDir)
+    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     val model = myReadHelper.interpolate(embedder, file, readResult.first.model)
 
     val modelMap: MutableMap<String, String> = HashMap()
@@ -69,16 +67,6 @@ class MavenProjectReader(
                                     modelMap,
                                     readResult.second,
                                     readResult.first.problems)
-  }
-
-  private fun getEmbedder(baseDir: Path): MavenEmbedderWrapper {
-    return myEmbedders.computeIfAbsent(baseDir) {
-      embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, baseDir.toString())
-    }
-  }
-
-  override fun close() {
-    myEmbedders.values.forEach { embeddersManager.release(it) }
   }
 
   private suspend fun readProjectModel(file: VirtualFile, recursionGuard: MutableSet<VirtualFile>): Pair<RawModelReadResult, MavenExplicitProfiles> {
@@ -105,7 +93,7 @@ class MavenProjectReader(
     val baseDirString = baseDir.toString()
     val transformer = RemotePathTransformerFactory.createForProject(myProject)
     val baseDirFile = File(transformer.toRemotePathOrSelf(baseDirString))
-    val embedder = getEmbedder(baseDir)
+    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     val profileApplicationResult = embedder.applyProfiles(modelWithInheritance, baseDirFile, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
 
     val modelWithProfiles = profileApplicationResult.model
@@ -134,7 +122,7 @@ class MavenProjectReader(
   ): RawModelReadResult {
     var result: MavenModel? = null
     val baseDir = MavenUtil.getBaseDir(file)
-    val embedder = getEmbedder(baseDir)
+    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }
     if (result == null) {
       result = MavenModel()
@@ -315,7 +303,7 @@ class MavenProjectReader(
       }
 
       val baseDir = MavenUtil.getBaseDir(file)
-      val embedder = getEmbedder(baseDir)
+      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
       val modelWithInheritance = myReadHelper.assembleInheritance(embedder, parentModel, model, file)
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.

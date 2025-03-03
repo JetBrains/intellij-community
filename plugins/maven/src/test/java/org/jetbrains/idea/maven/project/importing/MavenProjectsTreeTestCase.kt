@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
@@ -17,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() {
   private var myTree: MavenProjectsTree? = null
   protected val rawProgressReporter: RawProgressReporter = object : RawProgressReporter {}
+  protected lateinit var mavenEmbedderWrappers: MavenEmbedderWrappers
 
   val tree: MavenProjectsTree
     get() {
@@ -29,21 +32,33 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
   }
 
+  override fun setUp() {
+    super.setUp()
+    mavenEmbedderWrappers = MavenEmbedderWrappersTestImpl(project)
+  }
+
+  override fun tearDown() {
+    RunAll(
+      ThrowableRunnable { mavenEmbedderWrappers.close() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
+  }
+
   protected suspend fun updateAll(vararg files: VirtualFile) {
     updateAll(emptyList<String>(), *files)
   }
 
   protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile) {
     tree.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
   }
 
   protected suspend fun update(file: VirtualFile) {
-    tree.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
+    tree.update(listOf(file), false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
   }
 
   protected suspend fun deleteProject(file: VirtualFile) {
-    tree.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
+    tree.delete(listOf(file), mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
   }
 
   @Throws(IOException::class)
@@ -107,8 +122,8 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                      tree,
                      tree.workspaceMap,
                      generalSettings.effectiveRepositoryPath,
-                     updateSnapshots =
-                     embeddersManager,
+                     updateSnapshots,
+                     mavenEmbedderWrappers,
                      progressReporter,
                      MavenLogEventHandler)
   }

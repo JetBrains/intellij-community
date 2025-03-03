@@ -378,10 +378,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     updateAll(projectPom)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
     l.log.clear()
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log(), l.log)
     l.log.clear()
-    tree.updateAll(true, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(true, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
   }
 
@@ -407,10 +407,10 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     update(projectPom)
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log)
     l.log.clear()
-    tree.update(listOf(projectPom), false, mavenGeneralSettings, rawProgressReporter)
+    tree.update(listOf(projectPom), false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log(), l.log)
     l.log.clear()
-    tree.update(listOf(projectPom), true, mavenGeneralSettings, rawProgressReporter)
+    tree.update(listOf(projectPom), true, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "project").add("deleted"), l.log)
     l.log.clear()
   }
@@ -1483,11 +1483,11 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     val l = MyLoggingListener()
     tree.addListener(l, getTestRootDisposable())
     tree.addManagedFilesWithProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log)
     l.log.clear()
     tree.removeManagedFiles(listOf(projectPom))
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log)
   }
 

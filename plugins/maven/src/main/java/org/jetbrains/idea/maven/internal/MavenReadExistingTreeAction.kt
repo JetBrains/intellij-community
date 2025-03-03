@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.internal
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersImpl
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -16,12 +17,12 @@ class MavenReadExistingTreeAction : DumbAwareAction() {
 
     MavenUtil.run(MavenProjectBundle.message("action.Maven.ReReadAll.text")) { indicator ->
       runBlockingCancellable {
-       mavenProjectManager.projectsTree.updateAll(true, mavenProjectManager.generalSettings, indicator)
+        val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+        mavenEmbedderWrappers.use {
+          mavenProjectManager.projectsTree.updateAll(true, mavenProjectManager.generalSettings, mavenEmbedderWrappers, indicator)
+        }
       }
     }
-
-
-
   }
 
 }

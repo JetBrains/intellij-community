@@ -55,7 +55,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
         .add("resolved", "parent")
         .add("plugins", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")
