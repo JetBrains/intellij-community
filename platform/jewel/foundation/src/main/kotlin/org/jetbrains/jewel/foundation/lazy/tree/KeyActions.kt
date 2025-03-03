@@ -152,6 +152,9 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
+        // When mouse is used, we're no longer in keyboard navigation mode
+        selectableLazyListState.isKeyboardNavigating = false
+
         with(keybindings) {
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
@@ -225,15 +228,30 @@ public class DefaultTreeViewKeyActions(
     ): KeyEvent.() -> Boolean = lambda@{
         if (type == KeyEventType.KeyUp) return@lambda false
         val keyEvent = this
+
+        // Always mark keyboard navigation mode active for all keyboard interactions
+        state.lastKeyEventUsedMouse = false
+        state.isKeyboardNavigating = true
+
         with(keybindings) {
             with(actions) {
                 if (selectionMode == SelectionMode.None) return@lambda false
                 when {
-                    isSelectParent -> onSelectParent(keys, state)
-                    isSelectChild -> onSelectChild(keys, state)
-                    super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent) -> return@lambda true
+                    isSelectParent -> {
+                        onSelectParent(keys, state)
+                    }
+                    isSelectChild -> {
+                        onSelectChild(keys, state)
+                    }
+                    // Before delegating to super, mark that we're using keyboard navigation
+                    else -> {
+                        // Now delegate to super handler
+                        if (super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent)) {
+                            return@lambda true
+                        }
 
-                    else -> return@lambda false
+                        return@lambda false
+                    }
                 }
             }
         }
@@ -260,6 +278,12 @@ public open class DefaultSelectableLazyColumnKeyActions(
         selectionMode: SelectionMode,
     ): KeyEvent.() -> Boolean = lambda@{
         if (type == KeyEventType.KeyUp || selectionMode == SelectionMode.None) return@lambda false
+
+        // More aggressively mark keyboard navigation for all key interactions
+        // This improves screen reader behavior
+        state.lastKeyEventUsedMouse = false
+        state.isKeyboardNavigating = true
+
         with(keybindings) { with(actions) { execute(keys, state, selectionMode) } }
     }
 
