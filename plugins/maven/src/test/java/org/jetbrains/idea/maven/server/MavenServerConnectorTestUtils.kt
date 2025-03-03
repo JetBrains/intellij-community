@@ -89,7 +89,7 @@ private class CompatibleMavenServerConnector(
     return true
   }
 
-  override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+  override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw RuntimeException("not implemented")
   }
 
@@ -154,7 +154,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+  override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw ConnectException("Cannot reconnect")
   }
 
