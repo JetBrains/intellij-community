@@ -107,3 +107,4 @@ $RECYCLE.BIN/
 /.kotlin
 /buildSrc/.kotlin
 /foundation/bin/*
+/samples/showcase/bin/*

@@ -18,16 +18,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
@@ -88,17 +85,15 @@ public fun SelectableLazyColumn(
                         }
                     }
                 }
+                .focusProperties { canFocus = true }
                 .focusRequester(focusRequester)
-                .focusable(interactionSource = interactionSource)
+                .focusable(enabled = true)
                 .onPreviewKeyEvent { event ->
-                    // Handle Tab key press to move focus to next item
-                    if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
-                        val focusDirection = if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
-                        focusManager.moveFocus(focusDirection)
-                        return@onPreviewKeyEvent true
+                    if (event.key == Key.Tab) {
+                        return@onPreviewKeyEvent false
                     }
+
                     if (state.lastActiveItemIndex != null) {
-                        // Handle Up/Down/Home/End
                         val actionHandled = keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
                         if (actionHandled) {
                             scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
@@ -224,17 +219,18 @@ private fun Modifier.selectable(
     allKeys: List<SelectableLazyListKey>,
     itemKey: Any,
 ) =
-    semantics(mergeDescendants = true) {
-            // Add accessibility properties compatible with Compose Multiplatform
-            // We don't use Role since Role.ListItem is not available in Multiplatform
+    // Prevent this item from being individually focusable by Tab
+    focusProperties {
+            // Make items unfocusable by Tab focus traversal
+            canFocus = false
+        }
+        // Add semantics for accessibility
+        .semantics(mergeDescendants = true) {
             selected = itemKey in selectableState.selectedKeys
-            // When focused with keyboard, this ensures the screen reader
-            // announces the content properly
             focused = selectableState.lastActiveItemIndex == allKeys.indexOfFirst { it.key == itemKey }
-            // Don't add "selected" to state description as it's redundant with the selected
-            // property
             stateDescription = ""
         }
+        // Handle pointer input but ensure Tab keys aren't intercepted
         .pointerInput(allKeys, itemKey) {
             awaitPointerEventScope {
                 while (true) {
