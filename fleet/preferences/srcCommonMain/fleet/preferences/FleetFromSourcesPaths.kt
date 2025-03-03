@@ -1,18 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.preferences
 
-import java.io.IOException
-import java.io.UncheckedIOException
-import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.stream.Collectors
-import kotlin.io.path.absolute
-import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.pathString
-import kotlin.io.path.toPath
+import kotlinx.io.IOException
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 
 // Paths for resources while running Fleet from sources
 // None of its methods should be called on production call path
@@ -24,11 +15,11 @@ object FleetFromSourcesPaths {
   val intellijProjectRoot: Path by lazy {
     requireNotNull(findRepositoryRoot()) {
       "Cannot find IntelliJ repository root"
-    }.absolute().normalize()
+    }.let { SystemFileSystem.resolve(it) }
   }
 
   val projectRoot: Path by lazy {
-    intellijProjectRoot.resolve("fleet")
+    Path(intellijProjectRoot, "fleet")
   }
 
   // TODO: remove the usages of this property and delete it.
@@ -36,8 +27,8 @@ object FleetFromSourcesPaths {
   // Currently, this is needed for GalleryApp and some isolated UI tests.
   // Once our test running logic is unified, we will be able to wire the proper preparation steps to test runs avoiding such code.
   val skikoLibraryDirectory: Path by lazy {
-    val skiko = projectRoot.resolve("build/fleet-skiko/build/skiko/buildPlatform")
-    require(skiko.takeIf { it.exists()}?.listDirectoryEntries()?.isNotEmpty() == true) {
+    val skiko = Path(projectRoot, "build/fleet-skiko/build/skiko/buildPlatform")
+    require(skiko.takeIf { SystemFileSystem.exists(it) }?.let { SystemFileSystem.list(it) }?.isNotEmpty() == true) {
       """
         '$skiko' is empty or does not exist.
         
@@ -55,7 +46,7 @@ object FleetFromSourcesPaths {
 
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.plugins.keymap.test", "fleet.app.fleet.tests"])
   val bundledKeymapsDirectory: Path by lazy {
-    projectRoot.resolve("plugins/keymap/frontend/resources/fleet/keymap")
+    Path(projectRoot, "plugins/keymap/frontend/resources/fleet/keymap")
   }
 
   private fun findRepositoryRoot(): Path? {
@@ -63,27 +54,16 @@ object FleetFromSourcesPaths {
     while (directory != null) {
       if (directory.name != "community") {
         try {
-          val children = Files.list(directory).use { it.map(Path::name).collect(Collectors.toSet()) }
+          val children = SystemFileSystem.list(directory).map(Path::name).toSet()
           if (children.contains(".idea") && children.contains("fleet")) {
             return directory
           }
         }
-        catch (ignore: IOException) {
-        }
-        catch (ignore: UncheckedIOException) {
+        catch (_: IOException) {
         }
       }
       directory = directory.parent
     }
     return null
-  }
-
-  private fun findFleetRootByClass(): Path? {
-    val url: URL? = javaClass.getResource("/${javaClass.name.replace('.', '/')}.class")
-    return when (url?.protocol) {
-      "file" -> url.toURI().toPath()
-      "jar" -> URL(url.file).toURI().toPath().pathString.split("!").firstOrNull()?.let { Path.of(it) }
-      else -> null
-    }
   }
 }

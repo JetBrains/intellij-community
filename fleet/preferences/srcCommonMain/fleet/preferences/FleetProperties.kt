@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.preferences
 
+import fleet.util.multiplatform.linkToActual
+
 // True means one wants to investigate how fleet itself works (e.g. enable verbose logging or increase transport delays)
 val isFleetDebugMode: Boolean by lazy { fleetFlag("fleet.debug.mode") }
 
@@ -35,7 +37,4 @@ val coroutinesDebugProbesEnabled: Boolean by lazy { fleetFlag("fleet.coroutines.
 
 fun fleetFlag(name: String, defaultValue: Boolean = false): Boolean = fleetProperty(name)?.toBoolean() ?: defaultValue
 
-fun fleetProperty(name: String, defaultValue: String? = null): String? {
-  val formattedName = name.replace('.', '_').uppercase()
-  return System.getProperty(name) ?: System.getenv(formattedName) ?: defaultValue
-}
+fun fleetProperty(name: String, defaultValue: String? = null): String? = linkToActual()
