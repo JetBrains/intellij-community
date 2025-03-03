@@ -1280,3 +1280,9 @@ fun <T : CommandChain> T.changeJavaSignature(action: ChangeJavaSignatureAction, 
 fun <T : CommandChain> T.inlineJavaMethod(): T = apply {
   addCommand("${CMD_PREFIX}inlineJavaMethod")
 }
+
+/** @see com.intellij.java.performancePlugin.MoveClassToPackageCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.moveClassToPackage(targetPackage: String): T = apply {
+  addCommand("${CMD_PREFIX}moveClassToPackage $targetPackage")
+}

@@ -16,7 +16,8 @@ final class JavaCommandProvider implements CommandProvider {
       CreateJavaFileCommand.PREFIX, CreateJavaFileCommand::new,
       RenameDirectoryAsPackageCommand.PREFIX, RenameDirectoryAsPackageCommand::new,
       ChangeJavaSignatureCommand.PREFIX, ChangeJavaSignatureCommand::new,
-      InlineJavaMethodCommand.PREFIX, InlineJavaMethodCommand::new
+      InlineJavaMethodCommand.PREFIX, InlineJavaMethodCommand::new,
+      MoveClassToPackageCommand.PREFIX, MoveClassToPackageCommand::new
     );
   }
 }
