@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,18 +10,6 @@ import kotlinx.coroutines.launch
 // Used only for Java code, since MutableStateFlow function cannot be called there.
 internal fun <T> createMutableStateFlow(initialValue: T): MutableStateFlow<T> {
   return MutableStateFlow(initialValue)
-}
-
-
-// Used only for Java code, since combine cannot be called there
-internal fun createSessionSuspendedFlow(
-  cs: CoroutineScope,
-  pausedFlow: StateFlow<Boolean>,
-  suspendContextFlow: StateFlow<XSuspendContext?>,
-): StateFlow<Boolean> {
-  return combine(pausedFlow, suspendContextFlow) { paused, suspendContext ->
-    paused && suspendContext != null
-  }.stateIn(cs, SharingStarted.Eagerly, pausedFlow.value && suspendContextFlow.value != null)
 }
 
 internal fun addOnSessionSelectedListener(session: XDebugSessionProxy, action: () -> Unit) {

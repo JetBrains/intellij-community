@@ -95,13 +95,16 @@ class XDebugSessionImpl @JvmOverloads constructor(
   showToolWindowOnSuspendOnly: Boolean = false,
   contentToReuse: RunContentDescriptor? = null,
 ) : XDebugSession {
+  @ApiStatus.Internal
+  val coroutineScope: CoroutineScope = debuggerManager.coroutineScope.childScope("XDebugSession $sessionName", EmptyCoroutineContext, true)
+
   private var myDebugProcess: XDebugProcess? = null
   private val myRegisteredBreakpoints: MutableMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?> = HashMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?>()
   private val myInactiveSlaveBreakpoints: MutableSet<XBreakpoint<*>?> = Collections.synchronizedSet<XBreakpoint<*>?>(
     HashSet<XBreakpoint<*>?>())
   private var myBreakpointsDisabled = false
-  private val myDebuggerManager: XDebuggerManagerImpl
-  private val myExecutionPointManager: XDebuggerExecutionPointManager
+  private val myDebuggerManager: XDebuggerManagerImpl = debuggerManager
+  private val myExecutionPointManager: XDebuggerExecutionPointManager = debuggerManager.executionPointManager
   private var myBreakpointListenerDisposable: Disposable? = null
   private val mySuspendContext = MutableStateFlow<XSuspendContext?>(null)
 
@@ -117,32 +120,32 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myTopStackFrame: XStackFrame? = null
   private val myPaused = MutableStateFlow<Boolean>(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
-  private val mySessionName: @Nls String
+  private val mySessionName: @Nls String = sessionName
   private var mySessionTab: XDebugSessionTab? = null
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
   private val myActiveNonLineBreakpoint = AtomicReference<Pair<XBreakpoint<*>?, XSourcePosition?>?>()
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
-  private val myProject: Project
+  private val myProject: Project = debuggerManager.project
 
-  @get:ApiStatus.Internal
-  val coroutineScope: CoroutineScope
-  val executionEnvironment: ExecutionEnvironment?
+  val executionEnvironment: ExecutionEnvironment? = environment
   private val myStopped = MutableStateFlow<Boolean>(false)
   private val myPauseActionSupported = MutableStateFlow<Boolean>(false)
   private val myReadOnly = MutableStateFlow<Boolean>(false)
-  private val myShowToolWindowOnSuspendOnly: Boolean
+  private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
   private val myTabInitDataFlow = createMutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
   val restartActions: MutableList<AnAction> = SmartList<AnAction>()
   val extraStopActions: MutableList<AnAction> = SmartList<AnAction>()
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
-  private val myIcon: Icon?
-  private val entity: Deferred<XDebugSessionEntity>
-  private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager
+  private val myIcon: Icon? = icon
+  private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this)
+  private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
 
   @get:ApiStatus.Internal
-  val isSuspendedState: StateFlow<Boolean>
+  val isSuspendedState: StateFlow<Boolean> = combine(myPaused, mySuspendContext) { paused, suspendContext ->
+    paused && suspendContext != null
+  }.stateIn(coroutineScope, SharingStarted.Eagerly, myPaused.value && mySuspendContext.value != null)
 
   @Volatile
   private var breakpointsInitialized = false
@@ -151,19 +154,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   init {
     var contentToReuse = contentToReuse
-    this.coroutineScope = debuggerManager.coroutineScope.childScope("XDebugSession $sessionName", EmptyCoroutineContext, true)
-    this.executionEnvironment = environment
-    mySessionName = sessionName
-    myDebuggerManager = debuggerManager
-    myShowToolWindowOnSuspendOnly = showToolWindowOnSuspendOnly
-    myProject = debuggerManager.project
-    myExecutionPointManager = debuggerManager.executionPointManager
     ValueLookupManagerController.getInstance(myProject).startListening()
     DebuggerInlayListener.getInstance(myProject).startListening()
-    myIcon = icon
-    this.entity = storeXDebugSessionInDb(this.coroutineScope, this)
-    myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
-    this.isSuspendedState = createSessionSuspendedFlow(this.coroutineScope, myPaused, mySuspendContext)
 
     var oldSessionData: XDebugSessionData? = null
     if (contentToReuse == null) {
