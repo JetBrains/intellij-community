@@ -32,6 +32,9 @@
     <extensionPoint name="xdebugger.customEvaluateHandler"
                     interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandler" dynamic="true"/>
 
+    <extensionPoint name="xdebugger.customMuteBreakpointHandler"
+                    interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
+
     <extensionPoint name="xdebugger.xValueCustomDescriptorSerializerProvider"
                     interface="com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider" dynamic="true"/>
   </extensionPoints>
