@@ -46,8 +46,8 @@ interface MavenServerConnector : Disposable {
 
   fun addMultimoduleDir(multimoduleDirectory: String): Boolean
 
-  @Throws(RemoteException::class)
-  fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder
+  @ApiStatus.Internal
+  suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder
 
   @Throws(RemoteException::class)
   fun createIndexer(): MavenServerIndexer

@@ -31,22 +31,19 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
 
   protected abstract suspend fun getServer(): MavenServer
 
-  @Throws(RemoteException::class)
-  override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
-    synchronized(embedderLock) {
-      try {
-        return getServerBlocking().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
+  override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+    try {
+      return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
+    }
+    catch (e: Exception) {
+      val cause = ExceptionUtil.findCause(e, MavenCoreInitializationException::class.java)
+      if (cause != null) {
+        return MisconfiguredPlexusDummyEmbedder(project!!, cause.message!!,
+                                                myMultimoduleDirectories,
+                                                mavenDistribution.version,
+                                                cause.unresolvedExtensionId)
       }
-      catch (e: Exception) {
-        val cause = ExceptionUtil.findCause(e, MavenCoreInitializationException::class.java)
-        if (cause != null) {
-          return MisconfiguredPlexusDummyEmbedder(project!!, cause.message!!,
-                                                  myMultimoduleDirectories,
-                                                  mavenDistribution.version,
-                                                  cause.unresolvedExtensionId)
-        }
-        throw e
-      }
+      throw e
     }
   }
 

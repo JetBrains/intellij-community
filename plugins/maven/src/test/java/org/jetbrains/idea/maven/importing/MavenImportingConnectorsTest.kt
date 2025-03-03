@@ -279,7 +279,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                            return object : MavenServerConnectorImpl(project, jdk, vmOptions, null,
                                                                                                     mavenDistribution,
                                                                                                     multimoduleDirectory) {
-                                                             override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+                                                             override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
                                                                settingsRef.set(settings)
                                                                throw UnsupportedOperationException()
                                                              }
