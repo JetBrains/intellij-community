@@ -59,7 +59,10 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.APACHE),
 
     LibraryLicense("Apache Ant", version = "1.9", libraryName = "Ant", url = "https://ant.apache.org/")
-      .apache("https://ant.apache.org/license.html"),
+      // used in the intellij.gradle.jps module
+      .additionalLibraryNames("ant")
+      .apache("https://ant.apache.org/license.html")
+      .suppliedByOrganizations(Suppliers.APACHE),
 
     LibraryLicense("Apache Axis", libraryName = "axis-1.4", version = "1.4", url = "https://axis.apache.org/axis/")
       .apache("https://svn.apache.org/viewvc/axis/axis1/java/trunk/LICENSE?view=markup"),
@@ -501,6 +504,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/intellij-coverage/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense(libraryName = "io.modelcontextprotocol.kotlin.sdk", url = "https://github.com/modelcontextprotocol/kotlin-sdk/")
+      .mit("https://github.com/modelcontextprotocol/kotlin-sdk/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("ISO RELAX", libraryName = "isorelax", url = "https://sourceforge.net/projects/iso-relax/")
       .mit("https://sourceforge.net/projects/iso-relax/")
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
@@ -576,7 +583,8 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/square/javapoet/blob/master/LICENSE.txt"),
 
     LibraryLicense("javax inject", libraryName = "javax-inject", url = "https://github.com/javax-inject/javax-inject")
-      .apache("https://github.com/javax-inject/javax-inject"),
+      .apache("https://github.com/javax-inject/javax-inject")
+      .suppliedByPersons("https://groups.google.com/g/atinject-observer"),
 
     LibraryLicense("JAXB (Java Architecture for XML Binding) API", libraryName = "jaxb-api", url = "https://github.com/javaee/jaxb-spec")
       .cddl11("https://github.com/javaee/jaxb-spec/blob/master/LICENSE.txt")
@@ -658,10 +666,12 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.ECLIPSE),
 
     LibraryLicense("JGoodies Common", libraryName = "jgoodies-common", url = "https://www.jgoodies.com/freeware/libraries/looks/")
-      .newBsd("https://opensource.org/licenses/BSD-3-Clause"),  // no longer OSS; historic versions are still available
+      .newBsd("https://opensource.org/licenses/BSD-3-Clause")  // no longer OSS; historic versions are still available
+      .suppliedByPersons("Karsten Lentzsch"),
 
     LibraryLicense("JGoodies Forms", libraryName = "jgoodies-forms", url = "https://www.jgoodies.com/freeware/libraries/forms/")
-      .newBsd("https://opensource.org/licenses/BSD-3-Clause"),  // no longer OSS; historic versions are still available
+      .newBsd("https://opensource.org/licenses/BSD-3-Clause")  // no longer OSS; historic versions are still available
+      .suppliedByPersons("Karsten Lentzsch"),
 
     LibraryLicense("Jing", libraryName = "jing", url = "https://relaxng.org/jclark/jing.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/")
@@ -760,6 +770,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
 
+    LibraryLicense("kotlin-codepoints", libraryName = "de.cketti.unicode.kotlin.codepoints.jvm", url = "https://github.com/cketti/kotlin-codepoints")
+      .mit("https://github.com/cketti/kotlin-codepoints/blob/main/LICENSE"),
+
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -817,7 +830,8 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("kotlinx-document-store-mvstore", libraryName = "kotlinx-document-store-mvstore", url = "https://github.com/lamba92/kotlin.document.store")
-      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE"),
+      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE")
+      .suppliedByPersons("Lamberto Basti"),
 
     LibraryLicense("kotlinx.html", libraryName = "kotlinx-html-jvm", url = "https://github.com/Kotlin/kotlinx.html")
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE")
