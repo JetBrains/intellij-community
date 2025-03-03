@@ -1,5 +1,5 @@
 load("@rules_java//java:defs.bzl", _JavaInfo = "JavaInfo")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo", _KtCompilerPluginInfo = "KtCompilerPluginInfo", "KtPluginConfiguration")
 load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
 
@@ -40,6 +40,16 @@ jvm_library = rule(
             default = [],
             allow_files = [".kt", ".java"],
             mandatory = True,
+        ),
+        "exported_compiler_plugins": attr.label_list(
+            doc = """\
+    Exported compiler plugins.
+
+    Compiler plugins listed here will be treated as if they were added in the plugins attribute
+    of any targets that directly depend on this target. Unlike `java_plugin`s exported_plugins,
+    this is not transitive""",
+            default = [],
+            providers = [[_KtCompilerPluginInfo], [KtPluginConfiguration]],
         ),
         "exports": attr.label_list(
             doc = """\
