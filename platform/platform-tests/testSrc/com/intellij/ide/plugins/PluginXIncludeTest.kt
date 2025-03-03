@@ -278,6 +278,71 @@ internal class PluginXIncludeTest {
     assertThat(msgs.count { it.contains("Cannot resolve b.xml") }).withFailMessage { msgs.joinToString() }.isGreaterThan(250)
   }
 
+  @Test
+  fun `includes are allowed in content modules`() {
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <content>
+          <module name="plugin.id.module" loading="required"/>
+        </content>
+      </idea-plugin>
+    """.trimIndent())
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("plugin.id.module.xml").writeXml(
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="plugin.id.module">
+        <xi:include href="a.xml"/>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml(includes = includes(), appServices = listOf("included"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    assertThat(pluginSet.getEnabledModule("plugin.id.module")).hasExactlyApplicationServices("included")
+  }
+
+  @Test
+  fun `includes are allowed inside extensionPoints element`() {
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <extensionPoints>
+          <extensionPoint qualifiedName="before" interface="before"/>
+          <xi:include href="a.xml"/>
+          <extensionPoint qualifiedName="after" interface="after"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml(includes(), appServices = emptyList(), extensionPoints = listOf("included"))
+    val pluginSet: PluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    assertThat(pluginSet.getEnabledPlugin(pluginId)).hasExactlyExtensionPointsNames("before", "included", "after")
+  }
+
+  @Test
+  fun `includes are forbidden inside extensions element, yet the plugin loads`() {
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <extensions defaultExtensionNs="com.intellij">
+          <applicationService serviceImplementation="before"/>
+          <xi:include href="a.xml"/>
+          <applicationService serviceImplementation="after"/>
+        </extensions>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml(includes(), listOf("included"))
+    lateinit var pluginSet: PluginSet
+    val err = LoggedErrorProcessor.executeAndReturnLoggedError {
+      pluginSet = buildPluginSet()
+    }
+    assertThat(err).isNotNull.hasMessageContaining("`include` is supported only on a root level")
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    assertThat(pluginSet.getEnabledPlugin(pluginId)).hasExactlyApplicationServices("before", "after")
+  }
+
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
     PluginSetTestBuilder(pluginsPath)
       .withExpiredPlugins(*expiredPluginIds)
@@ -316,13 +381,26 @@ internal class PluginXIncludeTest {
       }
     }
 
-    private fun Path.writeXml(includes: List<Include>) {
+    private fun Path.writeXml(includes: List<Include>, appServices: List<String> = emptyList(), extensionPoints: List<String> = emptyList()) {
       createParentDirectories()
+      val extPoints = extensionPoints.joinToString("\n") { """<extensionPoint qualifiedName="${it}" interface="${it}"/>""" }
+      val services = appServices.joinToString("\n") { """<applicationService serviceImplementation="${it}"/>""" }
       writeText("""
           <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
           ${includes.xml()}
+          <extensionPoints>
+            $extPoints
+          </extensionPoints>
+          <extensions defaultExtensionNs="com.intellij">
+            $services
+          </extensions>
           </idea-plugin>
         """.trimIndent())
+    }
+
+    private fun Path.writeXml(@Language("XML") text: String) {
+      createParentDirectories()
+      writeText(text)
     }
   }
 }

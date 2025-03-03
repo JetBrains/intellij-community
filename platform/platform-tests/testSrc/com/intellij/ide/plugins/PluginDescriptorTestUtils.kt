@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import org.assertj.core.api.InstanceOfAssertFactories
-import org.assertj.core.api.InstanceOfAssertFactories.list
 import org.assertj.core.api.ObjectAssert
 
 
@@ -45,8 +44,20 @@ fun ObjectAssert<IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
 
 fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
   extracting { it.content.modules.mapNotNull { it.getDescriptorOrNull()?.takeIf { it.isEnabled }?.moduleName } }
-    .asInstanceOf(list(String::class.java))
-    .hasSameElementsAs(ids.toList())
+    .asList()
+    .containsExactly(*ids)
 }
 
 fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveEnabledContentModules() = hasExactlyEnabledContentModules()
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyApplicationServices(vararg impls: String) = apply {
+  extracting { it.appContainerDescriptor.services.mapNotNull { it.serviceImplementation } }
+    .asList()
+    .containsExactly(*impls)
+}
+
+fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyExtensionPointsNames(vararg names: String) = apply {
+  extracting { it.appContainerDescriptor.extensionPoints?.map { it.name } ?: emptyList() }
+    .asList()
+    .containsExactly(*names)
+}
