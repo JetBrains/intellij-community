@@ -1,4 +1,0 @@
-c:com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
-- <init>():V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler

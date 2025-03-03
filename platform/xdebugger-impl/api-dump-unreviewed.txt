@@ -106,33 +106,8 @@ a:com.intellij.xdebugger.attach.osHandlers.UnixAttachOSHandler
 - p:getenv(java.lang.String):java.lang.String
 - isOurProcess(I):Z
 a:com.intellij.xdebugger.impl.DebuggerSupport
-- psf:DISABLED_EDIT:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
-- psf:DISABLED_TOGGLE_HANDLER:com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
 - <init>():V
-- getAddToInlineWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getAddToWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getBreakpointPanelProvider():com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
-- s:getDebuggerSupport(java.lang.Class):com.intellij.xdebugger.impl.DebuggerSupport
-- getEditBreakpointAction():com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
-- getEvaluateHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getEvaluateInConsoleActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceStepOverHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getMuteBreakpointsHandler():com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
 - getQuickEvaluateHandler():com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
-- getRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getShowExecutionPointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getSmartStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getStepOutHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getToggleLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getToggleTemporaryLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-pf:com.intellij.xdebugger.impl.DebuggerSupport$DisabledActionHandler
-- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- sf:INSTANCE:com.intellij.xdebugger.impl.DebuggerSupport$DisabledActionHandler
-- isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
-- perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 - com.intellij.openapi.editor.event.EditorMouseListener
 - com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -159,26 +134,6 @@ f:com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroF
 - com.intellij.openapi.application.PathMacroFilter
 - <init>():V
 - skipPathMacros(org.jdom.Element):Z
-c:com.intellij.xdebugger.impl.XDebuggerSupport
-- com.intellij.xdebugger.impl.DebuggerSupport
-- <init>():V
-- getAddToInlineWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getAddToWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getBreakpointPanelProvider():com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
-- getEditBreakpointAction():com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
-- getEvaluateHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getEvaluateInConsoleActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getForceStepOverHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getMuteBreakpointsHandler():com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
-- getRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getShowExecutionPointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getSmartStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getStepIntoHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getStepOutHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getToggleLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getToggleTemporaryLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 e:com.intellij.xdebugger.impl.XSourceKind
 - java.lang.Enum
 - sf:ALTERNATIVE:com.intellij.xdebugger.impl.XSourceKind
@@ -298,7 +253,7 @@ c:com.intellij.xdebugger.impl.actions.EditBreakpointAction
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction
 - com.intellij.openapi.project.DumbAwareAction
-- <init>(com.intellij.openapi.editor.markup.GutterIconRenderer,java.lang.Object,com.intellij.xdebugger.impl.DebuggerSupport):V
+- <init>(com.intellij.openapi.editor.markup.GutterIconRenderer,java.lang.Object):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
 - com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -403,12 +358,10 @@ com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 - a:getDocumentForHighlighting(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-- sf:collectPanelProviders():java.util.List
 - sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
 - sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
 - sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor):java.util.List
 - sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor):java.util.List
-- sf:getDebuggerSupport(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem):com.intellij.xdebugger.impl.DebuggerSupport
 - sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
