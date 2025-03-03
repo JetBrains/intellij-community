@@ -10,6 +10,7 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
@@ -36,7 +37,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
   private val cs = parentCs
-    .childScope("GitHub Pull Request Timeline UI", Dispatchers.Main)
+    .childScope("GitHub Pull Request Timeline UI", Dispatchers.EDT)
     .cancelledWith(this)
 
   private val timelineVm = projectVm.acquireTimelineViewModel(file.pullRequest, this)
