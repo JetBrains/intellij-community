@@ -64,18 +64,18 @@ class IdeaPluginDescriptorImpl(
 
   @Volatile
   private var description: String? = null
-  private val productCode = raw.productCode
+  private val productCode: String? = raw.productCode
   private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
-  private val releaseVersion = raw.releaseVersion
-  private val isLicenseOptional = raw.isLicenseOptional
+  private val releaseVersion: Int = raw.releaseVersion
+  private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
   @NonNls
   private var resourceBundleBaseName: String? = null
-  private val changeNotes = raw.changeNotes
+  private val changeNotes: String? = raw.changeNotes
   private var version: String? = raw.version
-  private var vendor = raw.vendor
-  private val vendorEmail = raw.vendorEmail
-  private val vendorUrl = raw.vendorUrl
+  private var vendor: String? = raw.vendor
+  private val vendorEmail: String? = raw.vendorEmail
+  private val vendorUrl: String? = raw.vendorUrl
   private var category: String? = raw.category
 
   @JvmField
