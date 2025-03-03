@@ -194,7 +194,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       if (statement.getResourceList() != null) {
-        throw unsupportedExpression("Try with resources is not yet supported");
+        throw unsupportedExpression("'try-with-resources' statement is not supported");
       }
       Evaluator bodyEvaluator = accept(statement.getTryBlock());
       if (bodyEvaluator != null) {
@@ -244,7 +244,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      throw unsupportedExpression("Synchronized is not yet supported");
+      throw unsupportedExpression("'synchronized' statement is not supported");
     }
 
     @Override
