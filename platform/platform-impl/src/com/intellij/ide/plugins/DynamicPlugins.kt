@@ -808,11 +808,11 @@ object DynamicPlugins {
 
     app.unloadServices(module, module.appContainerDescriptor.services)
     val appMessageBus = app.messageBus as MessageBusEx
-    module.appContainerDescriptor.readOnlyListeners.let { appMessageBus.unsubscribeLazyListeners(module, it) }
+    module.appContainerDescriptor.listeners.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
       (project.actualComponentManager as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
-      module.projectContainerDescriptor.readOnlyListeners.let {
+      module.projectContainerDescriptor.listeners.let {
         ((project.actualComponentManager as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 

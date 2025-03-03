@@ -334,7 +334,7 @@ abstract class ComponentManagerImpl(
         registerServices(containerDescriptor.services, module)
         registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
 
-        containerDescriptor.readOnlyListeners.let { listeners ->
+        containerDescriptor.listeners.let { listeners ->
           var m = map
           if (m == null) {
             m = ConcurrentHashMap()

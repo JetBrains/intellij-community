@@ -19,9 +19,9 @@ class ContainerDescriptor {
   val components: List<ComponentConfig>
     get() = _components ?: Java11Shim.INSTANCE.listOf()
 
-  private var listeners: MutableList<ListenerDescriptor>? = null
-  val readOnlyListeners: List<ListenerDescriptor>
-    get() = listeners ?: Java11Shim.INSTANCE.listOf()
+  private var _listeners: MutableList<ListenerDescriptor>? = null
+  val listeners: List<ListenerDescriptor>
+    get() = _listeners ?: Java11Shim.INSTANCE.listOf()
 
   @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
 
@@ -43,20 +43,20 @@ class ContainerDescriptor {
   }
 
   internal fun addListener(listenerDescriptor: ListenerDescriptor) {
-    if (listeners == null) {
-      listeners = ArrayList()
+    if (_listeners == null) {
+      _listeners = ArrayList()
     }
-    listeners!!.add(listenerDescriptor)
+    _listeners!!.add(listenerDescriptor)
   }
 
   override fun toString(): String {
-    if (_services == null && components.isEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && listeners == null) {
+    if (_services == null && components.isEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && _listeners == null) {
       return "ContainerDescriptor(empty)"
     }
     else {
       return "ContainerDescriptor(" +
              "services=$_services, components=$_components, " +
-             "extensionPoints=$extensionPoints, extensions=$extensions, listeners=$listeners" +
+             "extensionPoints=$extensionPoints, extensions=$extensions, listeners=$_listeners" +
              ")"
     }
   }
