@@ -5161,6 +5161,7 @@ a:com.intellij.ide.util.ChooseElementsDialog
 - p:canElementsBeMarked():Z
 - p:createCenterPanel():javax.swing.JComponent
 - getChosenElements():java.util.List
+- getInitialSize():java.awt.Dimension
 - p:getItemBackgroundColor(java.lang.Object):java.awt.Color
 - pa:getItemIcon(java.lang.Object):javax.swing.Icon
 - p:getItemLocation(java.lang.Object):java.lang.String
