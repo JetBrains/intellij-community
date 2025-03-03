@@ -8,10 +8,13 @@ import com.intellij.find.SearchSession
 import com.intellij.find.editorHeaderActions.NextOccurrenceAction
 import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 import com.intellij.find.editorHeaderActions.ToggleMatchCase
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import org.cef.browser.CefBrowser
 import javax.swing.JComponent
+import javax.swing.text.JTextComponent
 
 internal class MarkdownPreviewSearchSession(
   private val project: Project,
@@ -91,7 +94,22 @@ internal class MarkdownPreviewSearchSession(
 
     component.isVisible = false
     component.addListener(this)
+    registerTextComponentActionShortcuts(component.searchTextComponent)
 
     return component
+  }
+
+  private fun registerTextComponentActionShortcuts(component: JTextComponent) {
+    val actionManager = ActionManager.getInstance()
+    val actions = listOf(
+      IdeActions.ACTION_EDITOR_COPY,
+      IdeActions.ACTION_EDITOR_CUT,
+      IdeActions.ACTION_EDITOR_PASTE,
+      IdeActions.ACTION_SELECT_ALL,
+      IdeActions.ACTION_UNDO,
+      IdeActions.ACTION_REDO,
+    ).mapNotNull(actionManager::getAction)
+
+    actions.forEach { it.registerCustomShortcutSet(component, null) }
   }
 }
