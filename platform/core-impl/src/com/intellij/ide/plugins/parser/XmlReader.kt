@@ -389,10 +389,10 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
 
         val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
 
-        var epNameToExtensions = descriptor.epNameToExtensions
+        var epNameToExtensions = descriptor.miscExtensions
         if (epNameToExtensions == null) {
           epNameToExtensions = HashMap()
-          descriptor.epNameToExtensions = epNameToExtensions
+          descriptor.miscExtensions = epNameToExtensions
         }
 
         epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionDescriptor)

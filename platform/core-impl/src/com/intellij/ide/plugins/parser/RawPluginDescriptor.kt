@@ -59,7 +59,8 @@ class RawPluginDescriptor {
   @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val moduleContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
 
-  @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
+  /** key is extension point's FQN */
+  @JvmField var miscExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
   @JvmField var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
   @JvmField var dependencies: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor.Companion.EMPTY

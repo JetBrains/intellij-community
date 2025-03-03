@@ -112,7 +112,7 @@ class IdeaPluginDescriptorImpl(
 
   // extension point name -> list of extension descriptors
   @JvmField
-  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
+  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions.let { rawMap ->
     if (rawMap == null) {
       Java11Shim.INSTANCE.mapOf()
     }
