@@ -43,7 +43,8 @@ internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(nam
     val allObjects = getKotlinSubclassObjectsSymbolsCached()
 
     return allObjects.asSequence().flatMap { objectSymbol ->
-        val callablesByName = objectSymbol.memberScope.callables(name)
+        val memberScope = objectSymbol.memberScope
+        val callablesByName = memberScope.callables(name)
         callablesByName.map { objectSymbol to it }
     }
 }
