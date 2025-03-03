@@ -74,7 +74,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
@@ -698,7 +697,7 @@ public final class PlatformTestUtil {
   public static @NotNull URL getRtJarURL() {
     String home = SystemProperties.getJavaHome();
     try {
-      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+      return CurrentJavaVersion.currentJavaVersion().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);

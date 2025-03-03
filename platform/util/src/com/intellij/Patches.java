@@ -3,7 +3,7 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.CurrentJavaVersion;
 
 public final class Patches {
   /**
@@ -44,5 +44,5 @@ public final class Patches {
    * <a href="https://bugs.openjdk.org/browse/JDK-8220231">JDK-8220231</a>
    */
   @ReviseWhenPortedToJDK("13")
-  public static final boolean TEXT_LAYOUT_IS_SLOW = JavaVersion.current().feature == 12 && !SystemInfo.isJetBrainsJvm;
+  public static final boolean TEXT_LAYOUT_IS_SLOW = CurrentJavaVersion.currentJavaVersion().feature == 12 && !SystemInfo.isJetBrainsJvm;
 }

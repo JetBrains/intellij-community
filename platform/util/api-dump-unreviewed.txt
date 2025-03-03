@@ -2148,6 +2148,8 @@ f:com.intellij.util.CoroutineScopeKt
 - sf:asDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
 - sf:attachAsChildTo(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 - sf:disposeOnCompletion(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
+f:com.intellij.util.CurrentJavaVersion
+- sf:currentJavaVersion():com.intellij.util.lang.JavaVersion
 f:com.intellij.util.DefaultBundleService
 - <init>():V
 - compute(java.util.function.Supplier):java.lang.Object
@@ -5430,24 +5432,6 @@ f:com.intellij.util.lang.CompoundRuntimeException
 - printStackTrace(java.io.PrintStream):V
 - printStackTrace(java.io.PrintWriter):V
 - s:throwIfNotEmpty(java.util.List):V
-f:com.intellij.util.lang.JavaVersion
-- java.lang.Comparable
-- f:build:I
-- f:ea:Z
-- f:feature:I
-- f:minor:I
-- f:update:I
-- compareTo(com.intellij.util.lang.JavaVersion):I
-- s:compose(I):com.intellij.util.lang.JavaVersion
-- s:compose(I,I,I,I,Z):com.intellij.util.lang.JavaVersion
-- s:current():com.intellij.util.lang.JavaVersion
-- equals(java.lang.Object):Z
-- hashCode():I
-- isAtLeast(I):Z
-- s:parse(java.lang.String):com.intellij.util.lang.JavaVersion
-- toFeatureMinorUpdateString():java.lang.String
-- toFeatureString():java.lang.String
-- s:tryParse(java.lang.String):com.intellij.util.lang.JavaVersion
 e:com.intellij.util.system.CpuArch
 - java.lang.Enum
 - sf:ARM32:com.intellij.util.system.CpuArch

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
@@ -42,6 +43,7 @@ object ClassPathUtil {
     return arrayOf(
       LoadingState::class.java,  // module 'intellij.platform.diagnostic'
       PathManager::class.java,  // module 'intellij.platform.util'
+      JavaVersion::class.java, // module 'intellij.platform.util.kmp'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'

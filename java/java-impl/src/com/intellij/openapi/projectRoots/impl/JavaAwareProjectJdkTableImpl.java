@@ -9,9 +9,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -79,7 +79,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
         }
       }
 
-      String versionName = JdkVersionDetector.formatVersionString(JavaVersion.current());
+      String versionName = JdkVersionDetector.formatVersionString(CurrentJavaVersion.currentJavaVersion());
       myInternalJdk = JavaSdk.getInstance().createJdk(versionName, javaHome.toAbsolutePath().toString(), !JdkUtil.checkForJdk(javaHome));
     }
     return myInternalJdk;

@@ -33,8 +33,8 @@ import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -1021,7 +1021,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void canonicallyCasedHardLink() throws IOException {
-    assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
+    assumeTrue("Requires JRE 21+", CurrentJavaVersion.currentJavaVersion().isAtLeast(21));
     var original = tempDir.newFile("original").toPath();
     var hardLink = Files.createLink(original.resolveSibling("hardLink"), original);
     assertThat(myFS.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
@@ -1030,7 +1030,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void canonicallyCasedDecomposedName() {
-    assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
+    assumeTrue("Requires JRE 21+", CurrentJavaVersion.currentJavaVersion().isAtLeast(21));
     @SuppressWarnings({"NonAsciiCharacters", "SpellCheckingInspection"}) var name = "schön";
     var nfdName = Normalizer.normalize(name, Normalizer.Form.NFD);
     var nfcName = Normalizer.normalize(name, Normalizer.Form.NFC);

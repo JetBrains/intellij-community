@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.test
 
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
@@ -54,7 +55,7 @@ class JavaVersionTest {
   @Test fun ibmRt(): Unit = doFailTest("pxa6480sr3fp10-20160720_02 (SR3 FP10)")
 
   @Test fun current() {
-    val current = JavaVersion.current()
+    val current = currentJavaVersion()
     assertThat(current.feature).isGreaterThanOrEqualTo(8)
     assertThat(current.minor).isEqualTo(0)
     assertThat(current.build).isGreaterThan(0)

@@ -37,7 +37,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.IoErrorText
 import kotlinx.coroutines.*
@@ -180,7 +180,7 @@ internal object SystemHealthMonitor {
     }
     jreHome = jreHome.removeSuffix("/Contents/Home")
     showNotification("bundled.jre.version.message", suppressable = false, switchAction,
-                     JavaVersion.current(), System.getProperty("java.vendor"), jreHome)
+                     currentJavaVersion(), System.getProperty("java.vendor"), jreHome)
   }
 
   // when can't detect a JBR version, give a user the benefit of the doubt
@@ -191,7 +191,7 @@ internal object SystemHealthMonitor {
 
     // when can't detect a JBR version, give a user the benefit of the doubt
     val jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath())
-    return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
+    return jbrVersion == null || currentJavaVersion() >= jbrVersion.version
   }
 
   private suspend fun isJbrOperational(): Boolean {

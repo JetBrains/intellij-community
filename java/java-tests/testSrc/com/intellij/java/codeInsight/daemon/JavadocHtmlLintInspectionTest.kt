@@ -10,14 +10,14 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import java.io.File
 
 private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
   override fun getSdk(): Sdk {
     val jreHome = File(System.getProperty("java.home"))
     val jdkHome = if (jreHome.name == "jre") jreHome.parentFile else jreHome
-    return IdeaTestUtil.createMockJdk("java version \"{${JavaVersion.current()}}\"", jdkHome.path)
+    return IdeaTestUtil.createMockJdk("java version \"{${currentJavaVersion()}}\"", jdkHome.path)
   }
 }
 

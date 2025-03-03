@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -453,7 +454,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         forkSdk = null;
       }
 
-      final int compilerSdkVersion = forkSdk == null ? JavaVersion.current().feature : forkSdk.getSecond();
+      final int compilerSdkVersion = forkSdk == null ? CurrentJavaVersion.currentJavaVersion().feature : forkSdk.getSecond();
 
       final Pair<Iterable<String>, Iterable<String>> vm_compilerOptions = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
       final Iterable<String> vmOptions = vm_compilerOptions.first;
@@ -698,7 +699,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (!isJavac(compilingTool)) {
       return false; // applicable to javac only
     }
-    final int compilerSdkVersion = JavaVersion.current().feature;
+    final int compilerSdkVersion = CurrentJavaVersion.currentJavaVersion().feature;
 
     if (preferTargetJdkCompiler(context)) {
       final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
@@ -972,7 +973,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   public static void addCompilationOptions(List<? super String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(JavaVersion.current().feature, JavaBuilderUtil.findCompilingTool(JavacCompilerTool.ID), options, context, chunk, profile, false);
+    addCompilationOptions(CurrentJavaVersion.currentJavaVersion().feature, JavaBuilderUtil.findCompilingTool(JavacCompilerTool.ID), options, context, chunk, profile, false);
   }
 
   private static void addCompilationOptions(

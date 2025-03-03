@@ -19,7 +19,7 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
@@ -90,7 +90,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
-      Version(1, JavaVersion.current().feature, 0),
+      Version(1, currentJavaVersion().feature, 0),
       CpuArch.CURRENT.name.lowercase(Locale.ENGLISH),
       getJavaVendor())
 

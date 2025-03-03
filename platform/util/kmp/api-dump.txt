@@ -1,0 +1,32 @@
+f:com.intellij.util.lang.JavaVersion
+- java.lang.Comparable
+- sf:Companion:com.intellij.util.lang.JavaVersion$Companion
+- f:build:I
+- f:ea:Z
+- f:feature:I
+- f:minor:I
+- f:update:I
+- compareTo(com.intellij.util.lang.JavaVersion):I
+- sf:compose(I):com.intellij.util.lang.JavaVersion
+- sf:compose(I,I):com.intellij.util.lang.JavaVersion
+- sf:compose(I,I,I):com.intellij.util.lang.JavaVersion
+- sf:compose(I,I,I,I):com.intellij.util.lang.JavaVersion
+- sf:compose(I,I,I,I,Z):com.intellij.util.lang.JavaVersion
+- sf:current():com.intellij.util.lang.JavaVersion
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:isAtLeast(I):Z
+- sf:parse(java.lang.String):com.intellij.util.lang.JavaVersion
+- f:toFeatureMinorUpdateString():java.lang.String
+- f:toFeatureString():java.lang.String
+- sf:tryParse(java.lang.String):com.intellij.util.lang.JavaVersion
+f:com.intellij.util.lang.JavaVersion$Companion
+- f:compose(I):com.intellij.util.lang.JavaVersion
+- f:compose(I,I):com.intellij.util.lang.JavaVersion
+- f:compose(I,I,I):com.intellij.util.lang.JavaVersion
+- f:compose(I,I,I,I):com.intellij.util.lang.JavaVersion
+- f:compose(I,I,I,I,Z):com.intellij.util.lang.JavaVersion
+- bs:compose$default(com.intellij.util.lang.JavaVersion$Companion,I,I,I,I,Z,I,java.lang.Object):com.intellij.util.lang.JavaVersion
+- f:current():com.intellij.util.lang.JavaVersion
+- f:parse(java.lang.String):com.intellij.util.lang.JavaVersion
+- f:tryParse(java.lang.String):com.intellij.util.lang.JavaVersion
