@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.impl.EditorImpl
 
 class NotebookPositionKeeper(val editor: EditorImpl) {
@@ -29,10 +30,10 @@ class NotebookPositionKeeper(val editor: EditorImpl) {
   fun restorePosition(position: Position) {
     val (topLeftCornerOffset, viewportShift) = position
     val scrollingModel = editor.scrollingModel
-    scrollingModel.disableAnimation()
     val newY = editor.offsetToXY(topLeftCornerOffset).y - viewportShift
-    scrollingModel.scrollVertically(newY)
-    scrollingModel.enableAnimation()
+    scrollingModel.withoutAnimation {
+      scrollVertically(newY)
+    }
   }
 
   fun <T> keepScrollingPositionWhile(task: () -> T): T {
@@ -76,4 +77,14 @@ class NotebookPositionKeeper(val editor: EditorImpl) {
 
   data class Position(val topLeftCornerOffset: Int, val viewportShift: Int)
 
+}
+
+fun ScrollingModel.withoutAnimation(task: ScrollingModel.() -> Unit) {
+  disableAnimation()
+  try {
+    task()
+  }
+  finally {
+    enableAnimation()
+  }
 }
