@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
+import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -329,15 +330,13 @@ private fun readOldDepends(reader: XMLStreamReader2, descriptor: RawPluginDescri
       PluginXmlConst.DEPENDS_CONFIG_FILE_ATTR -> configFile = reader.getAttributeValue(i)
     }
   }
-
   val dependencyIdString = getNullifiedContent(reader) ?: return
   var depends = descriptor.depends
   if (depends == null) {
     depends = ArrayList()
     descriptor.depends = depends
   }
-
-  depends.add(PluginDependency(PluginId.getId(dependencyIdString), configFile, isOptional))
+  depends.add(DependsElement(pluginId = dependencyIdString, configFile = configFile, isOptional = isOptional))
 }
 
 private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, interner: XmlInterner) {

@@ -4,8 +4,8 @@ package com.intellij.ide.plugins.parser
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.ModuleDependenciesDescriptor
 import com.intellij.ide.plugins.PluginContentDescriptor
-import com.intellij.ide.plugins.PluginDependency
 import com.intellij.ide.plugins.parser.elements.ActionElement
+import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -50,7 +50,7 @@ class RawPluginDescriptor {
 
   @JvmField var pluginAliases: MutableList<String>? = null
 
-  @JvmField var depends: MutableList<PluginDependency>? = null
+  @JvmField var depends: MutableList<DependsElement>? = null
   @JvmField var actions: MutableList<ActionElement>? = null
 
   @JvmField var incompatibleWith: MutableList<String>? = null

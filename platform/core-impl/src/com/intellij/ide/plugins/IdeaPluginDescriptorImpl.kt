@@ -6,6 +6,7 @@ import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.elements.ActionElement
+import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -96,7 +97,9 @@ class IdeaPluginDescriptorImpl(
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
     }
-    pluginDependencies = raw.depends?.let(::fixDepends) ?: Java11Shim.INSTANCE.listOf()
+    pluginDependencies = raw.depends
+      ?.let(::convertDepends)
+      ?.let(::fixDepends) ?: Java11Shim.INSTANCE.listOf()
   }
 
   @Transient
@@ -625,6 +628,11 @@ class IdeaPluginDescriptorImpl(
   }
 
   private companion object {
+    private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependency> =
+      depends.mapTo(ArrayList(depends.size)) {
+        PluginDependency(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
+      }
+
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
     private fun fixDepends(depends: MutableList<PluginDependency>): List<PluginDependency> {
       val iterator = depends.iterator()
