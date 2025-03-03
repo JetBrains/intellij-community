@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -276,6 +277,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(true);
     updateIconProgress(true);
     myStatusLine.setIndeterminate(false);
+
+    if (Registry.is("test.view.hide.progress.bar.on.tests.finished", false)) {
+      myStatusLine.hideProgressBar();
+    }
 
     myRequests.clear();
     myUpdateTreeRequests.cancelAllRequests();
@@ -666,6 +671,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   private void updateStatusLabel(final boolean testingFinished) {
+    myStatusLine.showProgressBar();
     if (myFailedTestCount > 0) {
       myStatusLine.setStatus(ProgressBarUtil.FAILED_VALUE);
     }
