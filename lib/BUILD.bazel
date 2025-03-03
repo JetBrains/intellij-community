@@ -19,6 +19,15 @@ kt_compiler_plugin(
   visibility = ["//visibility:public"]
 )
 
+kt_compiler_plugin(
+  name = "expects-plugin",
+  id = "org.jetbrains.fleet.expects-compiler-plugin",
+  deps = [
+    ":expects-compiler-plugin"
+  ],
+  visibility = ["//visibility:public"]
+)
+
 kt_jvm_import(
   name = "rhizomedb-compiler-plugin-lib",
   jar = "@rhizomedb-compiler-plugin-2_1_0-0_2_http//file",

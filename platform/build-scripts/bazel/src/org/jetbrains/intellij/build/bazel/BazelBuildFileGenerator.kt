@@ -188,10 +188,6 @@ internal class BazelBuildFileGenerator(
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     for (module in project.model.project.modules) {
-      if (module.name == "fleet.compiler.plugins") {
-        continue
-      }
-
       val descriptor = getModuleDescriptor(module)
       if (descriptor.isCommunity) {
         community.add(descriptor)
@@ -311,6 +307,16 @@ internal class BazelBuildFileGenerator(
         }
         if (kotlincOptionsLabel != null) {
           option("kotlinc_opts", kotlincOptionsLabel)
+        }
+
+        if (module.name == "fleet.util.multiplatform") {
+          option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
+        }
+
+        // exported_compiler_plugins does not get exported through PROVIDED dependencies
+        // probably needs handling/asserting later
+        if (module.name == "fleet.multiplatform.shims") {
+          option("plugins", arrayOf("@lib//:expects-plugin"))
         }
 
         var deps = moduleList.deps.get(moduleDescriptor)
