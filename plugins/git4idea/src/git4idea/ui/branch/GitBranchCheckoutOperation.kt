@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchOptions
@@ -157,9 +158,9 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
                                           repositories: List<GitRepository>,
                                           startRef: String,
                                           branchName: String): Boolean =
-      ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>(
-        { checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName) },
-        GitBundle.message("branches.checking.existing.commits.process"), true, project)
+      runWithModalProgressBlocking(project, GitBundle.message("branches.checking.existing.commits.process")) {
+        checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName)
+      }
 
     private fun checkCommitsBetweenRefAndBranchName(project: Project,
                                                     repositories: List<GitRepository>,
