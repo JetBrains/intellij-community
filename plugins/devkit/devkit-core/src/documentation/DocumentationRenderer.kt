@@ -285,7 +285,7 @@ internal class DocumentationRenderer(private val project: Project) {
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
-        val attributeDetails = getDetails(attribute.requirement, attribute.getOwnOrParentInternalNote())
+        val attributeDetails = getDetails(attribute.getOwnOrParentInternalNote(), attribute.requirement)
         appendLine("- ${attributeLink(attribute.name!!, attribute.path)}$attributeDetails")
       }
     }
@@ -296,18 +296,20 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun getDetails(requirement: Requirement?, internalNote: String?): String {
+  private fun getDetails(internalNote: String?, requirement: Requirement?): String {
     val details = mutableListOf<String>()
+    if (internalNote != null) {
+      details.add("internal")
+    }
     if (requirement != null) {
       val requiredDetails = when (requirement.required) {
         Required.YES -> "required"
         Required.YES_FOR_PAID -> "required for paid/freemium"
         else -> null
       }
-      details.addIfNotNull(requiredDetails)
-    }
-    if (internalNote != null) {
-      details.add("internal")
+      if (requiredDetails != null) {
+        details.add("**$requiredDetails**")
+      }
     }
     if (details.isEmpty()) return ""
     return details.joinToString(prefix = " ", separator = "; ") { "_${it}_" }
@@ -326,7 +328,7 @@ internal class DocumentationRenderer(private val project: Project) {
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
-        val childDetails = getDetails(childElement.requirement, childElement.getOwnOrParentInternalNote())
+        val childDetails = getDetails(childElement.getOwnOrParentInternalNote(), childElement.requirement)
         appendLine("- [`<$linkText>`]($linkUrl)$childDetails")
       }
       appendParagraphSeparator()
