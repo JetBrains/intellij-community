@@ -45,7 +45,6 @@ internal class AsyncEntityService(private val coroutineScope: CoroutineScope) {
       debugName,
       entityRef as AtomicReference<E>,
       deferredRef as AtomicReference<Deferred<E>>,
-      refCount = 1,
     )
   }
 }
@@ -54,11 +53,10 @@ private val ENTITY_IS_READY: Deferred<Entity> = CompletableDeferred()
 private val ENTITY_IS_NOT_READY: Deferred<Entity>? = null
 
 @Experimental
-internal data class AsyncEntityHandle<E : Entity>(
+internal class AsyncEntityHandle<E : Entity>(
   private val debugName: String,
   private val entityRef: AtomicReference<E>,
   private val entityDeferredRef: AtomicReference<Deferred<E>>,
-  private val refCount: Int,
 ) {
 
   suspend fun entity(): E {
@@ -78,6 +76,7 @@ internal data class AsyncEntityHandle<E : Entity>(
     }
     checkNotNull(deferred) { "impossible happened" }
     AdTheManager.LOG.debug { "slow path entity creation on EDT $debugName" }
+    @Suppress("HardCodedStringLiteral") // TODO: message is used only for debug purpose
     return runWithModalProgressBlocking(
       ModalTaskOwner.guess(),
       "shared entity creation $debugName",
@@ -90,8 +89,8 @@ internal data class AsyncEntityHandle<E : Entity>(
     if (entity != null) { // fast path
       return (null to entity)
     }
-    assert(deferred != ENTITY_IS_READY)
-    assert(deferred != ENTITY_IS_NOT_READY)
+    check(deferred != ENTITY_IS_READY)
+    check(deferred != ENTITY_IS_NOT_READY)
     return (deferred to null)
   }
 
