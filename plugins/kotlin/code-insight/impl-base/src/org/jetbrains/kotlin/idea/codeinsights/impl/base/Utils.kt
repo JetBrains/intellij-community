@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandService
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -202,4 +205,8 @@ tailrec fun KtExpression.replaceVariableCallsWithExplicitInvokeCalls(variableCal
     val qualified = newExpression.getQualifiedExpressionForReceiver() ?: return newExpression
 
     return qualified.replaceVariableCallsWithExplicitInvokeCalls(variableCalls)
+}
+
+fun ModCommandAction.asQuickFix(): LocalQuickFix {
+    return ModCommandService.getInstance().wrapToQuickFix(this)
 }

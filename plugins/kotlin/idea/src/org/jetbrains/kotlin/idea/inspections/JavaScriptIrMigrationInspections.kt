@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -87,7 +88,7 @@ class NonVarPropertyInExternalInterfaceInspection : AbstractKotlinInspection() {
             holder.registerProblem(
                 property.valOrVarKeyword,
                 KotlinBundle.message("property.in.external.interface.should.be.var"),
-                LocalQuickFix.from(ChangeVariableMutabilityFix(property, true))!!
+                ChangeVariableMutabilityFix(property, true).asQuickFix(),
             )
         }
     }

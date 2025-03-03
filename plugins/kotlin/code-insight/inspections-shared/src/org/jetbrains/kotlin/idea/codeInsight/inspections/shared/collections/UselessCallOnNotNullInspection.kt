@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -74,7 +75,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
                 safeExpression.operationTokenNode.psi,
                 KotlinBundle.message("this.call.is.useless.with"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                LocalQuickFix.from(ReplaceWithDotCallFix(safeExpression))!!
+                ReplaceWithDotCallFix(safeExpression).asQuickFix(),
             )
         }
     }

@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
@@ -9,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
@@ -37,7 +41,7 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
         KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         onTheFly,
-        LocalQuickFix.from(ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true))!!
+        ChangeVariableMutabilityFix(element, makeVar = false, deleteInitializer = true).asQuickFix(),
     )
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {

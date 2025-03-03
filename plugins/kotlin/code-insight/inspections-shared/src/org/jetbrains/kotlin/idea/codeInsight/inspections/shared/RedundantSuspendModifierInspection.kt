@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.descendants
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -43,7 +43,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     suspendModifier,
                     KotlinBundle.message("redundant.suspend.modifier"),
-                    LocalQuickFix.from(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))!!
+                    RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asQuickFix(),
                 )
             }
         })
