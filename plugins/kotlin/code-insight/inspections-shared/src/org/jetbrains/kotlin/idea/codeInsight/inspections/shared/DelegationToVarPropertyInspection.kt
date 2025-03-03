@@ -31,7 +31,7 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val containingClass = parameter.containingClassOrObject as? KtClass ?: return
             val isUsedForOtherClass = containingClass != delegatedSuperTypeEntry.getStrictParentOfType<KtClass>()
 
-            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).findAll().none {
+            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).none {
                 val element = it.element
                 element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
             }
