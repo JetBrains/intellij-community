@@ -22,6 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
@@ -39,6 +44,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
+import org.jetbrains.jewel.foundation.util.JewelLogger
 
 /**
  * Renders a lazy tree view based on the provided tree data structure.
@@ -158,9 +164,32 @@ public fun <T> BasicLazyTree(
                         )
                         .padding(elementContentPadding)
                         .padding(start = (element.depth * indentSize.value).dp)
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = buildString {
+                                if (element is Tree.Element.Node) {
+                                    append(if (element.id in treeState.openNodes) "expanded " else "collapsed ")
+                                }
+                                append(element.data?.toString() ?: "")
+                            }
+
+                            selected = element.id in treeState.delegate.selectedKeys
+                            focused = treeState.delegate.lastActiveItemIndex == index
+
+                            stateDescription =
+                                if (
+                                    treeState.delegate.isKeyboardNavigating &&
+                                        treeState.delegate.lastActiveItemIndex == index
+                                ) {
+                                    "current item"
+                                } else {
+                                    ""
+                                }
+                        }
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                            val item = flattenedTree[index] as Tree.Element<T>
+                            JewelLogger.getInstance("BasicLazyTree").warn("Clicky clicky: ${item.data}")
                             (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
-                                item = flattenedTree[index] as Tree.Element<T>,
+                                item = item,
                                 scope = scope,
                                 doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
                                 onElementClick = onElementClick,
@@ -307,7 +336,6 @@ private fun Tree.Element<*>.flattenTree(state: TreeState): MutableList<Tree.Elem
             open(true)
             children?.forEach { child -> orderedChildren.addAll(child.flattenTree(state)) }
         }
-
         is Tree.Element.Leaf<*> -> {
             orderedChildren.add(this)
         }

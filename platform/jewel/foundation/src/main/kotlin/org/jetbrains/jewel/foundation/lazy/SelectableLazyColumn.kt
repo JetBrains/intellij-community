@@ -31,6 +31,10 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
@@ -94,6 +98,7 @@ public fun SelectableLazyColumn(
                         return@onPreviewKeyEvent true
                     }
                     if (state.lastActiveItemIndex != null) {
+                        // Handle Up/Down/Home/End
                         val actionHandled = keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
                         if (actionHandled) {
                             scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
@@ -160,7 +165,6 @@ private fun LazyListScope.appendEntry(
                     entry.content.invoke(itemScope)
                 }
             }
-
         is Entry.Items ->
             items(count = entry.count, key = { entry.key(it) }, contentType = { entry.contentType(it) }) { index ->
                 val key = remember(entry, index) { entry.key(index) }
@@ -184,7 +188,6 @@ private fun LazyListScope.appendEntry(
                     entry.itemContent.invoke(itemScope, index)
                 }
             }
-
         is Entry.StickyHeader ->
             stickyHeader(entry.key, entry.contentType) {
                 val itemScope = SelectableLazyItemScope(entry.key in state.selectedKeys, isFocused)
@@ -221,23 +224,34 @@ private fun Modifier.selectable(
     allKeys: List<SelectableLazyListKey>,
     itemKey: Any,
 ) =
-    pointerInput(allKeys, itemKey) {
-        awaitPointerEventScope {
-            while (true) {
-                val event = awaitPointerEvent()
-                when (event.type) {
-                    PointerEventType.Press -> {
-                        requester?.requestFocus()
-                        actionHandler.handlePointerEventPress(
-                            pointerEvent = event,
-                            keybindings = keybindings,
-                            selectableLazyListState = selectableState,
-                            selectionMode = selectionMode,
-                            allKeys = allKeys,
-                            key = itemKey,
-                        )
+    semantics(mergeDescendants = true) {
+            // Add accessibility properties compatible with Compose Multiplatform
+            // We don't use Role since Role.ListItem is not available in Multiplatform
+            selected = itemKey in selectableState.selectedKeys
+            // When focused with keyboard, this ensures the screen reader
+            // announces the content properly
+            focused = selectableState.lastActiveItemIndex == allKeys.indexOfFirst { it.key == itemKey }
+            // Don't add "selected" to state description as it's redundant with the selected
+            // property
+            stateDescription = ""
+        }
+        .pointerInput(allKeys, itemKey) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    when (event.type) {
+                        PointerEventType.Press -> {
+                            requester?.requestFocus()
+                            actionHandler.handlePointerEventPress(
+                                pointerEvent = event,
+                                keybindings = keybindings,
+                                selectableLazyListState = selectableState,
+                                selectionMode = selectionMode,
+                                allKeys = allKeys,
+                                key = itemKey,
+                            )
+                        }
                     }
                 }
             }
         }
-    }
