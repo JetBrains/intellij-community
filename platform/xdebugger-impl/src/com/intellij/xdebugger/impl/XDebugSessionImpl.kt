@@ -1,1271 +1,1244 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl;
+package com.intellij.xdebugger.impl
 
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.*;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.platform.util.coroutines.CoroutineScopeKt;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.breakpoints.*;
-import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper;
-import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
-import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
-import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
-import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
-import com.intellij.xdebugger.impl.rpc.XDebugSessionPausedInfo;
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo;
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo;
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt;
-import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
-import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
-import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.flow.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
-import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createSessionSuspendedFlow;
-import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.OpenFileHyperlinkInfo
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunnerLayoutUi
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
+import com.intellij.ui.AppUIUtil.invokeOnEdt
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SmartList
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.*
+import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebuggerPerformanceCollector.logBreakpointReached
+import com.intellij.xdebugger.impl.XDebuggerSuspendScopeProvider.provideSuspendScope
+import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.reportBreakpointVerified
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
+import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
+import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
+import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
+import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
+import com.intellij.xdebugger.impl.rhizome.storeXDebugSessionInDb
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.impl.ui.*
+import com.intellij.xdebugger.impl.util.start
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
+import javax.swing.Icon
+import javax.swing.JLabel
+import javax.swing.event.HyperlinkEvent
+import javax.swing.event.HyperlinkListener
+import kotlin.concurrent.Volatile
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
-public final class XDebugSessionImpl implements XDebugSession {
-  private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
-  private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
+class XDebugSessionImpl @JvmOverloads constructor(
+  environment: ExecutionEnvironment?,
+  debuggerManager: XDebuggerManagerImpl,
+  sessionName: @Nls String = environment!!.getRunProfile().getName(),
+  icon: Icon? = environment!!.getRunProfile().getIcon(),
+  showToolWindowOnSuspendOnly: Boolean = false,
+  contentToReuse: RunContentDescriptor? = null,
+) : XDebugSession {
+  private var myDebugProcess: XDebugProcess? = null
+  private val myRegisteredBreakpoints: MutableMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?> = HashMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?>()
+  private val myInactiveSlaveBreakpoints: MutableSet<XBreakpoint<*>?> = Collections.synchronizedSet<XBreakpoint<*>?>(
+    HashSet<XBreakpoint<*>?>())
+  private var myBreakpointsDisabled = false
+  private val myDebuggerManager: XDebuggerManagerImpl
+  private val myExecutionPointManager: XDebuggerExecutionPointManager
+  private var myBreakpointListenerDisposable: Disposable? = null
+  private val mySuspendContext = MutableStateFlow<XSuspendContext?>(null)
 
-  // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
-  private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
+  @get:ApiStatus.Internal
+  var suspendCoroutineScope: CoroutineScope? = null
+    private set
+  var currentExecutionStack: XExecutionStack? = null
+    private set
+  private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
+  private var myIsTopFrame = false
 
-  private XDebugProcess myDebugProcess;
-  private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
-  private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
-  private boolean myBreakpointsDisabled;
-  private final XDebuggerManagerImpl myDebuggerManager;
-  private final XDebuggerExecutionPointManager myExecutionPointManager;
-  private Disposable myBreakpointListenerDisposable;
-  private final MutableStateFlow<XSuspendContext> mySuspendContext = createMutableStateFlow(null);
-  private CoroutineScope mySuspendCoroutineScope;
-  private XExecutionStack myCurrentExecutionStack;
-  private @Nullable XAlternativeSourceHandler myAlternativeSourceHandler;
-  private boolean myIsTopFrame;
-  private volatile XStackFrame myTopStackFrame;
-  private final MutableStateFlow<Boolean> myPaused = createMutableStateFlow(false);
-  private XValueMarkers<?, ?> myValueMarkers;
-  private final @Nls String mySessionName;
-  private @Nullable XDebugSessionTab mySessionTab;
-  private @Nullable RunContentDescriptor myRunContentDescriptor;
-  private final @NotNull XDebugSessionData mySessionData;
-  private final AtomicReference<Pair<XBreakpoint<?>, XSourcePosition>> myActiveNonLineBreakpoint = new AtomicReference<>();
-  private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
-  private final Project myProject;
-  private final CoroutineScope myCoroutineScope;
-  private final @Nullable ExecutionEnvironment myEnvironment;
-  private final MutableStateFlow<Boolean> myStopped = createMutableStateFlow(false);
-  private final MutableStateFlow<Boolean> myPauseActionSupported = createMutableStateFlow(false);
-  private final MutableStateFlow<Boolean> myReadOnly = createMutableStateFlow(false);
-  private final boolean myShowToolWindowOnSuspendOnly;
-  private final MutableStateFlow<@Nullable XDebuggerSessionTabAbstractInfo> myTabInitDataFlow = CoroutineUtilsKt.createMutableStateFlow(null);
-  private final MutableStateFlow<@Nullable XDebugSessionPausedInfo> myPausedFlow = CoroutineUtilsKt.createMutableStateFlow(null);
-  private final List<AnAction> myRestartActions = new SmartList<>();
-  private final List<AnAction> myExtraStopActions = new SmartList<>();
-  private final List<AnAction> myExtraActions = new SmartList<>();
-  private ConsoleView myConsoleView;
-  private final Icon myIcon;
-  private final Deferred<@NotNull XDebugSessionEntity> myEntity;
-  private final XDebugSessionCurrentStackFrameManager myCurrentStackFrameManager;
-  private final StateFlow<Boolean> myIsSuspended;
+  @Volatile
+  private var myTopStackFrame: XStackFrame? = null
+  private val myPaused = MutableStateFlow<Boolean>(false)
+  private var myValueMarkers: XValueMarkers<*, *>? = null
+  private val mySessionName: @Nls String
+  private var mySessionTab: XDebugSessionTab? = null
+  private var myRunContentDescriptor: RunContentDescriptor? = null
+  val sessionData: XDebugSessionData
+  private val myActiveNonLineBreakpoint = AtomicReference<Pair<XBreakpoint<*>?, XSourcePosition?>?>()
+  private val myDispatcher = EventDispatcher.create<XDebugSessionListener?>(XDebugSessionListener::class.java)
+  private val myProject: Project
 
-  private volatile boolean breakpointsInitialized;
-  private long myUserRequestStart;
-  private String myUserRequestAction;
+  @get:ApiStatus.Internal
+  val coroutineScope: CoroutineScope
+  val executionEnvironment: ExecutionEnvironment?
+  private val myStopped = MutableStateFlow<Boolean>(false)
+  private val myPauseActionSupported = MutableStateFlow<Boolean>(false)
+  private val myReadOnly = MutableStateFlow<Boolean>(false)
+  private val myShowToolWindowOnSuspendOnly: Boolean
+  private val myTabInitDataFlow = createMutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
+  val restartActions: MutableList<AnAction> = SmartList<AnAction>()
+  val extraStopActions: MutableList<AnAction> = SmartList<AnAction>()
+  val extraActions: MutableList<AnAction> = SmartList<AnAction>()
+  private var myConsoleView: ConsoleView? = null
+  private val myIcon: Icon?
+  val entity: Deferred<XDebugSessionEntity>
+  private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager
 
-  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment,
-                           @NotNull XDebuggerManagerImpl debuggerManager) {
-    this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false,
-         null);
-  }
+  @get:ApiStatus.Internal
+  val isSuspendedState: StateFlow<Boolean>
 
-  public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
-                           @NotNull XDebuggerManagerImpl debuggerManager,
-                           @NotNull @Nls String sessionName,
-                           @Nullable Icon icon,
-                           boolean showToolWindowOnSuspendOnly,
-                           @Nullable RunContentDescriptor contentToReuse) {
-    myCoroutineScope = CoroutineScopeKt.childScope(debuggerManager.getCoroutineScope(), "XDebugSession " + sessionName,
-                                                   EmptyCoroutineContext.INSTANCE, true);
-    myEnvironment = environment;
-    mySessionName = sessionName;
-    myDebuggerManager = debuggerManager;
-    myShowToolWindowOnSuspendOnly = showToolWindowOnSuspendOnly;
-    myProject = debuggerManager.getProject();
-    myExecutionPointManager = debuggerManager.getExecutionPointManager();
-    ValueLookupManagerController.getInstance(myProject).startListening();
-    DebuggerInlayListener.getInstance(myProject).startListening();
-    myIcon = icon;
-    myEntity = storeXDebugSessionInDb(myCoroutineScope, this);
-    myCurrentStackFrameManager = new XDebugSessionCurrentStackFrameManager(myCoroutineScope, myEntity);
-    myIsSuspended = createSessionSuspendedFlow(myCoroutineScope, myPaused, mySuspendContext);
+  @Volatile
+  private var breakpointsInitialized = false
+  private var myUserRequestStart: Long = 0
+  private var myUserRequestAction: String? = null
 
-    XDebugSessionData oldSessionData = null;
+  init {
+    var contentToReuse = contentToReuse
+    this.coroutineScope = debuggerManager.getCoroutineScope().childScope("XDebugSession " + sessionName,
+                                                                         EmptyCoroutineContext, true)
+    this.executionEnvironment = environment
+    mySessionName = sessionName
+    myDebuggerManager = debuggerManager
+    myShowToolWindowOnSuspendOnly = showToolWindowOnSuspendOnly
+    myProject = debuggerManager.getProject()
+    myExecutionPointManager = debuggerManager.getExecutionPointManager()
+    ValueLookupManagerController.getInstance(myProject).startListening()
+    DebuggerInlayListener.getInstance(myProject).startListening()
+    myIcon = icon
+    this.entity = storeXDebugSessionInDb(this.coroutineScope, this)
+    myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
+    this.isSuspendedState = createSessionSuspendedFlow(this.coroutineScope, myPaused, mySuspendContext!!)
+
+    var oldSessionData: XDebugSessionData? = null
     if (contentToReuse == null) {
-      contentToReuse = environment != null ? environment.getContentToReuse() : null;
+      contentToReuse = if (environment != null) environment.getContentToReuse() else null
     }
     if (contentToReuse != null) {
-      JComponent component = contentToReuse.getComponent();
+      val component = contentToReuse.getComponent()
       if (component != null) {
-        oldSessionData = XDebugSessionData.DATA_KEY.getData(DataManager.getInstance().getDataContext(component));
+        oldSessionData = XDebugSessionData.DATA_KEY.getData(DataManager.getInstance().getDataContext(component))
       }
     }
 
-    String currentConfigurationName = computeConfigurationName();
-    if (oldSessionData == null || !oldSessionData.getConfigurationName().equals(currentConfigurationName)) {
-      oldSessionData = new XDebugSessionData(myProject, currentConfigurationName);
+    val currentConfigurationName = computeConfigurationName()
+    if (oldSessionData == null || oldSessionData.getConfigurationName() != currentConfigurationName) {
+      oldSessionData = XDebugSessionData(myProject, currentConfigurationName)
     }
-    mySessionData = oldSessionData;
+    this.sessionData = oldSessionData
   }
 
-  @Override
-  public @NotNull String getSessionName() {
-    return mySessionName;
+  override fun getSessionName(): String {
+    return mySessionName
   }
 
-  @ApiStatus.Internal
-  public Flow<@Nullable XDebuggerSessionTabAbstractInfo> getTabInitDataFlow() {
-    return myTabInitDataFlow;
+  @get:ApiStatus.Internal
+  val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo?>
+    get() = myTabInitDataFlow
+
+  override fun getRunContentDescriptor(): RunContentDescriptor {
+    val descriptor = myRunContentDescriptor
+    LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!")
+    return descriptor!!
   }
 
-  @ApiStatus.Internal
-  public Flow<@Nullable XDebugSessionPausedInfo> getPausedFlow() {
-    return myPausedFlow;
-  }
+  private val isTabInitialized: Boolean
+    get() = myTabInitDataFlow.value != null && (useFeProxy() || mySessionTab != null)
 
-  @Override
-  public @NotNull RunContentDescriptor getRunContentDescriptor() {
-    RunContentDescriptor descriptor = myRunContentDescriptor;
-    LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!");
-    return descriptor;
-  }
-
-  @ApiStatus.Internal
-  public @Nullable RunContentDescriptor getRunContentDescriptorIfInitialized() {
-    return myRunContentDescriptor;
-  }
-
-  private boolean isTabInitialized() {
-    return myTabInitDataFlow.getValue() != null && (XDebugSessionProxy.useFeProxy() || mySessionTab != null);
-  }
-
-  private void assertSessionTabInitialized() {
-    if (myShowToolWindowOnSuspendOnly && !isTabInitialized()) {
-      LOG.error("Debug tool window isn't shown yet because debug process isn't suspended");
+  private fun assertSessionTabInitialized() {
+    if (myShowToolWindowOnSuspendOnly && !this.isTabInitialized) {
+      LOG.error("Debug tool window isn't shown yet because debug process isn't suspended")
     }
     else {
-      LOG.assertTrue(isTabInitialized(), "Debug tool window not initialized yet!");
+      LOG.assertTrue(this.isTabInitialized, "Debug tool window not initialized yet!")
     }
   }
 
-  @Override
-  public void setPauseActionSupported(final boolean isSupported) {
-    myPauseActionSupported.setValue(isSupported);
+  override fun setPauseActionSupported(isSupported: Boolean) {
+    myPauseActionSupported!!.value = isSupported
   }
 
 
-  public StateFlow<Boolean> isReadOnlyState() {
-    return myReadOnly;
-  }
+  val isReadOnlyState: StateFlow<Boolean>
+    get() = myReadOnly
 
-  public boolean isReadOnly() {
-    return myReadOnly.getValue();
-  }
+  var isReadOnly: Boolean
+    get() = myReadOnly!!.value!!
+    set(readOnly) {
+      myReadOnly!!.value = readOnly
+    }
 
-  public void setReadOnly(boolean readOnly) {
-    myReadOnly.setValue(readOnly);
-  }
-
-  public @NotNull List<AnAction> getRestartActions() {
-    return myRestartActions;
-  }
-
-  public void addRestartActions(AnAction... restartActions) {
+  fun addRestartActions(vararg restartActions: AnAction?) {
     if (restartActions != null) {
-      Collections.addAll(myRestartActions, restartActions);
+      Collections.addAll<AnAction?>(this.restartActions, *restartActions)
     }
   }
 
-  public @NotNull List<AnAction> getExtraActions() {
-    return myExtraActions;
-  }
-
-  public void addExtraActions(AnAction... extraActions) {
+  fun addExtraActions(vararg extraActions: AnAction?) {
     if (extraActions != null) {
-      Collections.addAll(myExtraActions, extraActions);
+      Collections.addAll<AnAction?>(this.extraActions, *extraActions)
     }
-  }
-
-  public List<AnAction> getExtraStopActions() {
-    return myExtraStopActions;
   }
 
   // used externally
-  @SuppressWarnings("unused")
-  public void addExtraStopActions(AnAction... extraStopActions) {
+  @Suppress("unused")
+  fun addExtraStopActions(vararg extraStopActions: AnAction?) {
     if (extraStopActions != null) {
-      Collections.addAll(myExtraStopActions, extraStopActions);
+      Collections.addAll<AnAction?>(this.extraStopActions, *extraStopActions)
     }
   }
 
-  @Override
-  public void rebuildViews() {
-    myDispatcher.getMulticaster().settingsChanged();
+  override fun rebuildViews() {
+    myDispatcher.getMulticaster().settingsChanged()
   }
 
-  Deferred<@NotNull XDebugSessionEntity> getEntity() {
-    return myEntity;
+  override fun getRunProfile(): RunProfile? {
+    return if (this.executionEnvironment != null) executionEnvironment.getRunProfile() else null
   }
 
-  @Override
-  public @Nullable RunProfile getRunProfile() {
-    return myEnvironment != null ? myEnvironment.getRunProfile() : null;
+  val isPauseActionSupportedState: StateFlow<Boolean>
+    get() = myPauseActionSupported
+
+  @JvmName("isPauseActionSupported")
+  fun isPauseActionSupported(): Boolean {
+    return myPauseActionSupported.value
   }
 
-  public StateFlow<Boolean> isPauseActionSupportedState() {
-    return myPauseActionSupported;
+  override fun getProject(): Project {
+    return myDebuggerManager.getProject()
   }
 
-  public boolean isPauseActionSupported() {
-    return myPauseActionSupported.getValue();
+  override fun getDebugProcess(): XDebugProcess {
+    return myDebugProcess!!
   }
 
-  @Override
-  public @NotNull Project getProject() {
-    return myDebuggerManager.getProject();
+  override fun isSuspended(): Boolean {
+    return isSuspendedState.value!!
   }
 
-  @Override
-  public @NotNull XDebugProcess getDebugProcess() {
-    return myDebugProcess;
+  @get:ApiStatus.Internal
+  val isPausedState: StateFlow<Boolean>
+    get() = myPaused
+
+  override fun isPaused(): Boolean {
+    return myPaused!!.value!!
   }
 
-  @Override
-  public boolean isSuspended() {
-    return myIsSuspended.getValue();
+  override fun getCurrentStackFrame(): XStackFrame? {
+    return myCurrentStackFrameManager.getCurrentStackFrame()
   }
 
-  @ApiStatus.Internal
-  public StateFlow<Boolean> isSuspendedState() {
-    return myIsSuspended;
+  override fun getSuspendContext(): XSuspendContext? {
+    return mySuspendContext!!.value
   }
 
-  @ApiStatus.Internal
-  public StateFlow<Boolean> isPausedState() {
-    return myPaused;
+  override fun getCurrentPosition(): XSourcePosition? {
+    return getFrameSourcePosition(getCurrentStackFrame())
   }
 
-  @Override
-  public boolean isPaused() {
-    return myPaused.getValue();
+  override fun getTopFramePosition(): XSourcePosition? {
+    return getFrameSourcePosition(myTopStackFrame)
   }
 
-  @Override
-  public @Nullable XStackFrame getCurrentStackFrame() {
-    return myCurrentStackFrameManager.getCurrentStackFrame();
+  fun getFrameSourcePosition(frame: XStackFrame?): XSourcePosition? {
+    return getFrameSourcePosition(frame, this.currentSourceKind)
   }
 
-  public @Nullable XExecutionStack getCurrentExecutionStack() {
-    return myCurrentExecutionStack;
-  }
-
-  @Override
-  public @Nullable XSuspendContext getSuspendContext() {
-    return mySuspendContext.getValue();
-  }
-
-  @ApiStatus.Internal
-  public @Nullable CoroutineScope getSuspendCoroutineScope() {
-    return mySuspendCoroutineScope;
-  }
-
-  @Override
-  public @Nullable XSourcePosition getCurrentPosition() {
-    return getFrameSourcePosition(getCurrentStackFrame());
-  }
-
-  @Override
-  public @Nullable XSourcePosition getTopFramePosition() {
-    return getFrameSourcePosition(myTopStackFrame);
-  }
-
-  public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame) {
-    return getFrameSourcePosition(frame, getCurrentSourceKind());
-  }
-
-  public @Nullable XSourcePosition getFrameSourcePosition(@Nullable XStackFrame frame, @NotNull XSourceKind sourceKind) {
-    if (frame == null) return null;
-    return switch (sourceKind) {
-      case MAIN -> frame.getSourcePosition();
-      case ALTERNATIVE -> myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativePosition(frame) : null;
-    };
-  }
-
-  public @NotNull XSourceKind getCurrentSourceKind() {
-    StateFlow<@NotNull Boolean> state = getAlternativeSourceKindState();
-    return state.getValue() ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN;
-  }
-
-  @NotNull StateFlow<@NotNull Boolean> getAlternativeSourceKindState() {
-    return myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativeSourceKindState() : ALWAYS_FALSE_STATE;
-  }
-
-  void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
-    LOG.assertTrue(myDebugProcess == null);
-    myDebugProcess = process;
-    myAlternativeSourceHandler = myDebugProcess.getAlternativeSourceHandler();
-    myExecutionPointManager.setAlternativeSourceKindFlow(getAlternativeSourceKindState());
-
-    if (myDebugProcess.checkCanInitBreakpoints()) {
-      ReadAction.run(() -> initBreakpoints());
+  fun getFrameSourcePosition(frame: XStackFrame?, sourceKind: XSourceKind): XSourcePosition? {
+    if (frame == null) return null
+    return when (sourceKind) {
+      XSourceKind.MAIN -> frame.getSourcePosition()
+      XSourceKind.ALTERNATIVE -> if (myAlternativeSourceHandler != null) myAlternativeSourceHandler!!.getAlternativePosition(frame)
+      else null
     }
-    if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground debuggeeInForeground &&
-        debuggeeInForeground.isBringingToForegroundApplicable()) {
-      BringDebuggeeInForegroundUtilsKt.start(debuggeeInForeground, this, 1000);
+  }
+
+  val currentSourceKind: XSourceKind
+    get() {
+      val state = this.alternativeSourceKindState
+      return if (state.value) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
+    }
+
+  val alternativeSourceKindState: StateFlow<Boolean>
+    get() = if (myAlternativeSourceHandler != null) myAlternativeSourceHandler!!.getAlternativeSourceKindState() else ALWAYS_FALSE_STATE
+
+  fun init(process: XDebugProcess, contentToReuse: RunContentDescriptor?) {
+    LOG.assertTrue(myDebugProcess == null)
+    myDebugProcess = process
+    myAlternativeSourceHandler = process.getAlternativeSourceHandler()
+    myExecutionPointManager.alternativeSourceKindFlow = this.alternativeSourceKindState
+
+    if (process.checkCanInitBreakpoints()) {
+      ReadAction.run<RuntimeException?>(ThrowableRunnable { initBreakpoints() })
+    }
+    if (process is XDebugProcessDebuggeeInForeground &&
+        process.isBringingToForegroundApplicable()
+    ) {
+      process.start(this, 1000)
     }
 
 
-    myDebugProcess.getProcessHandler().addProcessListener(new ProcessListener() {
-      @Override
-      public void processTerminated(final @NotNull ProcessEvent event) {
-        stopImpl();
-        myDebugProcess.getProcessHandler().removeProcessListener(this);
+    process.getProcessHandler().addProcessListener(object : ProcessListener {
+      override fun processTerminated(event: ProcessEvent) {
+        stopImpl()
+        process.getProcessHandler().removeProcessListener(this)
       }
-    });
+    })
     //todo make 'createConsole()' method return ConsoleView
-    myConsoleView = (ConsoleView)myDebugProcess.createConsole();
+    myConsoleView = process.createConsole() as ConsoleView
     if (!myShowToolWindowOnSuspendOnly) {
-      initSessionTab(contentToReuse, false);
+      initSessionTab(contentToReuse, false)
     }
   }
 
-  public void reset() {
-    breakpointsInitialized = false;
-    removeBreakpointListeners();
-    unsetPaused();
-    clearPausedData();
-    rebuildViews();
+  fun reset() {
+    breakpointsInitialized = false
+    removeBreakpointListeners()
+    unsetPaused()
+    clearPausedData()
+    rebuildViews()
   }
 
   @RequiresReadLock
-  @Override
-  public void initBreakpoints() {
-    LOG.assertTrue(!breakpointsInitialized);
-    breakpointsInitialized = true;
+  override fun initBreakpoints() {
+    LOG.assertTrue(!breakpointsInitialized)
+    breakpointsInitialized = true
 
-    disableSlaveBreakpoints();
-    processAllBreakpoints(true, false);
+    disableSlaveBreakpoints()
+    processAllBreakpoints(true, false)
 
     if (myBreakpointListenerDisposable == null) {
-      myBreakpointListenerDisposable = Disposer.newDisposable();
-      Disposer.register(myProject, myBreakpointListenerDisposable);
-      MessageBusConnection busConnection = myProject.getMessageBus().connect(myBreakpointListenerDisposable);
-      busConnection.subscribe(XBreakpointListener.TOPIC, new MyBreakpointListener());
-      busConnection.subscribe(XDependentBreakpointListener.TOPIC, new MyDependentBreakpointListener());
+      myBreakpointListenerDisposable = Disposer.newDisposable()
+      Disposer.register(myProject, myBreakpointListenerDisposable!!)
+      val busConnection = myProject.getMessageBus().connect(myBreakpointListenerDisposable!!)
+      busConnection.subscribe<XBreakpointListener<*>>(XBreakpointListener.TOPIC, MyBreakpointListener())
+      busConnection.subscribe<XDependentBreakpointListener>(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
     }
   }
 
-  @Override
-  public ConsoleView getConsoleView() {
-    return myConsoleView;
+  override fun getConsoleView(): ConsoleView? {
+    return myConsoleView
   }
 
-  public @Nullable XDebugSessionTab getSessionTab() {
-    if (XDebugSessionProxy.useFeProxy()) {
-      LOG.error("Debug tab should not be used in split mode from XDebugSession");
+  val sessionTab: XDebugSessionTab?
+    get() {
+      if (useFeProxy()) {
+        LOG.error("Debug tab should not be used in split mode from XDebugSession")
+      }
+      return mySessionTab
     }
-    return mySessionTab;
+
+  override fun getUI(): RunnerLayoutUi {
+    assertSessionTabInitialized()
+    val sessionTab: XDebugSessionTab? = checkNotNull(this.sessionTab)
+    return sessionTab!!.getUi()
   }
 
-  @Override
-  public RunnerLayoutUi getUI() {
-    assertSessionTabInitialized();
-    XDebugSessionTab sessionTab = getSessionTab();
-    assert sessionTab != null;
-    return sessionTab.getUi();
+  override fun isMixedMode(): Boolean {
+    return myDebugProcess is XMixedModeCombinedDebugProcess
   }
 
-  @Override
-  public boolean isMixedMode() {
-    return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
-  }
+  private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
+    val forceNewDebuggerUi = getDebugProcess().forceShowNewDebuggerUi()
+    val withFramesCustomization = getDebugProcess().allowFramesViewCustomization()
 
-  private void initSessionTab(@Nullable RunContentDescriptor contentToReuse, boolean shouldShowTab) {
-    boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(getDebugProcess());
-    boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(getDebugProcess());
-
-    if (XDebugSessionProxy.useFeProxy()) {
-      XDebuggerSessionTabInfo tabInfo = new XDebuggerSessionTabInfo(myIcon, forceNewDebuggerUi, withFramesCustomization, shouldShowTab,
-                                                                    contentToReuse, myEnvironment);
+    if (useFeProxy()) {
+      val tabInfo = XDebuggerSessionTabInfo(myIcon, forceNewDebuggerUi, withFramesCustomization, shouldShowTab,
+                                            contentToReuse, this.executionEnvironment)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        myRunContentDescriptor = contentToReuse != null
-                                 ? contentToReuse
-                                 // This is a mock descriptor used in backend only
-                                 : new RunContentDescriptor(myConsoleView, getDebugProcess().getProcessHandler(), new JLabel(),
-                                                            getSessionName(), myIcon, null);
-        myDebugProcess.sessionInitialized();
+        myRunContentDescriptor = if (contentToReuse != null)
+          contentToReuse // This is a mock descriptor used in backend only
+        else
+          RunContentDescriptor(myConsoleView, getDebugProcess().getProcessHandler(), JLabel(),
+                               getSessionName(), myIcon, null)
+        myDebugProcess!!.sessionInitialized()
       }
     }
     else {
-      if (myTabInitDataFlow.getValue() != null) return;
-      XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this);
-      XDebugSessionTab tab = XDebugSessionTab.create(proxy, myIcon, myEnvironment, contentToReuse,
-                                                     forceNewDebuggerUi, withFramesCustomization);
-      if (myTabInitDataFlow.compareAndSet(null, new XDebuggerSessionTabInfoNoInit(tab))) {
-        tabInitialized(tab);
-        myDebugProcess.sessionInitialized();
+      if (myTabInitDataFlow.value != null) return
+      val proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this)
+      val tab = XDebugSessionTab.create(proxy, myIcon, this.executionEnvironment, contentToReuse,
+                                        forceNewDebuggerUi, withFramesCustomization)
+      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {
+        tabInitialized(tab)
+        myDebugProcess!!.sessionInitialized()
         if (shouldShowTab) {
-          tab.showTab();
+          tab.showTab()
         }
       }
     }
-  }
+    addSessionListener(object : XDebugSessionListener {
+      override fun sessionPaused() {
+        updateActions()
+      }
 
-  public @NotNull XDebugSessionData getSessionData() {
-    return mySessionData;
+      override fun sessionResumed() {
+        updateActions()
+      }
+
+      override fun sessionStopped() {
+        updateActions()
+      }
+
+      override fun stackFrameChanged() {
+        updateActions()
+      }
+
+      fun updateActions() {
+        UIUtil.invokeLaterIfNeeded(Runnable { mySessionTab!!.getUi().updateActionsNow() })
+      }
+    })
   }
 
   @ApiStatus.Internal
-  public void tabInitialized(@NotNull XDebugSessionTab sessionTab) {
-    mySessionTab = sessionTab;
-    myRunContentDescriptor = sessionTab.getRunContentDescriptor();
+  fun tabInitialized(sessionTab: XDebugSessionTab) {
+    mySessionTab = sessionTab
+    myRunContentDescriptor = sessionTab.getRunContentDescriptor()
   }
 
-  private void disableSlaveBreakpoints() {
-    Set<XBreakpoint<?>> slaveBreakpoints = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager().getAllSlaveBreakpoints();
+  private fun disableSlaveBreakpoints() {
+    val slaveBreakpoints = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager().getAllSlaveBreakpoints()
     if (slaveBreakpoints.isEmpty()) {
-      return;
+      return
     }
 
-    Set<XBreakpointType<?, ?>> breakpointTypes = new HashSet<>();
-    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
-      breakpointTypes.add(getBreakpointTypeClass(handler));
+    val breakpointTypes: MutableSet<XBreakpointType<*, *>?> = HashSet<XBreakpointType<*, *>?>()
+    for (handler in myDebugProcess!!.getBreakpointHandlers()) {
+      breakpointTypes.add(getBreakpointTypeClass(handler))
     }
-    for (XBreakpoint<?> slaveBreakpoint : slaveBreakpoints) {
+    for (slaveBreakpoint in slaveBreakpoints) {
       if (breakpointTypes.contains(slaveBreakpoint.getType())) {
-        myInactiveSlaveBreakpoints.add(slaveBreakpoint);
+        myInactiveSlaveBreakpoints.add(slaveBreakpoint)
       }
     }
   }
 
-  public void showSessionTab() {
-    XDebugSessionTab tab = getSessionTab();
-    assert tab != null;
-    tab.showTab();
+  fun showSessionTab() {
+    val tab: XDebugSessionTab? = checkNotNull(this.sessionTab)
+    tab!!.showTab()
   }
 
-  public @Nullable XValueMarkers<?, ?> getValueMarkers() {
-    if (myValueMarkers == null) {
-      XValueMarkerProvider<?, ?> provider = myDebugProcess.createValueMarkerProvider();
-      if (provider != null) {
-        myValueMarkers = XValueMarkers.createValueMarkers(provider);
+  val valueMarkers: XValueMarkers<*, *>?
+    @JvmName("valueMarkers")
+    get() {
+      if (myValueMarkers == null) {
+        val provider = myDebugProcess!!.createValueMarkerProvider()
+        if (provider != null) {
+          myValueMarkers = XValueMarkers.createValueMarkers(provider)
+        }
       }
+      return myValueMarkers
     }
-    return myValueMarkers;
+
+  @JvmName("getValueMarkers")
+  fun getValueMarkers(): XValueMarkers<*, *>? {
+    return valueMarkers
   }
 
-  @ApiStatus.Internal
-  public CoroutineScope getCoroutineScope() {
-    return myCoroutineScope;
-  }
-
-  @SuppressWarnings("unchecked") //need to compile under 1.8, please do not remove before checking
-  private static XBreakpointType getBreakpointTypeClass(final XBreakpointHandler handler) {
-    return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass());
-  }
-
-  private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler,
-                                                             boolean register,
-                                                             final boolean temporary) {
-    Collection<? extends B> breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
-    for (B b : breakpoints) {
-      handleBreakpoint(handler, b, register, temporary);
+  private fun <B : XBreakpoint<*>?> processBreakpoints(
+    handler: XBreakpointHandler<*>,
+    register: Boolean,
+    temporary: Boolean,
+  ) {
+    handler as XBreakpointHandler<B?>
+    val breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints<B?>(handler.getBreakpointTypeClass())
+    for (b in breakpoints) {
+      handleBreakpoint<B?>(handler, b, register, temporary)
     }
   }
 
-  private <B extends XBreakpoint<?>> void handleBreakpoint(final XBreakpointHandler<B> handler, final B b, final boolean register,
-                                                           final boolean temporary) {
+  private fun <B : XBreakpoint<*>?> handleBreakpoint(
+    handler: XBreakpointHandler<B?>, b: B?, register: Boolean,
+    temporary: Boolean,
+  ) {
     if (register) {
-      boolean active = ReadAction.compute(() -> isBreakpointActive(b));
+      val active = ReadAction.compute<Boolean?, RuntimeException?>(ThrowableComputable { isBreakpointActive(b!!) })
       if (active) {
-        synchronized (myRegisteredBreakpoints) {
-          myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
-          if (b instanceof XLineBreakpoint) {
-            updateBreakpointPresentation((XLineBreakpoint)b, b.getType().getPendingIcon(), null);
+        synchronized(myRegisteredBreakpoints) {
+          myRegisteredBreakpoints.put(b, CustomizedBreakpointPresentation())
+          if (b is XLineBreakpoint<*>) {
+            updateBreakpointPresentation(b as XLineBreakpoint<*>, b.getType().getPendingIcon(), null)
           }
         }
-        handler.registerBreakpoint(b);
+        handler.registerBreakpoint(b!!)
       }
     }
     else {
-      boolean removed;
-      synchronized (myRegisteredBreakpoints) {
-        removed = myRegisteredBreakpoints.remove(b) != null;
+      val removed: Boolean
+      synchronized(myRegisteredBreakpoints) {
+        removed = myRegisteredBreakpoints.remove(b) != null
       }
       if (removed) {
-        handler.unregisterBreakpoint(b, temporary);
+        handler.unregisterBreakpoint(b!!, temporary)
       }
     }
   }
 
-  public @Nullable CustomizedBreakpointPresentation getBreakpointPresentation(@NotNull XBreakpoint<?> breakpoint) {
-    synchronized (myRegisteredBreakpoints) {
-      return myRegisteredBreakpoints.get(breakpoint);
+  fun getBreakpointPresentation(breakpoint: XBreakpoint<*>): CustomizedBreakpointPresentation? {
+    synchronized(myRegisteredBreakpoints) {
+      return myRegisteredBreakpoints.get(breakpoint)
     }
   }
 
-  private void processAllHandlers(final XBreakpoint<?> breakpoint, final boolean register) {
-    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
-      processBreakpoint(breakpoint, handler, register);
+  private fun processAllHandlers(breakpoint: XBreakpoint<*>, register: Boolean) {
+    for (handler in myDebugProcess!!.getBreakpointHandlers()) {
+      processBreakpoint(breakpoint, handler, register)
     }
   }
 
-  private <B extends XBreakpoint<?>> void processBreakpoint(final XBreakpoint<?> breakpoint,
-                                                            final XBreakpointHandler<B> handler,
-                                                            boolean register) {
-    XBreakpointType<?, ?> type = breakpoint.getType();
-    if (handler.getBreakpointTypeClass().equals(type.getClass())) {
-      //noinspection unchecked
-      B b = (B)breakpoint;
-      handleBreakpoint(handler, b, register, false);
+  private fun <B : XBreakpoint<*>> processBreakpoint(
+    breakpoint: B,
+    handler: XBreakpointHandler<*>,
+    register: Boolean,
+  ) {
+    val type = breakpoint.getType()
+    if (handler.getBreakpointTypeClass() == type?.javaClass) {
+      handleBreakpoint(handler as XBreakpointHandler<B?>, breakpoint, register, false)
     }
   }
 
   @RequiresReadLock
-  public boolean isBreakpointActive(@NotNull XBreakpoint<?> b) {
-    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase<?, ?, ?>)b).isDisposed();
+  fun isBreakpointActive(b: XBreakpoint<*>): Boolean {
+    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !(b as XBreakpointBase<*, *, *>).isDisposed()
   }
 
-  @Override
-  public boolean areBreakpointsMuted() {
-    return mySessionData.isBreakpointsMuted();
+  override fun areBreakpointsMuted(): Boolean {
+    return sessionData.isBreakpointsMuted()
   }
 
-  @Override
-  public void addSessionListener(@NotNull XDebugSessionListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  override fun addSessionListener(listener: XDebugSessionListener, parentDisposable: Disposable) {
+    myDispatcher.addListener(listener, parentDisposable)
   }
 
-  @Override
-  public void addSessionListener(final @NotNull XDebugSessionListener listener) {
-    myDispatcher.addListener(listener);
+  override fun addSessionListener(listener: XDebugSessionListener) {
+    myDispatcher.addListener(listener)
   }
 
-  @Override
-  public void removeSessionListener(final @NotNull XDebugSessionListener listener) {
-    myDispatcher.removeListener(listener);
+  override fun removeSessionListener(listener: XDebugSessionListener) {
+    myDispatcher.removeListener(listener)
   }
 
   @RequiresReadLock
-  @Override
-  public void setBreakpointMuted(boolean muted) {
-    if (areBreakpointsMuted() == muted) return;
-    mySessionData.setBreakpointsMuted(muted);
+  override fun setBreakpointMuted(muted: Boolean) {
+    if (areBreakpointsMuted() == muted) return
+    sessionData.setBreakpointsMuted(muted)
     if (!myBreakpointsDisabled) {
-      processAllBreakpoints(!muted, muted);
+      processAllBreakpoints(!muted, muted)
     }
-    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
-    myDispatcher.getMulticaster().breakpointsMuted(muted);
+    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate()
+    myDispatcher.getMulticaster().breakpointsMuted(muted)
   }
 
-  @Override
-  public void stepOver(final boolean ignoreBreakpoints) {
-    rememberUserActionStart(XDebuggerActions.STEP_OVER);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun stepOver(ignoreBreakpoints: Boolean) {
+    rememberUserActionStart(XDebuggerActions.STEP_OVER)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
     if (ignoreBreakpoints) {
-      setBreakpointsDisabledTemporarily(true);
+      setBreakpointsDisabledTemporarily(true)
     }
-    myDebugProcess.startStepOver(doResume());
+    myDebugProcess!!.startStepOver(doResume())
   }
 
-  @Override
-  public void stepInto() {
-    rememberUserActionStart(XDebuggerActions.STEP_INTO);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun stepInto() {
+    rememberUserActionStart(XDebuggerActions.STEP_INTO)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    myDebugProcess.startStepInto(doResume());
+    myDebugProcess!!.startStepInto(doResume())
   }
 
-  @Override
-  public void stepOut() {
-    rememberUserActionStart(XDebuggerActions.STEP_OUT);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun stepOut() {
+    rememberUserActionStart(XDebuggerActions.STEP_OUT)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    myDebugProcess.startStepOut(doResume());
+    myDebugProcess!!.startStepOut(doResume())
   }
 
-  @Override
-  public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
-    rememberUserActionStart(XDebuggerActions.SMART_STEP_INTO);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun <V : XSmartStepIntoVariant?> smartStepInto(handler: XSmartStepIntoHandler<V?>, variant: V?) {
+    rememberUserActionStart(XDebuggerActions.SMART_STEP_INTO)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    final XSuspendContext context = doResume();
-    handler.startStepInto(variant, context);
+    val context = doResume()
+    handler.startStepInto(variant!!, context)
   }
 
-  @Override
-  public void forceStepInto() {
-    rememberUserActionStart(XDebuggerActions.FORCE_STEP_INTO);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun forceStepInto() {
+    rememberUserActionStart(XDebuggerActions.FORCE_STEP_INTO)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    myDebugProcess.startForceStepInto(doResume());
+    myDebugProcess!!.startForceStepInto(doResume())
   }
 
-  @Override
-  public void runToPosition(final @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
-    rememberUserActionStart(XDebuggerActions.RUN_TO_CURSOR);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun runToPosition(position: XSourcePosition, ignoreBreakpoints: Boolean) {
+    rememberUserActionStart(XDebuggerActions.RUN_TO_CURSOR)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
     if (ignoreBreakpoints) {
-      setBreakpointsDisabledTemporarily(true);
+      setBreakpointsDisabledTemporarily(true)
     }
-    myDebugProcess.runToPosition(position, doResume());
+    myDebugProcess!!.runToPosition(position, doResume())
   }
 
-  @Override
-  public void pause() {
-    rememberUserActionStart(XDebuggerActions.PAUSE);
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun pause() {
+    rememberUserActionStart(XDebuggerActions.PAUSE)
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    myDebugProcess.startPausing();
+    myDebugProcess!!.startPausing()
   }
 
   @RequiresReadLock
-  private void processAllBreakpoints(final boolean register, final boolean temporary) {
-    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
-      processBreakpoints(handler, register, temporary);
+  private fun processAllBreakpoints(register: Boolean, temporary: Boolean) {
+    for (handler in myDebugProcess!!.getBreakpointHandlers()) {
+      processBreakpoints<XBreakpoint<*>?>(handler, register, temporary)
     }
   }
 
-  private void setBreakpointsDisabledTemporarily(boolean disabled) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (myBreakpointsDisabled == disabled) return;
-      myBreakpointsDisabled = disabled;
+  private fun setBreakpointsDisabledTemporarily(disabled: Boolean) {
+    ApplicationManager.getApplication().runReadAction(Runnable {
+      if (myBreakpointsDisabled == disabled) return@Runnable
+      myBreakpointsDisabled = disabled
       if (!areBreakpointsMuted()) {
-        processAllBreakpoints(!disabled, disabled);
+        processAllBreakpoints(!disabled, disabled)
       }
-    });
+    })
   }
 
-  @Override
-  public void resume() {
-    if (!myDebugProcess.checkCanPerformCommands()) return;
+  override fun resume() {
+    if (!myDebugProcess!!.checkCanPerformCommands()) return
 
-    myDebugProcess.resume(doResume());
+    myDebugProcess!!.resume(doResume())
   }
 
-  private @Nullable XSuspendContext doResume() {
-    if (!StateFlowKt.getAndUpdate(myPaused, (it) -> false)) {
-      return null;
+  private fun doResume(): XSuspendContext? {
+    if (!myPaused.getAndUpdate { false }) {
+      return null
     }
 
-    myDispatcher.getMulticaster().beforeSessionResume();
-    XSuspendContext context = mySuspendContext.getValue();
-    clearPausedData();
-    myDispatcher.getMulticaster().sessionResumed();
-    return context;
+    myDispatcher.getMulticaster().beforeSessionResume()
+    val context = mySuspendContext!!.value
+    clearPausedData()
+    UIUtil.invokeLaterIfNeeded(Runnable {
+      if (mySessionTab != null) {
+        mySessionTab!!.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
+      }
+    })
+    myDispatcher.getMulticaster().sessionResumed()
+    return context
   }
 
-  private void clearPausedData() {
-    mySuspendContext.setValue(null);
-    if (mySuspendCoroutineScope != null) {
-      kotlinx.coroutines.CoroutineScopeKt.cancel(mySuspendCoroutineScope, null);
+  private fun clearPausedData() {
+    mySuspendContext!!.value = null
+    if (this.suspendCoroutineScope != null) {
+      suspendCoroutineScope!!.cancel(null)
     }
-    mySuspendCoroutineScope = null;
-    myCurrentExecutionStack = null;
-    myCurrentStackFrameManager.setCurrentStackFrame(null);
-    myTopStackFrame = null;
-    clearActiveNonLineBreakpoint();
-    updateExecutionPosition();
+    this.suspendCoroutineScope = null
+    this.currentExecutionStack = null
+    myCurrentStackFrameManager.setCurrentStackFrame(null)
+    myTopStackFrame = null
+    clearActiveNonLineBreakpoint()
+    updateExecutionPosition()
   }
 
-  @Override
-  public void updateExecutionPosition() {
-    updateExecutionPosition(getCurrentSourceKind());
+  override fun updateExecutionPosition() {
+    updateExecutionPosition(this.currentSourceKind)
   }
 
-  private void updateExecutionPosition(@NotNull XSourceKind navigationSourceKind) {
+  private fun updateExecutionPosition(navigationSourceKind: XSourceKind) {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
-      boolean isTopFrame = isTopFrameSelected();
-      XSourcePosition mainSourcePosition = getFrameSourcePosition(getCurrentStackFrame(), XSourceKind.MAIN);
-      XSourcePosition alternativeSourcePosition = getFrameSourcePosition(getCurrentStackFrame(), XSourceKind.ALTERNATIVE);
-      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind);
-      updateExecutionPointGutterIconRenderer();
+      val isTopFrame = this.isTopFrameSelected
+      val mainSourcePosition = getFrameSourcePosition(getCurrentStackFrame(), XSourceKind.MAIN)
+      val alternativeSourcePosition = getFrameSourcePosition(getCurrentStackFrame(), XSourceKind.ALTERNATIVE)
+      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind)
+      updateExecutionPointGutterIconRenderer()
     }
   }
 
-  public boolean isTopFrameSelected() {
-    return myCurrentExecutionStack != null && myIsTopFrame;
-  }
+  val isTopFrameSelected: Boolean
+    get() = this.currentExecutionStack != null && myIsTopFrame
 
 
-  @Override
-  public void showExecutionPoint() {
-    if (mySuspendContext.getValue() != null) {
-      XExecutionStack executionStack = mySuspendContext.getValue().getActiveExecutionStack();
+  override fun showExecutionPoint() {
+    if (mySuspendContext!!.value != null) {
+      val executionStack = mySuspendContext.value!!.getActiveExecutionStack()
       if (executionStack != null) {
-        XStackFrame topFrame = executionStack.getTopFrame();
+        val topFrame = executionStack.getTopFrame()
         if (topFrame != null) {
-          setCurrentStackFrame(executionStack, topFrame, true);
-          myExecutionPointManager.showExecutionPosition();
+          setCurrentStackFrame(executionStack, topFrame, true)
+          myExecutionPointManager.showExecutionPosition()
         }
       }
     }
   }
 
-  @Override
-  public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame) {
-    if (mySuspendContext.getValue() == null) return;
+  override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
+    if (mySuspendContext!!.value == null) return
 
-    boolean frameChanged = getCurrentStackFrame() != frame;
-    myCurrentExecutionStack = executionStack;
-    myCurrentStackFrameManager.setCurrentStackFrame(frame);
-    myIsTopFrame = isTopFrame;
+    val frameChanged = getCurrentStackFrame() !== frame
+    this.currentExecutionStack = executionStack
+    myCurrentStackFrameManager.setCurrentStackFrame(frame)
+    myIsTopFrame = isTopFrame
 
     if (frameChanged) {
-      myDispatcher.getMulticaster().stackFrameChanged();
+      myDispatcher.getMulticaster().stackFrameChanged()
     }
 
-    activateSession(frameChanged);
+    activateSession(frameChanged)
   }
 
-  void activateSession(boolean forceUpdateExecutionPosition) {
-    boolean sessionChanged = myDebuggerManager.setCurrentSession(this);
+  fun activateSession(forceUpdateExecutionPosition: Boolean) {
+    val sessionChanged = myDebuggerManager.setCurrentSession(this)
     if (sessionChanged || forceUpdateExecutionPosition) {
-      updateExecutionPosition();
+      updateExecutionPosition()
     }
     else {
-      myExecutionPointManager.showExecutionPosition();
+      myExecutionPointManager.showExecutionPosition()
     }
   }
 
-  public XBreakpoint<?> getActiveNonLineBreakpoint() {
-    Pair<XBreakpoint<?>, XSourcePosition> pair = myActiveNonLineBreakpoint.get();
-    if (pair != null) {
-      XSourcePosition breakpointPosition = pair.getSecond();
-      XSourcePosition position = getTopFramePosition();
-      if (breakpointPosition == null ||
-          (position != null &&
-           !(breakpointPosition.getFile().equals(position.getFile()) && breakpointPosition.getLine() == position.getLine()))) {
-        return pair.getFirst();
+  val activeNonLineBreakpoint: XBreakpoint<*>?
+    get() {
+      val pair = myActiveNonLineBreakpoint.get()
+      if (pair != null) {
+        val breakpointPosition = pair.getSecond()
+        val position = getTopFramePosition()
+        if (breakpointPosition == null ||
+            (position != null &&
+             !(breakpointPosition.getFile() == position.getFile() && breakpointPosition.getLine() == position.getLine()))
+        ) {
+          return pair.getFirst()
+        }
       }
+      return null
     }
-    return null;
-  }
 
-  public void checkActiveNonLineBreakpointOnRemoval(@NotNull XBreakpoint<?> removedBreakpoint) {
-    Pair<XBreakpoint<?>, XSourcePosition> pair = myActiveNonLineBreakpoint.get();
-    if (pair != null && pair.getFirst() == removedBreakpoint) {
-      clearActiveNonLineBreakpoint();
-      updateExecutionPointGutterIconRenderer();
+  fun checkActiveNonLineBreakpointOnRemoval(removedBreakpoint: XBreakpoint<*>) {
+    val pair = myActiveNonLineBreakpoint.get()
+    if (pair != null && pair.getFirst() === removedBreakpoint) {
+      clearActiveNonLineBreakpoint()
+      updateExecutionPointGutterIconRenderer()
     }
   }
 
-  private void clearActiveNonLineBreakpoint() {
-    myActiveNonLineBreakpoint.set(null);
+  private fun clearActiveNonLineBreakpoint() {
+    myActiveNonLineBreakpoint.set(null)
   }
 
-  void updateExecutionPointGutterIconRenderer() {
+  fun updateExecutionPointGutterIconRenderer() {
     if (myDebuggerManager.getCurrentSession() == this) {
-      boolean isTopFrame = isTopFrameSelected();
-      GutterIconRenderer renderer = getPositionIconRenderer(isTopFrame);
-      myExecutionPointManager.setGutterIconRenderer(renderer);
+      val isTopFrame = this.isTopFrameSelected
+      val renderer = getPositionIconRenderer(isTopFrame)
+      myExecutionPointManager.gutterIconRenderer = renderer
     }
   }
 
-  private @Nullable GutterIconRenderer getPositionIconRenderer(boolean isTopFrame) {
+  private fun getPositionIconRenderer(isTopFrame: Boolean): GutterIconRenderer? {
     if (!isTopFrame) {
-      return null;
+      return null
     }
-    XBreakpoint<?> activeNonLineBreakpoint = getActiveNonLineBreakpoint();
+    val activeNonLineBreakpoint = this.activeNonLineBreakpoint
     if (activeNonLineBreakpoint != null) {
-      return ((XBreakpointBase<?, ?, ?>)activeNonLineBreakpoint).createGutterIconRenderer();
+      return (activeNonLineBreakpoint as XBreakpointBase<*, *, *>).createGutterIconRenderer()
     }
-    if (myCurrentExecutionStack != null) {
-      return myCurrentExecutionStack.getExecutionLineIconRenderer();
+    if (this.currentExecutionStack != null) {
+      return currentExecutionStack!!.getExecutionLineIconRenderer()
     }
-    return null;
+    return null
   }
 
-  @Override
-  public void updateBreakpointPresentation(final @NotNull XLineBreakpoint<?> breakpoint,
-                                           final @Nullable Icon icon,
-                                           final @Nullable String errorMessage) {
-    CustomizedBreakpointPresentation presentation;
-    synchronized (myRegisteredBreakpoints) {
-      presentation = myRegisteredBreakpoints.get(breakpoint);
+  override fun updateBreakpointPresentation(
+    breakpoint: XLineBreakpoint<*>,
+    icon: Icon?,
+    errorMessage: String?,
+  ) {
+    val presentation: CustomizedBreakpointPresentation?
+    synchronized(myRegisteredBreakpoints) {
+      presentation = myRegisteredBreakpoints.get(breakpoint)
       if (presentation == null ||
-          (Comparing.equal(presentation.getIcon(), icon) && Comparing.strEqual(presentation.getErrorMessage(), errorMessage))) {
-        return;
+          (Comparing.equal<Icon?>(presentation.getIcon(), icon) && Comparing.strEqual(presentation.getErrorMessage(), errorMessage))
+      ) {
+        return
       }
 
-      presentation.setErrorMessage(errorMessage);
-      presentation.setIcon(icon);
+      presentation.setErrorMessage(errorMessage)
+      presentation.setIcon(icon)
 
-      long timestamp = presentation.getTimestamp();
-      if (timestamp != 0 && XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(icon)) {
-        long delay = System.currentTimeMillis() - timestamp;
-        presentation.setTimestamp(0);
-        BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, delay);
+      val timestamp = presentation.getTimestamp()
+      if (timestamp != 0L && XDebuggerUtilImpl.getVerifiedIcon(breakpoint) == icon) {
+        val delay = System.currentTimeMillis() - timestamp
+        presentation.setTimestamp(0)
+        reportBreakpointVerified(breakpoint, delay)
       }
     }
-    XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager();
-    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate(breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this));
+    val debuggerManager = myDebuggerManager.getBreakpointManager()
+    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate(breakpoint, Runnable {
+      debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this)
+    })
   }
 
-  @Override
-  public void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint) {
-    updateBreakpointPresentation(breakpoint, XDebuggerUtilImpl.getVerifiedIcon(breakpoint), null);
+  override fun setBreakpointVerified(breakpoint: XLineBreakpoint<*>) {
+    updateBreakpointPresentation(breakpoint, XDebuggerUtilImpl.getVerifiedIcon(breakpoint), null)
   }
 
-  @Override
-  public void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage) {
-    updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
+  override fun setBreakpointInvalid(breakpoint: XLineBreakpoint<*>, errorMessage: String?) {
+    updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
   }
 
-  @Override
-  public boolean breakpointReached(final @NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
-                                   @NotNull XSuspendContext suspendContext) {
-    return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true);
+  override fun breakpointReached(
+    breakpoint: XBreakpoint<*>, evaluatedLogExpression: String?,
+    suspendContext: XSuspendContext,
+  ): Boolean {
+    return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true)
   }
 
-  public void breakpointReachedNoProcessing(final @NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext) {
-    breakpointReached(breakpoint, null, suspendContext, false);
+  fun breakpointReachedNoProcessing(breakpoint: XBreakpoint<*>, suspendContext: XSuspendContext) {
+    breakpointReached(breakpoint, null, suspendContext, false)
   }
 
-  private boolean breakpointReached(final @NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
-                                    @NotNull XSuspendContext suspendContext, boolean doProcessing) {
+  private fun breakpointReached(
+    breakpoint: XBreakpoint<*>, evaluatedLogExpression: String?,
+    suspendContext: XSuspendContext, doProcessing: Boolean,
+  ): Boolean {
     if (doProcessing) {
       if (breakpoint.isLogMessage()) {
-        XSourcePosition position = breakpoint.getSourcePosition();
-        OpenFileHyperlinkInfo hyperlinkInfo =
-          position != null ? new OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) : null;
-        printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", XBreakpointUtil.getShortText(breakpoint), hyperlinkInfo);
+        val position = breakpoint.getSourcePosition()
+        val hyperlinkInfo =
+          if (position != null) OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) else null
+        printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", getShortText(breakpoint), hyperlinkInfo)
       }
 
       if (breakpoint.isLogStack()) {
-        myDebugProcess.logStack(suspendContext, this);
+        myDebugProcess!!.logStack(suspendContext, this)
       }
 
       if (evaluatedLogExpression != null) {
-        printMessage(evaluatedLogExpression, null, null);
+        printMessage(evaluatedLogExpression, null, null)
       }
 
-      processDependencies(breakpoint);
+      processDependencies(breakpoint)
 
       if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
-        return false;
+        return false
       }
     }
 
     NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit")
       .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
-      .notify(getProject());
+      .notify(getProject())
 
-    if (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) {
+    if (breakpoint !is XLineBreakpoint<*> || breakpoint.getType().canBeHitInOtherPlaces()) {
       // precompute source position for faster access later
-      myActiveNonLineBreakpoint.set(Pair.create(breakpoint, breakpoint.getSourcePosition()));
+      myActiveNonLineBreakpoint.set(Pair.create<XBreakpoint<*>?, XSourcePosition?>(breakpoint, breakpoint.getSourcePosition()))
     }
     else {
-      myActiveNonLineBreakpoint.set(null);
+      myActiveNonLineBreakpoint.set(null)
     }
 
     // set this session active on breakpoint, update execution position will be called inside positionReached
-    myDebuggerManager.setCurrentSession(this);
+    myDebuggerManager.setCurrentSession(this)
 
-    positionReachedInternal(suspendContext, true);
+    positionReachedInternal(suspendContext, true)
 
-    if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint<?>)breakpoint).isTemporary()) {
-      handleTemporaryBreakpointHit(breakpoint);
+    if (doProcessing && breakpoint is XLineBreakpoint<*> && breakpoint.isTemporary()) {
+      handleTemporaryBreakpointHit(breakpoint)
     }
-    return true;
+    return true
   }
 
-  private void handleTemporaryBreakpointHit(final XBreakpoint<?> breakpoint) {
-    addSessionListener(new XDebugSessionListener() {
-      private void removeBreakpoint() {
-        XDebuggerUtil.getInstance().removeBreakpoint(myProject, breakpoint);
-        removeSessionListener(this);
+  private fun handleTemporaryBreakpointHit(breakpoint: XBreakpoint<*>?) {
+    addSessionListener(object : XDebugSessionListener {
+      fun removeBreakpoint() {
+        XDebuggerUtil.getInstance().removeBreakpoint(myProject, breakpoint)
+        removeSessionListener(this)
       }
 
-      @Override
-      public void sessionResumed() {
-        removeBreakpoint();
+      override fun sessionResumed() {
+        removeBreakpoint()
       }
 
-      @Override
-      public void sessionStopped() {
-        removeBreakpoint();
+      override fun sessionStopped() {
+        removeBreakpoint()
       }
-    });
+    })
   }
 
-  public void processDependencies(final XBreakpoint<?> breakpoint) {
-    XDependentBreakpointManager dependentBreakpointManager = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager();
-    if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return;
+  fun processDependencies(breakpoint: XBreakpoint<*>) {
+    val dependentBreakpointManager = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager()
+    if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return
 
-    List<XBreakpoint<?>> breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint);
-    breakpoints.forEach(myInactiveSlaveBreakpoints::remove);
-    for (XBreakpoint<?> slaveBreakpoint : breakpoints) {
-      processAllHandlers(slaveBreakpoint, true);
+    val breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint)
+    breakpoints.forEach(Consumer { o: XBreakpoint<*>? -> myInactiveSlaveBreakpoints.remove(o) })
+    for (slaveBreakpoint in breakpoints) {
+      processAllHandlers(slaveBreakpoint, true)
     }
 
     if (dependentBreakpointManager.getMasterBreakpoint(breakpoint) != null && !dependentBreakpointManager.isLeaveEnabled(breakpoint)) {
-      boolean added = myInactiveSlaveBreakpoints.add(breakpoint);
+      val added = myInactiveSlaveBreakpoints.add(breakpoint)
       if (added) {
-        processAllHandlers(breakpoint, false);
-        myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(breakpoint);
+        processAllHandlers(breakpoint, false)
+        myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(breakpoint)
       }
     }
   }
 
-  private void printMessage(final String message, final String hyperLinkText, final @Nullable HyperlinkInfo info) {
-    AppUIUtil.invokeOnEdt(() -> {
-      myConsoleView.print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
+  private fun printMessage(message: String, hyperLinkText: String?, info: HyperlinkInfo?) {
+    invokeOnEdt(Runnable {
+      myConsoleView!!.print(message, ConsoleViewContentType.SYSTEM_OUTPUT)
       if (info != null) {
-        myConsoleView.printHyperlink(hyperLinkText, info);
+        myConsoleView!!.printHyperlink(hyperLinkText!!, info)
       }
       else if (hyperLinkText != null) {
-        myConsoleView.print(hyperLinkText, ConsoleViewContentType.SYSTEM_OUTPUT);
+        myConsoleView!!.print(hyperLinkText, ConsoleViewContentType.SYSTEM_OUTPUT)
       }
-      myConsoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-    });
+      myConsoleView!!.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT)
+    })
   }
 
-  public void unsetPaused() {
-    myPaused.setValue(false);
+  fun unsetPaused() {
+    myPaused!!.value = false
   }
 
-  private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
+  private fun positionReachedInternal(suspendContext: XSuspendContext, attract: Boolean) {
     if (handlePositionReaching(suspendContext, attract)) {
-      return;
+      return
     }
 
-    setBreakpointsDisabledTemporarily(false);
-    mySuspendContext.setValue(suspendContext);
-    mySuspendCoroutineScope = XDebuggerSuspendScopeProvider.INSTANCE.provideSuspendScope(this);
-    myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
-    XStackFrame newCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
-    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame);
-    myIsTopFrame = true;
-    myTopStackFrame = newCurrentStackFrame;
-    XSourcePosition topFramePosition = getTopFramePosition();
+    setBreakpointsDisabledTemporarily(false)
+    mySuspendContext!!.value = suspendContext
+    this.suspendCoroutineScope = provideSuspendScope(this)
+    this.currentExecutionStack = suspendContext.getActiveExecutionStack()
+    val newCurrentStackFrame = if (this.currentExecutionStack != null) currentExecutionStack!!.getTopFrame() else null
+    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
+    myIsTopFrame = true
+    myTopStackFrame = newCurrentStackFrame
+    val topFramePosition = getTopFramePosition()
 
-    boolean isSteppingSuspendContext = suspendContext instanceof XSteppingSuspendContext;
+    val isSteppingSuspendContext = suspendContext is XSteppingSuspendContext
 
-    myPaused.setValue(!isSteppingSuspendContext);
+    myPaused!!.value = !isSteppingSuspendContext
 
     if (!isSteppingSuspendContext) {
-      boolean isAlternative = myAlternativeSourceHandler != null &&
-                              myAlternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext);
-      updateExecutionPosition(isAlternative ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN);
+      val isAlternative = myAlternativeSourceHandler != null &&
+                          myAlternativeSourceHandler!!.isAlternativeSourceKindPreferred(suspendContext)
+      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
     }
 
-    logPositionReached(topFramePosition);
+    logPositionReached(topFramePosition)
 
-    final boolean needsInitialization = myTabInitDataFlow.getValue() == null;
+    val needsInitialization = myTabInitDataFlow.value == null
     if (needsInitialization || attract) {
-      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+      invokeLaterIfProjectAlive(myProject, Runnable {
         if (needsInitialization) {
-          initSessionTab(null, true);
+          initSessionTab(null, true)
         }
+        // user attractions should only be made if event happens independently (e.g. program paused/suspended)
+        // and should not be made when user steps in the code
+        if (attract) {
+          if (mySessionTab == null) {
+            LOG.debug("Cannot request focus because Session Tab is not initialized yet")
+            return@Runnable
+          }
 
-        boolean topFrameIsAbsent = topFramePosition == null;
-        if (XDebugSessionProxy.useFeProxy()) {
-          myPausedFlow.setValue(new XDebugSessionPausedInfo(attract, topFrameIsAbsent));
+          if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+            mySessionTab!!.toFront(true, Runnable { this.updateExecutionPosition() })
+          }
+
+          if (topFramePosition == null) {
+            // if there is no source position available, we should somehow tell the user that session is stopped.
+            // the best way is to show the stack frames.
+            XDebugSessionTab.showFramesView(this)
+          }
+
+          mySessionTab!!.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
         }
-        else {
-          // We have to keep this code because Code with Me expects BE to work with tab similar to monolith
-          assert mySessionTab != null;
-          mySessionTab.onPause(attract, topFrameIsAbsent);
-        }
-      });
+      })
     }
 
-    myDispatcher.getMulticaster().sessionPaused();
+    myDispatcher.getMulticaster().sessionPaused()
   }
 
-  @Override
-  public void positionReached(final @NotNull XSuspendContext suspendContext) {
-    positionReached(suspendContext, false);
+  override fun positionReached(suspendContext: XSuspendContext) {
+    positionReached(suspendContext, false)
   }
 
-  public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
-    clearActiveNonLineBreakpoint();
-    positionReachedInternal(suspendContext, attract);
+  fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+    clearActiveNonLineBreakpoint()
+    positionReachedInternal(suspendContext, attract)
   }
 
-  @Override
-  public void sessionResumed() {
-    doResume();
+  override fun sessionResumed() {
+    doResume()
   }
 
-  @ApiStatus.Internal
-  public StateFlow<Boolean> isStoppedState() {
-    return myStopped;
+  @get:ApiStatus.Internal
+  val isStoppedState: StateFlow<Boolean>
+    get() = myStopped
+
+  override fun isStopped(): Boolean {
+    return myStopped!!.value!!
   }
 
-  @Override
-  public boolean isStopped() {
-    return myStopped.getValue();
-  }
-
-  private void stopImpl() {
-    if (!myStopped.compareAndSet(false, true)) {
-      return;
+  private fun stopImpl() {
+    if (!myStopped!!.compareAndSet(false, true)) {
+      return
     }
 
     try {
-      removeBreakpointListeners();
+      removeBreakpointListeners()
     }
     finally {
-      myDebugProcess.stopAsync()
-        .onSuccess(aVoid -> {
-          processStopped();
-        });
+      myDebugProcess!!.stopAsync()
+        .onSuccess(Consumer { aVoid: Any? ->
+          processStopped()
+        })
     }
   }
 
-  private void processStopped() {
+  private fun processStopped() {
     if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+      myProject.getMessageBus().syncPublisher<XDebuggerManagerListener>(XDebuggerManager.TOPIC).processStopped(myDebugProcess!!)
     }
 
-    if (!isTabInitialized() && myConsoleView != null) {
-      AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));
+    if (mySessionTab != null) {
+      invokeOnEdt(Runnable {
+        mySessionTab!!.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION)
+        if (!myProject.isDisposed()) {
+          (mySessionTab!!.getWatchesView() as XWatchesViewImpl).updateSessionData()
+        }
+        mySessionTab!!.detachFromSession()
+      })
+    }
+    else if (myConsoleView != null) {
+      invokeOnEdt(Runnable { Disposer.dispose(myConsoleView!!) })
     }
 
-    clearPausedData();
+    clearPausedData()
 
     if (myValueMarkers != null) {
-      myValueMarkers.clear();
+      myValueMarkers!!.clear()
     }
     if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
-      mySessionData.setBreakpointsMuted(false);
+      sessionData.setBreakpointsMuted(false)
     }
-    myDebuggerManager.removeSession(this);
-    myDispatcher.getMulticaster().sessionStopped();
-    myDispatcher.getListeners().clear();
+    myDebuggerManager.removeSession(this)
+    myDispatcher.getMulticaster().sessionStopped()
+    myDispatcher.getListeners().clear()
 
-    myProject.putUserData(InlineDebugRenderer.LinePainter.CACHE, null);
+    myProject.putUserData(InlineDebugRenderer.LinePainter.CACHE, null)
 
-    synchronized (myRegisteredBreakpoints) {
-      myRegisteredBreakpoints.clear();
+    synchronized(myRegisteredBreakpoints) {
+      myRegisteredBreakpoints.clear()
     }
 
-    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
+    coroutineScope.cancel(null)
   }
 
-  private void removeBreakpointListeners() {
-    Disposable breakpointListenerDisposable = myBreakpointListenerDisposable;
+  private fun removeBreakpointListeners() {
+    val breakpointListenerDisposable = myBreakpointListenerDisposable
     if (breakpointListenerDisposable != null) {
-      myBreakpointListenerDisposable = null;
-      Disposer.dispose(breakpointListenerDisposable);
+      myBreakpointListenerDisposable = null
+      Disposer.dispose(breakpointListenerDisposable)
     }
   }
 
-  public boolean isInactiveSlaveBreakpoint(final XBreakpoint<?> breakpoint) {
-    return myInactiveSlaveBreakpoints.contains(breakpoint);
+  fun isInactiveSlaveBreakpoint(breakpoint: XBreakpoint<*>?): Boolean {
+    return myInactiveSlaveBreakpoints.contains(breakpoint)
   }
 
-  @Override
-  public void stop() {
-    stop(myDebugProcess);
+  override fun stop() {
+    stop(myDebugProcess)
   }
 
-  private void stop(XDebugProcess process) {
-    ProcessHandler processHandler = process == null ? null : process.getProcessHandler();
-    if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
+  private fun stop(process: XDebugProcess?) {
+    val processHandler = if (process == null) null else process.getProcessHandler()
+    if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return
 
     if (processHandler.detachIsDefault()) {
-      processHandler.detachProcess();
+      processHandler.detachProcess()
     }
     else {
-      processHandler.destroyProcess();
+      processHandler.destroyProcess()
     }
   }
 
-  @Override
-  public void reportError(final @NotNull String message) {
-    reportMessage(message, MessageType.ERROR);
+  override fun reportError(message: String) {
+    reportMessage(message, MessageType.ERROR)
   }
 
-  @Override
-  public void reportMessage(final @NotNull String message, final @NotNull MessageType type) {
-    reportMessage(message, type, null);
+  override fun reportMessage(message: String, type: MessageType) {
+    reportMessage(message, type, null)
   }
 
-  @Override
-  public void reportMessage(final @NotNull String message, final @NotNull MessageType type, final @Nullable HyperlinkListener listener) {
-    Notification notification = XDebuggerManagerImpl.getNotificationGroup().createNotification(message, type.toNotificationType());
+  override fun reportMessage(message: String, type: MessageType, listener: HyperlinkListener?) {
+    val notification = XDebuggerManagerImpl.getNotificationGroup().createNotification(message, type.toNotificationType())
     if (listener != null) {
-      notification.setListener((__, event) -> {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          listener.hyperlinkUpdate(event);
+      notification.setListener(NotificationListener { `__`: Notification?, event: HyperlinkEvent? ->
+        if (event!!.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          listener.hyperlinkUpdate(event)
         }
-      });
+      })
     }
-    notification.notify(myProject);
+    notification.notify(myProject)
   }
 
-  private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
-    @Override
-    public void breakpointAdded(final @NotNull XBreakpoint<?> breakpoint) {
+  private inner class MyBreakpointListener : XBreakpointListener<XBreakpoint<*>?> {
+    override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
       if (processAdd(breakpoint)) {
-        CustomizedBreakpointPresentation presentation = getBreakpointPresentation(breakpoint);
+        val presentation = getBreakpointPresentation(breakpoint)
         if (presentation != null) {
-          if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(presentation.getIcon())) {
-            BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, 0);
+          if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint) == presentation.getIcon()) {
+            reportBreakpointVerified(breakpoint, 0)
           }
           else {
-            presentation.setTimestamp(System.currentTimeMillis());
+            presentation.setTimestamp(System.currentTimeMillis())
           }
         }
       }
     }
 
-    @Override
-    public void breakpointRemoved(final @NotNull XBreakpoint<?> breakpoint) {
-      checkActiveNonLineBreakpointOnRemoval(breakpoint);
-      processRemove(breakpoint);
+    override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
+      checkActiveNonLineBreakpointOnRemoval(breakpoint)
+      processRemove(breakpoint)
     }
 
-    void processRemove(final @NotNull XBreakpoint<?> breakpoint) {
-      processAllHandlers(breakpoint, false);
+    fun processRemove(breakpoint: XBreakpoint<*>) {
+      processAllHandlers(breakpoint, false)
     }
 
-    boolean processAdd(final @NotNull XBreakpoint<?> breakpoint) {
+    fun processAdd(breakpoint: XBreakpoint<*>): Boolean {
       if (!myBreakpointsDisabled) {
-        processAllHandlers(breakpoint, true);
-        return true;
+        processAllHandlers(breakpoint, true)
+        return true
       }
-      return false;
+      return false
     }
 
-    @Override
-    public void breakpointChanged(final @NotNull XBreakpoint<?> breakpoint) {
-      processRemove(breakpoint);
-      processAdd(breakpoint);
+    override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
+      processRemove(breakpoint)
+      processAdd(breakpoint)
     }
   }
 
-  private class MyDependentBreakpointListener implements XDependentBreakpointListener {
-    @Override
-    public void dependencySet(final @NotNull XBreakpoint<?> slave, final @NotNull XBreakpoint<?> master) {
-      boolean added = myInactiveSlaveBreakpoints.add(slave);
+  private inner class MyDependentBreakpointListener : XDependentBreakpointListener {
+    override fun dependencySet(slave: XBreakpoint<*>, master: XBreakpoint<*>) {
+      val added = myInactiveSlaveBreakpoints.add(slave)
       if (added) {
-        processAllHandlers(slave, false);
+        processAllHandlers(slave, false)
       }
     }
 
-    @Override
-    public void dependencyCleared(final XBreakpoint<?> breakpoint) {
-      boolean removed = myInactiveSlaveBreakpoints.remove(breakpoint);
+    override fun dependencyCleared(breakpoint: XBreakpoint<*>) {
+      val removed = myInactiveSlaveBreakpoints.remove(breakpoint)
       if (removed) {
-        processAllHandlers(breakpoint, true);
+        processAllHandlers(breakpoint, true)
       }
     }
   }
 
   /**
    * Configuration name is either configuration type ID or session name.
-   * <p/>
+   *
+   *
    * Configuration type ID is the preferred way to reuse watches within the same configuration type,
    * e.g., in different test run configurations.
    */
-  private @NotNull String computeConfigurationName() {
-    if (myEnvironment != null) {
-      RunProfile profile = myEnvironment.getRunProfile();
-      if (profile instanceof RunConfiguration) {
-        return ((RunConfiguration)profile).getType().getId();
+  private fun computeConfigurationName(): String {
+    if (this.executionEnvironment != null) {
+      val profile = executionEnvironment.getRunProfile()
+      if (profile is RunConfiguration) {
+        return profile.getType().getId()
       }
     }
-    return getSessionName();
+    return getSessionName()
   }
 
-  public @Nullable ExecutionEnvironment getExecutionEnvironment() {
-    return myEnvironment;
+  private fun rememberUserActionStart(action: String) {
+    myUserRequestStart = System.currentTimeMillis()
+    myUserRequestAction = action
   }
 
-  private void rememberUserActionStart(@NotNull String action) {
-    myUserRequestStart = System.currentTimeMillis();
-    myUserRequestAction = action;
-  }
-
-  private void logPositionReached(@Nullable XSourcePosition topFramePosition) {
-    FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
+  private fun logPositionReached(topFramePosition: XSourcePosition?) {
+    val fileType = if (topFramePosition != null) topFramePosition.getFile().getFileType() else null
     if (myUserRequestAction != null) {
-      long durationMs = System.currentTimeMillis() - myUserRequestStart;
+      val durationMs = System.currentTimeMillis() - myUserRequestStart
       if (PERFORMANCE_LOG.isDebugEnabled()) {
-        PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms");
+        PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms")
       }
-      XDebuggerPerformanceCollector.logExecutionPointReached(myProject, fileType, myUserRequestAction, durationMs);
-      myUserRequestAction = null;
+      XDebuggerPerformanceCollector.logExecutionPointReached(myProject, fileType, myUserRequestAction!!, durationMs)
+      myUserRequestAction = null
     }
     else {
-      XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
+      logBreakpointReached(myProject, fileType)
     }
   }
 
-  private boolean handlePositionReaching(@NotNull XSuspendContext context, boolean attract) {
-    return isMixedMode() && ((XMixedModeCombinedDebugProcess)myDebugProcess).handlePositionReached(context, attract);
+  private fun handlePositionReaching(context: XSuspendContext, attract: Boolean): Boolean {
+    return isMixedMode() && (myDebugProcess as XMixedModeCombinedDebugProcess).handlePositionReached(context, attract)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(XDebugSessionImpl::class.java)
+    private val PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance")
+
+    // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
+    private val ALWAYS_FALSE_STATE = MutableStateFlow<Boolean>(false).asStateFlow<Boolean>()
+
+    //need to compile under 1.8, please do not remove before checking
+    private fun getBreakpointTypeClass(handler: XBreakpointHandler<*>): XBreakpointType<*, *>? {
+      return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass())
+    }
   }
 }

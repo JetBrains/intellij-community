@@ -70,7 +70,7 @@ internal class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
 @Internal
 open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
-    return !session.isPauseActionSupported || session.isPaused
+    return !session.isPauseActionSupported() || session.isPaused
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
@@ -104,7 +104,7 @@ internal open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugAction
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
-    if (session.isReadOnly || !session.isPauseActionSupported) return
+    if (session.isReadOnly || !session.isPauseActionSupported()) return
 
     if (session.isPaused) session.resume() else session.pause()
   }
@@ -117,7 +117,7 @@ internal open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugAction
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     dataContext?.getData(CommonDataKeys.PROJECT)?.let { pr ->
       RunWidgetResumeManager.getInstance(pr).let {
-        return session.isReadOnly || !session.isPauseActionSupported
+        return session.isReadOnly || !session.isPauseActionSupported()
       }
     }
     return false
