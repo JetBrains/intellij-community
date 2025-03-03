@@ -11,7 +11,6 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,6 +25,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
+import org.intellij.markdown.MarkdownParsingException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,10 +249,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       try {
         return convertMarkdownToHtml(markdownDescription);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
+      catch (MarkdownParsingException e) {
         Logger.getInstance(JsonSchemaDocumentationProvider.class).error(e);
       }
     }
