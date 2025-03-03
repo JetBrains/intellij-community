@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -233,7 +234,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           cell(syncConfigPanel)
             .onReset(syncConfigPanel::reset)
             .onIsModified{
-              enabledStatus.get() != SettingsSyncSettings.getInstance().syncEnabled || syncConfigPanel.isModified()
+              enabledStatus.get() != SettingsSyncSettings.getInstance().syncEnabled
+              || syncConfigPanel.isModified()
+              || userDropDownLink.selectedItem?.userId != SettingsSyncLocalSettings.getInstance().userId
             }
             .onApply {
               with(SettingsSyncLocalSettings.getInstance()) {
@@ -304,6 +307,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       else {
         0
       }
+    }
+  }
+
+  private fun disableCurrentSyncDialog() {
+    val code = MessagesService.getInstance().showMessageDialog(
+      null, null, message("disable.active.sync.message"), message("disable.active.sync.title"),
+      arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
+      1, -1, Messages.getInformationIcon(), null, false, null
+    )
+    if (code == 1) {
+      enabledStatus.set(false)
+      disableSyncOption.set(DisableSyncType.DISABLE)
     }
   }
 
@@ -418,7 +433,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun tryChangeAccount(selectedValue: UserProviderHolder) {
-    if (selectedValue == UserProviderHolder.addAccount) {
+    if (enabledStatus.get() || SettingsSyncSettings.getInstance().syncEnabled) {
+      disableCurrentSyncDialog()
+    } else if (selectedValue == UserProviderHolder.addAccount) {
       val syncTypeDialog = AddAccountDialog(configPanel)
       if (syncTypeDialog.showAndGet()) {
         val providerCode = syncTypeDialog.providerCode
