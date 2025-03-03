@@ -133,6 +133,8 @@ java_library(
     "//plugins/devkit/intellij.devkit.plugin:plugin-main",
     "//plugins/eclipse",
     "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared:vcs-git-shared",
+    "//plugins/git4idea/frontend:vcs-git-frontend",
     "//plugins/git-features-trainer:vcs-git-featuresTrainer",
     "//images",
     "//plugins/groovy",

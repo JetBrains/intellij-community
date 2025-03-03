@@ -11,6 +11,7 @@ jvm_library(
   module_name = "fleet.multiplatform.shims",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  plugins = ["@lib//:expects-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     ":fleet-util-multiplatform_provided",

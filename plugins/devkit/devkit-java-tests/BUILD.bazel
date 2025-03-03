@@ -56,6 +56,7 @@ jvm_library(
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
   ],
   runtime_deps = [
     ":java-tests_test_resources",

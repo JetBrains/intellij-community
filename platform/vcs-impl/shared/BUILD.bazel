@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util:util-ui",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//platform/platform-impl/rpc:ide-rpc",
   ],
   runtime_deps = [":vcs-impl-shared_resources"]
 )

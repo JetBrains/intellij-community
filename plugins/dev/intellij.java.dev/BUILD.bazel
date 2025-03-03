@@ -26,8 +26,9 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
     "//java/debugger/impl:java-debugger-impl",
-    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-analysis-api:analysis",
     "//java/compiler/openapi:java-compiler",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
   ],
   runtime_deps = [":java-dev_resources"]
 )

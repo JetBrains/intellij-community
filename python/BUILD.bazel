@@ -70,6 +70,8 @@ java_library(
     "//plugins/hg4idea:vcs-hg",
     "//plugins/svn4idea:vcs-svn",
     "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared:vcs-git-shared",
+    "//plugins/git4idea/frontend:vcs-git-frontend",
     "//plugins/git-features-trainer:vcs-git-featuresTrainer",
     "//xml/relaxng",
     "//plugins/github/github-core:vcs-github",

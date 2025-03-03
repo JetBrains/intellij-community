@@ -36,6 +36,7 @@ jvm_library(
     "@lib//:jackson-databind",
     "@lib//:jackson",
     "@lib//:jackson-dataformat-yaml",
+    "@lib//:jetbrains-markdown",
     "@lib//:caffeine",
     "@lib//:stream_ex",
     "@lib//:kotlinx-collections-immutable",

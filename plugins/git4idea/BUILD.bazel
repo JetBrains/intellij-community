@@ -86,6 +86,11 @@ jvm_library(
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//plugins/git4idea/shared:vcs-git-shared",
+    "//plugins/git4idea/frontend:vcs-git-frontend",
+    "//platform/kernel/backend",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/project/shared:project",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -185,6 +190,11 @@ jvm_library(
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//plugins/git4idea/shared:vcs-git-shared",
+    "//plugins/git4idea/frontend:vcs-git-frontend",
+    "//platform/kernel/backend",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [
     ":vcs-git_resources",
