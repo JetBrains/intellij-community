@@ -113,7 +113,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
       PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.isDependentOnCoreClassLoader = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> descriptor.isSeparateJar = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?

@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.ModuleDependenciesDescriptor
+import com.intellij.ide.plugins.PluginContentDescriptor
+import com.intellij.ide.plugins.PluginDependency
 import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -40,7 +43,7 @@ class RawPluginDescriptor {
   @JvmField var isRestartRequired: Boolean = false
   @JvmField var isLicenseOptional: Boolean = false
   // makes sense only for product modules for now
-  @JvmField var isDependentOnCoreClassLoader: Boolean = true
+  @JvmField var isIndependentFromCoreClassLoader: Boolean = false
 
   @JvmField var productCode: String? = null
   @JvmField var releaseDate: LocalDate? = null
