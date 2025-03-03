@@ -208,10 +208,10 @@ private fun readRootElementChild(
     }
     PluginXmlConst.INCOMPATIBLE_WITH_ELEM -> {
       getNullifiedContent(reader)?.let {
-        if (descriptor.incompatibilities == null) {
-          descriptor.incompatibilities = ArrayList()
+        if (descriptor.incompatibleWith == null) {
+          descriptor.incompatibleWith = ArrayList()
         }
-        descriptor.incompatibilities!!.add(PluginId.getId(it))
+        descriptor.incompatibleWith!!.add(PluginId.getId(it))
       }
     }
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)

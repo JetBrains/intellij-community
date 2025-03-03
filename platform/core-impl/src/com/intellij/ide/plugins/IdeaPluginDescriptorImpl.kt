@@ -90,7 +90,7 @@ class IdeaPluginDescriptorImpl(
   val pluginDependencies: List<PluginDependency>
 
   @JvmField
-  val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
+  val incompatibilities: List<PluginId> = raw.incompatibleWith ?: Java11Shim.INSTANCE.listOf()
 
   init {
     if (moduleName != null) {

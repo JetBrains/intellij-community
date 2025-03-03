@@ -54,7 +54,7 @@ class RawPluginDescriptor {
   @JvmField var depends: MutableList<PluginDependency>? = null
   @JvmField var actions: MutableList<ActionElement>? = null
 
-  @JvmField var incompatibilities: MutableList<PluginId>? = null
+  @JvmField var incompatibleWith: MutableList<PluginId>? = null
 
   @JvmField val appContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
