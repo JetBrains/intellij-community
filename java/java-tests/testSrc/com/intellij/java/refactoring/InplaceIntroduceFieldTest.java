@@ -6,10 +6,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceField/";
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
 
   public void testAnchor() {
     doTest(null);
@@ -69,6 +77,10 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
 
   public void testStatementsBeforeSuper() {
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
+  }
+  
+  public void testNoExternalTypeAnnotations() {
+    doTest(null);
   }
 
   @Override
