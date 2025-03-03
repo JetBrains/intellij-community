@@ -266,7 +266,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * @see [PluginLayout.semanticVersioning]
      */
-    var semanticVersioning: Boolean = false
+    var semanticVersioning: Boolean = true
       set(value) {
         layout.semanticVersioning = value
       }
