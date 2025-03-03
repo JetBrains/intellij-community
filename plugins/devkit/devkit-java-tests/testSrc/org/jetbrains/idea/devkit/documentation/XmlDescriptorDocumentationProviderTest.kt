@@ -338,11 +338,10 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#element:root__internalElement__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__internalElement__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a> <i>internal</i></li>" +
       "</ul>" +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An internal note for the element."
+      "<p>An internal note for the element."
     )
   }
 
@@ -355,9 +354,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> / <b><code>@internalAttribute</code></b><hr/>\n" +
       "Description of <code>internalAttribute</code>." +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An internal note for the attribute."
+      "<p>An internal note for the attribute."
     )
   }
 
@@ -377,11 +375,10 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a> <i>internal</i></li>" +
       "</ul>" +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
+      "<p>An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
     )
   }
 
@@ -401,11 +398,10 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks__internalChildElement\"><code>&lt;internalChildElement&gt;</code></a> <i>internal</i></li>" +
       "</ul>" +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An internal link note for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
+      "<p>An internal link note for the <a href=\"psi_element://#element:root__any\"><code>element</code></a>."
     )
   }
 
@@ -419,9 +415,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> / <b><code>@attributeWithInternalLinks</code></b><hr/>\n" +
       "<a href=\"https://example.com\">First</a> and <a href=\"https://example.com\"><code>second</code> internal</a>." +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
+      "<p>An <a href=\"https://example.com/2\">internal link note</a> for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
     )
   }
 
@@ -435,9 +430,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> / <b><code>@attributeWithInternalLinks</code></b><hr/>\n" +
       "<a href=\"https://example.com\">First</a> and <code>second</code> internal." +
-      "<hr>" +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
-      "An internal link note for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
+      "<p>An internal link note for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
     )
   }
 

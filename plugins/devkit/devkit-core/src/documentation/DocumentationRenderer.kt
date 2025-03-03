@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
+import com.intellij.icons.AllIcons
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.containers.addIfNotNull
+import javax.swing.Icon
 
 private const val HEADER_LEVEL = "#####"
 
@@ -132,20 +134,20 @@ internal class DocumentationRenderer(private val project: Project) {
     val indent = attributesLine.takeWhile { it == ' ' }
     val style = attributes["style"]
     val icon = when (style) {
-      "warning" -> "AllIcons.General.Warning"
-      "info" -> "AllIcons.General.Information"
-      else -> "AllIcons.Actions.IntentionBulbGrey"
+      "warning" -> "AllIcons.General.Warning" to AllIcons.General.Warning
+      "info" -> "AllIcons.General.Information" to AllIcons.General.Information
+      else -> "AllIcons.Actions.IntentionBulbGrey" to AllIcons.Actions.IntentionBulbGrey
     }
     val text = attributes["title"] ?: when (style) {
       "warning" -> "Warning"
       "info" -> "Information"
       else -> "Tip"
     }
-    return "${indent}> ${buildIconTitle(icon, text)}<br>"
+    return "${indent}> ${buildIconTitle(icon.first, icon.second, text)}<br>"
   }
 
-  private fun buildIconTitle(icon: String, text: String): String {
-    return "${HtmlChunk.tag("icon").attr("src", icon)}&nbsp;<b>$text</b>"
+  private fun buildIconTitle(iconId: String, icon: Icon, text: String): String {
+    return "${HtmlChunk.icon(iconId, icon)}&nbsp;<b>$text</b>"
   }
 
   private fun String.isAttributesLine(): Boolean {
@@ -175,7 +177,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendChildren(element)
     appendExamples(element.examples)
     appendReferences(element.references)
-    appendInternalNote(element.internalNote)
+    appendInternalNote(element.getOwnOrParentInternalNote())
     return this
   }
 
@@ -283,9 +285,8 @@ internal class DocumentationRenderer(private val project: Project) {
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
-        appendLine(
-          "- ${attributeLink(attribute.name!!, attribute.path)}${getDetails(attribute.requirement, attribute.internalNote)}"
-        )
+        val attributeDetails = getDetails(attribute.requirement, attribute.getOwnOrParentInternalNote())
+        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}$attributeDetails")
       }
     }
   }
@@ -324,7 +325,9 @@ internal class DocumentationRenderer(private val project: Project) {
         val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
-        appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getDetails(childElement.requirement, childElement.internalNote)}")
+        val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
+        val childDetails = getDetails(childElement.requirement, childElement.getOwnOrParentInternalNote())
+        appendLine("- [`<$linkText>`]($linkUrl)$childDetails")
       }
       appendParagraphSeparator()
     }
@@ -353,8 +356,7 @@ internal class DocumentationRenderer(private val project: Project) {
 
   private fun StringBuilder.appendInternalNote(internalNote: String?) {
     internalNote ?: return
-    append("<hr>")
-    append("<h6>${buildIconTitle("AllIcons.General.Warning", "Internal Use Only")}</h6>")
+    appendLine("\n###### ${buildIconTitle("AllIcons.General.Warning", AllIcons.General.Warning, "Internal Use Only")}")
     append(internalNote.trim())
   }
 
@@ -375,7 +377,7 @@ internal class DocumentationRenderer(private val project: Project) {
     attribute.defaultValue?.trim()?.let {
       append("Default value: $it")
     }
-    appendInternalNote(attribute.internalNote)
+    appendInternalNote(attribute.getOwnOrParentInternalNote())
     return this
   }
 

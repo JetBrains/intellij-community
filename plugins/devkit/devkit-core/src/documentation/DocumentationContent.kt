@@ -35,6 +35,7 @@ internal data class ElementWrapper(
 internal interface DocumentationItem {
   val parent: DocumentationItem?
   val renderContexts: List<RenderContext>
+  val internalNote: String?
 
   /**
    * Determines whether the current documentation item should be rendered in the specified render context.
@@ -53,6 +54,10 @@ internal interface DocumentationItem {
     }
     return true
   }
+
+  fun getOwnOrParentInternalNote(): String? {
+      return internalNote ?: parent?.getOwnOrParentInternalNote()
+  }
 }
 
 internal data class Element(
@@ -64,7 +69,7 @@ internal data class Element(
   var deprecatedSince: String? = null,
   var deprecationNote: String? = null,
   var description: String? = null,
-  var internalNote: String? = null,
+  override var internalNote: String? = null,
   var sdkDocsSupportDetails: String? = null,
   var attributes: List<AttributeWrapper> = emptyList(),
   var containsItself: Boolean = false,
@@ -109,7 +114,7 @@ internal data class Attribute(
   var deprecationNote: String? = null,
   var requirement: Requirement? = null,
   var description: String? = null,
-  var internalNote: String? = null,
+  override var internalNote: String? = null,
   var defaultValue: String? = null,
   var path: List<String> = emptyList(),
   override var parent: DocumentationItem? = null,

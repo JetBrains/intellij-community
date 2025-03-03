@@ -68,7 +68,7 @@
         },
         "internalNote": {
           "type": "string",
-          "description": "An internal note if the element is for the internal use only. Supports Writerside Markdown format.",
+          "description": "The element is internal if it or any parent element has an internalNote value defined. Internal elements are for JetBrains internal use only. If not specified, the closets parent's internalNote is used. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
         "sdkDocsSupportDetails": {
@@ -216,7 +216,7 @@
         },
         "internalNote": {
           "type": "string",
-          "description": "An internal note if the attribute is for the internal use only. Supports Writerside Markdown format.",
+          "description": "The attribute is internal if it or any parent element has an internalNote value defined. Internal elements and attributes are for JetBrains internal use only. If not specified, the closets parent's internalNote is used. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
         "defaultValue": {
