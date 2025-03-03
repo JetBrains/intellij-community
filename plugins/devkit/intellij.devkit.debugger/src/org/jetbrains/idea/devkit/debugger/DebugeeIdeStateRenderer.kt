@@ -44,7 +44,7 @@ internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
     val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
     val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
     val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
-    if (!debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
+    if (!debugProcess.isEvaluationPossible(suspendContext)) return null
     val state = evaluationContext.computeAndKeep {
       DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE, emptyList()) as? ObjectReference
     } ?: return null

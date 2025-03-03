@@ -168,7 +168,7 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
   }
 
   public boolean isEvaluationPossible() {
-    return getSuspendContext().getDebugProcess().isEvaluationPossibleInCurrentCommand(getSuspendContext());
+    return getSuspendContext().getDebugProcess().isEvaluationPossible(getSuspendContext());
   }
 
   @Contract(pure = true)

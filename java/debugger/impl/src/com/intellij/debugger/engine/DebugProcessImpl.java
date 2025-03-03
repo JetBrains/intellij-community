@@ -2813,10 +2813,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
            && suspendContextCommand.getSuspendContext() == suspendContext;
   }
 
-  public boolean isEvaluationPossibleInCurrentCommand(SuspendContextImpl suspendContext) {
-    return isInSuspendCommand(suspendContext) && isEvaluationPossible(suspendContext);
-  }
-
   public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {
     return mySuspendManager.hasPausedContext(suspendContext);
   }
