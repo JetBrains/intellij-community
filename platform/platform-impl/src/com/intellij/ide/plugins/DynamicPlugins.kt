@@ -415,7 +415,7 @@ object DynamicPlugins {
   }
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
-    if (!containerDescriptor.readOnlyComponents.isEmpty()) {
+    if (!containerDescriptor.components.isEmpty()) {
       return "Plugin $pluginId is not unload-safe because it declares components"
     }
     if (containerDescriptor.services.any { it.overrides }) {

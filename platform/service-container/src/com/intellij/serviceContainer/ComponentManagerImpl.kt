@@ -437,7 +437,7 @@ abstract class ComponentManagerImpl(
   private fun registerComponents2Inner(pluginDescriptor: IdeaPluginDescriptor,
                                        containerDescriptor: ContainerDescriptor,
                                        headless: Boolean) {
-    val components = containerDescriptor.readOnlyComponents
+    val components = containerDescriptor.components
     if (components.isNullOrEmpty()) {
       return
     }
