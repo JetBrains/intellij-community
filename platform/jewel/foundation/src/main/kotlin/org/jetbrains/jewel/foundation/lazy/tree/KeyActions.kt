@@ -1,7 +1,9 @@
 package org.jetbrains.jewel.foundation.lazy.tree
 
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
@@ -226,6 +228,9 @@ public class DefaultTreeViewKeyActions(
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
     ): KeyEvent.() -> Boolean = lambda@{
+        // Explicitly don't handle Tab key events - let them pass through for focus traversal
+        if (key == Key.Tab) return@lambda false
+
         if (type == KeyEventType.KeyUp) return@lambda false
         val keyEvent = this
 
@@ -277,6 +282,9 @@ public open class DefaultSelectableLazyColumnKeyActions(
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
     ): KeyEvent.() -> Boolean = lambda@{
+        // Explicitly don't handle Tab key events - let them pass through for focus traversal
+        if (key == Key.Tab) return@lambda false
+
         if (type == KeyEventType.KeyUp || selectionMode == SelectionMode.None) return@lambda false
 
         // More aggressively mark keyboard navigation for all key interactions

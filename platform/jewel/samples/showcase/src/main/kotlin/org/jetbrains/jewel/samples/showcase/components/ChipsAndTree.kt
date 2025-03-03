@@ -83,7 +83,7 @@ public fun SelectableLazyColumnSample() {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
             SelectableLazyColumn(
-                modifier = Modifier.focusable(interactionSource = interactionSource),
+                modifier = Modifier.focusable(),
                 selectionMode = SelectionMode.Multiple,
                 state = state,
                 interactionSource = remember { MutableInteractionSource() },
@@ -190,7 +190,7 @@ public fun TreeSample(modifier: Modifier = Modifier) {
     Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
         LazyTree(
             tree = tree,
-            modifier = Modifier.size(200.dp, 200.dp),
+            modifier = Modifier.size(200.dp, 200.dp).focusable(),
             onElementClick = {},
             onElementDoubleClick = {},
         ) { element ->
