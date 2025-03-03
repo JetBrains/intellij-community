@@ -8,7 +8,7 @@ import fleet.fastutil.longs.LongSet
 
 internal object DummyQueryScope : QueryScope {
   override fun <T> Query<T>.producer(): Producer<T> = producerImpl()
-  override val shouldFailFast: Boolean = false
+  override val performAdditionalChecks: Boolean = false
 
   override fun onDispose(sub: Subscription) { }
   override fun subscribe(e: EID?, attribute: Attribute<*>?, v: Any?, datomPort: DatomPort) {}

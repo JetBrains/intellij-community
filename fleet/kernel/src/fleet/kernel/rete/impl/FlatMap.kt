@@ -36,18 +36,12 @@ internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> S
       }
       true -> {
         val (us, patterns) = trackReads { f(input) }
-        if (shouldFailFast) {
+        if (performAdditionalChecks) {
           val us2 = f(input)
           val funIsPure = us.size == us2.size && us.all { it in us2 }
-          //          check(funIsPure) {
-          //            "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
-          //            "first invocation: $us, second: $us2"
-          //          }
-          if (!funIsPure) {
-            FlatMap.logger.warn(Throwable()) {
-              "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
-              "first invocation: $us, second: $us2"
-            }
+          check(funIsPure) {
+            "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
+            "first invocation: $us, second: $us2"
           }
         }
         val matches = adaptiveMapOf<U, Match<U>>()

@@ -36,7 +36,7 @@ fun ReteState.dbOrThrow(): DB =
   }
 
 data class Rete internal constructor(
-  internal val failFast: Boolean,
+  internal val abortOnError: Boolean,
   internal val commands: SendChannel<Command>,
   internal val reteState: StateFlow<ReteState>,
   internal val dbSource: ReteDbSource,
@@ -85,9 +85,12 @@ suspend fun <T> withQueriesTracing(logger: KLogger, key: Any, body: suspend Coro
  * Sets up [Rete] for use inside [body]
  * Runs a coroutine which consumes changes made in db and commands to add or remove [QueryObserver]s
  *
- * [failFast] disables exception handling for testing purposes.
+ * [abortOnError] disables exception handling for testing purposes.
+ * [performAdditionalChecks] enables additional expensive checks while running queries
  * */
-suspend fun <T> withRete(failFast: Boolean = false, body: suspend CoroutineScope.() -> T): T {
+suspend fun <T> withRete(abortOnError: Boolean = false,
+                         performAdditionalChecks: Boolean = false,
+                         body: suspend CoroutineScope.() -> T): T {
   val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
   return spannedScope("withRete") {
     val kernel = transactor()
@@ -108,7 +111,9 @@ suspend fun <T> withRete(failFast: Boolean = false, body: suspend CoroutineScope
                 .produceIn(this)
                 .consume {
                   val changesConflated = this
-                  val rete = postponedVars(lastKnownDb, ReteNetwork.new(lastKnownDb, failFast))
+                  val rete = postponedVars(lastKnownDb, ReteNetwork.new(lastKnownDb,
+                                                                        failWhenPropagationFailed = abortOnError,
+                                                                        performAdditionalChecks = performAdditionalChecks))
                   whileSelect {
                     commandsReceiver.onReceive { cmd ->
                       rete.command(cmd)
@@ -130,7 +135,7 @@ suspend fun <T> withRete(failFast: Boolean = false, body: suspend CoroutineScope
           }.use {
             val rete = Rete(commands = commandsSender,
                             reteState = lastKnownDb,
-                            failFast = failFast,
+                            abortOnError = abortOnError,
                             dbSource = ReteDbSource(lastKnownDb))
             val reteEntity = change {
               register(ReteEntity)
@@ -357,7 +362,7 @@ suspend fun <T> Query<T>.launchOnEach(body: suspend CoroutineScope.(T) -> Unit) 
     }
   }
   when {
-    rete.failFast -> coroutineScope { impl(this) }
+    rete.abortOnError -> coroutineScope { impl(this) }
     else -> supervisorScope { impl(this) }
   }
 }

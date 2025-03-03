@@ -58,7 +58,7 @@ annotation class ReteDsl
 @ReteDsl
 interface QueryScope : SubscriptionScope {
   fun <T> Query<T>.producer(): Producer<T>
-  val shouldFailFast: Boolean
+  val performAdditionalChecks: Boolean
 }
 
 /**
@@ -144,8 +144,12 @@ fun interface QueryObserver<in T> {
  * */
 internal interface ReteNetwork {
   companion object {
-    fun new(dbState: MutableStateFlow<ReteState>, failWhenPropagationFailed: Boolean): ReteNetwork =
-      ReteNetworkImpl(dbState, failWhenPropagationFailed)
+    fun new(dbState: MutableStateFlow<ReteState>,
+            failWhenPropagationFailed: Boolean,
+            performAdditionalChecks: Boolean): ReteNetwork =
+      ReteNetworkImpl(lastKnownDb = dbState,
+                      failWhenPropagationFailed = failWhenPropagationFailed,
+                      performAdditionalChecks = performAdditionalChecks)
   }
 
   fun <T> observeQuery(
