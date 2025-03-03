@@ -408,6 +408,17 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertSame(t, result.getThrowable());
   }
 
+  @Test
+  public void testEventsAreDispatchedBeforeModalProgressExits() {
+    AtomicBoolean marker = new AtomicBoolean();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        marker.set(true);
+      });
+    }, "", true, null);
+    assertTrue(marker.get());
+  }
+
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     super.runTestRunnable(() -> {
