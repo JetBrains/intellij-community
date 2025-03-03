@@ -26,7 +26,7 @@ class ContainerDescriptor {
   @Transient var distinctExtensionPointCount: Int = -1
   @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
 
-  fun addService(serviceDescriptor: ServiceDescriptor) {
+  internal fun addService(serviceDescriptor: ServiceDescriptor) {
     if (_services == null) {
       _services = ArrayList()
     }
