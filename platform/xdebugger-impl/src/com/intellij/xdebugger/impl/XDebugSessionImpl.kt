@@ -54,16 +54,12 @@ import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.storeXDebugSessionInDb
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoNoInit
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.impl.util.start
@@ -125,6 +121,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
   private val myActiveNonLineBreakpoint = AtomicReference<Pair<XBreakpoint<*>?, XSourcePosition?>?>()
+  private val myPausedFlow = createMutableStateFlow<XDebugSessionPausedInfo?>(null)
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
 
@@ -260,6 +257,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @get:ApiStatus.Internal
   val isPausedState: StateFlow<Boolean>
     get() = myPaused
+
+  @ApiStatus.Internal
+  fun getPausedFlow(): Flow<XDebugSessionPausedInfo?> {
+    return myPausedFlow
+  }
+
 
   override fun isPaused(): Boolean {
     return myPaused.value
@@ -406,27 +409,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
         }
       }
     }
-    addSessionListener(object : XDebugSessionListener {
-      override fun sessionPaused() {
-        updateActions()
-      }
-
-      override fun sessionResumed() {
-        updateActions()
-      }
-
-      override fun sessionStopped() {
-        updateActions()
-      }
-
-      override fun stackFrameChanged() {
-        updateActions()
-      }
-
-      fun updateActions() {
-        UIUtil.invokeLaterIfNeeded(Runnable { mySessionTab!!.ui.updateActionsNow() })
-      }
-    })
   }
 
   @ApiStatus.Internal
@@ -657,11 +639,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     myDispatcher.getMulticaster().beforeSessionResume()
     val context = mySuspendContext.value
     clearPausedData()
-    UIUtil.invokeLaterIfNeeded(Runnable {
-      if (mySessionTab != null) {
-        mySessionTab!!.ui.clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
-      }
-    })
     myDispatcher.getMulticaster().sessionResumed()
     return context
   }
@@ -971,25 +948,13 @@ class XDebugSessionImpl @JvmOverloads constructor(
         if (needsInitialization) {
           initSessionTab(null, true)
         }
-        // user attractions should only be made if event happens independently (e.g. program paused/suspended)
-        // and should not be made when user steps in the code
-        if (attract) {
-          if (mySessionTab == null) {
-            LOG.debug("Cannot request focus because Session Tab is not initialized yet")
-            return@Runnable
-          }
-
-          if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isShowDebuggerOnBreakpoint) {
-            mySessionTab!!.toFront(true, Runnable { this.updateExecutionPosition() })
-          }
-
-          if (topFramePosition == null) {
-            // if there is no source position available, we should somehow tell the user that session is stopped.
-            // the best way is to show the stack frames.
-            XDebugSessionTab.showFramesView(this)
-          }
-
-          mySessionTab!!.ui.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
+        val topFrameIsAbsent = topFramePosition == null
+        if (useFeProxy()) {
+          myPausedFlow.value = XDebugSessionPausedInfo(attract, topFrameIsAbsent)
+        }
+        else {
+          // We have to keep this code because Code with Me expects BE to work with tab similar to monolith
+          mySessionTab!!.onPause(attract, topFrameIsAbsent)
         }
       })
     }
@@ -1047,16 +1012,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       myProject.getMessageBus().syncPublisher<XDebuggerManagerListener>(XDebuggerManager.TOPIC).processStopped(myDebugProcess!!)
     }
 
-    if (mySessionTab != null) {
-      invokeOnEdt(Runnable {
-        mySessionTab!!.ui.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION)
-        if (!myProject.isDisposed()) {
-          (mySessionTab!!.watchesView as XWatchesViewImpl).updateSessionData()
-        }
-        mySessionTab!!.detachFromSession()
-      })
-    }
-    else if (myConsoleView != null) {
+    if (!isTabInitialized && myConsoleView != null) {
       invokeOnEdt(Runnable { Disposer.dispose(myConsoleView!!) })
     }
 
@@ -1079,6 +1035,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     coroutineScope.cancel(null)
+  }
+
+  @ApiStatus.Internal
+  fun getRunContentDescriptorIfInitialized(): RunContentDescriptor? {
+    return myRunContentDescriptor
   }
 
   private fun removeBreakpointListeners() {
