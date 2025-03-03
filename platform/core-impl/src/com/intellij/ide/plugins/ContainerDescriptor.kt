@@ -16,6 +16,9 @@ class ContainerDescriptor {
     get() = _services ?: Java11Shim.INSTANCE.listOf()
 
   @JvmField var components: MutableList<ComponentConfig>? = null
+  val readOnlyComponents: List<ComponentConfig>
+    get() = components ?: Java11Shim.INSTANCE.listOf()
+
   @JvmField var listeners: MutableList<ListenerDescriptor>? = null
 
   @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
@@ -31,7 +34,7 @@ class ContainerDescriptor {
   }
 
   override fun toString(): String {
-    if (_services == null && components.isNullOrEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && listeners == null) {
+    if (_services == null && readOnlyComponents.isEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && listeners == null) {
       return "ContainerDescriptor(empty)"
     }
     else {

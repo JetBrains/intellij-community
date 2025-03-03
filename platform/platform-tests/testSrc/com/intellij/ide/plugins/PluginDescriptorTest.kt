@@ -196,7 +196,7 @@ class PluginDescriptorTest {
 </idea-plugin>""")
     val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
-    assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
+    assertThat(descriptor.projectContainerDescriptor.readOnlyComponents[0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
 
   @Test

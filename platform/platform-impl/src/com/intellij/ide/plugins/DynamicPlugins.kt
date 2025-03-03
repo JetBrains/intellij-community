@@ -18,9 +18,9 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.parser.elements.ActionElement.ActionElementName
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.parser.elements.ActionElement.ActionElementName
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.idea.IdeaLogger
@@ -415,7 +415,7 @@ object DynamicPlugins {
   }
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
-    if (!containerDescriptor.components.isNullOrEmpty()) {
+    if (!containerDescriptor.readOnlyComponents.isEmpty()) {
       return "Plugin $pluginId is not unload-safe because it declares components"
     }
     if (containerDescriptor.services.any { it.overrides }) {
