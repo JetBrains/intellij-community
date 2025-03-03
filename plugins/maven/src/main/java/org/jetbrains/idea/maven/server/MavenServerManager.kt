@@ -38,6 +38,7 @@ interface MavenServerManager : Disposable {
     return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
   }
 
+  @ApiStatus.Internal
   fun createEmbedder(project: Project,
                      alwaysOnline: Boolean,
                      multiModuleProjectDirectory: String): MavenEmbedderWrapper
