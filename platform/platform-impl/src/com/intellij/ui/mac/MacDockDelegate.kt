@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.impl.SystemDock
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import java.awt.*
 
 internal class MacDockDelegate private constructor(private val recentProjectsMenu: Menu) : SystemDock.Delegate {
@@ -20,7 +21,7 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
       try {
         dockMenu.add(recentProjectsMenu)
         ExtensionPointName.create<MacDockMenuActions>("com.intellij.mac.dockMenuActions").forEachExtensionSafe { actions ->
-          actions.createMenuItem()?.let {  
+          actions.createMenuItem()?.let {
             dockMenu.add(it)
           }
         }
@@ -39,7 +40,12 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
   override fun updateRecentProjectsMenu() {
     recentProjectsMenu.removeAll()
     for (action in RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)) {
-      val menuItem = MenuItem((action as ReopenProjectAction).projectDisplayName)
+      val displayName = when (action) {
+        is ReopenProjectAction -> action.projectDisplayName
+        is ProjectToolbarWidgetPresentable -> action.projectNameToDisplay
+        else -> continue
+      }
+      val menuItem = MenuItem(displayName)
       menuItem.addActionListener {
         // The newly opened project won't become an active window if another application is currently active.
         // This is not what user expects, so we activate our application explicitly.
