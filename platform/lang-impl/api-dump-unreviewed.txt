@@ -172,16 +172,16 @@ f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
 - com.intellij.analysis.problemsView.toolWindow.Node
 - <init>(com.intellij.analysis.problemsView.toolWindow.Node,com.intellij.openapi.vfs.VirtualFile,com.intellij.analysis.problemsView.Problem):V
 - equals(java.lang.Object):Z
-- f:getColumn():I
+- getColumn():I
 - getDescriptor():com.intellij.openapi.fileEditor.OpenFileDescriptor
 - f:getFile():com.intellij.openapi.vfs.VirtualFile
 - getLeafState():com.intellij.ui.tree.LeafState
-- f:getLine():I
+- getLine():I
 - getName():java.lang.String
 - getNavigatable():com.intellij.pom.Navigatable
 - f:getProblem():com.intellij.analysis.problemsView.Problem
-- f:getSeverity():I
-- f:getText():java.lang.String
+- getSeverity():I
+- getText():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
 f:com.intellij.analysis.problemsView.toolWindow.ProblemsTreeModel
