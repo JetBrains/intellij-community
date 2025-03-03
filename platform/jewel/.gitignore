@@ -106,3 +106,5 @@ $RECYCLE.BIN/
 # Ignore Kotlin compiler sessions
 /.kotlin
 /buildSrc/.kotlin
+/foundation/bin/*
+/samples/showcase/bin/*
