@@ -67,10 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -825,11 +822,11 @@ public class TableResultPanel extends UserDataHolderBase
   void showError(@NotNull ErrorInfo errorInfo, final @Nullable DataGridRequestPlace source) {
     hideErrorPanel();
     ErrorNotificationPanel.Builder builder =
-      ErrorNotificationPanel.create(errorInfo.getMessage(), errorInfo.getOriginalThrowable(), myMainPanel);
+      ErrorNotificationPanel.create(errorInfo.getMessage(), errorInfo.getOriginalThrowable());
     List<ErrorInfo.Fix> fixes = errorInfo.getFixes();
     if (!fixes.isEmpty()) {
       for (ErrorInfo.Fix fix : fixes) {
-        builder.addLink(fix.getName(), fix.getName(), () -> GridHelper.get(this).applyFix(myProject, fix, null));
+        builder.addLink(fix.getName(), null, () -> GridHelper.get(this).applyFix(myProject, fix, null));
       }
       builder.addSpace();
     }
@@ -845,7 +842,7 @@ public class TableResultPanel extends UserDataHolderBase
       int c = viewColumnIdx.asInteger() + 1;
       //noinspection DialogTitleCapitalization
       String title = DataGridBundle.message("action.row.choice.col.text", r, c, c < 1 ? 0 : 1);
-      builder.addLink("navigate", title, () -> {
+      builder.addLink(title, KeyEvent.VK_N, () -> {
         if (viewRowIdx.isValid(this) && viewColumnIdx.isValid(this)) {
           scrollToLocally(this, viewRowIdx, viewColumnIdx);
         }

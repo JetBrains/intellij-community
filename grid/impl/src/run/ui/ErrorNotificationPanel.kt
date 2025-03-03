@@ -2,227 +2,200 @@ package com.intellij.database.run.ui
 
 import com.intellij.CommonBundle
 import com.intellij.database.DataGridBundle
-import com.intellij.database.datagrid.GridUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyProvider
-import com.intellij.ide.IdeTooltipManager.Companion.getInstance
-import com.intellij.ide.IdeTooltipManager.Companion.initPane
 import com.intellij.ide.TextCopyProvider
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.UiDataProvider.Companion.wrapComponent
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.HintHint
-import com.intellij.ui.HyperlinkAdapter
-import com.intellij.util.Consumer
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NonNls
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
-import java.awt.event.InputEvent
+import org.jetbrains.annotations.Nls
+import java.awt.*
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
+import java.awt.font.TextAttribute
 import javax.swing.*
-import javax.swing.event.HyperlinkEvent
+
+private const val HORIZONTAL_LAYOUT_THRESHOLD = 2
+private const val VERTICAL_MARGINS = 10
+private const val HEIGHT_BETWEEN_TEXT_AND_BUTTONS = 6
+private const val HORIZONTAL_MARGINS = 16
 
 class ErrorNotificationPanel private constructor(
-  htmlErrorMessage: @NlsContexts.NotificationContent String,
-  private val myActions: MutableMap<String?, Runnable?>,
-  private val myType: MessageType
-) : JPanel(BorderLayout()) {
-  private val myMessagePane: JEditorPane
-  private val myCopyProvider: CopyProvider
+  htmlErrorMessage: String?,
+  items: List<PanelItem>,
+  private val hideErrorAction: Runnable?,
+  private val messageType: MessageType = MessageType.ERROR,
+) : JPanel(BorderLayout()), UiDataProvider {
+  private var copyProvider: CopyProvider? = null
+  private val textPane: JTextArea?
 
   init {
-    setBorder(JBUI.Borders.empty(0, 4))
+    background = messageType.popupBackground
+    isFocusable = true
+    isFocusCycleRoot = true
+    border = JBUI.Borders.empty(VERTICAL_MARGINS, 0)
+    isRequestFocusEnabled = true
 
-    myMessagePane = initPane(htmlErrorMessage, HintHint()
-      .setAwtTooltip(false)
-      .setTextFg(getForeground())
-      .setTextBg(getBackground())
-      .setBorderColor(getBackground())
-      .setBorderInsets(JBInsets.emptyInsets()), null)
-    myMessagePane.setBorder(null)
-    myMessagePane.addHyperlinkListener(object : HyperlinkAdapter() {
-      override fun hyperlinkActivated(e: HyperlinkEvent) {
-        performAction(e.description)
-      }
-    })
-    myCopyProvider = object : TextCopyProvider() {
-      override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.EDT
-      }
+    val horizontalLayout = items.size <= HORIZONTAL_LAYOUT_THRESHOLD
+    textPane = htmlErrorMessage?.let { createTextPanel(htmlErrorMessage, horizontalLayout) }
+    initComponent(items, horizontalLayout)
 
-      override fun getTextLinesToCopy(): MutableCollection<String?>? {
-        val text = myMessagePane.getSelectedText()
-        return if (StringUtil.isEmpty(text)) null else mutableSetOf<String?>(text)
-      }
+    SwingUtilities.invokeLater { requestFocusInWindow() }
+  }
+
+  private fun initComponent(items: List<PanelItem>, horizontalLayout: Boolean) {
+    val buttonsGravity = if (horizontalLayout) { BorderLayout.EAST } else { BorderLayout.NORTH }
+    val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT, HORIZONTAL_MARGINS, 0)).apply {
+      items.forEach { add(it.buildComponent()) }
+      isOpaque = false
+      border = JBUI.Borders.empty()
     }
-    add(wrapComponent(myMessagePane, UiDataProvider { sink: DataSink? ->
-      sink!!.set<CopyProvider>(PlatformDataKeys.COPY_PROVIDER, this.myCopyProvider)
-    }), BorderLayout.CENTER)
 
+    add(buttonPanel, buttonsGravity)
+    textPane?.let { add(it, BorderLayout.CENTER) }
+    addSubscribers(textPane)
+
+    addMouseListener(RequestFocusMouseListener(this))
+    textPane?.addMouseListener(RequestFocusMouseListener(this))
+  }
+
+  private fun createTextPanel(htmlText: String, horizontalLayout: Boolean) = JTextArea().apply {
+    isOpaque = false
+    isEditable = false
+    isFocusable = true
+    text = htmlText.trimIndent()
+    font = UIManager.getFont("ToolTip.font")
+    lineWrap = true
+    border = if (horizontalLayout) {
+      JBUI.Borders.empty(0, VERTICAL_MARGINS, 0, 0)
+    } else {
+      JBUI.Borders.empty(HEIGHT_BETWEEN_TEXT_AND_BUTTONS, HORIZONTAL_MARGINS, 0, HORIZONTAL_MARGINS)
+    }
+    wrapStyleWord = true
+    foreground = messageType.titleForeground
+    caret = object : javax.swing.text.DefaultCaret() {
+      override fun paint(g: Graphics?) { /* hide cursor */ }
+    }
+  }
+
+  override fun addMouseListener(listener: MouseListener) {
+    super.addMouseListener(listener)
+    textPane?.addMouseListener(listener)
+  }
+
+  private fun addSubscribers(textPane: JTextArea?) {
     object : DumbAwareAction(DataGridBundle.message("action.close.text")) {
       override fun actionPerformed(e: AnActionEvent) {
-        performAction(DataGridBundle.message("action.close.text"))
+        hideErrorAction?.run()
       }
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), this)
+
+    copyProvider = object : TextCopyProvider() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getTextLinesToCopy(): MutableCollection<String?>? {
+        textPane ?: return null
+        textPane.selectedText?.let { return mutableSetOf(it) }
+        return mutableSetOf(textPane.text)
+      }
+    }
   }
 
-  private fun performAction(actionName: String?) {
-    myActions[actionName]?.run()
+  override fun getMinimumSize(): Dimension = JBUI.emptySize()
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.COPY_PROVIDER] = copyProvider
   }
-
-  override fun getBackground(): Color {
-    return type.popupBackground
-  }
-
-  override fun getForeground(): Color {
-    return type.titleForeground
-  }
-
-  private val type: MessageType
-    get() = ObjectUtils.chooseNotNull<MessageType>(myType, MessageType.ERROR)
-
-  override fun getMinimumSize(): Dimension {
-    return JBUI.emptySize()
-  }
-
-  val content: JComponent
-    get() = myMessagePane
 
   class Builder internal constructor(
-    private val myMessage: @NlsContexts.NotificationContent String?,
-    private val myError: Throwable?,
-    private val myBaseComponent: JComponent
+    private val message: @NlsContexts.NotificationContent String?,
+    private val error: Throwable?,
   ) {
-    private val myLongMessage: Boolean
-
-    private val myActions: MutableMap<String?, Runnable?> = LinkedHashMap<String?, Runnable?>()
-    private val myShowHideHandlers: MutableList<Consumer<Disposable?>> = ArrayList<Consumer<Disposable?>>()
-    private val myHtmlBuilder = StringBuilder()
+    private var errorMessage: String? = null
+    private val items = mutableListOf<PanelItem>()
+    private var type: MessageType = MessageType.ERROR
+    private var hideErrorAction: Runnable? = null
 
     private var isChoppedMessage = false
 
-    private var myType: MessageType = MessageType.ERROR
-
     init {
-      var errorMessage = if (myMessage == null) if (myError == null) null else getNormalizedMessage(myError)
-      else getNormalized(
-        myMessage)
-      val font = getInstance().getTextFont(true)
-      val fm = myBaseComponent.getFontMetrics(font)
-      myLongMessage = SwingUtilities.computeStringWidth(fm, errorMessage) > myBaseComponent.getWidth() * 3 / 4
-      if (errorMessage != null) {
-        errorMessage = StringUtil.escapeXmlEntities(errorMessage).replace("\n", "<br>")
+      errorMessage = when {
+        message != null -> getNormalized(message)
+        error != null -> getNormalizedMessage(error)
+        else -> null
       }
-
-      myHtmlBuilder.append("<html><head><style type=\"text/css\">a:link {text-decoration:none;}</style></head><body>")
-      myHtmlBuilder.append("<font face=\"verdana\"><table width=\"100%\"><tr valign=\"top\"><td>")
-      myHtmlBuilder.append(errorMessage)
-      myHtmlBuilder.append("</td>")
     }
 
     fun messageType(type: MessageType): Builder {
-      myType = type
+      this.type = type
       return this
     }
 
-    fun addIconLink(command: String?, tooltipText: @NlsContexts.Tooltip String?, realIcon: Icon, action: Runnable?): Builder {
-      val iconPath = GridUtil.getIconPath(realIcon)
-
-      startActionColumn()
-      myHtmlBuilder.append("<a href=\"")
-        .append(command).append("\"><icon alt=\"").append(tooltipText).append("\"")
-        .append("\" src=\"")
-      myHtmlBuilder.append(iconPath).append("\"></a>")
-      endActionColumn()
-
-      if (action != null) {
-        myActions.put(command, action)
-      }
-
+    fun addIconLink(tooltipText: @NlsContexts.Tooltip String?, realIcon: Icon, action: Runnable?): Builder {
+      items.add(IconLink(realIcon, { action?.run() }, tooltipText))
       return this
     }
 
     fun addSpace(): Builder {
-      startActionColumn()
-      endActionColumn()
+      items.add(EmptySpace())
       return this
     }
 
-    fun addLink(command: @NonNls String, linkHtml: @NlsActions.ActionText String, action: Runnable): Builder {
-      startActionColumn()
-      val mnemonicIndex = UIUtil.getDisplayMnemonicIndex(command)
-      val fixedCommand: @NlsSafe String = if (mnemonicIndex < 0) command else command.substring(0, mnemonicIndex) + command.substring(mnemonicIndex + 1)
-      ContainerUtil.addIfNotNull<Consumer<Disposable?>?>(myShowHideHandlers,
-                                                         createMnemonicActionIfNeeded(fixedCommand, mnemonicIndex, action, myBaseComponent))
-      myHtmlBuilder.append("<a style=\"text-decoration:none;\" href=\"").append(fixedCommand).append("\">").append(linkHtml).append("</a>")
-      endActionColumn()
-      myActions.put(fixedCommand, action)
+    fun addLink(link: @NlsActions.ActionText String, mnemonicCode: Int? = null, action: Runnable): Builder {
+      items.add(TextLink(link, { action.run() }, mnemonicCode))
       return this
     }
 
     fun addDetailsButton(): Builder {
-      val message: String = (if (myError == null) myMessage
-      else if (myError.stackTrace.size > 0) com.intellij.util.ExceptionUtil.getThrowableText(myError, "com.intellij.")
-      else myError.message)!!
-      if (StringUtil.contains(myHtmlBuilder, message)) return this
-      return addLink("details", DataGridBundle.message("action.details.text"), Runnable {
-        Messages.showIdeaMessageDialog(null, message,
-                                       DataGridBundle.message("dialog.title.query.error"),
-                                       arrayOf<String>(CommonBundle.getOkButtonText()), 0, Messages.getErrorIcon(), null)
-      })
+      val message: String? = when {
+        error == null -> message
+        error.stackTrace.size > 0 -> com.intellij.util.ExceptionUtil.getThrowableText(error, "com.intellij.")
+        else -> error.message
+      }
+
+      return addLink(DataGridBundle.message("action.details.text")) {
+        Messages.showIdeaMessageDialog(
+          null, message, DataGridBundle.message("dialog.title.query.error"),
+          arrayOf<String>(CommonBundle.getOkButtonText()), 0, Messages.getErrorIcon(), null)
+      }
     }
 
     fun addFullMessageButtonIfNeeded(): Builder {
       if (!isChoppedMessage) return this
-      return addLink("details", DataGridBundle.message("action.full.message.text"), Runnable {
-        Messages.showIdeaMessageDialog(null, myMessage,
-                                       DataGridBundle.message("dialog.title.query.error"),
-                                       arrayOf<String>(CommonBundle.getOkButtonText()), 0, Messages.getErrorIcon(), null
+      return addLink(DataGridBundle.message("action.full.message.text"), KeyEvent.VK_F, Runnable {
+        val result = Messages.showIdeaMessageDialog(
+          null, message, DataGridBundle.message("dialog.title.query.error"),
+          arrayOf<String>(CommonBundle.getCancelButtonText(),  DataGridBundle.message("dialog.button.copy.and.close")), 0, Messages.getErrorIcon(), null
         )
+        if (result == 1) {
+          message?.let { CopyPasteManager.copyTextToClipboard(message) }
+        }
       })
     }
 
     fun addCloseButton(action: Runnable?): Builder {
-      return addIconLink(DataGridBundle.message("action.close.text"), DataGridBundle.message("tooltip.close.esc"),
-                         AllIcons.Actions.Close, action)
+      hideErrorAction = action
+      return addIconLink(DataGridBundle.message("tooltip.close.esc"), AllIcons.Actions.Close, action)
     }
 
     fun build(): ErrorNotificationPanel {
-      myHtmlBuilder.append("</tr></table></font></body>")
-      val result = ErrorNotificationPanel(myHtmlBuilder.toString(), myActions, myType) //NON-NLS
-      registerShowHideHandlers(result)
+      val result = ErrorNotificationPanel(errorMessage, items, hideErrorAction, this.type)
       return result
     }
 
-    private fun startActionColumn() {
-      myHtmlBuilder.append("<td width=\"1%\" align=\"right\" valign=\"")
-        .append(if (myLongMessage) "top" else "middle")
-        .append("\" nowrap><div style='margin:0px 2px 0px 2px'>")
-    }
-
-    private fun endActionColumn() {
-      myHtmlBuilder.append("</div></td>")
-    }
-
+    @Suppress("HardCodedStringLiteral")
     private fun getNormalizedMessage(error: Throwable): @NlsContexts.NotificationContent String {
-      var sourceMessage = StringUtil.notNullize(error.message,
-                                                DataGridBundle.message(
-                                                  "notification.content.unknown.problem.occurred.see.details")) + "kgmsdkgmksdfgnmksndfgknskdfgnksndgkndfkgnsdkfgnskdngkndsfgksnkgnfksdngksdnfgksndkgnsdkfgnksdnfgkndkfgnskngfksnkgfnksdnfgksdnfgknsdkgnslgnskldfnglksnfgksnfgksnkfgnksdfngksdnfgksdngksndfgknsdkf"
-      // In some cases source message contains stacktrace inside. Let's chop it
+      var sourceMessage = StringUtil.notNullize(error.message, DataGridBundle.message(
+        "notification.content.unknown.problem.occurred.see.details"))
+      // In some cases a source message contains a stacktrace inside. Let's chop it
       val divPos = sourceMessage.indexOf("\n\tat ")
       if (divPos != -1) {
         sourceMessage = sourceMessage.substring(0, divPos)
@@ -238,59 +211,97 @@ class ErrorNotificationPanel private constructor(
       if (sourceMessage.length > limit) isChoppedMessage = true
       return StringUtil.trimLog(sourceMessage, limit + 1)
     }
+  }
 
-    private fun registerShowHideHandlers(component: JComponent) {
-      if (myShowHideHandlers.isEmpty()) return
+  private interface PanelItem {
+    fun buildComponent(): JComponent
+  }
 
-      component.addHierarchyListener(object : HierarchyListener {
-        private var myShownDisposable: Disposable? = null
-        override fun hierarchyChanged(e: HierarchyEvent) {
-          val c = e.component
-          if (c == null || (e.getChangeFlags() and HierarchyEvent.SHOWING_CHANGED.toLong()) <= 0) return
+  private class TextLink(
+    @Nls private val linkText: String,
+    private val onClickAction: () -> Unit,
+    private val mnemonicCode: Int? = null,
+  ) : PanelItem {
+    override fun buildComponent(): JComponent {
+      return JButton().apply {
+        foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+        text = linkText
+        font = UIManager.getFont("ToolTip.font")
 
-          if (c.isShowing()) {
-            myShownDisposable = Disposer.newDisposable()
-            for (handler in myShowHideHandlers) {
-              handler.consume(myShownDisposable)
-            }
-            return
-          }
+        isOpaque = false
+        isContentAreaFilled = false
+        isBorderPainted = false
+        val fontMetrics = getFontMetrics(font)
+        preferredSize = JBDimension(fontMetrics.stringWidth(linkText), fontMetrics.height)
+        border = JBUI.Borders.empty()
 
-          if (myShownDisposable != null) Disposer.dispose(myShownDisposable!!)
-          myShownDisposable = null
+        isFocusable = true
+        if (mnemonicCode != null) {
+          mnemonic = mnemonicCode
+          addActionListener { onClickAction() }
+          MnemonicHelper.registerMnemonicAction(this, mnemonicCode)
         }
-      })
-    }
-
-    companion object {
-      private fun createMnemonicActionIfNeeded(
-        command: @NlsActions.ActionText String,
-        mnemonicIndex: Int,
-        runnable: Runnable,
-        component: JComponent?
-      ): Consumer<Disposable?>? {
-        if (mnemonicIndex < 0) return null
-        return { parentDisposable: Disposable? ->
-          val a: DumbAwareAction = object : DumbAwareAction(command) {
-            override fun actionPerformed(e: AnActionEvent) {
-              runnable.run()
-            }
-          }
-          val modifiers = if (SystemInfo.isMac && !`is`(
-              "ide.mac.alt.mnemonic.without.ctrl")
-          ) InputEvent.ALT_MASK or InputEvent.CTRL_MASK
-          else InputEvent.ALT_MASK
-          val keyStroke = KeyStroke.getKeyStroke(command.get(mnemonicIndex).uppercaseChar().code, modifiers)
-          a.registerCustomShortcutSet(CustomShortcutSet(keyStroke), component, parentDisposable)
-        } as? Consumer<Disposable?>
+        addMouseListener(MouseClickedListener(onClickAction, this))
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
       }
     }
   }
 
+  private class IconLink(
+    private val icon: Icon,
+    private val onClickAction: () -> Unit,
+    @Nls private val tooltipText: String? = null,
+  ) : PanelItem {
+    override fun buildComponent(): JComponent {
+      return JLabel(icon).apply {
+        toolTipText = tooltipText
+
+        addMouseListener(MouseClickedListener(onClickAction, this))
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      }
+    }
+  }
+
+  private class EmptySpace() : PanelItem {
+    override fun buildComponent(): JComponent {
+      return Box.createRigidArea(JBDimension(1, 20)) as JComponent
+    }
+  }
+
+  private class MouseClickedListener(
+    private val onClickAction: () -> Unit,
+    private val component: JComponent,
+  ) : MouseListener {
+    private val originalFont = component.font
+    private val underlinedFont = originalFont.deriveFont(mapOf(TextAttribute.UNDERLINE to TextAttribute.UNDERLINE_ON))
+    override fun mouseClicked(e: MouseEvent?) = onClickAction()
+    override fun mousePressed(e: MouseEvent?) = Unit
+    override fun mouseReleased(e: MouseEvent?) = Unit
+    override fun mouseEntered(e: MouseEvent?) {
+      component.font = underlinedFont
+    }
+
+    override fun mouseExited(e: MouseEvent?) {
+      component.font = originalFont
+    }
+  }
+
+  private class RequestFocusMouseListener(
+    private val component: JComponent,
+  ) : MouseListener {
+    override fun mouseClicked(e: MouseEvent?) {
+      component.requestFocusInWindow()
+    }
+    override fun mousePressed(e: MouseEvent?) = Unit
+    override fun mouseReleased(e: MouseEvent?) = Unit
+    override fun mouseEntered(e: MouseEvent?) = Unit
+    override fun mouseExited(e: MouseEvent?) = Unit
+  }
+
   companion object {
     @JvmStatic
-    fun create(message: @NlsContexts.NotificationContent String?, error: Throwable?, baseComponent: JComponent): Builder {
-      return Builder(message, error, baseComponent)
+    fun create(message: @NlsContexts.NotificationContent String?, error: Throwable?): Builder {
+      return Builder(message, error)
     }
   }
 }
