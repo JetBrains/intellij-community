@@ -9,9 +9,9 @@ import com.intellij.platform.syntax.lexer.TokenSequence
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.Logger.Attachment
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.Logger.Attachment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls

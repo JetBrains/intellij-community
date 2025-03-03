@@ -6,9 +6,9 @@ import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.NoopLogger
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.ApiStatus
 
 /**

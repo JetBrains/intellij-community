@@ -4,7 +4,7 @@
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.util.CancellationProvider
+import com.intellij.platform.syntax.CancellationProvider
 import org.jetbrains.annotations.ApiStatus
 
 /**

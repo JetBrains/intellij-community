@@ -4,7 +4,7 @@ package com.intellij.platform.syntax.impl.builder
 import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.fastutil.ints.IntList
 import com.intellij.platform.syntax.impl.fastutil.ints.lastIndexOf
-import com.intellij.platform.syntax.util.Logger
+import com.intellij.platform.syntax.Logger
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

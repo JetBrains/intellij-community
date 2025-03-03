@@ -1,3 +1,14 @@
+*:com.intellij.platform.syntax.CancellationProvider
+- a:checkCancelled():V
+*:com.intellij.platform.syntax.Logger
+- a:error(java.lang.String):V
+- a:error(java.lang.String,com.intellij.platform.syntax.Logger$Attachment[]):V
+- a:warn(java.lang.String,java.lang.RuntimeException):V
+- bs:warn$default(com.intellij.platform.syntax.Logger,java.lang.String,java.lang.RuntimeException,I,java.lang.Object):V
+*f:com.intellij.platform.syntax.Logger$Attachment
+- <init>(java.lang.String,java.lang.String):V
+- f:getContent():java.lang.String
+- f:getName():java.lang.String
 *f:com.intellij.platform.syntax.SyntaxElementType
 - <init>(java.lang.String):V
 *f:com.intellij.platform.syntax.element.SyntaxTokenTypes
@@ -38,8 +49,8 @@
 - hasType(I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 *f:com.intellij.platform.syntax.lexer.TokenListKt
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
-- sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
-- bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
+- sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
+- bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
 - sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.lexer.Lexer
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
@@ -105,10 +116,10 @@
 *:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:build():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - a:withCachedLexemes(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
-- a:withCancellationProvider(com.intellij.platform.syntax.util.CancellationProvider):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withCancellationProvider(com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withDebugMode(Z):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withLanguage(java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
-- a:withLogger(com.intellij.platform.syntax.util.Logger):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withLogger(com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withOpaquePolicy(com.intellij.platform.syntax.parser.OpaqueElementPolicy):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withStartOffset(I):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withWhitespaceOrCommentBindingPolicy(com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
@@ -128,14 +139,3 @@
 - f:defaultRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyLeftBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
-*:com.intellij.platform.syntax.util.CancellationProvider
-- a:checkCancelled():V
-*:com.intellij.platform.syntax.util.Logger
-- a:error(java.lang.String):V
-- a:error(java.lang.String,com.intellij.platform.syntax.util.Logger$Attachment[]):V
-- a:warn(java.lang.String,java.lang.RuntimeException):V
-- bs:warn$default(com.intellij.platform.syntax.util.Logger,java.lang.String,java.lang.RuntimeException,I,java.lang.Object):V
-*f:com.intellij.platform.syntax.util.Logger$Attachment
-- <init>(java.lang.String,java.lang.String):V
-- f:getContent():java.lang.String
-- f:getName():java.lang.String
