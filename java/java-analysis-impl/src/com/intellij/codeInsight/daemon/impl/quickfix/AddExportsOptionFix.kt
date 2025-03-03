@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo
 import com.intellij.openapi.module.Module
-import com.intellij.psi.JavaModuleSystem
 import org.jetbrains.annotations.Nls
 
 class AddExportsOptionFix(module: Module,
@@ -12,19 +12,19 @@ class AddExportsOptionFix(module: Module,
                                   private val useName: String) : CompilerOptionFix(module) {
   private val qualifier = "${targetName}/${packageName}"
 
-  override fun getText(): @Nls String = QuickFixBundle.message("add.compiler.option.fix.name", "${JavaModuleSystem.ADD_EXPORTS_OPTION} ${qualifier}=${useName}")
+  override fun getText(): @Nls String = QuickFixBundle.message("add.compiler.option.fix.name", "${JpmsModuleAccessInfo.ADD_EXPORTS_OPTION} ${qualifier}=${useName}")
 
   override fun update(options: MutableList<String>) {
     var idx = -1
     var candidate = -1
     var offset = 0
     for ((i, option) in options.withIndex()) {
-      if (option.startsWith(JavaModuleSystem.ADD_EXPORTS_OPTION)) {
-        if (option.length == JavaModuleSystem.ADD_EXPORTS_OPTION.length) {
+      if (option.startsWith(JpmsModuleAccessInfo.ADD_EXPORTS_OPTION)) {
+        if (option.length == JpmsModuleAccessInfo.ADD_EXPORTS_OPTION.length) {
           candidate = i + 1; offset = 0
         }
-        else if (option[JavaModuleSystem.ADD_EXPORTS_OPTION.length] == '=') {
-          candidate = i; offset = JavaModuleSystem.ADD_EXPORTS_OPTION.length + 1
+        else if (option[JpmsModuleAccessInfo.ADD_EXPORTS_OPTION.length] == '=') {
+          candidate = i; offset = JpmsModuleAccessInfo.ADD_EXPORTS_OPTION.length + 1
         }
       }
       if (i == candidate && option.startsWith(qualifier, offset)) {
@@ -35,7 +35,7 @@ class AddExportsOptionFix(module: Module,
       }
     }
     when (idx) {
-      -1 -> options += listOf(JavaModuleSystem.ADD_EXPORTS_OPTION, "${qualifier}=${useName}")
+      -1 -> options += listOf(JpmsModuleAccessInfo.ADD_EXPORTS_OPTION, "${qualifier}=${useName}")
       else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
     }
   }

@@ -262,7 +262,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_EXPORTS_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_EXPORTS_OPTION)
       .filter { it.startsWith(prefix) }
       .map { it.substring(prefix.length) }
       .flatMap { it.splitToSequence(",") }
@@ -271,22 +271,31 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_MODULES_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_MODULES_OPTION)
       .flatMap { it.splitToSequence(",") }
-      .any { it == moduleName || it == JavaModuleSystem.ALL_SYSTEM || it == JavaModuleSystem.ALL_MODULE_PATH }
+      .any { it == moduleName || it == ALL_SYSTEM || it == ALL_MODULE_PATH }
   }
 
   private fun inAddedReads(fromJavaModule: PsiJavaModule, toJavaModule: PsiJavaModule?): Boolean {
     val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_READS_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_READS_OPTION)
       .flatMap { it.splitToSequence(",") }
       .any {
         val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
         fromJavaModule.name == optFromModuleName &&
-        (toJavaModule?.name == optToModuleName || (optToModuleName == JavaModuleSystem.ALL_UNNAMED && isUnnamedModule(toJavaModule)))
+        (toJavaModule?.name == optToModuleName || (optToModuleName == ALL_UNNAMED && isUnnamedModule(toJavaModule)))
       }
   }
 
   private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
+  
+  companion object {
+    const val ALL_UNNAMED: String = "ALL-UNNAMED"
+    const val ALL_SYSTEM: String = "ALL-SYSTEM"
+    const val ALL_MODULE_PATH: String = "ALL-MODULE-PATH"
+    const val ADD_EXPORTS_OPTION: String = "--add-exports"
+    const val ADD_MODULES_OPTION: String = "--add-modules"
+    const val ADD_READS_OPTION: String = "--add-reads"
+  }
 }

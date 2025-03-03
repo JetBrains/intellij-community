@@ -927,7 +927,6 @@
     <jvm.logging implementation="com.intellij.lang.logging.Slf4jLogger"/>
     <jvm.logging implementation="com.intellij.lang.logging.UnspecifiedLogger"/>
 
-    <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>

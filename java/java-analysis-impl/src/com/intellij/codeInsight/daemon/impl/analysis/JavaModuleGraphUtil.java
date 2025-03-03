@@ -90,7 +90,7 @@ public final class JavaModuleGraphUtil {
    */
   public static boolean isModuleReadable(@NotNull PsiElement place,
                                          @NotNull PsiJavaModule targetModule) {
-    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(targetModule, place));
+    return JavaModuleGraphHelper.getInstance().isAccessible(targetModule, place);
   }
 
   public static boolean addDependency(@NotNull PsiJavaModule from,
@@ -118,7 +118,7 @@ public final class JavaModuleGraphUtil {
     if (fromDescriptor == null) return false;
     PsiJavaModule toDescriptor = findDescriptorByElement(to);
     if (toDescriptor == null) return false;
-    if(!ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(to, from))) return false;
+    if (!JavaModuleGraphHelper.getInstance().isAccessible(to, from)) return false;
     return addDependency(fromDescriptor, toDescriptor, scope);
   }
 

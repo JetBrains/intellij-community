@@ -27,7 +27,7 @@ sealed interface JpmsModuleInfo {
    * @property jpsModule JPS module initialization.
    */
   class CurrentModuleInfo(override val module: PsiJavaModule?, val name: String, jps: () -> Module? = { null }) : JpmsModuleInfo {
-    constructor(use: PsiJavaModule?, element: PsiElement) : this(use, use?.name ?: JavaModuleSystem.ALL_UNNAMED, {
+    constructor(use: PsiJavaModule?, element: PsiElement) : this(use, use?.name ?: JpmsModuleAccessInfo.ALL_UNNAMED, {
       ModuleUtilCore.findModuleForPsiElement(element)
     })
 
