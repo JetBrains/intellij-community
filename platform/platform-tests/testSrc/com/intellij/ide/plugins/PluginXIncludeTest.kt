@@ -122,12 +122,24 @@ internal class PluginXIncludeTest {
   }
 
   @Test
-  fun `transitive include changes the base dir in an unconceivable way if relative path is used - intellij`() {
+  fun `transitive include changes the base dir in an unconceivable way if relative path is used - intellij-prefixed`() {
     Spec(
       includes("dir/a.xml"),
       mapOf(
         "META-INF/dir/a.xml" to includes("intellij.b.xml"),
         "intellij.b.xml" to includes(),
+      )
+    ).buildIn(pluginDirPath)
+    assertLoads()
+  }
+
+  @Test
+  fun `transitive include changes the base dir in an unconceivable way if relative path is used - kotlin-prefixed`() {
+    Spec(
+      includes("dir/a.xml"),
+      mapOf(
+        "META-INF/dir/a.xml" to includes("kotlin.b.xml"),
+        "kotlin.b.xml" to includes(),
       )
     ).buildIn(pluginDirPath)
     assertLoads()
