@@ -112,7 +112,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                                                   /*forceAutoPopup*/ false,
                                                   /*showHint*/ false)
       .apply {
-        minimumSize = JBUI.size(332, 0)
+        minimumSize = JBUI.size(240, 0)
         setupCleanBranchNameAndAdjustCursorIfNeeded()
       }
     row(GitBundle.message("new.branch.dialog.branch.name")) {
