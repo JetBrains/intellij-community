@@ -1,15 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.text;
+package com.intellij.util.text
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.text.CharArrayUtilKmp.getChars
+
 
 /**
  * A char sequence that supports fast copying of its full or partial contents to a char array. May be useful for performance optimizations
  * @see CharSequenceBackedByArray
- * @see CharArrayUtil#getChars(CharSequence, char[], int)
+ *
+ * @see CharArrayUtilKmp.getChars
  */
-public interface CharArrayExternalizable extends CharSequence {
-
+interface CharArrayExternalizable : CharSequence {
   /**
    * Copies own character sub-sequence to the given array
    * @param start the index where to start taking chars from in this sequence
@@ -17,5 +18,5 @@ public interface CharArrayExternalizable extends CharSequence {
    * @param dest the array to put characters into
    * @param destPos the index where to put the characters in the dest array
    */
-  void getChars(int start, int end, char @NotNull [] dest, int destPos);
+  fun getChars(start: Int, end: Int, dest: CharArray, destPos: Int)
 }

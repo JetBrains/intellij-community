@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.text.CharArrayCharSequence
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
 import it.unimi.dsi.fastutil.objects.Object2IntMap
@@ -43,6 +44,7 @@ object ClassPathUtil {
     return arrayOf(
       LoadingState::class.java,  // module 'intellij.platform.diagnostic'
       PathManager::class.java,  // module 'intellij.platform.util'
+      CharArrayCharSequence::class.java, // module 'intellij.platform.util.base.kmp'
       JavaVersion::class.java, // module 'intellij.platform.util.kmp'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'

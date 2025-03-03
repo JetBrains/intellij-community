@@ -293,35 +293,17 @@ public class StringUtil {
 
   @Contract(pure = true)
   public static int getLineBreakCount(@NotNull CharSequence text) {
-    int count = 0;
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        count++;
-      }
-      else if (c == '\r') {
-        if (i + 1 < text.length() && text.charAt(i + 1) == '\n') {
-          //noinspection AssignmentToForLoopParameter
-          i++;
-        }
-        count++;
-      }
-    }
-    return count;
+    return StringUtilKmp.getLineBreakCount(text);
   }
 
   @Contract(pure = true)
   public static boolean containsLineBreak(@NotNull CharSequence text) {
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (isLineBreak(c)) return true;
-    }
-    return false;
+    return StringUtilKmp.containsLineBreak(text);
   }
 
   @Contract(pure = true)
   public static boolean isLineBreak(char c) {
-    return c == '\n' || c == '\r';
+    return StringUtilKmp.isLineBreak(c);
   }
 
   @Contract(pure = true)

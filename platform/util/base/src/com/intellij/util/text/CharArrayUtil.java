@@ -7,13 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class CharArrayUtil {
-  private static final int GET_CHARS_THRESHOLD = 10;
-
   private CharArrayUtil() {
   }
 
@@ -50,73 +47,25 @@ public final class CharArrayUtil {
    * @param len         number of source data symbols to copy to the given buffer
    */
   public static void getChars(@NotNull CharSequence src, char @NotNull [] dst, int srcOffset, int dstOffset, int len) {
-    if (src instanceof CharArrayExternalizable) {
-      ((CharArrayExternalizable)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
-      return;
-    }
-
-    if (len >= GET_CHARS_THRESHOLD) {
-      if (src instanceof String) {
-        ((String)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
-        return;
-      }
-      else if (src instanceof CharBuffer) {
-        CharBuffer buffer = (CharBuffer)src;
-        int i = buffer.position();
-        buffer.position(i + srcOffset);
-        buffer.get(dst, dstOffset, len);
-        buffer.position(i);
-        return;
-      }
-      else if (src instanceof CharSequenceBackedByArray) {
-        ((CharSequenceBackedByArray)src.subSequence(srcOffset, srcOffset + len)).getChars(dst, dstOffset);
-        return;
-      }
-      else if (src instanceof StringBuffer) {
-        ((StringBuffer)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
-        return;
-      }
-      else if (src instanceof StringBuilder) {
-        ((StringBuilder)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
-        return;
-      }
-    }
-
-    for (int i = 0, j = srcOffset, max = srcOffset + len; j < max && i < dst.length; i++, j++) {
-      dst[i + dstOffset] = src.charAt(j);
-    }
+    CharArrayUtilKmp.getChars(src, dst, srcOffset, dstOffset, len);
   }
 
   public static char @Nullable [] fromSequenceWithoutCopying(@Nullable CharSequence seq) {
-    if (seq instanceof CharSequenceBackedByArray) {
-      return ((CharSequenceBackedByArray)seq).getChars();
-    }
-
-    if (seq instanceof CharBuffer) {
-      CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0 && buffer.position() == 0) {
-        return buffer.array();
-      }
-    }
-
-    return null;
+    return CharArrayUtilKmp.fromSequenceWithoutCopying(seq);
   }
 
   /**
    * @return the underlying char[] array if any, or the new chara array if not
    */
   public static char @NotNull [] fromSequence(@NotNull CharSequence seq) {
-    char[] underlying = fromSequenceWithoutCopying(seq);
-    return underlying != null ? underlying.clone() : fromSequence(seq, 0, seq.length());
+    return CharArrayUtilKmp.fromSequence(seq);
   }
 
   /**
    * @return a new char array containing the subsequence's chars
    */
   public static char @NotNull [] fromSequence(@NotNull CharSequence seq, int start, int end) {
-    char[] result = new char[end - start];
-    getChars(seq, result, start, 0, end - start);
-    return result;
+    return CharArrayUtilKmp.fromSequence(seq, start, end);
   }
 
   public static int shiftForward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
@@ -139,17 +88,7 @@ public final class CharArrayUtil {
    *                     {@code endOffset} otherwise
    */
   public static int shiftForward(@NotNull CharSequence buffer, int startOffset, int endOffset, @NotNull String chars) {
-    for (int offset = startOffset, limit = Math.min(endOffset, buffer.length()); offset < limit; offset++) {
-      char c = buffer.charAt(offset);
-      int i;
-      for (i = 0; i < chars.length(); i++) {
-        if (c == chars.charAt(i)) break;
-      }
-      if (i >= chars.length()) {
-        return offset;
-      }
-    }
-    return endOffset;
+    return CharArrayUtilKmp.shiftForward(buffer, chars, startOffset, endOffset);
   }
 
   public static int shiftForwardCarefully(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
@@ -173,6 +112,10 @@ public final class CharArrayUtil {
 
   public static int shiftForward(char @NotNull [] buffer, int offset, @NotNull String chars) {
     return shiftForward(new CharArrayCharSequence(buffer), offset, chars);
+  }
+
+  public static int shiftBackward(char @NotNull [] buffer, int offset, @NotNull String chars) {
+    return shiftBackward(new CharArrayCharSequence(buffer), offset, chars);
   }
 
   public static int shiftBackward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
@@ -200,22 +143,8 @@ public final class CharArrayUtil {
     return offset;
   }
 
-  public static int shiftBackward(char @NotNull [] buffer, int offset, @NotNull String chars) {
-    return shiftBackward(new CharArrayCharSequence(buffer), offset, chars);
-  }
-
   public static int shiftForwardUntil(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    while (true) {
-      if (offset >= buffer.length()) break;
-      char c = buffer.charAt(offset);
-      int i;
-      for (i = 0; i < chars.length(); i++) {
-        if (c == chars.charAt(i)) break;
-      }
-      if (i < chars.length()) break;
-      offset++;
-    }
-    return offset;
+    return CharArrayUtilKmp.shiftForwardUntil(buffer, offset, chars);
   }
 
   /**
@@ -244,18 +173,7 @@ public final class CharArrayUtil {
    *                    of the given {@code 'chars to exclude'}
    */
   public static int shiftBackwardUntil(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    if (offset >= buffer.length()) return offset;
-    while (true) {
-      if (offset < 0) break;
-      char c = buffer.charAt(offset);
-      int i;
-      for (i = 0; i < chars.length(); i++) {
-        if (c == chars.charAt(i)) break;
-      }
-      if (i < chars.length()) break;
-      offset--;
-    }
-    return offset;
+    return CharArrayUtilKmp.shiftBackwardUntil(buffer, offset, chars);
   }
 
   public static boolean regionMatches(char @NotNull [] buffer, int start, int end, @NotNull CharSequence s) {
@@ -492,12 +410,7 @@ public final class CharArrayUtil {
   }
 
   public static boolean containLineBreaks(@Nullable CharSequence seq, int fromOffset, int endOffset) {
-    if (seq == null) return false;
-    for (int i = fromOffset; i < endOffset; i++) {
-      char c = seq.charAt(i);
-      if (c == '\n' || c == '\r') return true;
-    }
-    return false;
+    return CharArrayUtilKmp.containLineBreaks(seq, fromOffset, endOffset);
   }
 
   /**
