@@ -117,7 +117,7 @@ class ThreadDumpAction : DumbAwareAction() {
               .sortedWith(DumpItem.BY_INTEREST)
           }
 
-        if (providers.any { it.requiresEvaluation() }) {
+        if (providers.any { it.requiresEvaluation }) {
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
@@ -132,7 +132,7 @@ class ThreadDumpAction : DumbAwareAction() {
           }
         }
         else {
-          getAllItems(null)
+          getAllItems(null) // todo fix
         }
       }
       catch (e: Throwable) {
@@ -472,18 +472,18 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
     val vm = context.debugProcess!!.virtualMachineProxy
 
-    val dumpVirtualThreads =
+    private val shouldDumpVirtualThreads =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
       JavaVersion.parse(vm.version()).feature >= 19 &&
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
-    override fun requiresEvaluation() = dumpVirtualThreads
+    override val requiresEvaluation get() = shouldDumpVirtualThreads
 
     override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
       val virtualThreads =
-        if (dumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
+        if (shouldDumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
         else emptyList()
 
       return buildThreadStates(vm, virtualThreads)

@@ -35,7 +35,7 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
                     // check that coroutines are in the project's classpath
                     vm.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
-        override fun requiresEvaluation() = enabled
+        override val requiresEvaluation get() = enabled
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
             if (!enabled) return emptyList()

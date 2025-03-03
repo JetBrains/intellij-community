@@ -19,7 +19,7 @@ interface ThreadDumpItemsProvider {
   /**
    * Returns whether this provider requires [SuspendContextImpl] which can be used to evaluate some information to provide dump items.
    */
-  fun requiresEvaluation(): Boolean
+  val requiresEvaluation: Boolean
 
   /**
    * Computes a list of dump items optionally using the given suspend context which is ready for evaluation.
