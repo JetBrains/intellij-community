@@ -10,6 +10,7 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.util.containers.addIfNotNull
 
 private const val HEADER_LEVEL = "#####"
 
@@ -282,7 +283,9 @@ internal class DocumentationRenderer(private val project: Project) {
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
-        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}${getRequirementSimpleText(attribute.requirement)}")
+        appendLine(
+          "- ${attributeLink(attribute.name!!, attribute.path)}${getDetails(attribute.requirement, attribute.internalNote)}"
+        )
       }
     }
   }
@@ -292,13 +295,21 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun getRequirementSimpleText(requirement: Requirement?): String {
-    requirement ?: return ""
-    return when (requirement.required) {
-      Required.YES -> " _required_"
-      Required.YES_FOR_PAID -> " _required for paid/freemium_"
-      else -> ""
+  private fun getDetails(requirement: Requirement?, internalNote: String?): String {
+    val details = mutableListOf<String>()
+    if (requirement != null) {
+      val requiredDetails = when (requirement.required) {
+        Required.YES -> "required"
+        Required.YES_FOR_PAID -> "required for paid/freemium"
+        else -> null
+      }
+      details.addIfNotNull(requiredDetails)
     }
+    if (internalNote != null) {
+      details.add("internal")
+    }
+    if (details.isEmpty()) return ""
+    return details.joinToString(prefix = " ", separator = "; ") { "_${it}_" }
   }
 
   private fun StringBuilder.appendChildren(element: Element) {
@@ -313,7 +324,7 @@ internal class DocumentationRenderer(private val project: Project) {
         val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
-        appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
+        appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getDetails(childElement.requirement, childElement.internalNote)}")
       }
       appendParagraphSeparator()
     }

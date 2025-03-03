@@ -45,8 +45,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__elementNotIncludedInDocumentationProvider\"><code>&lt;elementNotIncludedInDocumentationProvider&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> <i>internal</i></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> <i>internal</i></li>" +
       "</ul>"
     )
   }
@@ -334,7 +334,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "An internal element description." +
       "<h5>Attributes</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#attribute:root__internalElement__internalAttribute\"><code>internalAttribute</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__internalElement__internalAttribute\"><code>internalAttribute</code></a> <i>internal</i></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
@@ -373,7 +373,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<a href=\"https://example.com\">First</a> and <a href=\"https://example.com\"><code>second</code> internal</a>." +
       "<h5>Attributes</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a> <i>internal</i></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
@@ -397,7 +397,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<a href=\"https://example.com\">First</a> and <code>second</code> internal." +
       "<h5>Attributes</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithInternalLinks__attributeWithInternalLinks\"><code>attributeWithInternalLinks</code></a> <i>internal</i></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
