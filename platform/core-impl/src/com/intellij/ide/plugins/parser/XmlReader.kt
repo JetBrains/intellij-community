@@ -211,7 +211,7 @@ private fun readRootElementChild(
         if (descriptor.incompatibleWith == null) {
           descriptor.incompatibleWith = ArrayList()
         }
-        descriptor.incompatibleWith!!.add(PluginId.getId(it))
+        descriptor.incompatibleWith!!.add(it)
       }
     }
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)

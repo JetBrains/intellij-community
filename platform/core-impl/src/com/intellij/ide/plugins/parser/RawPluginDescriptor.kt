@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginContentDescriptor
 import com.intellij.ide.plugins.PluginDependency
 import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.openapi.extensions.ExtensionDescriptor
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
@@ -54,7 +53,7 @@ class RawPluginDescriptor {
   @JvmField var depends: MutableList<PluginDependency>? = null
   @JvmField var actions: MutableList<ActionElement>? = null
 
-  @JvmField var incompatibleWith: MutableList<PluginId>? = null
+  @JvmField var incompatibleWith: MutableList<String>? = null
 
   @JvmField val appContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
