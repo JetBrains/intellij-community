@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.document.AdEntityProvider
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityHandle
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityService
+import com.intellij.openapi.editor.impl.ad.util.EntityCleanService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectIdOrNull
@@ -66,7 +67,7 @@ private class AdDocumentMarkupManagerImpl(private val coroutineScope: CoroutineS
   private fun createDocMarkupEntity(project: Project?, markupModel: MarkupModelEx) {
     if (isEnabled()) {
       val entityProvider = AdEntityProvider.getInstance()
-      val debugName = markupModel.document.toString()
+      val debugName = markupModel.toString()
       lock.withLock {
         assert(markupModel.getUserData(MARKUP_ENTITY_HANDLE_KEY) == null) {
           "unexpected existence of document markup entity already exists $debugName"
@@ -75,6 +76,10 @@ private class AdDocumentMarkupManagerImpl(private val coroutineScope: CoroutineS
         if (docMarkupUid != null) {
           val handle = AsyncEntityService.getInstance().createHandle(debugName) {
             entityProvider.createDocMarkupEntity(docMarkupUid, markupModel)
+          }
+          EntityCleanService.getInstance().registerEntity(markupModel, debugName) {
+            val entity = handle.entity()
+            entityProvider.deleteDocMarkupEntity(entity)
           }
           markupModel.putUserData(MARKUP_ENTITY_HANDLE_KEY, handle)
         }

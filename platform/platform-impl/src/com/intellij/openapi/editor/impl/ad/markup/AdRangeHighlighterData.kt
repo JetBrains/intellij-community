@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus.Experimental
+import java.lang.ref.WeakReference
 
 
 @Experimental
@@ -20,8 +21,14 @@ internal data class AdRangeHighlighterData(
   val isVisibleIfFolded: Boolean,
   val isThinErrorStripeMark: Boolean,
   val isPersistent: Boolean,
-  @Transient val origin: RangeHighlighterEx? = null,
+
+  // TODO: WR is needed because of leaking AdRangeHighlighterData via DB
+  @Transient private val origin: WeakReference<RangeHighlighterEx>? = null,
 ) {
+
+  fun origin(): RangeHighlighterEx? {
+    return origin?.get()
+  }
 
   fun targetArea(): HighlighterTargetArea {
     return if (isExactRange) HighlighterTargetArea.EXACT_RANGE else HighlighterTargetArea.LINES_IN_RANGE

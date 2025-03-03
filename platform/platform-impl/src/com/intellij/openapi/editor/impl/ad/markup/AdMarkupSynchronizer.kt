@@ -23,6 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -41,8 +42,8 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
     val cs = coroutineScope.childScope("markup->entity sync", AD_DISPATCHER)
     val disposable = cs.asDisposable()
     val delay = if (markupModel is EditorMarkupModel) 5L else 100L
-    val sync = AdMarkupSynchronizer(markupEntity, markupModel, delay, cs)
-    markupModel.document.addDocumentListener(sync, disposable)
+    val sync = AdMarkupSynchronizer(markupEntity, WeakReference(markupModel), delay, cs)
+    markupModel.document.addDocumentListener(sync)
     markupModel.addMarkupModelListener(disposable, sync)
     return cs
   }
@@ -52,7 +53,7 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
 @Experimental
 private class AdMarkupSynchronizer(
   private val markupEntity: AdMarkupEntity,
-  private val markupModel: MarkupModelEx,
+  private val markupModel: WeakReference<MarkupModelEx>,
   private val delay: Long,
   private val coroutineScope: CoroutineScope,
 ) : MarkupModelListener, DocumentListener {
@@ -69,7 +70,7 @@ private class AdMarkupSynchronizer(
   }
 
   override fun beforeDocumentChange(event: DocumentEvent) {
-    markupModel.processRangeHighlightersOverlappingWith(event.offset, event.offset + event.oldLength) {
+    markupModel.get()?.processRangeHighlightersOverlappingWith(event.offset, event.offset + event.oldLength) {
       updateHighlighter(it)
       true
     }
@@ -111,14 +112,16 @@ private class AdMarkupSynchronizer(
   }
 
   private fun scheduleCollect() {
-    if (scheduledCollect.compareAndSet(READY_TO_COLLECT, null)) {
-      coroutineScope.launch {
-        if (delay > 0) {
-          delay(delay)
+    if (markupModel.get() != null) {
+      if (scheduledCollect.compareAndSet(READY_TO_COLLECT, null)) {
+        coroutineScope.launch {
+          if (delay > 0) {
+            delay(delay)
+          }
+          collectBatch(lastSeenNoveltyId.get())
+          // TODO: why I do this???
+          scheduledCollect.set(READY_TO_COLLECT)
         }
-        collectBatch(lastSeenNoveltyId.get())
-        // TODO: why I do this???
-        scheduledCollect.set(READY_TO_COLLECT)
       }
     }
   }
@@ -158,7 +161,7 @@ private class AdMarkupSynchronizer(
 
   private fun highlighterToAdd(invalidateOldMarkup: Boolean, lastSeenNoveltyId: Long): List<AdRangeHighlighter> {
     val toAdd = mutableListOf<AdRangeHighlighter>()
-    markupModel.processRangeHighlightersOverlappingWith(0, Int.MAX_VALUE) { highlighter ->
+    markupModel.get()?.processRangeHighlightersOverlappingWith(0, Int.MAX_VALUE) { highlighter ->
       val ts = highlighter.getUserData(HIGHLIGHTER_TIMESTAMP)
       if (ts != null && (invalidateOldMarkup || ts > lastSeenNoveltyId)) {
         val adHighlighter = AdRangeHighlighter.fromHighlighter(ts, highlighter)

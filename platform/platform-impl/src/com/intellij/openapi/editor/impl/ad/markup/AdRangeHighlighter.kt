@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
+import java.lang.ref.WeakReference
 import kotlin.math.min
 
 
@@ -43,7 +44,7 @@ internal data class AdRangeHighlighter(
           highlighter.isVisibleIfFolded,
           highlighter.isThinErrorStripeMark,
           highlighter.isPersistent,
-          highlighter,
+          WeakReference(highlighter),
         ),
       )
     }
@@ -70,21 +71,21 @@ internal data class AdRangeHighlighter(
   override fun isVisibleIfFolded(): Boolean = data.isVisibleIfFolded
   override fun isThinErrorStripeMark(): Boolean = data.isThinErrorStripeMark
   override fun isPersistent(): Boolean = data.isPersistent
-  override fun getCustomRenderer(): CustomHighlighterRenderer? = data.origin?.customRenderer
+  override fun getCustomRenderer(): CustomHighlighterRenderer? = data.origin()?.customRenderer
 
   override fun getTextAttributesKey(): TextAttributesKey? = data.textAttributesKey()
   override fun getTextAttributes(scheme: EditorColorsScheme?): TextAttributes? = getTextAttr(scheme)
 
-  override fun getLineSeparatorPlacement(): SeparatorPlacement? = data.origin?.lineSeparatorPlacement
-  override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = data.origin?.lineSeparatorRenderer
-  override fun getLineSeparatorColor(): Color? = data.origin?.lineSeparatorColor
-  override fun getErrorStripeTooltip(): Any? = data.origin?.errorStripeTooltip
-  override fun getLineMarkerRenderer(): LineMarkerRenderer? = data.origin?.lineMarkerRenderer
-  override fun getGutterIconRenderer(): GutterIconRenderer? = data.origin?.gutterIconRenderer
-  override fun getErrorStripeMarkColor(scheme: EditorColorsScheme?): Color? = data.origin?.getErrorStripeMarkColor(scheme)
-  override fun getForcedTextAttributes(): TextAttributes? = data.origin?.forcedTextAttributes
-  override fun getForcedErrorStripeMarkColor(): Color? = data.origin?.forcedErrorStripeMarkColor
-  override fun <T : Any?> getUserData(key: Key<T?>): T? = data.origin?.getUserData(key)
+  override fun getLineSeparatorPlacement(): SeparatorPlacement? = data.origin()?.lineSeparatorPlacement
+  override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = data.origin()?.lineSeparatorRenderer
+  override fun getLineSeparatorColor(): Color? = data.origin()?.lineSeparatorColor
+  override fun getErrorStripeTooltip(): Any? = data.origin()?.errorStripeTooltip
+  override fun getLineMarkerRenderer(): LineMarkerRenderer? = data.origin()?.lineMarkerRenderer
+  override fun getGutterIconRenderer(): GutterIconRenderer? = data.origin()?.gutterIconRenderer
+  override fun getErrorStripeMarkColor(scheme: EditorColorsScheme?): Color? = data.origin()?.getErrorStripeMarkColor(scheme)
+  override fun getForcedTextAttributes(): TextAttributes? = data.origin()?.forcedTextAttributes
+  override fun getForcedErrorStripeMarkColor(): Color? = data.origin()?.forcedErrorStripeMarkColor
+  override fun <T : Any?> getUserData(key: Key<T?>): T? = data.origin()?.getUserData(key)
 
   // region Not yet implemented
 
