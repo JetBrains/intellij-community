@@ -45,6 +45,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
 import com.jetbrains.WindowDecorations
+import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -109,6 +110,7 @@ class MainToolbar(
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = ConcurrentHashSet<ToolbarWidthCalculationListener>()
+  private val cachedWidths = ConcurrentHashMap<String, Int>()
 
   init {
     this.background = background
@@ -129,9 +131,22 @@ class MainToolbar(
       preferredSizeFunction = { component ->
         when (component) {
           is ActionToolbar -> {
-            notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
-            val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
-            CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
+            val mainToolbarWidth = this@MainToolbar.width
+            val availableSize = Dimension(mainToolbarWidth - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+            val sizeMap = CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>())
+            val dimension = sizeMap.getValue(component)
+
+            val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
+            val cachedWidth = cachedWidths[componentText]
+            if (dimension.width != cachedWidth || cachedWidths[MAIN_TOOLBAR_ID] != mainToolbarWidth) {
+              notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
+              val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
+              cachedWidths.put(componentText, dimension.width)
+              (component as ActionToolbar).actionGroup.templatePresentation.text
+              cachedWidths.put(MAIN_TOOLBAR_ID, mainToolbarWidth)
+            }
+
+            dimension
           }
           else -> {
             component.preferredSize
@@ -143,11 +158,6 @@ class MainToolbar(
 
   fun calculatePreferredWidth(): Int {
     return components.filterIsInstance<ActionToolbar>().sumOf { it.component.preferredSize.width} + 4 * JBUI.scale(layoutGap)
-  }
-
-  @Internal
-  fun addToolbarListeners(listener: ActionToolbarListener, disposable: Disposable) {
-    components.filterIsInstance<ActionToolbar>().forEach { it.addListener(listener, disposable) }
   }
 
   private fun updateToolbarActions() {
