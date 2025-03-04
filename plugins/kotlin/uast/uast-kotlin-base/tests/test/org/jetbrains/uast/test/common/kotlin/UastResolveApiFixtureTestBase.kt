@@ -2573,11 +2573,13 @@ interface UastResolveApiFixtureTestBase {
         )
         myFixture.configureByText(
             "main.kt", """
+                import java.util.function.Consumer
                 import test.pkg.*
                 
                 fun test() {
                   Any().belongsToClassPart()
                   Any().needFake()
+                  Consumer(Any::needFake)
                 }
             """.trimIndent()
         )
@@ -2613,6 +2615,20 @@ interface UastResolveApiFixtureTestBase {
                     TestCase.assertEquals(txt, expected, (attrVal as? PsiLiteral)?.value)
 
                     return super.visitCallExpression(node)
+                }
+
+                override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+                    val txt = node.sourcePsi?.text
+                    val resolved = node.resolve() as? PsiMethod
+                    TestCase.assertNotNull(txt, resolved)
+
+                    val containingClass = resolved!!.containingClass
+                    val expectedName =
+                        if (isK2) "MyStringsKt" // multi-file facade
+                        else "MyStringsKt__MyStringJVMKt" // multi-file class part
+                    TestCase.assertEquals(txt, expectedName, containingClass?.name)
+
+                    return super.visitCallableReferenceExpression(node)
                 }
             })
         } finally {
