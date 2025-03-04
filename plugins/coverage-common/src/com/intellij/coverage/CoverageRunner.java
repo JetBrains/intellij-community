@@ -2,6 +2,7 @@
 package com.intellij.coverage;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,6 +16,7 @@ import java.io.File;
  * Represents coverage framework inside IntelliJ.
  */
 public abstract class CoverageRunner {
+  private static final Logger LOG = Logger.getInstance(CoverageRunner.class);
   public static final ExtensionPointName<CoverageRunner> EP_NAME = ExtensionPointName.create("com.intellij.coverageRunner");
 
   /**
@@ -26,21 +28,23 @@ public abstract class CoverageRunner {
   @ApiStatus.NonExtendable
   public @Nullable ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite baseCoverageSuite) {
     if (baseCoverageSuite == null) {
-      return loadCoverageDataWithLogging(sessionDataFile, null, null).getProjectData();
+      return loadCoverageDataWithLogging(sessionDataFile, null, new DummyCoverageLoadErrorReporter()).getProjectData();
     }
     CoverageLoadListener listener = baseCoverageSuite.getProject().getMessageBus().syncPublisher(CoverageLoadListener.COVERAGE_TOPIC);
     LoadCoverageResult result;
     listener.coverageLoadingStarted(sessionDataFile);
     try {
-      result = loadCoverageDataWithLogging(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporter(listener, sessionDataFile));
+      result = loadCoverageDataWithLogging(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporterImplementation(listener, sessionDataFile));
     }
     catch (UnsupportedOperationException e) {
+      LOG.warn(e);
       String message = "Coverage runner " + this.getClass().getName() + " does not implement coverage loading, please contact a developer of extension";
-      result = new FailedLoadCoverageResult(null, message, e);
+      result = new FailedLoadCoverageResult(message, e);
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
-      result = new FailedLoadCoverageResult(null, "Could not load coverage from file " + sessionDataFile + ": " + e.getMessage(), e);
+      LOG.warn(e);
+      result = new FailedLoadCoverageResult(e, true);
     }
     listener.reportCoverageLoaded(result, sessionDataFile);
 
@@ -56,10 +60,10 @@ public abstract class CoverageRunner {
    * @param reporter wrapper around {@link CoverageLoadListener} is used for notifying about errors during coverage loading
    */
   @ApiStatus.OverrideOnly
-  public LoadCoverageResult loadCoverageDataWithLogging(
+  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
     final @NotNull File sessionDataFile,
     final @Nullable CoverageSuite baseCoverageSuite,
-    final @Nullable CoverageLoadErrorReporter reporter
+    final @NotNull CoverageLoadErrorReporter reporter
   ) {
     throw new UnsupportedOperationException("Method loadCoverageDataWithLogging should be implemented");
   }
