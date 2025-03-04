@@ -16,7 +16,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -873,14 +872,14 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 
 private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptorBuilder) {
   reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
-    var os: ExtensionDescriptor.Os? = null
+    var os: OS? = null
     var listenerClassName: String? = null
     var topicClassName: String? = null
     var activeInTestMode = true
     var activeInHeadlessMode = true
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
-        PluginXmlConst.LISTENER_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.LISTENER_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
         PluginXmlConst.LISTENER_CLASS_ATTR -> listenerClassName = getNullifiedAttributeValue(reader, i)
         PluginXmlConst.LISTENER_TOPIC_ATTR -> topicClassName = getNullifiedAttributeValue(reader, i)
         PluginXmlConst.LISTENER_ACTIVE_IN_TEST_MODE_ATTR -> activeInTestMode = reader.getAttributeAsBoolean(i)
@@ -892,7 +891,13 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
       LOG.error("Listener descriptor is not correct as ${reader.location}")
     }
     else {
-      containerDescriptor.addListener(ListenerDescriptor(os, listenerClassName, topicClassName, activeInTestMode, activeInHeadlessMode))
+      containerDescriptor.addListener(ListenerElement(
+        listenerClassName = listenerClassName,
+        topicClassName = topicClassName,
+        activeInTestMode = activeInTestMode,
+        activeInHeadlessMode = activeInHeadlessMode,
+        os = os
+      ))
     }
     reader.skipElement()
   }
