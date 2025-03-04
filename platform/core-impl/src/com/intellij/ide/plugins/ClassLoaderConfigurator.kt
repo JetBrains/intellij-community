@@ -145,7 +145,12 @@ class ClassLoaderConfigurator(
         else {
           val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
                                       && (module.moduleName == "intellij.rider.test.cases"
+                                          || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
+                                          || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
                                           || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
+                                          || module.moduleName == "intellij.rider.plugins.godot.test.cases"
+                                          || module.moduleName == "intellij.rider.plugins.unity.test.cases"
+                                          || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
                                           || module.moduleName == "intellij.rider.test.cases.qodana"
                                           || module.moduleName == "intellij.rider.test.cases.supplementary")
           module.pluginClassLoader = PluginClassLoader(
