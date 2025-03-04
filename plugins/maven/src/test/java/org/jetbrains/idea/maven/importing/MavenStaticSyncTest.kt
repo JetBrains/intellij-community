@@ -29,9 +29,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -55,9 +55,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -82,9 +82,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -123,9 +123,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project", "m1")
     assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -730,9 +730,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
 
     assertModuleLibDepScope("project", "Maven: somedep:somedep:4.0", DependencyScope.TEST)
 
@@ -770,9 +770,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
     assertModules("project", "m1")
 
     assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
   }
 
   @Test
