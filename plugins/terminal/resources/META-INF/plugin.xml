@@ -180,11 +180,13 @@
       <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
     </action>
-    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction" use-shortcut-of="EditorPageUp">
+    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction">
       <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
     </action>
-    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown">
+    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction">
       <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
     </action>
 
     <group id="Terminal.PromptStyle" popup="true">
