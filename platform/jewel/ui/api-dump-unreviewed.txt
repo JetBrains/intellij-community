@@ -223,21 +223,21 @@ f:org.jetbrains.jewel.ui.component.ComboBoxState$Companion
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
 - <init>():V
-- f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-2$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-3$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-4$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-1598537304$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-1749954721$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-1861256637$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$57961071$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - <init>():V
-- f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-2$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-3$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda-4$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-745244970$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1517724418$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$319830002$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$505847611$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
 - <init>():V
-- f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-1067661272$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ContextMenuDivider
 - androidx.compose.foundation.ContextMenuItem
 - sf:$stable:I
