@@ -229,7 +229,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val psi = analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     when (candidate) {
-                        is KaVariableSymbol -> psiForUast(candidate)
+                        is KaVariableSymbol -> psiForUast(candidate, ktExpression)
                         is KaFunctionSymbol -> toPsiMethod(candidate, ktExpression)
                     }
                 }
@@ -455,7 +455,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         resolvedTargetSymbol.owningProperty.psi
                     }
                     else -> {
-                        psiForUast(resolvedTargetSymbol)
+                        psiForUast(resolvedTargetSymbol, ktExpression)
                     }
                 }
 
