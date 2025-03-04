@@ -85,7 +85,7 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
         PluginXmlConst.ID_ELEM -> descriptor.builder.id = getNullifiedContent(reader)
         PluginXmlConst.NAME_ELEM -> descriptor.builder.name = getNullifiedContent(reader)
         PluginXmlConst.VERSION_ELEM -> descriptor.version = getNullifiedContent(reader)
-        PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
+        PluginXmlConst.DESCRIPTION_ELEM -> descriptor.builder.description = getNullifiedContent(reader)
         PluginXmlConst.IDEA_VERSION_ELEM -> readIdeaVersion(reader, descriptor)
         PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
         else -> reader.skipElement()
@@ -179,7 +179,7 @@ private fun readRootElementChild(
         reader.skipElement()
       }
     }
-    PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
+    PluginXmlConst.DESCRIPTION_ELEM -> descriptor.builder.description = getNullifiedContent(reader)
     PluginXmlConst.CHANGE_NOTES_ELEM -> descriptor.changeNotes = getNullifiedContent(reader)
     PluginXmlConst.RESOURCE_BUNDLE_ELEM -> descriptor.resourceBundleBaseName = getNullifiedContent(reader)
     PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
