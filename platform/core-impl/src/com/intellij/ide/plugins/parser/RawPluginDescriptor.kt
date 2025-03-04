@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.ModuleDependenciesDescriptor
 import com.intellij.ide.plugins.PluginContentDescriptor
 import com.intellij.ide.plugins.parser.elements.ActionElement
@@ -55,9 +54,9 @@ class RawPluginDescriptor {
 
   @JvmField var incompatibleWith: MutableList<String>? = null
 
-  @JvmField val appContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
-  @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
-  @JvmField val moduleContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
+  @JvmField val appContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
+  @JvmField val projectContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
+  @JvmField val moduleContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
 
   /** key is extension point's FQN */
   @JvmField var miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null

@@ -120,13 +120,13 @@ class IdeaPluginDescriptorImpl(
     ?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
 
   @JvmField
-  val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
+  val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor.build()
 
   @JvmField
-  val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
+  val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor.build()
 
   @JvmField
-  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
+  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor.build()
 
   @JvmField
   val content: PluginContentDescriptor =
