@@ -1,13 +1,15 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
@@ -24,9 +26,9 @@ internal class TerminalInput(
   }
 
   /**
-   * Use the flow to buffer the input events before we get the actual channel from the backend.
+   * Use this channel to buffer the input events before we get the actual channel from the backend.
    */
-  private val inputFlow = MutableSharedFlow<TerminalInputEvent>(extraBufferCapacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val bufferChannel = Channel<TerminalInputEvent>(capacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
     coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
@@ -34,10 +36,22 @@ internal class TerminalInput(
     }
 
   init {
-    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
-      inputFlow.collect { event ->
-        val channel = inputChannelDeferred.await()
-        channel.send(event)
+    coroutineScope.launch {
+      val targetChannel = inputChannelDeferred.await()
+
+      try {
+        for (event in bufferChannel) {
+          targetChannel.send(event)
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (_: ClosedSendChannelException) {
+        thisLogger().warn("Failed to send the event because input channel is closed")
+      }
+      catch (t: Throwable) {
+        thisLogger().error("Error while sending input event", t)
       }
     }
   }
@@ -73,6 +87,6 @@ internal class TerminalInput(
   }
 
   private fun sendEvent(event: TerminalInputEvent) {
-    inputFlow.tryEmit(event)
+    bufferChannel.trySend(event)
   }
 }
