@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATIO
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverResolverExtension
 
+@InternalIgnoreDependencyViolation
 private class IdeSamWithReceiverComponentContributor(private val project: Project) : StorageComponentContainerContributor {
     private companion object {
         val ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}="

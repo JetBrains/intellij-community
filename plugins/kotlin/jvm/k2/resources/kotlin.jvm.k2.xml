@@ -1,4 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k2">
+  <dependencies>
+    <module name="kotlin.jvm.shared"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.K2ScratchFileEditorProvider"/>
@@ -17,7 +21,4 @@
     <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction"/>
   </actions>
 
-  <dependencies>
-    <module name="kotlin.jvm.shared"/>
-  </dependencies>
 </idea-plugin>

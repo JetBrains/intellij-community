@@ -36,8 +36,6 @@
   <xi:include href="facets-base.xml"/>
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>
-  <xi:include href="kotlin.jvm.shared.xml"/>
-  <xi:include href="kotlin.jvm.k1.xml"/>
   <xi:include href="actions-fe10.xml"/>
 
   <!--suppress XmlPathReference -->
@@ -99,6 +97,9 @@
     <module name="kotlin.compiler-plugins.assignment.common.k1"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
+
+    <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.jvm.k1"/>
 
     <module name="kotlin.features-trainer"/>
     <module name="kotlin.j2k.k1.new.post-processing"/>

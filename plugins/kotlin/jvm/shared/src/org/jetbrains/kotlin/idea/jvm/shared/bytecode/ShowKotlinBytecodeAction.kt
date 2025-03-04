@@ -1,8 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.jvm.k1.bytecode
+package org.jetbrains.kotlin.idea.jvm.shared.bytecode
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 
 private const val TOOLWINDOW_ID = "Kotlin Bytecode"
 
-internal class ShowKotlinBytecodeAction : com.intellij.openapi.actionSystem.AnAction() {
+internal class ShowKotlinBytecodeAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val toolWindowManager = ToolWindowManager.getInstance(project)

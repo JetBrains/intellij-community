@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
+@InternalIgnoreDependencyViolation
 private class NoArgUltraLightClassModifierExtension(project: Project) :
     AnnotationBasedExtension,
     UltraLightClassModifierExtension {

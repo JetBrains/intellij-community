@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
+@InternalIgnoreDependencyViolation
 class IdeNoArgComponentContainerContributor(val project: Project) : StorageComponentContainerContributor {
     override fun registerModuleComponents(
         container: StorageComponentContainer, platform: TargetPlatform, moduleDescriptor: ModuleDescriptor

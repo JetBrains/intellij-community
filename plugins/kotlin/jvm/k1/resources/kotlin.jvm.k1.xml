@@ -1,4 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k1">
+  <dependencies>
+    <module name="kotlin.jvm.shared"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileEditorProvider"/>
@@ -29,6 +33,10 @@
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.jvm.shared.bytecode">
+    <compilationConfigurationEnricher implementation="org.jetbrains.kotlin.idea.jvm.k1.bytecode.K1CompilationConfigurationEnricher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

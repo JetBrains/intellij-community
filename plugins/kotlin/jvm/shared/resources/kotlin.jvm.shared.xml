@@ -1,4 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.shared">
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"
+            interface="org.jetbrains.kotlin.idea.jvm.shared.bytecode.CompilationConfigurationEnricher"
+            dynamic="true"/>
+  </extensionPoints>
+
   <actions>
     <!-- Kotlin Console REPL-->
     <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
@@ -15,6 +22,9 @@
             class="org.jetbrains.kotlin.idea.jvm.shared.actions.internal.ReactivePostOpenProjectActionsAction"
             text="Kotlin Project Post-Open Activity" internal="true">
       <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+    <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.jvm.shared.bytecode.ShowKotlinBytecodeAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
     </action>
   </actions>
 
@@ -70,7 +80,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
+    <scriptAdditionalIdeaDependenciesProvider
+            implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
 
     <storageComponentContainerContributor
             implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
