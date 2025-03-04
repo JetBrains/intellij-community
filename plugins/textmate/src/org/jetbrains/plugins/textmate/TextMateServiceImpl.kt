@@ -236,6 +236,10 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
         registerBundles(fireEvents = false)
         isInitialized = true
       }
+      catch (e: Throwable) {
+        LOG.debug("Initialization of textmate bundles was cancelled", e)
+        throw e
+      }
       finally {
         registrationLock.unlock()
       }
