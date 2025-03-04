@@ -5,10 +5,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeFilterState
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeResultsSorter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*

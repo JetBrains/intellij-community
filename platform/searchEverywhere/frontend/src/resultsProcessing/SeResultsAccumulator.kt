@@ -1,12 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.api.SeResultAddedEvent
-import com.intellij.platform.searchEverywhere.api.SeResultEvent
-import com.intellij.platform.searchEverywhere.api.SeResultReplacedEvent
-import com.intellij.platform.searchEverywhere.api.SeResultSkippedEvent
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

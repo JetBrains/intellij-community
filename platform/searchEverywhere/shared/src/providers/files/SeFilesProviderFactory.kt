@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.api.SeItemsProvider
-import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.actions.SeActionsAdaptedProvider
 import org.jetbrains.annotations.ApiStatus.Internal

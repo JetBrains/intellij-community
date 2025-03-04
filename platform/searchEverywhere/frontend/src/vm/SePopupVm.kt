@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi

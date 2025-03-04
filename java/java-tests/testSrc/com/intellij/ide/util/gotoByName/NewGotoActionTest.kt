@@ -5,10 +5,10 @@ package com.intellij.ide.util.gotoByName
 //import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereItemDataLocalProvider
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionHelperMock
+import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeFilterState
-import com.intellij.platform.searchEverywhere.api.SeItem
-import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.providers.actions.SeActionsProvider
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase

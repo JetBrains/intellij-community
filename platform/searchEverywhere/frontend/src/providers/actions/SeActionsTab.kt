@@ -3,11 +3,11 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.options.ObservableOptionEditor
+import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeFilterState
-import com.intellij.platform.searchEverywhere.api.SeResultEvent
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.providers.actions.SeActionsFilterData
 import com.intellij.ui.dsl.builder.panel

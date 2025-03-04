@@ -2,12 +2,8 @@
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeResultAddedEvent
-import com.intellij.platform.searchEverywhere.api.SeResultReplacedEvent
-import com.intellij.platform.searchEverywhere.api.SeResultSkippedEvent
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.sync.Mutex

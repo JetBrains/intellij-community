@@ -2,8 +2,8 @@
 package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Entity
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Item
 import com.jetbrains.rhizomedb.EID

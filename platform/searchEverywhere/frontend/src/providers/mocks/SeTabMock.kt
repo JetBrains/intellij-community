@@ -4,13 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.providers.mocks
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.api.SeFilterState
-import com.intellij.platform.searchEverywhere.api.SeResultEvent
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow

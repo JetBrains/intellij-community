@@ -4,9 +4,9 @@ package com.intellij.platform.searchEverywhere.providers.actions
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeItem
-import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 

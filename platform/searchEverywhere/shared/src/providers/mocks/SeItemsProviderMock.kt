@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.mocks
 
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeTextItemPresentation
-import com.intellij.platform.searchEverywhere.api.SeItem
-import com.intellij.platform.searchEverywhere.api.SeItemsProvider
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
