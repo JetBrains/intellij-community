@@ -81,10 +81,7 @@ public fun SelectableLazyColumnSample() {
         if (listOfItems.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
-            SelectableLazyColumn(
-                modifier = Modifier.focusable(),
-                state = state,
-            ) {
+            SelectableLazyColumn(modifier = Modifier.focusable(), state = state) {
                 items(count = listOfItems.size, key = { index -> listOfItems[index] }) { index ->
                     Text(
                         text = listOfItems[index],
