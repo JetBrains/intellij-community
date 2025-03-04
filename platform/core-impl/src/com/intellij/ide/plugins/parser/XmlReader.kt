@@ -567,14 +567,14 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
 private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> descriptor.productCode = getNullifiedAttributeValue(reader, i)
-      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR -> descriptor.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
+      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> descriptor.builder.productCode = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR -> descriptor.builder.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
       PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> {
         try {
-          descriptor.releaseVersion = reader.getAttributeAsInt(i)
+          descriptor.builder.releaseVersion = reader.getAttributeAsInt(i)
         }
         catch (_: TypedXMLStreamException) {
-          descriptor.releaseVersion = 0
+          descriptor.builder.releaseVersion = 0
         }
       }
       PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> descriptor.builder.isLicenseOptional = reader.getAttributeAsBoolean(i)

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
+import java.time.LocalDate
+
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var id: String? = null
   override var name: String? = null
@@ -31,4 +33,8 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var isRestartRequired: Boolean = false
   override var isLicenseOptional: Boolean = false
   override var isIndependentFromCoreClassLoader: Boolean = false
+
+  override var productCode: String? = null
+  override var releaseDate: LocalDate? = null
+  override var releaseVersion: Int = 0
 }

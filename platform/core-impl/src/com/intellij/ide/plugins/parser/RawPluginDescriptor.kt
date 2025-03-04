@@ -40,9 +40,9 @@ class RawPluginDescriptor {
   // makes sense only for product modules for now
   val isIndependentFromCoreClassLoader: Boolean get() = builder.isIndependentFromCoreClassLoader
 
-  @JvmField var productCode: String? = null
-  @JvmField var releaseDate: LocalDate? = null
-  @JvmField var releaseVersion: Int = 0
+  val productCode: String? get() = builder.productCode
+  val releaseDate: LocalDate? get() = builder.releaseDate
+  val releaseVersion: Int get() = builder.releaseVersion
 
   @JvmField var pluginAliases: MutableList<String>? = null
 
