@@ -199,10 +199,10 @@ public object IntUiUndecoratedComboBoxColorsFactory {
 }
 
 public fun ComboBoxMetrics.Companion.default(
-    arrowAreaSize: DpSize = DpSize(23.dp, 24.dp),
-    minSize: DpSize = DpSize(49.dp, 24.dp),
+    arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
+    minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
     popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
     borderWidth: Dp = 1.dp,
     maxPopupHeight: Dp = 200.dp,
@@ -218,10 +218,10 @@ public fun ComboBoxMetrics.Companion.default(
     )
 
 public fun ComboBoxMetrics.Companion.undecorated(
-    arrowAreaSize: DpSize = DpSize(23.dp, 24.dp),
-    minSize: DpSize = DpSize(49.dp, 24.dp),
+    arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
+    minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
     popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
     borderWidth: Dp = 0.dp,
     maxPopupHeight: Dp = 200.dp,

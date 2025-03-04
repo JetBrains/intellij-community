@@ -251,6 +251,7 @@ public final class org/jetbrains/jewel/ui/component/CircularProgressIndicatorKt 
 }
 
 public final class org/jetbrains/jewel/ui/component/ComboBoxKt {
+	public static final fun ComboBox-05tvjtU (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun ComboBox-xYaah8o (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -320,6 +321,13 @@ public final class org/jetbrains/jewel/ui/component/ComposableSingletons$InlineB
 	public final fun getLambda-6$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda-7$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda-8$ui ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class org/jetbrains/jewel/ui/component/ComposableSingletons$ListComboBoxKt {
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$ListComboBoxKt;
+	public static field lambda-1 Lkotlin/jvm/functions/Function5;
+	public fun <init> ()V
+	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function5;
 }
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt {
@@ -565,11 +573,10 @@ public final class org/jetbrains/jewel/ui/component/LinkState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/ListComboBoxKt {
-	public static final fun EditableListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
-	public static final fun EditableListComboBox-xKBSf-U (Ljava/util/List;ILkotlin/jvm/functions/Function2;Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
-	public static final fun ListComboBox-8u0NR3k (Ljava/util/List;ILkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
-	public static final fun ListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
-	public static final fun selectedItemIndex (Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)I
+	public static final fun EditableListComboBox-xzYpEKs (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ListComboBox-xKBSf-U (Ljava/util/List;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ListComboBox-xzYpEKs (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/runtime/Composer;III)V
+	public static final fun selectedItemIndex (Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Ljava/util/List;Lkotlin/jvm/functions/Function2;)I
 }
 
 public final class org/jetbrains/jewel/ui/component/ListItemState {
@@ -869,9 +876,13 @@ public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Co
 
 public final class org/jetbrains/jewel/ui/component/SimpleListItemKt {
 	public static final fun SimpleListItem-0vH8DBg (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-J1qPv4o (ZZLandroidx/compose/ui/graphics/ColorFilter;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SimpleListItem-Wu8B24Y (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SimpleListItem-XFD2ZOI (Ljava/lang/String;ZZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SimpleListItem-aqv2aB4 (Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-eKw1uXw (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-gMrHQkA (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-tJlDC5Y (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/graphics/ColorFilter;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/SliderKt {
