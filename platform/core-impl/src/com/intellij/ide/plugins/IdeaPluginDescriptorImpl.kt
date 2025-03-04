@@ -181,7 +181,7 @@ class IdeaPluginDescriptorImpl(
     context: DescriptorListLoadingContext,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
-    raw.name = name
+    raw.builder.name = name
     val result = IdeaPluginDescriptorImpl(raw, path, isBundled, id, module?.name, module?.loadingRule, useCoreClassLoader, !raw.isIndependentFromCoreClassLoader)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath

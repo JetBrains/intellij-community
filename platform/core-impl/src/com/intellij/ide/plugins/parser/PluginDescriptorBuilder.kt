@@ -3,4 +3,5 @@ package com.intellij.ide.plugins.parser
 
 interface PluginDescriptorBuilder {
   var id: String?
+  var name: String?
 }

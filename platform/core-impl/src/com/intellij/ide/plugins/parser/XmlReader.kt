@@ -83,7 +83,7 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
     reader.consumeChildElements { localName ->
       when (localName) {
         PluginXmlConst.ID_ELEM -> descriptor.builder.id = getNullifiedContent(reader)
-        PluginXmlConst.NAME_ELEM -> descriptor.name = getNullifiedContent(reader)
+        PluginXmlConst.NAME_ELEM -> descriptor.builder.name = getNullifiedContent(reader)
         PluginXmlConst.VERSION_ELEM -> descriptor.version = getNullifiedContent(reader)
         PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
         PluginXmlConst.IDEA_VERSION_ELEM -> readIdeaVersion(reader, descriptor)
@@ -168,7 +168,7 @@ private fun readRootElementChild(
         }
       }
     }
-    PluginXmlConst.NAME_ELEM -> descriptor.name = getNullifiedContent(reader)
+    PluginXmlConst.NAME_ELEM -> descriptor.builder.name = getNullifiedContent(reader)
     PluginXmlConst.CATEGORY_ELEM -> descriptor.category = getNullifiedContent(reader)
     PluginXmlConst.VERSION_ELEM -> {
       // kotlin includes compiler.xml that due to some reasons duplicates a version

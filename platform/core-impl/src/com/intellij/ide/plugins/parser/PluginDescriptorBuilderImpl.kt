@@ -3,4 +3,5 @@ package com.intellij.ide.plugins.parser
 
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var id: String? = null
+  override var name: String? = null
 }
