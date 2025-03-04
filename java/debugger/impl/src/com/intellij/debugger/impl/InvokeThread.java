@@ -118,7 +118,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   protected final EventQueue<E> myEvents;
 
-  private volatile WorkerThreadRequest<E> myCurrentRequest = null;
+  private WorkerThreadRequest<E> myCurrentRequest = null;
 
   public InvokeThread() {
     myEvents = new EventQueue<>(PrioritizedTask.Priority.values().length);
@@ -128,15 +128,19 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected abstract void processEvent(@NotNull E e);
 
   protected void startNewWorkerThread() {
-    assertCurrentThreadIsActive();
+    // myCurrentRequest has to be updated atomically with calling setRequestFuture
+    // otherwise we may have asserts triggering inside workerRequest.requestStop etc.
+    synchronized (this) {
+      assertCurrentThreadIsActive();
 
-    final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
-    WorkerThreadRequest<E> oldRequest = myCurrentRequest; // just for logging
-    myCurrentRequest = workerRequest;
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Started new worker thread request " + workerRequest + ", was " + oldRequest);
+      final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
+      WorkerThreadRequest<E> oldRequest = myCurrentRequest; // just for logging
+      myCurrentRequest = workerRequest;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Started new worker thread request " + workerRequest + ", was " + oldRequest);
+      }
+      workerRequest.setRequestFuture(ApplicationManager.getApplication().executeOnPooledThread(workerRequest));
     }
-    workerRequest.setRequestFuture(ApplicationManager.getApplication().executeOnPooledThread(workerRequest));
   }
 
   protected static boolean assertCurrentThreadIsActive() {
@@ -258,18 +262,23 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   protected void switchToRequest(WorkerThreadRequest newRequest) {
-    final WorkerThreadRequest currentThreadRequest = getCurrentThreadRequest();
-    LOG.assertTrue(currentThreadRequest != null);
-    myCurrentRequest = newRequest;
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Switched current request from " + currentThreadRequest + " to " + newRequest);
+    WorkerThreadRequest currentThreadRequest;
+    synchronized (this) {
+      currentThreadRequest = getCurrentThreadRequest();
+      LOG.assertTrue(currentThreadRequest != null);
+      myCurrentRequest = newRequest;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Switched current request from " + currentThreadRequest + " to " + newRequest);
+      }
     }
 
     currentThreadRequest.requestStop();
   }
 
   public WorkerThreadRequest<E> getCurrentRequest() {
-    return myCurrentRequest;
+    synchronized (this) {
+      return myCurrentRequest;
+    }
   }
 
   public static WorkerThreadRequest<?> getCurrentThreadRequest() {

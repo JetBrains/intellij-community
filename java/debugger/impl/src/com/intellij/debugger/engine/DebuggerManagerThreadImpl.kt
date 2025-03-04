@@ -166,9 +166,10 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
         {
           if (currentCommand === myEvents.currentEvent) {
             // if current command is still in progress, cancel it
-            currentRequest.requestStop()
+            val request = currentRequest
+            request.requestStop()
             try {
-              currentRequest.join()
+              request.join()
             }
             catch (_: InterruptedException) {
             }
