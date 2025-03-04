@@ -12,16 +12,21 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 interface MavenEmbedderWrappers : AutoCloseable {
   fun getEmbedder(baseDir: String): MavenEmbedderWrapper = getEmbedder(Path.of(baseDir))
+  fun getAlwaysOnlineEmbedder(baseDir: String): MavenEmbedderWrapper
   fun getEmbedder(baseDir: Path): MavenEmbedderWrapper
 }
 
 internal class MavenEmbedderWrappersImpl(private val myProject: Project) : MavenEmbedderWrappers {
   private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
 
-  override fun getEmbedder(baseDir: Path): MavenEmbedderWrapper {
+  override fun getAlwaysOnlineEmbedder(baseDir: String) = getEmbedder(Path.of(baseDir), true)
+
+  override fun getEmbedder(baseDir: Path) = getEmbedder(baseDir, false)
+
+  private fun getEmbedder(baseDir: Path, alwaysOnline: Boolean): MavenEmbedderWrapper {
     val embedderDir = guessExistingEmbedderDir(myProject, baseDir.toString())
     return myEmbedders.computeIfAbsent(baseDir) {
-      MavenServerManager.getInstance().createEmbedder(myProject, false, embedderDir)
+      MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, embedderDir)
     }
   }
 
