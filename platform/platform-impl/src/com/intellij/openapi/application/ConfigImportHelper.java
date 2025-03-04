@@ -170,7 +170,7 @@ public final class ConfigImportHelper {
                 vmOptionFileChanged = false;
               }
             }
-            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false, settings);
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true, settings);
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
