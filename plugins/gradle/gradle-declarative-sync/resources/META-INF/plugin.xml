@@ -19,6 +19,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="gradle.declarative.preimport.only" defaultValue="false" description="Show only the declarative Gradle pre-import stage"/>
+    <registryKey key="gradle.declarative.preimport.add.transitive.library.dependencies" defaultValue="false" description="Tries to add transitive library dependencies to the project model"/>
   </extensions>
 
 </idea-plugin>

@@ -2,8 +2,11 @@
 package com.intellij.gradle.declarativeSync
 
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencyModel
+import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel
 import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
@@ -24,35 +27,99 @@ import java.nio.file.Path
  * it works only with direct library dependencies for now
  */
 class GradleLibrariesResolver {
+
+  data class LibDepData(val group: String, val name: String, val version: String) {
+    constructor(artifact: ArtifactDependencyModel): this(
+      artifact.group().toString(),
+      artifact.name().toString(),
+      if(artifact.version().valueType == GradlePropertyModel.ValueType.NONE) "" else artifact.version().toString()
+    )
+    fun compactNotation(): String {
+      return if(version == "") "$group:$name" else "$group:$name:$version"
+    }
+  }
+
   suspend fun resolveAndAddLibraries(storage: MutableEntityStorage, context: ProjectResolverContext,
-                                    entitySource: GradleDeclarativeEntitySource, projectBuildModel: ProjectBuildModelImpl) {
+                                    entitySource: GradleDeclarativeEntitySource, projectBuildModel: ProjectBuildModelImpl): Map<LibDepData, List<LibDepData>> {
+    val originalDependencies = projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().dependencies().artifacts() }
+      .plus(projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().testing().dependencies().artifacts() })
+      .map { LibDepData(it) }.distinct()
+
+    val result = hashMapOf<LibDepData, MutableList<LibDepData>>()
+    result.putAll(originalDependencies.map { Pair(it, mutableListOf<LibDepData>()) })
     val gradleHomeCache = getGradleCacheVirtualFileUrl(context)
     if(gradleHomeCache != null) {
-      val allDependencies = projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().dependencies().artifacts() }.toSet()
-        .plus(projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().testing().dependencies().artifacts() }.toSet())
-        .map { Pair(it, findLibraryRootVirtualFile(gradleHomeCache, it)) }
-        .filter { it.second != null }.toSet() // discard libraries that weren't found in the cache
 
-      // TODO library roots have .module (actually json format) files that contain their dependencies
-      // TODO search the dependency tree for all dependencies
-      //val queue: Queue<Pair<ArtifactDependencyModel, VirtualFile?>> = java.util.ArrayDeque(allDependencies)
+      val libraryRootFoundDependencies = if(Registry.`is`("gradle.declarative.preimport.add.transitive.library.dependencies", false))
+        findTransitiveDependencies(originalDependencies, gradleHomeCache, result)
+      else originalDependencies.map { Pair(it, findLibraryRootDirectory(gradleHomeCache, it)) }.filter { it.second != null }
 
-      allDependencies.map {
-        val libRoot = findLibraryRoot(it.second!!, context.project().workspaceModel.getVirtualFileUrlManager())
-        if(libRoot != null) {
-          val libEntity = LibraryEntity("Gradle: " + it.first.compactNotation(), LibraryTableId.ProjectLibraryTableId,
-                                        listOf(libRoot), entitySource) {
-            typeId = LibraryTypeId("java-imported")
-          }
-          storage addEntity libEntity
-          storage addEntity LibraryPropertiesEntity(entitySource) {
-            propertiesXmlTag = "<properties groupId=\"${it.first.group()}\" artifactId=\"${it.first.name()}\"" +
-                               " version=\"${it.first.version()}\" baseVersion=\"${it.first.version()}\" />"
-            library = libEntity
-          }
-        }
+      libraryRootFoundDependencies.map {
+        addLibraryRoot(it, context, entitySource, storage)
       }
     }
+    return result
+  }
+
+  private suspend fun addLibraryRoot(
+    pair: Pair<LibDepData, VirtualFile?>,
+    context: ProjectResolverContext,
+    entitySource: GradleDeclarativeEntitySource,
+    storage: MutableEntityStorage,
+  ) {
+    val libRoot = findLibraryRootJar(pair.second!!, context.project().workspaceModel.getVirtualFileUrlManager())
+    if (libRoot != null) {
+      val libEntity = LibraryEntity("Gradle: " + pair.first.compactNotation(), LibraryTableId.ProjectLibraryTableId,
+                                    listOf(libRoot), entitySource) {
+        typeId = LibraryTypeId("java-imported")
+      }
+      storage addEntity libEntity
+      storage addEntity LibraryPropertiesEntity(entitySource) {
+        propertiesXmlTag = "<properties groupId=\"${pair.first.group}\" artifactId=\"${pair.first.name}\"" +
+                           " version=\"${pair.first.version}\" baseVersion=\"${pair.first.version}\" />"
+        library = libEntity
+      }
+    }
+  }
+
+  private fun findTransitiveDependencies(
+    originalDependencies: List<LibDepData>,
+    gradleHomeCache: VirtualFileUrl,
+    result: HashMap<LibDepData, MutableList<LibDepData>>,
+  ): MutableList<Pair<LibDepData, VirtualFile>> {
+    val dependencyDependencies = hashMapOf<LibDepData, List<LibDepData>>()
+
+    val newDependencies: ArrayDeque<LibDepData> = ArrayDeque(originalDependencies)
+    val libraryRootFoundDependencies = mutableListOf<Pair<LibDepData, VirtualFile>>() // all dependencies for which their library root directory exists
+    val consideredDependencies = hashSetOf<LibDepData>() // all dependencies that were considered
+    while (newDependencies.isNotEmpty()) {
+      val dep = newDependencies.removeFirst()
+      if (consideredDependencies.contains(dep)) continue
+      consideredDependencies.add(dep)
+      val libraryRoot = findLibraryRootDirectory(gradleHomeCache, dep)
+      if (libraryRoot == null) continue
+      libraryRootFoundDependencies.add(Pair(dep, libraryRoot))
+      val metadataFile = findLibraryRootGMM(libraryRoot)
+      if (metadataFile == null) continue
+      val metadataDependencies = getDependenciesGMM(metadataFile)
+      if (!dependencyDependencies.containsKey(dep)) {
+        dependencyDependencies[dep] = metadataDependencies
+      }
+      newDependencies.addAll(metadataDependencies.minus(consideredDependencies))
+    }
+
+    for (rootDep in result.keys) {
+      val rootDepNewDependencies: ArrayDeque<LibDepData> = ArrayDeque(dependencyDependencies[rootDep] ?: emptyList())
+      val rootDepConsideredDependencies = hashSetOf<LibDepData>()
+      while (rootDepNewDependencies.isNotEmpty()) {
+        val dep = rootDepNewDependencies.removeFirst()
+        if (rootDepConsideredDependencies.contains(dep)) continue
+        rootDepConsideredDependencies.add(dep)
+        result[rootDep]?.add(dep)
+        rootDepNewDependencies.addAll(dependencyDependencies[dep] ?: emptyList())
+      }
+    }
+    return libraryRootFoundDependencies
   }
 
   private suspend fun getGradleCacheVirtualFileUrl(context: ProjectResolverContext): VirtualFileUrl? {
@@ -66,16 +133,17 @@ class GradleLibrariesResolver {
     return gradleHome.resolve("caches/modules-2/files-2.1").toVirtualFileUrl(context.project().workspaceModel.getVirtualFileUrlManager())
   }
 
-  private fun findLibraryRootVirtualFile(gradleHomeCache: VirtualFileUrl, library: ArtifactDependencyModel): VirtualFile? {
-    val group = library.group().toString()
-    val name = library.name().toString()
-    val version = library.version().toString()
-    val libraryRoot = gradleHomeCache.append(group).append(name).append(version).virtualFile
+  private fun findLibraryRootDirectory(gradleHomeCache: VirtualFileUrl, library: LibDepData): VirtualFile? {
+    val group = library.group
+    val name = library.name
+    val version = library.version
+    val libraryRoot = if(version != "") gradleHomeCache.append(group).append(name).append(version).virtualFile
+      else null // TODO find newest? version
     if(libraryRoot == null || !libraryRoot.isDirectory) return null
     return libraryRoot
   }
 
-  private fun findLibraryRoot(libraryRootVirtualFile: VirtualFile, virtualFileUrlManager: VirtualFileUrlManager): LibraryRoot? {
+  private fun findLibraryRootJar(libraryRootVirtualFile: VirtualFile, virtualFileUrlManager: VirtualFileUrlManager): LibraryRoot? {
     val subDirs = VfsUtil.getChildren(libraryRootVirtualFile)
     for(subDir in subDirs) {
       for(file in subDir.children) {
@@ -85,5 +153,50 @@ class GradleLibrariesResolver {
       }
     }
     return null
+  }
+
+
+  private fun findLibraryRootGMM(libraryRootVirtualFile: VirtualFile): VirtualFile? {
+    val subDirs = VfsUtil.getChildren(libraryRootVirtualFile)
+    for(subDir in subDirs) {
+      for(file in subDir.children) {
+        if(file.isFile && file.name.endsWith(".module")) {
+          return file
+        }
+      }
+    }
+    return null
+  }
+
+  private fun getDependenciesGMM(file: VirtualFile): List<LibDepData> {
+    val data = mutableListOf<LibDepData>()
+    ObjectMapper().readTree(file.inputStream).let {
+      val variants = it["variants"]
+      if(variants != null) {
+        for(variant in variants) {
+          //TODO actually handle variants (compile, runtime)
+          //val attributes = variant["attributes"]
+          val dependencies = variant["dependencies"]
+          if(dependencies != null) {
+            for (dependency in dependencies) {
+              val group = dependency["group"].asText()
+              val name = dependency["module"].asText()
+              var version = ""
+              val versionObj = dependency["version"]
+              if(versionObj != null) {
+                val requires = versionObj["requires"]
+                if(requires != null) {
+                  version = requires.asText()
+                } else {
+                  // TODO implement prefers, strictly and rejects
+                }
+              }
+              data.add(LibDepData(group, name, version))
+            }
+          }
+        }
+      }
+    }
+    return data
   }
 }
