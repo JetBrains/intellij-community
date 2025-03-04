@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -21,9 +20,6 @@ class SeInitiatorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val service = SeFrontendService.getInstance(project)
-    service.coroutineScope.launch {
-      service.showPopup(null, e.dataContext)
-    }
+    SeFrontendService.getInstance(project).showPopup(null, e)
   }
 }

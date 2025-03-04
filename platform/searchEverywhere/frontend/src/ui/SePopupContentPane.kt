@@ -25,7 +25,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.util.bindTextIn
+import com.intellij.util.bindTextOnShow
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
@@ -40,7 +40,7 @@ import java.util.function.Supplier
 import javax.swing.*
 
 @Internal
-class SePopupContentPane(private val vm: SePopupVm, private val popupManager: SePopupManager): JPanel(), Disposable {
+class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
@@ -86,7 +86,7 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
-    textField.bindTextIn(vm.searchPattern, vm.coroutineScope)
+    textField.bindTextOnShow(vm.searchPattern, "Search Everywhere text field text binding")
 
     vm.coroutineScope.launch {
       vm.searchResults.collectLatest { listEventFlow ->
@@ -234,9 +234,7 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
       closePopup()
     }
     else {
-      withContext(Dispatchers.EDT) {
-        resultList.repaint()
-      }
+      resultList.repaint()
     }
   }
 
@@ -374,15 +372,8 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
   }
 
   private fun closePopup() {
-    popupManager.closePopup()
+    vm.closePopup()
   }
 
-  override fun dispose() {
-    vm.dispose()
-  }
-}
-
-@Internal
-interface SePopupManager {
-  fun closePopup()
+  override fun dispose() { }
 }

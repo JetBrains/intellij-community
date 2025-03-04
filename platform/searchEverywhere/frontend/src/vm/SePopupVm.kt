@@ -11,7 +11,6 @@ import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,7 +20,7 @@ class SePopupVm(val coroutineScope: CoroutineScope,
                 private val sessionRef: DurableRef<SeSessionEntity>,
                 tabs: List<SeTab>,
                 initialSearchPattern: String?,
-                private val onClose: suspend () -> Unit) {
+                private val closePopupHandler: () -> Unit) {
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
@@ -71,12 +70,6 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     usageLogger.tabSwitched()
   }
 
-  fun dispose() {
-    coroutineScope.launch {
-      onClose()
-    }
-  }
-
   private fun logItemSelected() {
     val searchText = searchPattern.value
     if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {
@@ -84,6 +77,10 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     }
 
     usageLogger.contributorItemSelected()
+  }
+
+  fun closePopup() {
+    closePopupHandler()
   }
 }
 
