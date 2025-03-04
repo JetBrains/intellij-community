@@ -240,23 +240,24 @@ public class DefaultTreeViewKeyActions(
 
         with(keybindings) {
             with(actions) {
-                if (selectionMode == SelectionMode.None) return@lambda false
-                when {
-                    isSelectParent -> {
-                        onSelectParent(keys, state)
-                    }
-                    isSelectChild -> {
-                        onSelectChild(keys, state)
-                    }
-                    // Before delegating to super, mark that we're using keyboard navigation
-                    else -> {
-                        // Now delegate to super handler
-                        if (super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent)) {
-                            return@lambda true
+                // Now delegate to super handler
+                // Before delegating to super, mark that we're using keyboard navigation
+                when (selectionMode) {
+                    SelectionMode.None -> return@lambda false
+                    else ->
+                        when {
+                            isSelectParent -> onSelectParent(keys, state)
+                            isSelectChild -> onSelectChild(keys, state)
+                            // Before delegating to super, mark that we're using keyboard navigation
+                            else -> {
+                                // Now delegate to super handler
+                                if (super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent)) {
+                                    return@lambda true
+                                } else {
+                                    return@lambda false
+                                }
+                            }
                         }
-
-                        return@lambda false
-                    }
                 }
             }
         }
