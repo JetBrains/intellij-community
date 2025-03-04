@@ -29,6 +29,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +105,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.rename.AutomaticRenamingDialog";
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
   }
 
   @Override
