@@ -1043,7 +1043,7 @@ private fun loadProductModule(
   val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName, moduleDir)
   val moduleRaw = if (jarFile == null) {
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
-    RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
+    RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
   }
   else {
     val reader = createXmlStreamReader(requireNotNull(module.descriptorContent) {

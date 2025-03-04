@@ -103,14 +103,14 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
 private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.builder.`package` = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PLUGIN_URL_ATTR -> descriptor.url = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> descriptor.isSeparateJar = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> descriptor.builder.isSeparateJar = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?
         getNullifiedAttributeValue(reader, i)?.let {

@@ -43,7 +43,7 @@ internal class ClassLoaderConfiguratorTest {
     val emptyPath = Path.of("")
 
     fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
-      return IdeaPluginDescriptorImpl(raw = RawPluginDescriptor().also { it.`package` = name },
+      return IdeaPluginDescriptorImpl(raw = RawPluginDescriptor().also { it.builder.`package` = name },
                                       path = emptyPath,
                                       isBundled = false,
                                       id = pluginId,

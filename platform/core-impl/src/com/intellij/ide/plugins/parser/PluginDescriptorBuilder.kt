@@ -14,4 +14,7 @@ interface PluginDescriptorBuilder {
   @Deprecated("Deprecated since 2025.2, the value is disregarded if its major part is at least 251. " +
               "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
   var untilBuild: String?
+
+  var `package`: String?
+  var isSeparateJar: Boolean
 }

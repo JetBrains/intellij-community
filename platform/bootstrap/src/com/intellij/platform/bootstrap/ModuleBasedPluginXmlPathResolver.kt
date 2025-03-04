@@ -40,7 +40,7 @@ internal class ModuleBasedPluginXmlPathResolver(
       return reader.build()
     }
     else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
-      return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
+      return RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path, readInto = readInto)
   }

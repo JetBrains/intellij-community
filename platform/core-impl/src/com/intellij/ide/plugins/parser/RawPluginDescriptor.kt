@@ -22,8 +22,8 @@ class RawPluginDescriptor {
               "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
   val untilBuild: String? get() = builder.untilBuild
 
-  @JvmField var `package`: String? = null
-  @JvmField var isSeparateJar: Boolean = false
+  val `package`: String? get() = builder.`package`
+  val isSeparateJar: Boolean get() = builder.isSeparateJar
 
   @JvmField var url: String? = null
   @JvmField var vendor: String? = null

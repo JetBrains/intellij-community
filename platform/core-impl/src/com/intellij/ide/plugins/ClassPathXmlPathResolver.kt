@@ -57,13 +57,13 @@ class ClassPathXmlPathResolver(
         isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
           val descriptor = RawPluginDescriptor()
-          descriptor.`package` = "unresolved.$moduleName"
+          descriptor.builder.`package` = "unresolved.$moduleName"
           return descriptor
         }
         ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName) -> {
           // this check won't be needed when we are able to load optional modules directly from product-modules.xml
           log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
-          return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
+          return RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
         }
         else -> {
           throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
