@@ -2,6 +2,7 @@
 package com.intellij.find.actions
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
@@ -66,7 +67,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
   }
 
   fun disposeProcessIcon() {
-    processIcon.dispose()
+    Disposer.dispose(processIcon)
     processIcon.parent?.apply {
       remove(processIcon)
       repaint()

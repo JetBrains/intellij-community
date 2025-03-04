@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.AccessToken;
@@ -203,12 +202,7 @@ public final class QuickFixPreviewPanelFactory {
       setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
       setBorder(JBUI.Borders.empty(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
-      Disposer.register(this, new Disposable() {
-        @Override
-        public void dispose() {
-          waitingIcon.dispose();
-        }
-      });
+      Disposer.register(this, waitingIcon);
       myWaitingLabel = getLabel(myView.getTree() .getSelectedProblemCount());
       add(myWaitingLabel);
       add(waitingIcon);

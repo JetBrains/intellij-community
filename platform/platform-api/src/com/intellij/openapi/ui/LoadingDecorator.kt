@@ -77,7 +77,7 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
     Disposer.register(parent) {
       fadeOutAnimator.dispose()
-      loadingLayer.progress.dispose()
+      Disposer.dispose(loadingLayer.progress)
       startRequestJob?.cancel()
     }
   }

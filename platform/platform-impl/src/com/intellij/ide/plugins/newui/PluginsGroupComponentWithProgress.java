@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   public void dispose() {
     if (myIcon != null) {
       remove(myIcon);
-      myIcon.dispose();
+      Disposer.dispose(myIcon);
       myIcon = null;
     }
   }

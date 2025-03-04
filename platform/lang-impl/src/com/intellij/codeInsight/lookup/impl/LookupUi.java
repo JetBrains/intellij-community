@@ -14,7 +14,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,12 +151,7 @@ final class LookupUi {
 
     addListeners();
 
-    Disposer.register(lookup, new Disposable() {
-      @Override
-      public void dispose() {
-        processIcon.dispose();
-      }
-    });
+    Disposer.register(lookup, processIcon);
   }
 
   private void addListeners() {
