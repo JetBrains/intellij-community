@@ -288,7 +288,7 @@ open class JBTabsImpl internal constructor(
       totalFrames = 2,
       cycleDuration = 500,
       isRepeatable = true,
-      coroutineScope = coroutineScope,
+      disposable = parentDisposable,
     ) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         repaintAttractions()

@@ -11,9 +11,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.util.ui.AnimatorKt.animatorCoroutineScope;
+
 /**
- * @author Kirill Kalishev
- * @author Konstantin Bulenkov
+ * NB: the Disposable contract is generally ignored by users and cannot be trusted
+ *     We rely on the 'isShowing()' to stop and start the animation instead.
  */
 public class AnimatedIcon extends JComponent implements Disposable {
   private final Icon[] icons;
@@ -42,7 +44,8 @@ public class AnimatedIcon extends JComponent implements Disposable {
     this.passiveIcon = passiveIcon;
     preferredSize = calcPreferredSize();
 
-    animator = new Animator(name, icons.length, cycleLength, true, true, coroutineScope) {
+    CoroutineScope animatorScope = coroutineScope != null ? coroutineScope : animatorCoroutineScope(name);
+    animator = new Animator(name, icons.length, cycleLength, true, true, animatorScope) {
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
         int len = AnimatedIcon.this.icons.length;
