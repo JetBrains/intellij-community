@@ -22,9 +22,13 @@ import java.util.concurrent.ConcurrentMap
  * so the results of [KtSymbolFromIndexProvider.getKotlinSubclassObjectsByNameFilter] should also be stable.
  * - It's safe to store references to [KaClassSymbol] in a cache as long as they are re-used in the same exact [KaSession].
  * This is achieved by using weak identity keys to store [KaSession].
+ * - The values ([KaClassSymbol]s) are weakly reachable from this cache, so that they can be GCed under memory pressure,
+ * and do not keep the weakly reachable keys ([KaSession]s) from being GCed.
+ * The weakly referenced [List] should survive long enough to be reused when [getKotlinSubclassObjectsSymbolsCached]
+ * is frequently called.
  */
 private val SUBCLASS_OBJECTS_SYMBOLS_CACHE: ConcurrentMap<KaSession, List<KaClassSymbol>> =
-    CollectionFactory.createConcurrentWeakIdentityMap()
+    CollectionFactory.createConcurrentWeakKeyWeakValueIdentityMap()
 
 context(KaSession)
 private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): List<KaClassSymbol> =
