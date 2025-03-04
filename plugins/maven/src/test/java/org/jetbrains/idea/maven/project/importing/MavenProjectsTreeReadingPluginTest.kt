@@ -41,7 +41,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       val pluginResolver = MavenPluginResolver(tree)
       val progressReporter = object : RawProgressReporter {}
       pluginResolver.resolvePlugins(listOf(parentProject),
-                                    embeddersManager,
+                                    mavenEmbedderWrappers,
                                     progressReporter,
                                     MavenLogEventHandler)
     }

@@ -966,6 +966,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       org.eclipse.aether.artifact.Artifact pluginArtifact =
         pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
 
+      mavenPluginArtifact = Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(pluginArtifact), getLocalRepositoryFile());
+
       DependencyFilter dependencyFilter = resolveDependencies ? null : new DependencyFilter() {
         @Override
         public boolean accept(DependencyNode node, List<DependencyNode> parents) {
@@ -984,9 +986,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
           artifacts.add(mavenArtifact);
-        }
-        else {
-          mavenPluginArtifact = mavenArtifact;
         }
       }
 
