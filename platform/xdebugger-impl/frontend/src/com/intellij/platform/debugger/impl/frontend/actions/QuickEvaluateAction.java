@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
-import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledDebuggerSupportQuickEvaluateActionHandler;
 
 @ApiStatus.Internal
 public class QuickEvaluateAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
@@ -48,7 +47,6 @@ public class QuickEvaluateAction extends DumbAwareAction implements ActionRemote
     }
     LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
     QuickEvaluateHandler customHandler = getEnabledCustomQuickEvaluateActionHandler(project, e);
-    QuickEvaluateHandler debuggerSupportHandler = getEnabledDebuggerSupportQuickEvaluateActionHandler(project, e);
     QuickEvaluateHandler handler;
     // first try to use platform's evaluate handler
     if (ourXQuickEvaluateHandler.isEnabled(project, e)) {
@@ -56,9 +54,6 @@ public class QuickEvaluateAction extends DumbAwareAction implements ActionRemote
     }
     else if (customHandler != null) {
       handler = customHandler;
-    }
-    else if (debuggerSupportHandler != null) {
-      handler = debuggerSupportHandler;
     }
     else {
       return;
@@ -85,10 +80,6 @@ public class QuickEvaluateAction extends DumbAwareAction implements ActionRemote
     }
     QuickEvaluateHandler customHandler = getEnabledCustomQuickEvaluateActionHandler(project, event);
     if (customHandler != null) {
-      return true;
-    }
-    QuickEvaluateHandler debuggerSupportHandler = getEnabledDebuggerSupportQuickEvaluateActionHandler(project, event);
-    if (debuggerSupportHandler != null) {
       return true;
     }
 

@@ -18,7 +18,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
-import java.awt.Point
 
 internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
   override suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int {
@@ -86,66 +84,29 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     return expressionInfo
   }
 
-
-  override suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean {
-    return withContext(Dispatchers.EDT) {
-      val project = projectId.findProject()
-      val editor = editorId.findEditor()
-      val point = editor.offsetToXY(offset)
-
-      val canShowHint = getValueHintFromDebuggerPlugins(project, editor, point, hintType) != null
-      return@withContext canShowHint
-    }
-  }
-
   override suspend fun createHint(
     projectId: ProjectId,
     editorId: EditorId,
     offset: Int,
     hintType: ValueHintType,
-    fromPlugins: Boolean,
   ): RemoteValueHintId? {
     return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
-
-      val hint = if (fromPlugins) {
-        getValueHintFromDebuggerPlugins(project, editor, point, hintType) ?: return@withContext null
+      val session = XDebuggerManager.getInstance(project).getCurrentSession()
+      if (session == null) {
+        return@withContext null
       }
-      else {
-        val session = XDebuggerManager.getInstance(project).getCurrentSession()
-        if (session == null) {
-          return@withContext null
-        }
-        val evaluator = session.getDebugProcess().getEvaluator()
-        if (evaluator == null) {
-          return@withContext null
-        }
-        val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
-        XValueHint(project, editor, point, hintType, offset, expressionInfo, evaluator, session, false)
+      val evaluator = session.getDebugProcess().getEvaluator()
+      if (evaluator == null) {
+        return@withContext null
       }
+      val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
+      val hint = XValueHint(project, editor, point, hintType, offset, expressionInfo, evaluator, session, false)
       val hintEntity = newValueEntity(hint)
       RemoteValueHintId(hintEntity.id)
     }
-  }
-
-  private suspend fun getValueHintFromDebuggerPlugins(
-    project: Project,
-    editor: Editor,
-    point: Point,
-    hintType: ValueHintType,
-  ): AbstractValueHint? {
-    for (support in DebuggerSupport.getDebuggerSupports()) {
-      val handler = support.quickEvaluateHandler
-      if (handler.isEnabled(project)) {
-        val hint = handler.createValueHintAsync(project, editor, point, hintType).hintPromise.await()
-        if (hint != null) {
-          return hint
-        }
-      }
-    }
-    return null
   }
 
   override suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit> {

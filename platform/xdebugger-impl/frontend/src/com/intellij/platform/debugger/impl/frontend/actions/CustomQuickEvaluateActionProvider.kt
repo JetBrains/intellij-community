@@ -4,7 +4,6 @@ package com.intellij.platform.debugger.impl.frontend.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import org.jetbrains.annotations.ApiStatus
 
@@ -33,8 +32,4 @@ internal fun getEnabledCustomQuickEvaluateActionHandler(project: Project, e: AnA
   return CustomQuickEvaluateActionProvider.EP_NAME.extensionList
     .mapNotNull { it.getCustomQuickEvaluateHandler(project) }
     .firstOrNull { it.isEnabled(project, e) }
-}
-
-internal fun getEnabledDebuggerSupportQuickEvaluateActionHandler(project: Project, e: AnActionEvent): QuickEvaluateHandler? {
-  return DebuggerSupport.getDebuggerSupports().map { it.quickEvaluateHandler }.firstOrNull { it.isEnabled(project, e) }
 }

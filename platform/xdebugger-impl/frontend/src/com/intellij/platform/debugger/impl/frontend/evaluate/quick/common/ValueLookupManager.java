@@ -20,7 +20,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluat
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -113,16 +112,6 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     if (customHandler != null) {
       requestHint(customHandler, editor, point, e, type);
       return;
-    }
-
-    // otherwise, handle old plugin handlers through DebuggerSupport (should be removed ASAP)
-    // for remote dev: specific DebuggerSupport with remote bridge will be used
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
-      if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, e, type);
-        return;
-      }
     }
 
     // if no providers were triggered - hide

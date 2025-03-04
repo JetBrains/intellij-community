@@ -13,18 +13,15 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHintId
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 
-@ApiStatus.Internal
-class RemoteValueHint(
+internal class RemoteValueHint(
   project: Project, private val projectId: ProjectId,
   private val editor: Editor,
   point: Point,
   private val type: ValueHintType,
   private val offset: Int,
   expressionInfo: ExpressionInfo,
-  private val fromPlugins: Boolean,
 ) : AbstractValueHint(project, editor, point, type, expressionInfo.textRange) {
   private var remoteHint: Deferred<RemoteValueHintId?>? = null
   private var hintCoroutineScope: CoroutineScope? = null
@@ -34,7 +31,7 @@ class RemoteValueHint(
     hintCoroutineScope = editor.childCoroutineScope("RemoteValueHintScope")
     val remoteHint = hintCoroutineScope!!.async(Dispatchers.IO) {
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-      remoteApi.createHint(projectId, editor.editorId(), offset, type, fromPlugins)
+      remoteApi.createHint(projectId, editor.editorId(), offset, type)
     }
     this@RemoteValueHint.remoteHint = remoteHint
     hintCoroutineScope!!.launch(Dispatchers.IO) {

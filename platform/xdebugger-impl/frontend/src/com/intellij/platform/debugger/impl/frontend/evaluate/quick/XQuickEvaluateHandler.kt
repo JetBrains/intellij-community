@@ -73,7 +73,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, sourcePosition, false)
       }
       else if (frontendType is FrontendType.RemoteDev) {
-        RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo, fromPlugins = false)
+        RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
       else {
         val session = XDebuggerManager.getInstance(project).getCurrentSession()
