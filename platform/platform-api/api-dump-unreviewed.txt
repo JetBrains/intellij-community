@@ -10813,7 +10813,10 @@ c:com.intellij.util.ui.AnimatedIcon
 a:com.intellij.util.ui.Animator
 - pf:isForward:Z
 - <init>(java.lang.String,I,I,Z):V
+- <init>(java.lang.String,I,I,Z,com.intellij.openapi.Disposable):V
 - <init>(java.lang.String,I,I,Z,Z):V
+- <init>(java.lang.String,I,I,Z,Z,com.intellij.openapi.Disposable):V
+- b:<init>(java.lang.String,I,I,Z,Z,com.intellij.openapi.Disposable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,I,I,Z,Z,kotlinx.coroutines.CoroutineScope):V
 - b:<init>(java.lang.String,I,I,Z,Z,kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - dispose():V
