@@ -5,6 +5,12 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor.getRunExecutorInstance
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
@@ -14,6 +20,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.OrderEnumerator
@@ -582,5 +589,132 @@ class GetProjectDependenciesTool : AbstractMcpTool<NoArgs>() {
         }.toHashSet()
 
         return Response(dependencies.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+}
+
+class ListAvailableActionsTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "list_available_actions"
+    override val description: String = """
+        Lists all available actions in JetBrains IDE editor.
+        Returns a JSON array of objects containing action information:
+        - id: The action ID
+        - text: The action presentation text
+        Use this tool to discover available actions for execution with execute_action_by_id.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val actionManager = ActionManager.getInstance() as ActionManagerEx
+        val dataContext = DataManager.getInstance().getDataContext()
+
+        val availableActions = runReadAction {
+            // Get all action IDs
+            actionManager.getActionIdList("").mapNotNull { actionId ->
+                val action = actionManager.getAction(actionId) ?: return@mapNotNull null
+
+                // Create event and presentation to check if action is enabled
+                val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
+                val presentation = action.templatePresentation.clone()
+
+                // Update presentation to check if action is available
+                action.update(event)
+
+                // Only include actions that have text and are enabled
+                if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
+                    """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
+                } else {
+                    null
+                }
+            }
+        }
+
+        return Response(availableActions.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+}
+
+@Serializable
+data class ExecuteActionArgs(val actionId: String)
+
+class ExecuteActionByIdTool : AbstractMcpTool<ExecuteActionArgs>() {
+    override val name: String = "execute_action_by_id"
+    override val description: String = """
+        Executes an action by its ID in JetBrains IDE editor.
+        Requires an actionId parameter containing the ID of the action to execute.
+        Returns one of two possible responses:
+        - "ok" if the action was successfully executed
+        - "action not found" if the action with the specified ID was not found
+        Note: This tool doesn't wait for the action to complete.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: ExecuteActionArgs): Response {
+        val actionManager = ActionManager.getInstance()
+        val action = actionManager.getAction(args.actionId)
+
+        if (action == null) {
+            return Response(error = "action not found")
+        }
+
+        ApplicationManager.getApplication().invokeLater({
+            val event = AnActionEvent.createFromAnAction(
+                action,
+                null,
+                "",
+                DataManager.getInstance().getDataContext()
+            )
+            action.actionPerformed(event)
+        }, ModalityState.nonModal())
+
+        return Response("ok")
+    }
+}
+
+class GetProgressIndicatorsTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_progress_indicators"
+    override val description: String = """
+        Retrieves the status of all running progress indicators in JetBrains IDE editor.
+        Returns a JSON array of objects containing progress information:
+        - text: The progress text/description
+        - fraction: The progress ratio (0.0 to 1.0)
+        - indeterminate: Whether the progress is indeterminate
+        Returns an empty array if no progress indicators are running.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val runningIndicators = CoreProgressManager.getCurrentIndicators()
+
+        val progressInfos = runningIndicators.map { indicator ->
+            val text = indicator.text ?: ""
+            val fraction = if (indicator.isIndeterminate) -1.0 else indicator.fraction
+            val indeterminate = indicator.isIndeterminate
+
+            """{"text": "${text.replace("\"", "\\\"")}", "fraction": $fraction, "indeterminate": $indeterminate}"""
+        }
+
+        return Response(progressInfos.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+}
+
+@Serializable
+data class WaitArgs(val milliseconds: Long = 5000)
+
+class WaitTool : AbstractMcpTool<WaitArgs>() {
+    override val name: String = "wait"
+    override val description: String = """
+        Waits for a specified number of milliseconds (default: 5000ms = 5 seconds).
+        Optionally accepts a milliseconds parameter to specify the wait duration.
+        Returns "ok" after the wait completes.
+        Use this tool when you need to pause before executing the next command.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: WaitArgs): Response {
+        val waitTime = if (args.milliseconds <= 0) 5000 else args.milliseconds
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(waitTime)
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            return Response(error = "Wait interrupted")
+        }
+
+        return Response("ok")
     }
 }

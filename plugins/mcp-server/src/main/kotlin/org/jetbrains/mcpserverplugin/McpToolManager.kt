@@ -38,6 +38,10 @@ class McpToolManager {
             GetAllOpenFileTextsTool(),
             GetAllOpenFilePathsTool(),
             OpenFileInEditorTool(),
+            ListAvailableActionsTool(),
+            ExecuteActionByIdTool(),
+            GetProgressIndicatorsTool(),
+            WaitTool(),
         )
     }
 }
