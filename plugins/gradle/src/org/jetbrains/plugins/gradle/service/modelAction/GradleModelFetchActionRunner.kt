@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.jetbrains.annotations.ApiStatus
@@ -13,7 +14,8 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner.Companion.runBuildAction
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
-import java.util.*
+
+private val LOG = logger<GradleModelFetchActionRunner>()
 
 /**
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
@@ -69,11 +71,11 @@ class GradleModelFetchActionRunner private constructor(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
-    try {
-      if(Registry.`is`("gradle.declarative.preimport.only")) return
-    } catch (_: MissingResourceException) {
-      // plugin is disabled
+    if(Registry.`is`("gradle.declarative.preimport.only", false)) {
+      LOG.warn("Pausing Gradle import process indefinitely due to registry flag 'gradle.declarative.preimport.only'")
+      return
     }
+
     modelFetchAction.isUseProjectsLoadedPhase = true
     connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
