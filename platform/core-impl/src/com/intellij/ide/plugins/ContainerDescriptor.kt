@@ -23,7 +23,7 @@ class ContainerDescriptor {
   val listeners: List<ListenerDescriptor>
     get() = _listeners ?: Java11Shim.INSTANCE.listOf()
 
-  @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
+  private var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
   val readOnlyExtensionPoints: List<ExtensionPointDescriptor>
     get() = extensionPoints ?: Java11Shim.INSTANCE.listOf()
 
@@ -49,6 +49,21 @@ class ContainerDescriptor {
       _listeners = ArrayList()
     }
     _listeners!!.add(listenerDescriptor)
+  }
+
+  internal fun addExtensionPoint(extensionPointDescriptor: ExtensionPointDescriptor) {
+    if (extensionPoints == null) {
+      extensionPoints = ArrayList()
+    }
+    extensionPoints!!.add(extensionPointDescriptor)
+  }
+
+  internal fun addExtensionPoints(points: List<ExtensionPointDescriptor>) {
+    if (extensionPoints == null) {
+      extensionPoints = ArrayList(points)
+    } else {
+      extensionPoints!!.addAll(points)
+    }
   }
 
   override fun toString(): String {

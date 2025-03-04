@@ -494,10 +494,7 @@ private fun readExtensionPoints(
       }
     }
 
-    if (containerDescriptor.extensionPoints == null) {
-      containerDescriptor.extensionPoints = ArrayList()
-    }
-    containerDescriptor.extensionPoints!!.add(ExtensionPointDescriptor(
+    containerDescriptor.addExtensionPoint(ExtensionPointDescriptor(
       name = qualifiedName ?: name ?: throw RuntimeException("`name` attribute not specified for extension point at ${reader.location}"),
       isNameQualified = qualifiedName != null,
       className = `interface` ?: beanClass!!,
@@ -511,12 +508,7 @@ private fun readExtensionPoints(
 private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
   extractor(from).readOnlyExtensionPoints.takeIf { it.isNotEmpty() }?.let {
     val toContainer = extractor(to)
-    if (toContainer.extensionPoints == null) {
-      toContainer.extensionPoints = ArrayList(it)
-    }
-    else {
-      toContainer.extensionPoints!!.addAll(it)
-    }
+    toContainer.addExtensionPoints(it)
   }
 }
 
