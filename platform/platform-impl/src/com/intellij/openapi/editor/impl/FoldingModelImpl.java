@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
-  implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
+  implements FoldingModelEx, FoldingModelInternal, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   @ApiStatus.Internal
@@ -561,16 +561,19 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
+  @Override
   public boolean isInBatchFoldingOperation() {
     return myIsBatchFoldingProcessing;
   }
 
   @ApiStatus.Internal
+  @Override
   public void updateCachedOffsets() {
     myFoldTree.updateCachedOffsets();
   }
 
   @ApiStatus.Internal
+  @Override
   public int getFoldedLinesCountBefore(int offset) {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
@@ -581,6 +584,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @ApiStatus.Internal
+  @Override
   public int getTotalNumberOfFoldedLines() {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
@@ -605,6 +609,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
    * height of that particular visual line (due to the custom fold region it contains (if it does)).
    */
   @ApiStatus.Internal
+  @Override
   public @NotNull IntPair getCustomRegionsYAdjustment(int offset, int prevFoldRegionIndex) {
     return myFoldTree.getCustomRegionsYAdjustment(offset, prevFoldRegionIndex);
   }

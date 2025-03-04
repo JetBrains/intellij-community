@@ -583,8 +583,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myDocument;
   }
 
-  FoldingModelImpl getFoldingModel() {
-    return (FoldingModelImpl)myEditorModel.getFoldingModel();
+  FoldingModelInternal getFoldingModel() {
+    return myEditorModel.getFoldingModel();
   }
 
   InlayModelEx getInlayModel() {

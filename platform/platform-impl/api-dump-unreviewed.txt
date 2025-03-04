@@ -7508,8 +7508,8 @@ f:com.intellij.openapi.editor.impl.FocusModeModel
 - sf:FOCUS_MODE_ATTRIBUTES:com.intellij.openapi.util.Key
 - dispose():V
 f:com.intellij.openapi.editor.impl.FoldingModelImpl
-- com.intellij.openapi.editor.InlayModel$SimpleAdapter
 - com.intellij.diagnostic.Dumpable
+- com.intellij.openapi.editor.InlayModel$SimpleAdapter
 - com.intellij.openapi.editor.ex.FoldingModelEx
 - com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - com.intellij.openapi.util.ModificationTracker

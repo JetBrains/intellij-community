@@ -45,7 +45,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   private final InlayModelEx myInlayModel;
-  private final FoldingModelImpl myFoldingModel;
+  private final FoldingModelInternal myFoldingModel;
   private final CaretModel myCaretModel;
   private final SoftWrapModelImpl mySoftWrapModel;
   private final ScrollingModel myScrollingModel;

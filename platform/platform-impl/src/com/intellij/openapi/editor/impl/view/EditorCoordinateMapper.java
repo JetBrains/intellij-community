@@ -5,10 +5,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FoldingKeys;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
@@ -29,7 +26,7 @@ import java.util.List;
 final class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
-  private final FoldingModelImpl myFoldingModel;
+  private final FoldingModelInternal myFoldingModel;
   private final InlayModelEx myInlayModel;
   private final SoftWrapModelImpl mySoftWrapModel;
 
