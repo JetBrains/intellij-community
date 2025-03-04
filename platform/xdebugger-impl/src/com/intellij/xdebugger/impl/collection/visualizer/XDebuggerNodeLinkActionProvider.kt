@@ -39,7 +39,7 @@ interface XDebuggerNodeLinkActionProvider {
       if (node.hasLinks()) return
 
       val session = XDebugView.getSession(node.tree) as? XDebugSessionImpl ?: return
-      val scope = session.suspendCoroutineScope ?: return
+      val scope = session.currentSuspendCoroutineScope ?: return
 
       scope.launch(Dispatchers.Default) {
         for (provider in EP_NAME.extensionList) {

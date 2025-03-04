@@ -36,7 +36,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -61,7 +60,10 @@ import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.storeXDebugSessionInDb
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import com.intellij.xdebugger.impl.ui.*
+import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
+import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
@@ -105,7 +107,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val mySuspendContext = MutableStateFlow<XSuspendContext?>(null)
 
   @get:ApiStatus.Internal
-  var suspendCoroutineScope: CoroutineScope? = null
+  var currentSuspendCoroutineScope: CoroutineScope? = null
     private set
   var currentExecutionStack: XExecutionStack? = null
     private set
@@ -644,11 +646,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   private fun clearPausedData() {
-    mySuspendContext.value = null
-    if (this.suspendCoroutineScope != null) {
-      suspendCoroutineScope!!.cancel(null)
+    // If the scope is not provided by an XSuspendContent implementation,
+    // then a default scope, provided by XDebuggerSuspendScopeProvider is used,
+    // and it must be canceled manually
+    if (mySuspendContext.value?.coroutineScope != null) {
+      currentSuspendCoroutineScope?.cancel()
     }
-    this.suspendCoroutineScope = null
+    currentSuspendCoroutineScope = null
+    mySuspendContext.value = null
     this.currentExecutionStack = null
     myCurrentStackFrameManager.setCurrentStackFrame(null)
     myTopStackFrame = null
@@ -922,7 +927,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     setBreakpointsDisabledTemporarily(false)
     mySuspendContext.value = suspendContext
-    this.suspendCoroutineScope = provideSuspendScope(this)
+    this.currentSuspendCoroutineScope = suspendContext.coroutineScope ?: provideSuspendScope(this)
     this.currentExecutionStack = suspendContext.activeExecutionStack
     val newCurrentStackFrame = if (this.currentExecutionStack != null) currentExecutionStack!!.getTopFrame() else null
     myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
