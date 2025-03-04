@@ -54,7 +54,7 @@ class ListComboBoxUiTest {
         get() = composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true)
 
     private val textField: SemanticsNodeInteraction
-        get() = composeRule.onNodeWithTag("Jewel.ComboBox.TextField")
+        get() = composeRule.onNodeWithTag("Jewel.ComboBox.TextField", useUnmergedTree = true)
 
     private val comboBox: SemanticsNodeInteraction
         get() = composeRule.onNodeWithTag("ComboBox")
@@ -122,7 +122,7 @@ class ListComboBoxUiTest {
     fun `when not-editable click opens popup`() {
         val comboBox = focusedListComboBox()
         comboBox.performClick()
-        composeRule.onNodeWithTag("Item 2").assertIsDisplayed()
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -186,7 +186,7 @@ class ListComboBoxUiTest {
             keyUp(Key.Companion.Enter)
         }
         popupMenu.assertDoesNotExist()
-        composeRule.onNodeWithTag("Item 1").assertDoesNotExist()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -305,7 +305,7 @@ class ListComboBoxUiTest {
             keyUp(Key.Companion.DirectionDown)
         }
         popupMenu.assertIsDisplayed()
-        composeRule.onAllNodesWithText("Item 2").onLast().assertIsDisplayed()
+        composeRule.onAllNodesWithText("Item 2", useUnmergedTree = true).onLast().assertIsDisplayed()
     }
 
     @Test
@@ -392,7 +392,7 @@ class ListComboBoxUiTest {
     fun `when editable clicking chevron open the popup and select the first item`() {
         editableListComboBox()
         chevronContainer.performClick()
-        composeRule.onNodeWithTag("Item 1").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertIsDisplayed().assertIsSelected()
     }
 
     @Test
@@ -402,11 +402,11 @@ class ListComboBoxUiTest {
 
         comboBox.performKeyInput { pressKey(Key.Companion.DirectionDown) }
         popupMenu.assertIsDisplayed()
-        composeRule.onNodeWithTag("Item 1").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyInput { pressKey(Key.Companion.DirectionDown) }
         popupMenu.assertIsDisplayed()
-        composeRule.onNodeWithTag("Item 2").assertIsDisplayed().assertIsSelected()
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsDisplayed().assertIsSelected()
     }
 
     @Test
@@ -415,13 +415,15 @@ class ListComboBoxUiTest {
         comboBox.performClick()
         popupMenu.assertIsDisplayed()
 
-        composeRule.onNodeWithTag("Item 2").assertIsDisplayed().performMouseInput {
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsDisplayed().performMouseInput {
             enter(Offset(2f, 0f))
             moveTo(Offset(10f, 2f))
             advanceEventTime()
         }
 
-        composeRule.onNodeWithTag("Item 2").assertIsSelected().performKeyInput { pressKey(Key.Companion.Enter) }
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsSelected().performKeyInput {
+            pressKey(Key.Companion.Enter)
+        }
 
         comboBox.assertTextEquals("Item 2", includeEditableText = false)
     }
@@ -456,7 +458,7 @@ class ListComboBoxUiTest {
 
         composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
         composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithTag("Item 1").performClick()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).performClick()
         assert(selectedIdx == 0) { "Expected selectedIdx to be 0, but was $selectedIdx" }
         assert(selectedText == "Item 1") { "Expected selectedText to be 'Item 1', but was $selectedText" }
     }
@@ -489,7 +491,7 @@ class ListComboBoxUiTest {
         selectedIndex = 3
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithTag("Book").assertIsSelected()
+        composeRule.onNodeWithTag("Book", useUnmergedTree = true).assertIsSelected()
     }
 
     @Test
@@ -526,7 +528,7 @@ class ListComboBoxUiTest {
         assert(selectedIdx == 1) { "Expected selectedIdx to remain 1, but was $selectedIdx" }
 
         chevronContainer.performClick()
-        composeRule.onNodeWithTag("Item 2").assertIsSelected()
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsSelected()
     }
 
     @Test
@@ -566,7 +568,7 @@ class ListComboBoxUiTest {
         textField.assertTextEquals("Book")
 
         chevronContainer.performClick()
-        composeRule.onNodeWithTag("Book").assertIsSelected()
+        composeRule.onNodeWithTag("Book", useUnmergedTree = true).assertIsSelected()
     }
 
     private fun editableListComboBox(): SemanticsNodeInteraction {
