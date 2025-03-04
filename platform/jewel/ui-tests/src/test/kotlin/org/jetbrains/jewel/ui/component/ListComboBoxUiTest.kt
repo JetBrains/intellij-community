@@ -429,6 +429,41 @@ class ListComboBoxUiTest {
     }
 
     @Test
+    fun `stateless ListComboBox displays and selects initial selectedIndex item`() {
+        var selectedIdx = 0
+        var selectedText = ""
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 2, // Start with "Item 3" selected
+                    onItemSelected = { index, text ->
+                        selectedIdx = index
+                        selectedText = text
+                    },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
+                )
+            }
+        }
+
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
+        composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).performClick()
+        assert(selectedIdx == 0) { "Expected selectedIdx to be 0, but was $selectedIdx" }
+        assert(selectedText == "Item 1") { "Expected selectedText to be 'Item 1', but was $selectedText" }
+    }
+
+    @Test
     fun `when selectedIndex changes externally ListComboBox updates`() {
         var selectedIndex by mutableStateOf(0)
 
