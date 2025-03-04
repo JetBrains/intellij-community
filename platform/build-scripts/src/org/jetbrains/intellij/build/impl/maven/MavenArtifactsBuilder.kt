@@ -109,7 +109,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.andel",
       "fleet.kernel",
       "fleet.multiplatform.shims",
-      "fleet.preferences",
       "fleet.reporting.api",
       "fleet.reporting.shared",
       "fleet.rhizomedb",
