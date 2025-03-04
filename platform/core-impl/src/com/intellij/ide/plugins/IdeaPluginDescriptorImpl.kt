@@ -671,8 +671,8 @@ class IdeaPluginDescriptorImpl(
       }
     }
 
-    private fun convertDependencies(dependencies: List<DependenciesElement>?): ModuleDependenciesDescriptor {
-      if (dependencies.isNullOrEmpty()) {
+    private fun convertDependencies(dependencies: List<DependenciesElement>): ModuleDependenciesDescriptor {
+      if (dependencies.isEmpty()) {
         return ModuleDependenciesDescriptor.EMPTY
       }
       val moduleDeps = ArrayList<ModuleDependenciesDescriptor.ModuleReference>()

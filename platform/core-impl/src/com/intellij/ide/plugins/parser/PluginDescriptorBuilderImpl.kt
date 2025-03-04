@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.parser.elements.ActionElement
-import com.intellij.ide.plugins.parser.elements.ContentElement
-import com.intellij.ide.plugins.parser.elements.DependsElement
-import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
+import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
@@ -108,4 +105,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val contentModules: List<ContentElement>
     get() = _contentModules ?: Java11Shim.INSTANCE.listOf()
+
+  private var _dependencies: MutableList<DependenciesElement>? = null
+  override fun addDependency(dependency: DependenciesElement) {
+    if (_dependencies == null) {
+      _dependencies = ArrayList()
+    }
+    _dependencies!!.add(dependency)
+  }
+  override val dependencies: List<DependenciesElement>
+    get() = _dependencies ?: Java11Shim.INSTANCE.listOf()
 }

@@ -706,10 +706,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
             break
           }
         }
-        if (descriptor.dependencies == null) {
-          descriptor.dependencies = ArrayList()
-        }
-        descriptor.dependencies!!.add(DependenciesElement.ModuleDependency(name!!))
+        descriptor.builder.addDependency(DependenciesElement.ModuleDependency(name!!))
       }
       PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
         var id: String? = null
@@ -719,10 +716,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
             break
           }
         }
-        if (descriptor.dependencies == null) {
-          descriptor.dependencies = ArrayList()
-        }
-        descriptor.dependencies!!.add(DependenciesElement.PluginDependency(id!!))
+        descriptor.builder.addDependency(DependenciesElement.PluginDependency(id!!))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }

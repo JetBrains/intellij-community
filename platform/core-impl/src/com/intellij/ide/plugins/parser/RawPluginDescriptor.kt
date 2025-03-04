@@ -59,7 +59,7 @@ class RawPluginDescriptor {
   val miscExtensions: Map<String, List<MiscExtensionElement>> get() = builder.miscExtensions
 
   val contentModules: List<ContentElement> get() = builder.contentModules
-  @JvmField var dependencies: MutableList<DependenciesElement>? = null
+  val dependencies: List<DependenciesElement> get() = builder.dependencies
 }
 
 
