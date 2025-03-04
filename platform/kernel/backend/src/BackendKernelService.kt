@@ -10,6 +10,7 @@ import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
+import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.change
 import fleet.kernel.rebase.*
 import fleet.kernel.transactor
@@ -58,7 +59,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
       handleEntityTypes(transactor(), this)
       // Create a supervisor child scope to avoid kernel coroutine getting canceled by exceptions coming under `withKernel`
       kernelCoroutineScope.complete(this.childScope(name = "KernelCoroutineScope", supervisor = true))
-      updateDbInTheEventDispatchThread()
+      updateDbInTheEventDispatchThread(DbContext.threadBound)
     }
   }
 }
