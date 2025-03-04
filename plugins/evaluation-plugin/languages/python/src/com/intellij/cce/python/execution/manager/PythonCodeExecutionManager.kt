@@ -13,7 +13,6 @@ import com.intellij.cce.python.execution.output.PythonJunitProcessor
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.io.delete
 import com.jetbrains.python.sdk.PythonSdkType
@@ -37,21 +36,18 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return Path.of(basePath + defaultTestFilePath)
   }
 
-  override fun setupEnvironment(project: Project): ProcessExecutionLog {
+  override fun setupEnvironment(project: Project, sdk: Sdk?) {
     val basePath = project.basePath
-    val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
 
-    basePath ?: return ProcessExecutionLog("", "No project base path found", -1)
+    basePath ?: return
 
-    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
+    if (sdk?.sdkType !is PythonSdkType) return
 
     val setupFile = Path.of("$basePath/setup_tests.sh")
-    if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
+    if (!setupFile.exists()) return
     val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.toString()), sdk)
 
     if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
-
-    return executionLog
   }
 
   private fun extractCodeDirectory(code: String): String? {
@@ -135,6 +131,5 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog(output, error, exitCode)
   }
 
-  override fun setupTarget(project: Project, sdk: Sdk) {}
   override fun removeTarget() {}
 }

@@ -32,13 +32,12 @@ abstract class CodeExecutionManager {
 
   val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
-  abstract fun setupTarget(project: Project, sdk: Sdk)
   abstract fun removeTarget()
 
 
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): Path
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
-  protected abstract fun setupEnvironment(project: Project): ProcessExecutionLog
+  protected abstract fun setupEnvironment(project: Project, sdk: Sdk?)
   protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: Path, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
@@ -61,10 +60,7 @@ abstract class CodeExecutionManager {
     // Save code in a temp file
     codeFile.writeText(code)
     // If this is the first execution, the plugin might need to set up the environment
-    if (shouldSetup) {
-      setupEnvironment(project)
-      shouldSetup = false
-    }
+    setupEnvironment(project, sdk)
     // Compile
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
