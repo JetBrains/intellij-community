@@ -10,16 +10,16 @@ import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJackson
 import org.jetbrains.annotations.ApiStatus
 
 @JvmName("getChildAsText")
-fun getChildAsText(node: JsonSchemaObject, vararg relativeChildPath: String): String? {
-  return when (node) {
+fun JsonSchemaObject.getChildAsText(vararg relativeChildPath: String): String? {
+  return when (this) {
     is JsonSchemaObjectBackedByJacksonBase -> {
-      val rawChildNode = relativeChildPath.asSequence().fold(node.rawSchemaNode) { currentNode, childName ->
+      val rawChildNode = relativeChildPath.asSequence().fold(this.rawSchemaNode) { currentNode, childName ->
         JacksonSchemaNodeAccessor.resolveRelativeNode(currentNode, childName) ?: return@fold MissingNode.getInstance()
       }
       return JacksonSchemaNodeAccessor.readTextNodeValue(rawChildNode)
     }
     else -> {
-      fileLogger().warn("JSON schema traverser does not provide support for ${node::class.java.simpleName}")
+      fileLogger().warn("JSON schema traverser does not provide support for ${this::class.java.simpleName}")
       null
     }
   }
