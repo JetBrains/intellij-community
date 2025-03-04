@@ -2,23 +2,24 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.parser.elements.ServiceElement
+import com.intellij.ide.plugins.parser.elements.ServiceElement.Companion.convert
 import com.intellij.openapi.components.ComponentConfig
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
 
 internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBuilder {
-  private var _services: MutableList<ServiceDescriptor>? = null
+  private var _services: MutableList<ServiceElement>? = null
   private var _listeners: MutableList<ListenerDescriptor>? = null
   private var _extensionPoints: MutableList<ExtensionPointDescriptor>? = null
   private var _components: MutableList<ComponentConfig>? = null
 
-  override fun addService(serviceDescriptor: ServiceDescriptor) {
+  override fun addService(serviceElement: ServiceElement) {
     if (_services == null) {
       _services = ArrayList()
     }
-    _services!!.add(serviceDescriptor)
+    _services!!.add(serviceElement)
   }
 
   override fun addComponent(componentConfig: ComponentConfig) {
@@ -58,7 +59,7 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
 
   override fun build(): ContainerDescriptor {
     val container = ContainerDescriptor(
-      _services ?: Java11Shim.INSTANCE.listOf(),
+      _services?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
       _components ?: Java11Shim.INSTANCE.listOf(),
       _listeners ?: Java11Shim.INSTANCE.listOf(),
       _extensionPoints ?: Java11Shim.INSTANCE.listOf(),

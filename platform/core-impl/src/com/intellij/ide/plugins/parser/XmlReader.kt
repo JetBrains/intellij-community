@@ -11,9 +11,7 @@ import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
-import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
@@ -409,7 +407,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
       }
     }
 
-    containerDescriptor.addService(readServiceDescriptor(reader, os?.asExtensionOS()))
+    containerDescriptor.addService(readServiceElement(reader, os))
     reader.skipElement()
   }
 }
@@ -512,14 +510,14 @@ private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginD
 }
 
 @Suppress("DuplicatedCode")
-private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescriptor.Os?): ServiceDescriptor {
+private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElement {
   var serviceInterface: String? = null
   var serviceImplementation: String? = null
   var testServiceImplementation: String? = null
   var headlessImplementation: String? = null
   var configurationSchemaKey: String? = null
   var overrides = false
-  var preload = ServiceDescriptor.PreloadMode.FALSE
+  var preload = ServiceElement.PreloadMode.FALSE
   var client: ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
@@ -531,10 +529,10 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
       PluginXmlConst.SERVICE_EP_OVERRIDES_ATTR -> overrides = reader.getAttributeAsBoolean(i)
       PluginXmlConst.SERVICE_EP_PRELOAD_ATTR -> {
         when (reader.getAttributeValue(i)) {
-          PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = ServiceDescriptor.PreloadMode.TRUE
-          PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = ServiceDescriptor.PreloadMode.AWAIT
-          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS
-          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = ServiceElement.PreloadMode.TRUE
+          PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = ServiceElement.PreloadMode.AWAIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = ServiceElement.PreloadMode.NOT_HEADLESS
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = ServiceElement.PreloadMode.NOT_LIGHT_EDIT
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
@@ -553,7 +551,17 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
       }
     }
   }
-  return ServiceDescriptor(serviceInterface, serviceImplementation, testServiceImplementation, headlessImplementation, overrides, configurationSchemaKey, preload, client, os)
+  return ServiceElement(
+    serviceInterface = serviceInterface,
+    serviceImplementation = serviceImplementation,
+    testServiceImplementation = testServiceImplementation,
+    headlessImplementation = headlessImplementation,
+    overrides = overrides,
+    configurationSchemaKey = configurationSchemaKey,
+    preload = preload,
+    client = client,
+    os = os
+  )
 }
 
 private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {

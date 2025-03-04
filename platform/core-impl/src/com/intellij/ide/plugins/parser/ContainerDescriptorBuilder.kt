@@ -2,13 +2,13 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.parser.elements.ServiceElement
 import com.intellij.openapi.components.ComponentConfig
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.messages.ListenerDescriptor
 
 interface ContainerDescriptorBuilder {
-  fun addService(serviceDescriptor: ServiceDescriptor)
+  fun addService(serviceElement: ServiceElement)
   fun addComponent(componentConfig: ComponentConfig)
   fun addListener(listenerDescriptor: ListenerDescriptor)
   fun addExtensionPoint(extensionPointDescriptor: ExtensionPointDescriptor)
