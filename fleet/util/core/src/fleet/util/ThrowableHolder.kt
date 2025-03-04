@@ -42,10 +42,10 @@ data class ThrowableHolder(
            e.suppressedExceptions.map { ThrowableHolder(it) })
 
   companion object{
-    fun stacktraceToStrings(elements: Array<StackTraceElement>) = elements.map { "$it" }
+    fun stacktraceToStrings(elements: Array<StackTraceElement>): List<String> = elements.map { "$it" }
   }
 
-  fun getMessageString() = "$exceptionType: $message"
+  fun getMessageString(): String = "$exceptionType: $message"
 
   fun getStacktraceString(): String = StringBuilder().also { appendStacktraceString(it) }.toString()
 
