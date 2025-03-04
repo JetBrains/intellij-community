@@ -3,7 +3,6 @@ package org.jetbrains.jewel.foundation.lazy
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,7 +26,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.focused
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -54,7 +52,6 @@ public fun SelectableLazyColumn(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
     pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: SelectableLazyListScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -72,7 +69,6 @@ public fun SelectableLazyColumn(
         onSelectedIndexesChange(indices)
     }
 
-    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =

@@ -117,18 +117,18 @@ public fun <T> BasicLazyTree(
 
     SelectableLazyColumn(
         modifier = modifier,
-        state = treeState.delegate,
         selectionMode = selectionMode,
-        keyActions = keyActions,
-        pointerEventActions = pointerEventScopedActions,
+        state = treeState.delegate,
         onSelectedIndexesChange = {
             onSelectionChange(it.map { element -> flattenedTree[element] as Tree.Element<T> })
         },
-        interactionSource = remember { MutableInteractionSource() },
+        keyActions = keyActions,
+        pointerEventActions = pointerEventScopedActions,
     ) {
         itemsIndexed(items = flattenedTree, key = { _, item -> item.id }, contentType = { _, item -> item.data }) {
             index,
-            element ->
+                element
+            ->
             val elementState =
                 TreeElementState.of(
                     active = isActive,
@@ -178,7 +178,7 @@ public fun <T> BasicLazyTree(
                             stateDescription =
                                 if (
                                     treeState.delegate.isKeyboardNavigating &&
-                                        treeState.delegate.lastActiveItemIndex == index
+                                    treeState.delegate.lastActiveItemIndex == index
                                 ) {
                                     "current item"
                                 } else {

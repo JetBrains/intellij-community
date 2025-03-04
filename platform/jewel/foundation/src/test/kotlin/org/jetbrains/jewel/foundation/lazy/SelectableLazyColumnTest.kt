@@ -59,7 +59,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -115,7 +115,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -179,7 +179,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -226,7 +226,7 @@ internal class SelectableLazyColumnTest {
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
                 val items = currentItems.value
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
