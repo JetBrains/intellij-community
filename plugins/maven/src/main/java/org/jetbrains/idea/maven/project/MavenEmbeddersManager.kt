@@ -80,11 +80,6 @@ class MavenEmbeddersManager(private val project: Project) {
   }
 
   @Synchronized
-  fun releaseForcefullyInTests() {
-    releasePooledEmbedders(true)
-  }
-
-  @Synchronized
   private fun releasePooledEmbedders(includeInUse: Boolean) {
     for (each in myPool.keys) {
       val embedder = myPool[each]
@@ -98,10 +93,10 @@ class MavenEmbeddersManager(private val project: Project) {
   }
 
   companion object {
+    // used in third-party plugins
     @JvmField
     val FOR_DEPENDENCIES_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_DEPENDENCIES_RESOLVE")
-    @JvmField
-    val FOR_FOLDERS_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_FOLDERS_RESOLVE")
+
     @JvmField
     val FOR_POST_PROCESSING: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_POST_PROCESSING")
 

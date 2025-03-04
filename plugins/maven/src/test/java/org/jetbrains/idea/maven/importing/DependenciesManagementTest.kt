@@ -126,9 +126,6 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
     importProjectsWithErrors(bom, project)
     assertModules("bom", "project")
 
-    // reset embedders and try to update projects from scratch
-    projectsManager.embeddersManager.releaseForcefullyInTests()
-
     updateAllProjects()
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
