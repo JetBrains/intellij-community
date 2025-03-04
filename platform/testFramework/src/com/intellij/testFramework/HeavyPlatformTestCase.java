@@ -76,6 +76,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -239,7 +240,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
-      IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+      IndexingTestUtil.waitUntilIndexesAreReady(myProject, getIndexingTimeout().toMillis());
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -274,7 +275,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject, getIndexingTimeout().toMillis());
+  }
+
+  protected @NotNull Duration getIndexingTimeout() {
+    return Duration.ofMinutes(10);
   }
 
   protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
@@ -323,22 +328,37 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull Module doCreateRealModule(@NotNull String moduleName) {
-    return doCreateRealModuleIn(moduleName, myProject, getModuleType());
+    return doCreateRealModuleIn(moduleName, myProject, getModuleType(), getIndexingTimeout());
   }
 
   protected static @NotNull Module doCreateRealModuleIn(@NotNull String moduleName,
                                                         @NotNull Project project,
                                                         @NotNull ModuleType<?> moduleType) {
-    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
+    return doCreateRealModuleIn(moduleName, project, moduleType, Duration.ofMillis(IndexingTestUtil.DEFAULT_TIMEOUT_MS));
+  }
+
+  protected static @NotNull Module doCreateRealModuleIn(@NotNull String moduleName,
+                                                        @NotNull Project project,
+                                                        @NotNull ModuleType<?> moduleType,
+                                                        @NotNull Duration timeout) {
+    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath(), timeout);
   }
 
   protected static @NotNull Module createModuleAt(@NotNull String moduleName,
                                                   @NotNull Project project,
                                                   @NotNull ModuleType<?> moduleType,
                                                   @NotNull Path path) {
+    return createModuleAt(moduleName, project, moduleType, path, Duration.ofMillis(IndexingTestUtil.DEFAULT_TIMEOUT_MS));
+  }
+
+  protected static @NotNull Module createModuleAt(@NotNull String moduleName,
+                                                  @NotNull Project project,
+                                                  @NotNull ModuleType<?> moduleType,
+                                                  @NotNull Path path,
+                                                  @NotNull Duration timeout) {
     Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
-    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    IndexingTestUtil.waitUntilIndexesAreReady(project, timeout.toMillis());
     return module;
   }
 

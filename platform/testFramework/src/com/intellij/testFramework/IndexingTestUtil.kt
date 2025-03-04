@@ -18,30 +18,35 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class IndexingTestUtil private constructor() {
   companion object { // companion object for keeping API compatibility
+    const val DEFAULT_TIMEOUT_MS: Long = 600_000
+
     @JvmStatic
-    fun waitUntilIndexesAreReadyInAllOpenedProjects() {
+    @JvmOverloads
+    fun waitUntilIndexesAreReadyInAllOpenedProjects(indexWaitingTimeoutMs: Long = DEFAULT_TIMEOUT_MS) {
       for (project in ProjectManager.getInstance().openProjects) {
-        IndexWaiter(project).waitUntilFinished()
+        IndexWaiter(project).waitUntilFinished(indexWaitingTimeoutMs.milliseconds)
       }
     }
 
     @JvmStatic
-    fun waitUntilIndexesAreReady(project: Project) {
-      IndexWaiter(project).waitUntilFinished()
+    @JvmOverloads
+    fun waitUntilIndexesAreReady(project: Project, indexWaitingTimeoutMs: Long = DEFAULT_TIMEOUT_MS) {
+      IndexWaiter(project).waitUntilFinished(indexWaitingTimeoutMs.milliseconds)
     }
 
-    suspend fun suspendUntilIndexesAreReady(project: Project) {
-      IndexWaiter(project).suspendUntilIndexesAreReady()
+    suspend fun suspendUntilIndexesAreReady(project: Project, indexWaitingTimeout: Duration = DEFAULT_TIMEOUT_MS.milliseconds) {
+      IndexWaiter(project).suspendUntilIndexesAreReady(indexWaitingTimeout)
     }
   }
 }
 
 private class IndexWaiter(private val project: Project) {
-  private fun waitAfterWriteAction() {
+  private fun waitAfterWriteAction(indexWaitingTimeout: Duration) {
     if (project.isDisposed) return
 
     val listenerDisposable = Disposer.newDisposable()
@@ -64,14 +69,14 @@ private class IndexWaiter(private val project: Project) {
         assert(nested >= 0) { "We counted more finished write actions than started." }
         if (nested <= 0) { // may not be negative, but let's stay on the safe side
           Disposer.dispose(listenerDisposable)
-          waitNow()
+          waitNow(indexWaitingTimeout)
         }
       }
     }, listenerDisposable)
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private fun waitNow() {
+  private fun waitNow(indexWaitingTimeout: Duration) {
     thisLogger().debug("waitNow, thread=${Thread.currentThread()}")
     Assert.assertFalse("Should not be invoked from write action", ApplicationManager.getApplication().isWriteAccessAllowed)
 
@@ -90,7 +95,7 @@ private class IndexWaiter(private val project: Project) {
     }
     else {
       runBlockingMaybeCancellable {
-        suspendUntilIndexesAreReady()
+        suspendUntilIndexesAreReady(indexWaitingTimeout)
       }
     }
   }
@@ -143,13 +148,13 @@ private class IndexWaiter(private val project: Project) {
     }
   }
 
-  suspend fun suspendUntilIndexesAreReady() {
+  suspend fun suspendUntilIndexesAreReady(timeout: Duration) {
     if (shouldWait()) {
       thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
 
     try {
-      withTimeout(600.seconds) {
+      withTimeout(timeout) {
         while (shouldWait()) {
           delay(1)
         }
@@ -161,13 +166,13 @@ private class IndexWaiter(private val project: Project) {
     }
   }
 
-  fun waitUntilFinished() {
+  fun waitUntilFinished(indexWaitingTimeout: Duration) {
     thisLogger().debug("waitUntilFinished, thread=${Thread.currentThread()}, WA=${ApplicationManager.getApplication().isWriteAccessAllowed}")
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      waitAfterWriteAction()
+      waitAfterWriteAction(indexWaitingTimeout)
     }
     else {
-      waitNow()
+      waitNow(indexWaitingTimeout)
     }
   }
 }
