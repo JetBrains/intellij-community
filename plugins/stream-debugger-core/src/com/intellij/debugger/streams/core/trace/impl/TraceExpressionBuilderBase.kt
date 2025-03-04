@@ -106,8 +106,9 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
     val resultType = chain.terminationCall.resultType
     return dsl.block {
       declare(streamResult, nullExpression, true)
-      val evaluationResult = array(resultType, "evaluationResult")
-      if (resultType != types.VOID) declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
+      val elementType = evaluationResultArrayElementType(resultType)
+      val evaluationResult = array(elementType, "evaluationResult")
+      if (resultType != types.VOID) declare(evaluationResult, newArray(elementType, TextExpression(elementType.defaultValue)), true)
       tryBlock {
         if (resultType == types.VOID) {
           streamResult assign newSizedArray(types.ANY, 1)
@@ -122,6 +123,10 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
         streamResult assign newArray(types.EXCEPTION, "t".expr)
       }
     }
+  }
+
+  protected open fun evaluationResultArrayElementType(resultType: GenericType) : GenericType {
+    return resultType
   }
 
   private fun buildFillInfo(intermediateCallsHandlers: List<IntermediateCallHandler>,
