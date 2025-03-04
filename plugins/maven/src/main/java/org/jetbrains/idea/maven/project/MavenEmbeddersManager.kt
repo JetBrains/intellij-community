@@ -5,19 +5,29 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenImportUtil.guessExistingEmbedderDir
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir
 
+@ApiStatus.Obsolete
 class MavenEmbeddersManager(private val project: Project) {
   private val myPool: MutableMap<Pair<Key<*>, String>, MavenEmbedderWrapper> = ContainerUtil.createSoftValueMap<Pair<Key<*>, String>, MavenEmbedderWrapper>()
   private val myEmbeddersInUse: MutableSet<MavenEmbedderWrapper> = HashSet<MavenEmbedderWrapper>()
 
   @Synchronized
   fun reset() {
-    releasePooledEmbedders(false)
+    for (each in myPool.keys) {
+      val embedder = myPool[each]
+      if (embedder == null) continue  // collected
+
+      if (myEmbeddersInUse.contains(embedder)) continue
+      embedder.release()
+    }
+    myPool.clear()
+    myEmbeddersInUse.clear()
   }
 
   // used in third-party plugins
@@ -69,25 +79,9 @@ class MavenEmbeddersManager(private val project: Project) {
     myEmbeddersInUse.remove(embedder)
   }
 
-  @Synchronized
-  private fun releasePooledEmbedders(includeInUse: Boolean) {
-    for (each in myPool.keys) {
-      val embedder = myPool[each]
-      if (embedder == null) continue  // collected
-
-      if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue
-      embedder.release()
-    }
-    myPool.clear()
-    myEmbeddersInUse.clear()
-  }
-
   companion object {
     // used in third-party plugins
     @JvmField
     val FOR_DEPENDENCIES_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_DEPENDENCIES_RESOLVE")
-
-    @JvmField
-    val FOR_POST_PROCESSING: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_POST_PROCESSING")
   }
 }
