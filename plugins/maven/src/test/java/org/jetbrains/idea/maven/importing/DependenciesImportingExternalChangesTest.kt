@@ -38,7 +38,6 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
     waitForImportWithinTimeout {
       repositoryPath = dir.resolve("__repo")
     }
-    projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
 
