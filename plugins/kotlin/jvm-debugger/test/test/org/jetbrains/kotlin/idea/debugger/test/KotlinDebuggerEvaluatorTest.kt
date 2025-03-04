@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.ui.JVMDebuggerEvaluatorTest
+import com.intellij.idea.TestFor
 
 /**
  * See also [AbstractSelectExpressionForDebuggerTest].
@@ -139,6 +140,16 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
 
     fun testTextBlock() {
         doTestRangeExpression("val a = \"\"\"\nx<caret>xx\n\"\"\"", expressionWithSideEffects("\"\"\"\nxxx\n\"\"\""))
+    }
+
+    @TestFor(issues = ["IDEA-368508"])
+    fun testLabels() {
+        doTestRangeExpression("run la<caret>bel@{ return@label }", noExpressions())
+        doTestRangeExpression("run label<caret>@{ return@label }", noExpressions())
+        doTestRangeExpression("run label@<caret>{ return@label }", noExpressions())
+        doTestRangeExpression("run label@{ return<caret>@label }", noExpressions())
+        doTestRangeExpression("run label@{ return@<caret>label }", noExpressions())
+        doTestRangeExpression("run label@{ return@la<caret>bel }", noExpressions())
     }
 
     //////////// Utility methods

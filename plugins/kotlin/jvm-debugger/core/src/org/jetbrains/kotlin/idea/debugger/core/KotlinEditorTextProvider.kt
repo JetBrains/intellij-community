@@ -125,7 +125,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             is KtObjectDeclaration -> if (candidate.isObjectLiteral()) candidate else null
             is KtDeclaration, is KtFile -> null
             is KtIfExpression -> if (candidate.`else` != null) candidate else null
-            is KtStatementExpression, is KtLabeledExpression -> null
+            is KtStatementExpression, is KtLabeledExpression, is KtLabelReferenceExpression -> null
             is KtStringTemplateExpression -> if (isStringTemplateAllowed(candidate, allowMethodCalls)) candidate else null
             is KtConstantExpression -> calculateCandidate(candidate.parent, allowMethodCalls)
             else -> when (val parent = candidate.parent) {
