@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
-import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
@@ -589,7 +588,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     var interfaceClass: String? = null
     var implementationClass: String? = null
     var headlessImplementationClass: String? = null
-    var os: ExtensionDescriptor.Os? = null
+    var os: OS? = null
     var overrides = false
     var options: MutableMap<String, String>? = null
 
@@ -624,7 +623,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 
           if (name != null && value != null) {
             when {
-              name == PluginXmlConst.COMPONENT_OPTION_NAME_OS_VALUE -> os = readOs(value)
+              name == PluginXmlConst.COMPONENT_OPTION_NAME_OS_VALUE -> os = readOSValue(value)
               name == PluginXmlConst.COMPONENT_OPTION_NAME_OVERRIDES_VALUE -> overrides = value.toBoolean()
               options == null -> {
                 options = Collections.singletonMap(name, value)
@@ -644,7 +643,15 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     }
     assert(reader.isEndElement)
 
-    containerDescriptor.addComponent(ComponentConfig(interfaceClass, implementationClass, headlessImplementationClass, isApplicableForDefaultProject, os, overrides, options))
+    containerDescriptor.addComponent(ComponentElement(
+      interfaceClass = interfaceClass,
+      implementationClass = implementationClass,
+      headlessImplementationClass = headlessImplementationClass,
+      loadForDefaultProject = isApplicableForDefaultProject,
+      os = os,
+      overrides = overrides,
+      options = options ?: Java11Shim.INSTANCE.mapOf(),
+    ))
   }
 }
 

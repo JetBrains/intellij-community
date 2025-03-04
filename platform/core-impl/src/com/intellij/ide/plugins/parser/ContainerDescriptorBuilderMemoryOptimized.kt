@@ -2,9 +2,10 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.parser.elements.ComponentElement
+import com.intellij.ide.plugins.parser.elements.ComponentElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ServiceElement
 import com.intellij.ide.plugins.parser.elements.ServiceElement.Companion.convert
-import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
@@ -13,7 +14,7 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
   private var _services: MutableList<ServiceElement>? = null
   private var _listeners: MutableList<ListenerDescriptor>? = null
   private var _extensionPoints: MutableList<ExtensionPointDescriptor>? = null
-  private var _components: MutableList<ComponentConfig>? = null
+  private var _components: MutableList<ComponentElement>? = null
 
   override fun addService(serviceElement: ServiceElement) {
     if (_services == null) {
@@ -22,11 +23,11 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
     _services!!.add(serviceElement)
   }
 
-  override fun addComponent(componentConfig: ComponentConfig) {
+  override fun addComponent(componentElement: ComponentElement) {
     if (_components == null) {
       _components = ArrayList()
     }
-    _components!!.add(componentConfig)
+    _components!!.add(componentElement)
   }
 
   override fun addListener(listenerDescriptor: ListenerDescriptor) {
@@ -60,7 +61,7 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
   override fun build(): ContainerDescriptor {
     val container = ContainerDescriptor(
       _services?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
-      _components ?: Java11Shim.INSTANCE.listOf(),
+      _components?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
       _listeners ?: Java11Shim.INSTANCE.listOf(),
       _extensionPoints ?: Java11Shim.INSTANCE.listOf(),
     )
