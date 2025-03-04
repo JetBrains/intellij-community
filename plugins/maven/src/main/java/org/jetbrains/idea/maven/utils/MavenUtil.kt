@@ -80,7 +80,6 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -1923,34 +1922,6 @@ object MavenUtil {
 
     //need better checking, can perform when IDEA-364602 is ready
     return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot)
-  }
-
-  fun getRemoteResolvedRepositories(project: Project): Set<MavenRemoteRepository> {
-    val projectsManager = MavenProjectsManager.getInstance(project)
-    val repositories = projectsManager.getRemoteRepositories()
-    val embeddersManager = projectsManager.getEmbeddersManager()
-
-    var baseDir = project.getBasePath()
-    val projects = projectsManager.getRootProjects()
-    if (!projects.isEmpty()) {
-      baseDir = getBaseDir(projects.get(0)!!.directoryFile).toString()
-    }
-    if (null == baseDir) {
-      baseDir = ""
-    }
-
-    val embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
-    try {
-      val resolvedRepositories = embedderWrapper.resolveRepositories(repositories)
-      return if (resolvedRepositories.isEmpty()) repositories else resolvedRepositories
-    }
-    catch (e: Exception) {
-      MavenLog.LOG.warn("resolve remote repo error", e)
-    }
-    finally {
-      embeddersManager.release(embedderWrapper)
-    }
-    return repositories
   }
 
   @JvmStatic

@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog.System.DefaultLocal
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersImpl
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -21,7 +21,6 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Function
 
 @Service(Service.Level.PROJECT)
 class MavenArchetypeManager(private val myProject: Project) {
@@ -143,10 +142,9 @@ class MavenArchetypeManager(private val myProject: Project) {
     groupId: String, artifactId: String,
     version: String, url: String?,
   ): Map<String, String>? {
-    val map: Map<String, String>? =
-      executeWithMavenEmbedderWrapperNullable<Map<String, String>?> {
-        it.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, mutableListOf(), url)
-      }
+    val map: Map<String, String>? = executeWithMavenEmbedderWrapper {
+      it.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, mutableListOf(), url)
+    }
     if (map != null) addToLocalIndex(groupId, artifactId, version)
     return map
   }
@@ -163,29 +161,15 @@ class MavenArchetypeManager(private val myProject: Project) {
 
   private fun <R> executeWithMavenEmbedderWrapper(function: (MavenEmbedderWrapper) -> R): R {
     val projectsManager = MavenProjectsManager.getInstance(myProject)
-    val manager = projectsManager.embeddersManager
     var baseDir = ""
     val projects = projectsManager.rootProjects
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects[0]!!.directoryFile).toString()
     }
-    val mavenEmbedderWrapper = manager.getEmbedder(MavenEmbeddersManager.Companion.FOR_POST_PROCESSING, baseDir)
-    try {
+    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
+    mavenEmbedderWrappers.use {
+    val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(baseDir)
       return function(mavenEmbedderWrapper)
-    }
-    finally {
-      manager.release(mavenEmbedderWrapper)
-    }
-  }
-
-  private fun <R> executeWithMavenEmbedderWrapperNullable(function: Function<MavenEmbedderWrapper, R?>): R? {
-    val manager = MavenProjectsManager.getInstance(myProject).embeddersManager
-    val mavenEmbedderWrapper = manager.getEmbedder(MavenEmbeddersManager.Companion.FOR_POST_PROCESSING, "")
-    try {
-      return function.apply(mavenEmbedderWrapper)
-    }
-    finally {
-      manager.release(mavenEmbedderWrapper)
     }
   }
 
