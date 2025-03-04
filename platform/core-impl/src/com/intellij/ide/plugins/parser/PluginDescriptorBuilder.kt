@@ -22,4 +22,6 @@ interface PluginDescriptorBuilder {
   var vendor: String?
   var vendorEmail: String?
   var vendorUrl: String?
+
+  var resourceBundleBaseName: String?
 }

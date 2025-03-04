@@ -181,7 +181,7 @@ private fun readRootElementChild(
     }
     PluginXmlConst.DESCRIPTION_ELEM -> descriptor.builder.description = getNullifiedContent(reader)
     PluginXmlConst.CHANGE_NOTES_ELEM -> descriptor.builder.changeNotes = getNullifiedContent(reader)
-    PluginXmlConst.RESOURCE_BUNDLE_ELEM -> descriptor.resourceBundleBaseName = getNullifiedContent(reader)
+    PluginXmlConst.RESOURCE_BUNDLE_ELEM -> descriptor.builder.resourceBundleBaseName = getNullifiedContent(reader)
     PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
     PluginXmlConst.MODULE_ELEM -> {
       findAttributeValue(reader, PluginXmlConst.MODULE_VALUE_ATTR)?.let { moduleName ->

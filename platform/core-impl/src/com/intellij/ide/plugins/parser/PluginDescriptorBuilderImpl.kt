@@ -22,4 +22,6 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var vendor: String? = null
   override var vendorEmail: String? = null
   override var vendorUrl: String? = null
+
+  override var resourceBundleBaseName: String? = null
 }

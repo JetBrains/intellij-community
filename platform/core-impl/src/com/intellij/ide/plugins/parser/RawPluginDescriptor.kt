@@ -30,7 +30,7 @@ class RawPluginDescriptor {
   val vendorEmail: String? get() = builder.vendorEmail
   val vendorUrl: String? get() = builder.vendorUrl
 
-  @JvmField var resourceBundleBaseName: String? = null
+  val resourceBundleBaseName: String? get() = builder.resourceBundleBaseName
 
   @JvmField var isUseIdeaClassLoader: Boolean = false
   @JvmField var isBundledUpdateAllowed: Boolean = false
