@@ -61,6 +61,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.jsonSchema.widget.FailedSchemaLoadingDiagnosticsKt.logSchemaDownloadFailureDiagnostics;
+
 final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   public static final String ID = "JSONSchemaSelector";
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
@@ -243,9 +245,12 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     String bar =
       isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files") : JsonBundle.message("schema.widget.prefix.other.files");
 
-    if (schemaFile instanceof HttpVirtualFile) {
-      RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
-      if (info == null) return getDownloadErrorState(null);
+    if (schemaFile instanceof HttpVirtualFile httpSchemaFile) {
+      RemoteFileInfo info = httpSchemaFile.getFileInfo();
+      if (info == null) {
+        logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
+        return getDownloadErrorState(null);
+      }
 
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
@@ -260,6 +265,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                                    JsonBundle.message("schema.widget.download.in.progress.label"), false);
         }
         case ERROR_OCCURRED -> {
+          logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
           return getDownloadErrorState(info.getErrorMessage());
         }
       }
