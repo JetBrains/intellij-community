@@ -37,6 +37,7 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
@@ -150,6 +151,7 @@ public final class ConfigImportHelper {
     Path tempBackup = null;
     boolean vmOptionFileChanged = false;
     @Nullable List<String> vmOptionsLines = null;
+    @Nullable List<String> currentlyDisabledPlugins = null;
     ImportOldConfigsState.InitialImportScenario importScenarioStatistics = null;
 
     try {
@@ -169,6 +171,9 @@ public final class ConfigImportHelper {
                 vmOptionsLines = Files.readAllLines(newConfigDir.resolve(VMOptions.getFileName()), VMOptions.getFileCharset());
                 vmOptionFileChanged = false;
               }
+             if (Files.isRegularFile(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))){
+               currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
+             }
             }
             tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true, settings);
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
@@ -243,6 +248,17 @@ public final class ConfigImportHelper {
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         setConfigImportedInThisSession();
+        if (currentlyDisabledPlugins != null) {
+          try {
+            Path newDisablePluginsFile = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+            Set<String> newDisabledPlugins = new LinkedHashSet<>(Files.readAllLines(newDisablePluginsFile));
+            newDisabledPlugins.addAll(currentlyDisabledPlugins);
+            Files.write(newDisablePluginsFile, newDisabledPlugins, CharsetToolkit.getPlatformCharset());
+          }
+          catch (IOException e) {
+            log.warn("Couldn't write disabled plugins file", e);
+          }
+        }
       }
       else {
         oldConfigDir = null;
