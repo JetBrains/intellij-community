@@ -31,9 +31,9 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
     waitForImportWithinTimeout {
       repositoryPath = dir.resolve("__repo")
@@ -43,9 +43,9 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
     updateAllProjects()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
   }
 
   @Test
@@ -66,9 +66,9 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
 
     assertModuleLibDeps("project", "Maven: org.testng:testng:jdk15:5.8", "Maven: junit:junit:3.8.1")
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
     waitForImportWithinTimeout {
       repositoryPath = dir.resolve("__repo")
@@ -77,8 +77,8 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
     updateAllProjects()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
-                       "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
+                       "jar://" + repositoryPathCanonical + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
   }
 }
