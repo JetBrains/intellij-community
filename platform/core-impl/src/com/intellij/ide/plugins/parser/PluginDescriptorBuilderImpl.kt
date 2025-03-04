@@ -72,4 +72,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val actions: List<ActionElement>
     get() = _actions ?: Java11Shim.INSTANCE.listOf()
+
+  private var _incompatibleWith: MutableList<String>? = null
+  override fun addIncompatibleWith(incompatibleWith: String) {
+    if (_incompatibleWith == null) {
+      _incompatibleWith = ArrayList()
+    }
+    _incompatibleWith!!.add(incompatibleWith)
+  }
+  override val incompatibleWith: List<String>
+    get() = _incompatibleWith ?: Java11Shim.INSTANCE.listOf()
 }

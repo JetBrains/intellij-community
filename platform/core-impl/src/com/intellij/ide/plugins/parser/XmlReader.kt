@@ -200,11 +200,8 @@ private fun readRootElementChild(
       descriptor.builder.vendor = getNullifiedContent(reader)
     }
     PluginXmlConst.INCOMPATIBLE_WITH_ELEM -> {
-      getNullifiedContent(reader)?.let {
-        if (descriptor.incompatibleWith == null) {
-          descriptor.incompatibleWith = ArrayList()
-        }
-        descriptor.incompatibleWith!!.add(it)
+      getNullifiedContent(reader)?.let { id ->
+        descriptor.builder.addIncompatibleWith(id)
       }
     }
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)

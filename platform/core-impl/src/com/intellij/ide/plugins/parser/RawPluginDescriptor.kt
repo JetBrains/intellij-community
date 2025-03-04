@@ -49,7 +49,7 @@ class RawPluginDescriptor {
   val depends: List<DependsElement> get() = builder.depends
   val actions: List<ActionElement> get() = builder.actions
 
-  @JvmField var incompatibleWith: MutableList<String>? = null
+  val incompatibleWith: List<String> get() = builder.incompatibleWith
 
   @JvmField val appContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   @JvmField val projectContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()

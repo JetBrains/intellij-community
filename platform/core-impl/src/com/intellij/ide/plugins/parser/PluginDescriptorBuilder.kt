@@ -48,4 +48,7 @@ interface PluginDescriptorBuilder {
 
   fun addAction(action: ActionElement)
   val actions: List<ActionElement>
+
+  fun addIncompatibleWith(incompatibleWith: String)
+  val incompatibleWith: List<String>
 }
