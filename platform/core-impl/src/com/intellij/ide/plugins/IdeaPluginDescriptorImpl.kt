@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.isKotlinPlugin
@@ -127,7 +128,7 @@ class IdeaPluginDescriptorImpl(
 
   @JvmField
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(it) }
+    raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
   /**
@@ -683,6 +684,24 @@ class IdeaPluginDescriptorImpl(
         }
       }
       return ModuleDependenciesDescriptor(moduleDeps, pluginDeps)
+    }
+
+    private fun convertContentModules(contentElements: List<ContentElement>): List<PluginContentDescriptor.ModuleItem> {
+      return contentElements.mapNotNull { elem ->
+        when (elem) {
+          is ContentElement.Module -> {
+            val index = elem.name.lastIndexOf('/')
+            val configFile: String? = if (index != -1) {
+              "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
+            } else null
+            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.fromElementValue())
+          }
+          else -> {
+            LOG.error("Unknown content element: $elem")
+            null
+          }
+        }
+      }
     }
   }
 }

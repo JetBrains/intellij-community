@@ -3,7 +3,9 @@
 
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DescriptorListLoadingContext
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
@@ -34,7 +36,7 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
-
+import com.intellij.ide.plugins.parser.elements.ModuleLoadingRule as LoadingRule
 
 internal fun readModuleDescriptor(
   builder: PluginDescriptorFromXmlStreamBuilder,
@@ -646,7 +648,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     var name: String? = null
-    var loadingRule = ModuleLoadingRule.OPTIONAL
+    var loadingRule = LoadingRule.OPTIONAL
     var os: ExtensionDescriptor.Os? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
@@ -654,10 +656,10 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
         PluginXmlConst.CONTENT_MODULE_LOADING_ATTR -> {
           val loading = reader.getAttributeValue(i)
           loadingRule = when (loading) {
-            PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> ModuleLoadingRule.OPTIONAL
-            PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> ModuleLoadingRule.REQUIRED
-            PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> ModuleLoadingRule.EMBEDDED
-            PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> ModuleLoadingRule.ON_DEMAND
+            PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> LoadingRule.OPTIONAL
+            PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> LoadingRule.REQUIRED
+            PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> LoadingRule.EMBEDDED
+            PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> LoadingRule.ON_DEMAND
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
@@ -669,12 +671,6 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
       throw RuntimeException("Name is not specified at ${reader.location}")
     }
 
-    var configFile: String? = null
-    val index = name.lastIndexOf('/')
-    if (index != -1) {
-      configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
-    }
-
     if (descriptor.contentModules == null) {
       descriptor.contentModules = ArrayList()
     }
@@ -682,7 +678,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
       if (os == null || os.isSuitableForOs()) {
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null, loadingRule = loadingRule))
+        descriptor.contentModules!!.add(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
       }
     }
     else {
@@ -691,7 +687,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
         val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent, loadingRule = loadingRule))
+        descriptor.contentModules!!.add(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
       }
 
       var nesting = 1

@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.PluginContentDescriptor
-import com.intellij.ide.plugins.parser.elements.ActionElement
-import com.intellij.ide.plugins.parser.elements.DependenciesElement
-import com.intellij.ide.plugins.parser.elements.DependsElement
-import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
+import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
@@ -61,7 +57,7 @@ class RawPluginDescriptor {
   /** key is extension point's FQN */
   @JvmField var miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
 
-  @JvmField var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
+  @JvmField var contentModules: MutableList<ContentElement>? = null
   @JvmField var dependencies: MutableList<DependenciesElement>? = null
 }
 
