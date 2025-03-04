@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
@@ -83,6 +84,37 @@ internal val useImplicitBlockingContext: Boolean
 @Internal
 class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob), IntelliJContextElement {
 
+  /**
+   * Consider the following case:
+   * ```kotlin
+   * blockingContextScope {
+   *   installContext(Lock) {
+   *     executeOnPooledThread {
+   *       // lock must not leak here, it escapes `installContext`
+   *     }
+   *   }
+   * }
+   * ```
+   * The problem with the snippet above is that we consider `executeOnPooledThread` to be a structured computation, hence it should retain all
+   * context elements regardless of their will. However, we must not leak `Lock` here, because `executeOnPooledThread` here is not structured with respect to `installContext`.
+   * Hence, we remember the context that existed at the entry to `blockingContextScope`, and leak exact those elements.
+   * The map is needed because `IntelliJContextElement` may produce new instances of context elements, and we need to track them.
+   */
+  private val rememberedElements: MutableMap<CoroutineContext.Element, Int> = ConcurrentHashMap()
+
+  fun rememberElement(element: CoroutineContext.Element) {
+    rememberedElements.compute(element) { _, v -> if (v == null) 1 else v + 1 }
+  }
+
+  fun forgetElement(element: CoroutineContext.Element) {
+    rememberedElements.compute(element) { _, v ->
+      check(v != null) { "Attempt to forget element $element that is not remembered: ${rememberedElements.keys}" }
+      if (v == 1) null else v - 1
+    }
+  }
+
+  fun isRemembered(element: IntelliJContextElement): Boolean = rememberedElements.containsKey(element)
+
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   companion object : CoroutineContext.Key<BlockingJob>
@@ -94,6 +126,7 @@ data class ChildContext internal constructor(
   val context: CoroutineContext,
   val continuation: Continuation<Unit>?,
   val ijElements: List<IntelliJContextElement>,
+  val additionalCleanup: AccessToken?,
 ) {
 
   val job: Job? get() = continuation?.context?.job
@@ -177,9 +210,28 @@ fun createChildContextIgnoreStructuredConcurrency(debugName: @NonNls String) : C
 @Internal
 private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancellationPropagation: Boolean): ChildContext {
   val currentThreadContext = currentThreadContext()
-  val isStructured = unconditionalCancellationPropagation || currentThreadContext[BlockingJob] != null
 
-  val (childContext, ijElements) = gatherAppliedChildContext(currentThreadContext, isStructured)
+  val blockingJob = currentThreadContext[BlockingJob]
+
+  val (childContext, ijElements) = gatherAppliedChildContext(currentThreadContext,
+                                                             unconditionalCancellationPropagation,
+                                                             blockingJob)
+
+  val additionalCleanup = if (blockingJob != null) {
+    ijElements.forEachGuaranteed {
+      blockingJob.rememberElement(it)
+    }
+    object : AccessToken() {
+      override fun finish() {
+        ijElements.forEachGuaranteed {
+          blockingJob.forgetElement(it)
+        }
+      }
+    }
+  }
+  else {
+    AccessToken.EMPTY_ACCESS_TOKEN
+  }
 
   // Problem: a task may infinitely reschedule itself
   //   => each re-scheduling adds a child Job and completes the current Job
@@ -207,14 +259,14 @@ private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancell
     Pair(EmptyCoroutineContext, null)
   }
 
-  return ChildContext(childContext.minusKey(Job) + cancellationContext, childContinuation, ijElements)
+  return ChildContext(childContext.minusKey(Job) + cancellationContext, childContinuation, ijElements, additionalCleanup)
 }
 
-private fun gatherAppliedChildContext(parentContext: CoroutineContext, isStructured: Boolean): Pair<CoroutineContext, List<IntelliJContextElement>> {
+private fun gatherAppliedChildContext(parentContext: CoroutineContext, isStructured: Boolean, blockingJob: BlockingJob?): Pair<CoroutineContext, List<IntelliJContextElement>> {
   val ijElements = SmartList<IntelliJContextElement>()
   try {
     val newContext = parentContext.fold<CoroutineContext>(EmptyCoroutineContext) { old, elem ->
-      old + produceChildContextElement(parentContext, elem, isStructured, ijElements)
+      old + produceChildContextElement(parentContext, elem, isStructured, blockingJob, ijElements)
     }
     return Pair(newContext, ijElements)
   }
@@ -235,10 +287,10 @@ private fun <T> cleanupList(original: Throwable, list: List<T>, action: (T) -> U
   throw original
 }
 
-private fun produceChildContextElement(parentContext: CoroutineContext, element: CoroutineContext.Element, isStructured: Boolean, ijElements: MutableList<IntelliJContextElement>): CoroutineContext {
+private fun produceChildContextElement(parentContext: CoroutineContext, element: CoroutineContext.Element, isStructured: Boolean, blockingJob: BlockingJob?, ijElements: MutableList<IntelliJContextElement>): CoroutineContext {
   return when {
     element is IntelliJContextElement -> {
-      val forked = element.produceChildElement(parentContext, isStructured)
+      val forked = element.produceChildElement(parentContext, isStructured || blockingJob?.isRemembered(element) == true)
       if (forked != null) {
         ijElements.add(forked)
         forked
@@ -247,7 +299,7 @@ private fun produceChildContextElement(parentContext: CoroutineContext, element:
         EmptyCoroutineContext
       }
     }
-    isStructured -> element
+    isStructured || blockingJob != null -> element
     else -> {
       EmptyCoroutineContext
     }

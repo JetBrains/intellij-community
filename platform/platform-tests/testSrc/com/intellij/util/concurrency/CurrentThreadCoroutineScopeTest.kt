@@ -1,22 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 private const val REPETITIONS = 100
 
@@ -125,6 +130,35 @@ class CurrentThreadCoroutineScopeTest {
       blockingContext {
         currentThreadCoroutineScope().launch {
           ThreadingAssertions.assertBackgroundThread()
+        }
+      }
+    }
+  }
+
+  class E1 : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+    companion object Key : CoroutineContext.Key<E1>
+  }
+
+  class E2 : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+    companion object Key : CoroutineContext.Key<E2>
+  }
+
+  class E3 : AbstractCoroutineContextElement(Key) {
+    companion object Key : CoroutineContext.Key<E3>
+  }
+
+
+  @Test
+  fun `blockingContextScope retains only those elements that were present at the moment of invocation`(): Unit = timeoutRunBlocking {
+    withContext(E2() + E3()) {
+      blockingContextScope {
+        installThreadContext(currentThreadContext() + E1(), true).use {
+          application.executeOnPooledThread {
+            val context = currentThreadContext()
+            assertNull(context[E1])
+            assertNotNull(context[E2])
+            assertNotNull(context[E3])
+          }
         }
       }
     }

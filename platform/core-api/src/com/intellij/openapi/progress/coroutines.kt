@@ -291,7 +291,9 @@ suspend fun <T> blockingContext(action: () -> T): T {
 suspend fun <T> blockingContextScope(action: () -> T): T {
   return coroutineScope {
     val coroutineContext = coroutineContext
-    blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
+    val blockingJob = BlockingJob(coroutineContext.job)
+    rememberElements(blockingJob, coroutineContext)
+    blockingContextInner(coroutineContext + blockingJob, action)
   }
 }
 
@@ -556,4 +558,10 @@ private object LockLeakedFromEDTMarker
   : CoroutineContext.Element,
     CoroutineContext.Key<LockLeakedFromEDTMarker> {
   override val key: CoroutineContext.Key<*> get() = this
+}
+
+private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
+  context.fold(Unit) { _, element ->
+    job.rememberElement(element)
+  }
 }
