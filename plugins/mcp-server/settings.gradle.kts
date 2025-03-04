@@ -6,4 +6,4 @@ pluginManagement {
 }
 
 rootProject.name = "mcp-server-plugin"
-extra["pluginVersion"] = "1.0.15"
+extra["pluginVersion"] = "1.0.16"
