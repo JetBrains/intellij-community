@@ -26,8 +26,8 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   // step 1 - collect container level extension points
   val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>()
   executeRegisterTask(modules) { pluginDescriptor ->
-    val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
-    if (!list.isNullOrEmpty()) {
+    val list = pluginDescriptor.moduleContainerDescriptor.readOnlyExtensionPoints
+    if (list.isNotEmpty()) {
       extensionPointDescriptors.add(pluginDescriptor to list)
       extensionPointTotalCount += list.size
       for (descriptor in list) {

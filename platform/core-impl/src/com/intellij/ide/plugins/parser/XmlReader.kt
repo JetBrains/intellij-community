@@ -509,10 +509,10 @@ private fun readExtensionPoints(
 }
 
 private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
-  extractor(from).extensionPoints.takeIf { !it.isNullOrEmpty() }?.let {
+  extractor(from).readOnlyExtensionPoints.takeIf { it.isNotEmpty() }?.let {
     val toContainer = extractor(to)
     if (toContainer.extensionPoints == null) {
-      toContainer.extensionPoints = it
+      toContainer.extensionPoints = ArrayList(it)
     }
     else {
       toContainer.extensionPoints!!.addAll(it)

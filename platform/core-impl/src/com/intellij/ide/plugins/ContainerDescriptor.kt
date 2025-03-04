@@ -24,6 +24,8 @@ class ContainerDescriptor {
     get() = _listeners ?: Java11Shim.INSTANCE.listOf()
 
   @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
+  val readOnlyExtensionPoints: List<ExtensionPointDescriptor>
+    get() = extensionPoints ?: Java11Shim.INSTANCE.listOf()
 
   @Transient var distinctExtensionPointCount: Int = -1
   @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
