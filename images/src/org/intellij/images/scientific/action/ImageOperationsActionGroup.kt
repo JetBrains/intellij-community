@@ -9,14 +9,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
-import java.awt.BorderLayout
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JPanel
+import java.awt.FlowLayout
+import javax.swing.*
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   private var selectedMode: String = ORIGINAL_IMAGE
-  private val availableModes = listOf(ORIGINAL_IMAGE, INVERTED_IMAGE, GRAYSCALE_IMAGE)
+  private val availableModes = listOf(ORIGINAL_IMAGE, INVERTED_IMAGE, GRAYSCALE_IMAGE, BINARIZE_IMAGE)
 
   init {
     templatePresentation.apply {
@@ -58,10 +56,10 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
         triggerModeAction(selectedMode)
       }
     }
-    return JPanel(BorderLayout()).apply {
+    return JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)).apply {
       isOpaque = false
       border = null
-      add(comboBox, BorderLayout.CENTER)
+      add(comboBox)
     }
   }
 
@@ -70,6 +68,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     actionGroup.add(RestoreOriginalImageAction())
     actionGroup.add(InvertChannelsAction())
     actionGroup.add(GrayscaleImageAction())
+    actionGroup.add(BinarizeImageAction())
     return actionGroup
   }
 
@@ -79,6 +78,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       ORIGINAL_IMAGE -> actionManager.tryToExecute(RestoreOriginalImageAction(), null, null, null, true)
       INVERTED_IMAGE -> actionManager.tryToExecute(InvertChannelsAction(), null, null, null, true)
       GRAYSCALE_IMAGE -> actionManager.tryToExecute(GrayscaleImageAction(), null, null, null, true)
+      BINARIZE_IMAGE -> actionManager.tryToExecute(BinarizeImageAction(), null, null, null, true)
     }
   }
 
@@ -86,5 +86,6 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     private val ORIGINAL_IMAGE: String = ImagesBundle.message("image.color.mode.original.image")
     private val INVERTED_IMAGE: String = ImagesBundle.message("image.color.mode.inverted.image")
     private val GRAYSCALE_IMAGE: String = ImagesBundle.message("image.color.mode.grayscale.image")
+    private val BINARIZE_IMAGE: String = ImagesBundle.message("image.color.mode.binarize.image")
   }
 }
