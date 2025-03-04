@@ -374,28 +374,7 @@ open class SyntaxGeneratedParserRuntimeBase(
     }
   }
 
-  private fun addCompletionVariantSmart(builder: SyntaxTreeBuilder, token: Any) {
-    val completionState: CompletionState? = errorState.completionState
-    if (completionState != null && errorState.predicateSign) {
-      addCompletionVariant(builder, completionState, token)
-    }
-  }
-
-  private fun addCompletionVariant(builder : SyntaxTreeBuilder, completionState: CompletionState?, o: Any) {
-    val offset: Int = builder.currentOffset
-    if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return  // suppress for zero-length tokens
-    completionState?.let {
-      val text = completionState.convertItem(o)
-      val length = text.length
-      var add = length != 0 && completionState.prefixMatches(builder, text)
-      add = add && length > 1 && !(text[0] == '<' && text[length - 1] == '>') && !(text[0] == '\'' && text[length - 1] == '\'' && length < 5)
-      if (add) {
-        completionState.addItem(builder, text)
-      }
-    }
-  }
-
-  private fun wasAutoSkipped(builder: SyntaxTreeBuilder, steps: Int): Boolean {
+  private fun SyntaxGeneratedParserRuntime.wasAutoSkipped(steps: Int): Boolean {
     for (i in -1 downTo -steps) {
       if (!isWhitespaceOrComment(builder, builder.rawLookup(i))) return false
     }

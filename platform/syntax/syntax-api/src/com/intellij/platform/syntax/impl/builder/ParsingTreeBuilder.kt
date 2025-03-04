@@ -10,9 +10,6 @@ import com.intellij.platform.syntax.lexer.TokenSequence
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
-import com.intellij.platform.syntax.runtime.CompletionState
-import com.intellij.platform.syntax.runtime.CompletionVariantProvider
-import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntimeBase
 import com.intellij.platform.syntax.util.CancellationProvider
 import com.intellij.platform.syntax.util.Logger
 import com.intellij.platform.syntax.util.Logger.Attachment
@@ -36,8 +33,7 @@ internal class ParsingTreeBuilder(
   val cancellationProvider: CancellationProvider?,
   private val whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy,
   private val opaquePolicy: OpaqueElementPolicy,
-  private val completionDelegate: CompletionVariantProvider?,
-) : SyntaxTreeBuilder, CompletionVariantProvider, SyntaxGeneratedParserRuntimeBase.LanguageInfoProvider, DiagnosticAwareBuilder {
+) : SyntaxTreeBuilder, DiagnosticAwareBuilder {
   internal val myLexStarts: IntArray
   private val myLexTypes: Array<SyntaxElementType>
   val lexemeCount: Int
@@ -491,22 +487,6 @@ internal class ParsingTreeBuilder(
       context: '$context'
       marker id: ${marker?.markerId ?: "n/a"}
       """.trimIndent()
-  }
-
-  override fun getCompletionState(): CompletionState? {
-    return completionDelegate?.getCompletionState()
-  }
-
-  override fun getLexer(): Lexer {
-    return lexer
-  }
-
-  override fun isLanguageCaseSensitive(): Boolean {
-    return true //TODO
-  }
-
-  override fun getBraces(): Array<SyntaxGeneratedParserRuntimeBase.BracePair>? {
-    TODO("Not yet implemented")
   }
 
   private inner class RelativeTokenTypesView : AbstractList<SyntaxElementType>() {
