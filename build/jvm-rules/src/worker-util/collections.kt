@@ -39,6 +39,8 @@ fun <T : Any> hashSet(): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(sl
 
 fun <T : Any> hashSet(expectedSize: Int): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(expectedSize, slowEqualsAwareHashStrategy())
 
+fun <T : Any> hashSet(collection: Collection<T>): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
+
 fun <K : Any, V : Any> hashMap(): Object2ObjectOpenCustomHashMap<K, V> {
   return Object2ObjectOpenCustomHashMap(slowEqualsAwareHashStrategy())
 }

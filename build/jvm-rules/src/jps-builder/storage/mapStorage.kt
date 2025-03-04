@@ -21,6 +21,7 @@ import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
+import org.jetbrains.jps.dependency.impl.StringEnumerator
 import org.jetbrains.jps.incremental.storage.runAllCatching
 import java.io.Closeable
 import java.io.DataInput
@@ -129,42 +130,22 @@ internal class BazelPersistentMapletFactory private constructor(
   }
 }
 
-internal interface StringEnumerator {
-  fun enumerate(string: String): Int
-
-  fun valueOf(id: Int): String
-}
-
 internal open class GraphDataExternalizer<T : Any>(
   @JvmField val externalizer: Externalizer<T>,
   private val stringEnumerator: StringEnumerator,
   private val elementInterner: ((Usage) -> Usage)?,
 ) {
   fun wrapOutput(out: DataOutput): GraphDataOutput {
-    return object : GraphDataOutputImpl(out) {
-      override fun writeUTF(s: String) {
-        writeInt(stringEnumerator.enumerate(s))
-      }
-    }
+    return GraphDataOutputImpl(out, stringEnumerator)
   }
 
   fun read(`in`: DataInput): T? {
     val wrapped = if (elementInterner == null) {
-      object : GraphDataInputImpl(`in`) {
-        override fun readUTF(): String {
-          val id = readInt()
-          return stringEnumerator.valueOf(id)
-        }
-      }
+      GraphDataInputImpl(`in`, stringEnumerator)
     }
     else {
-      object : GraphDataInputImpl(`in`) {
-        override fun readUTF(): String {
-          val id = readInt()
-          return stringEnumerator.valueOf(id)
-        }
-
-        override fun <T : ExternalizableGraphElement?> processLoadedGraphElement(element: T?): T? {
+      object : GraphDataInputImpl(`in`, stringEnumerator) {
+        override fun <T : ExternalizableGraphElement> processLoadedGraphElement(element: T): T {
           @Suppress("UNCHECKED_CAST")
           return if (element is Usage) elementInterner(element) as T else element
         }

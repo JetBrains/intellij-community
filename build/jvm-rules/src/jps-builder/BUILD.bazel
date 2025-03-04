@@ -14,7 +14,8 @@ kt_jvm_library(
         "@lib//:opentelemetry",
         "//src/worker-util",
         "//src/builder-state",
-        ":jps-standalone",
+        "//src/jps-shadow",
+        "//:jps",
         "//src/abi",
         "//src/kotlin-compiler",
         "//src/worker-framework",
@@ -49,18 +50,6 @@ kt_jvm_library(
         "//:kotlin-util-klib-metadata",
     ],
     visibility = ["//visibility:public"],
-)
-
-# java_import(
-#     name = "jps-standalone",
-#     jars = ["jps-build-standalone.jar"],
-#     visibility = ["//src/jps-builder:__subpackages__"],
-# )
-jvm_import(
-    name = "jps-standalone",
-    jar = "@jps-standalone_http//file",
-    source_jar = "@jps-standalone_http//file",
-    visibility = ["//src/jps-builder:__subpackages__"],
 )
 
 java_binary(

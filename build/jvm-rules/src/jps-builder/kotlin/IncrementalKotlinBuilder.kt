@@ -32,6 +32,8 @@ import org.jetbrains.bazel.jvm.span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaBuilderUtil.registerFilesToCompile
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
@@ -94,6 +96,7 @@ import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.incremental.JpsLookupStorageManager
 import org.jetbrains.kotlin.jps.targets.KotlinJvmModuleBuildTarget
 import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
+import org.jetbrains.kotlin.jps.targets.impl.LookupUsageRegistrar
 import org.jetbrains.kotlin.load.java.JavaClassesTracker
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
@@ -103,6 +106,7 @@ import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.preloading.ClassCondition
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
+import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -342,14 +346,7 @@ internal class IncrementalKotlinBuilder(
 
     kotlinChunk.targets.single().doAfterBuild()
 
-    representativeTarget.updateChunkMappings(
-      localContext = context,
-      chunk = chunk,
-      dirtyFilesHolder = kotlinDirtyFilesHolder,
-      outputItems = mapOf(target to generatedFiles),
-      incrementalCaches = incrementalCaches,
-      environment = environment,
-    )
+    updateChunkMappings(localContext = context, outputItems = generatedFiles, environment = environment)
 
     coroutineContext.ensureActive()
 
@@ -402,6 +399,79 @@ internal class IncrementalKotlinBuilder(
 
     return ModuleLevelBuilder.ExitCode.OK
   }
+}
+
+private fun updateChunkMappings(
+  localContext: CompileContext,
+  outputItems: List<GeneratedFile>,
+  environment: JpsCompilerEnvironment
+) {
+  val callback = JavaBuilderUtil.getDependenciesRegistrar(localContext)
+  val inlineConstTracker = environment.services[InlineConstTracker::class.java] as InlineConstTrackerImpl
+  val enumWhenTracker = environment.services[EnumWhenTracker::class.java] as EnumWhenTrackerImpl
+  val importTracker = environment.services[ImportTracker::class.java] as ImportTrackerImpl
+
+  LookupUsageRegistrar().processLookupTracker(
+    environment.services[LookupTracker::class.java],
+    callback,
+    environment.messageCollector
+  )
+
+  for (output in outputItems) {
+    if (output !is GeneratedJvmClass) {
+      continue
+    }
+
+    val sourceFiles = output.sourceFiles
+    // process trackers
+    for (sourceFile in sourceFiles) {
+      processInlineConstTracker(inlineConstTracker, sourceFile, output, callback)
+      processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, sourceFile, output, callback)
+    }
+
+    callback.associate(
+      output.relativePath,
+      sourceFiles.map { it.invariantSeparatorsPath },
+      ClassReader(output.outputClass.fileContents)
+    )
+  }
+  // important: in jps-dependency-graph you can't register additional dependencies after [callback.associate].
+}
+
+private fun processInlineConstTracker(inlineConstTracker: InlineConstTrackerImpl, sourceFile: File, output: GeneratedJvmClass, callback: Backend) {
+  val cRefs = inlineConstTracker.inlineConstMap.get(sourceFile.path)?.mapNotNull { cRef ->
+    @Suppress("SpellCheckingInspection")
+    val descriptor = when (cRef.constType) {
+      "Byte" -> "B"
+      "Short" -> "S"
+      "Int" -> "I"
+      "Long" -> "J"
+      "Float" -> "F"
+      "Double" -> "D"
+      "Boolean" -> "Z"
+      "Char" -> "C"
+      "String" -> "Ljava/lang/String;"
+      else -> null
+    } ?: return@mapNotNull null
+    Callbacks.createConstantReference(cRef.owner, cRef.name, descriptor)
+  } ?: return
+
+  val className = output.outputClass.className.internalName
+  callback.registerConstantReferences(className, cRefs)
+}
+
+private fun processBothEnumWhenAndImportTrackers(
+  enumWhenTracker: EnumWhenTrackerImpl,
+  importTracker: ImportTrackerImpl,
+  sourceFile: File,
+  output: GeneratedJvmClass,
+  callback: Backend
+) {
+  val enumFqNameClasses = enumWhenTracker.whenExpressionFilePathToEnumClassMap[sourceFile.path]?.map { "$it.*" }
+  val importedFqNames = importTracker.filePathToImportedFqNamesMap[sourceFile.path]
+  if (enumFqNameClasses == null && importedFqNames == null) return
+
+  callback.registerImports(output.outputClass.className.internalName, importedFqNames ?: listOf(), enumFqNameClasses ?: listOf())
 }
 
 private fun setupIncrementalCompilationServices(services: Services, config: CompilerConfiguration) {
@@ -685,7 +755,7 @@ private fun doProcessChangesUsingLookups(
     compiledFiles
   }
   else {
-    val result = HashSet(compiledFiles)
+    val result = hashSet(compiledFiles)
     for (file in forceRecompileTogether) {
       result.remove(file.toPath())
     }
