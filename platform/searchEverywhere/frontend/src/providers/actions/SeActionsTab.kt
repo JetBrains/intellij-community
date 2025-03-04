@@ -5,7 +5,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.api.SeFilterData
+import com.intellij.platform.searchEverywhere.api.SeFilterState
 import com.intellij.platform.searchEverywhere.api.SeResultEvent
 import com.intellij.platform.searchEverywhere.api.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
@@ -27,7 +27,7 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
     get() = name
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeActionsFilterEditor()
+  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState> = SeActionsFilterEditor()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
@@ -35,11 +35,11 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 }
 
 @ApiStatus.Internal
-class SeActionsFilterEditor : ObservableOptionEditor<SeFilterData> {
+class SeActionsFilterEditor : ObservableOptionEditor<SeFilterState> {
   private var current: SeActionsFilterData? = null
 
-  private val _resultFlow: MutableStateFlow<SeFilterData?> = MutableStateFlow(current?.toFilterData())
-  override val resultFlow: StateFlow<SeFilterData?> = _resultFlow.asStateFlow()
+  private val _resultFlow: MutableStateFlow<SeFilterState?> = MutableStateFlow(current?.toFilterData())
+  override val resultFlow: StateFlow<SeFilterState?> = _resultFlow.asStateFlow()
 
   override fun getComponent(): JComponent {
     return panel {
@@ -57,7 +57,7 @@ class SeActionsFilterEditor : ObservableOptionEditor<SeFilterData> {
     }
   }
 
-  override fun result(): SeFilterData {
-    return resultFlow.value ?: SeFilterData(emptyMap())
+  override fun result(): SeFilterState {
+    return resultFlow.value ?: SeFilterState.Empty
   }
 }

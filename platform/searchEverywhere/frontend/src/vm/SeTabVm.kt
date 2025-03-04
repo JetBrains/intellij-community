@@ -6,8 +6,8 @@ import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeTextSearchParams
-import com.intellij.platform.searchEverywhere.api.SeFilterData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.api.SeFilterState
 import com.intellij.platform.searchEverywhere.api.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeResultsSorter
 import kotlinx.coroutines.*
@@ -24,7 +24,7 @@ class SeTabVm(
 ) {
   val searchResults: StateFlow<Flow<SeResultListEvent>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
-  val filterEditor: ObservableOptionEditor<SeFilterData>? = tab.getFilterEditor()
+  val filterEditor: ObservableOptionEditor<SeFilterState>? = tab.getFilterEditor()
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
@@ -55,9 +55,9 @@ class SeTabVm(
 
         startSearchFlow.collectLatest {
           combine(searchPattern, filterEditor?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
-            Pair(searchPattern, filterData)
+            Pair(searchPattern, filterData ?: SeFilterState.Empty)
           }.mapLatest { (searchPattern, filterData) ->
-            val params = SeTextSearchParams(searchPattern, filterData)
+            val params = SeParams(searchPattern, filterData)
 
             flow {
               resultsSorter.getItems(params).map { item ->

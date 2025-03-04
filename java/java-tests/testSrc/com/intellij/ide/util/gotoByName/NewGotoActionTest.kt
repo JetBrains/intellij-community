@@ -5,8 +5,8 @@ package com.intellij.ide.util.gotoByName
 //import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereItemDataLocalProvider
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionHelperMock
-import com.intellij.platform.searchEverywhere.SeActionParams
-import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.api.SeFilterState
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.providers.actions.SeActionsProvider
@@ -22,7 +22,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test simple search`() {
     runBlocking {
-      val params = SeActionParams("apply patch", null, true)
+      val params = SeParams("apply patch", SeFilterState.Empty)
 
       SeActionsProvider(project, null, null).collectItems(params, Collector { item ->
         println(item.presentation().text)
@@ -34,7 +34,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test mocked provider`() {
     runBlocking {
-      val params = SeTextSearchParams("it", null)
+      val params = SeParams("it", SeFilterState.Empty)
 
       defaultProvider.collectItems(params, Collector { item ->
         println(item.presentation().text)

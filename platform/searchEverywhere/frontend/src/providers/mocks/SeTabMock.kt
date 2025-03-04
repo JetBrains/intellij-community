@@ -8,7 +8,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.api.SeFilterData
+import com.intellij.platform.searchEverywhere.api.SeFilterState
 import com.intellij.platform.searchEverywhere.api.SeResultEvent
 import com.intellij.platform.searchEverywhere.api.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
@@ -25,7 +25,7 @@ class SeTabMock(override val name: String,
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterData>? = null
+  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = null
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     println("Item selected: ${item.presentation.text}")

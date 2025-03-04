@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
@@ -31,15 +30,14 @@ class SeFilesProvider(val project: Project, private val contributorWrapper: SeAs
   override val id: String get() = ID
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val textSearchParams = params as? SeTextSearchParams ?: return
-    val text = textSearchParams.text
-    val filter = SeFilesFilterData.fromTabData(textSearchParams.filterData)
-    val defaultMatchers = createDefaultMatchers(text)
+    val inputQuery = params.inputQuery
+    val filter = SeFilesFilterData.from(params.filter)
+    val defaultMatchers = createDefaultMatchers(inputQuery)
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
 
-      contributorWrapper.fetchWeightedElements(text, indicator, object: AsyncProcessor<FoundItemDescriptor<Any>> {
+      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object: AsyncProcessor<FoundItemDescriptor<Any>> {
         override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
           val weight = t.weight
           val legacyItem = t.item as? ItemWithPresentation<*> ?: return true

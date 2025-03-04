@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import kotlinx.coroutines.coroutineScope
@@ -17,12 +16,11 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
   override val id: String get() = ID
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val textSearchParams = params as? SeTextSearchParams ?: return
-    val text = textSearchParams.text
-    val filter = SeActionsFilterData.fromTabData(textSearchParams.filterData)
+    val inputQuery = params.inputQuery
+    val filter = SeActionsFilterData.from(params.filter)
 
     coroutineScope {
-      legacyContributor.fetchWeightedElements(this, text) { t ->
+      legacyContributor.fetchWeightedElements(this, inputQuery) { t ->
         runBlockingCancellable {
           collector.put(SeActionItem(t.item))
         }

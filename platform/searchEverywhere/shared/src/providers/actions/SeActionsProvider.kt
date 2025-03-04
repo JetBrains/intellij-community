@@ -29,8 +29,8 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val filter = SeActionsFilterData.fromTabData(params.filterData)
-    processItems(params.text, filter.includeDisabled) { value ->
+    val filter = SeActionsFilterData.from(params.filter)
+    processItems(params.inputQuery, filter.includeDisabled) { value ->
       val item = SeActionItem(value)
       collector.put(item)
     }

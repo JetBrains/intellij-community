@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 @ApiStatus.Internal
 @Serializable
-data class SeFilterData(
-  val map: Map<String, String>
-)
+sealed class SeFilterState {
+  @Serializable
+  data object Empty : SeFilterState()
+  @Serializable
+  data class Data(val map: Map<String, String>) : SeFilterState()
+}

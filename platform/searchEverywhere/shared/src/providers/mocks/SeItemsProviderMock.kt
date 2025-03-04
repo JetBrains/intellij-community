@@ -4,7 +4,6 @@ package com.intellij.platform.searchEverywhere.providers.mocks
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeTextItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import kotlinx.coroutines.cancel
@@ -24,8 +23,6 @@ class SeItemsProviderMock(
 ) : SeItemsProvider {
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val searchText = (params as? SeTextSearchParams)?.text ?: return
-
     coroutineScope {
       val flow: Flow<SeItemMock> = flow {
         delay(delayMillis)
@@ -33,7 +30,7 @@ class SeItemsProviderMock(
         repeat(size) { index ->
           val item = SeItemMock("$resultPrefix $index")
 
-          if (searchText.isEmpty() || item.text.contains(searchText, ignoreCase = true)) {
+          if (params.inputQuery.isEmpty() || item.text.contains(params.inputQuery, ignoreCase = true)) {
             emit(item)
           }
 
