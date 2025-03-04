@@ -112,8 +112,8 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
 
   protected suspend fun resolve(project: Project,
                                 mavenProject: MavenProject,
-                                generalSettings: MavenGeneralSettings,
-                                embeddersManager: MavenEmbeddersManager) {
+                                generalSettings: MavenGeneralSettings
+  ) {
     val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
     val updateSnapshots = projectsManager.forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
