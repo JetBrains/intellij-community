@@ -42,6 +42,8 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil.collectionToString;
+
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
@@ -491,7 +493,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
-      externalSourceSet.setCompilerArguments(javaCompile.getOptions().getAllCompilerArgs());
+      externalSourceSet.setCompilerArguments(collectionToString(javaCompile.getOptions().getAllCompilerArgs()));
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

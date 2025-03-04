@@ -5,6 +5,9 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.DomainObjectCollection;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class GradleCollectionUtil {
 
   public static <T> void configureEach(DomainObjectCollection<? extends T> collection, Action<? super T> action) {
@@ -13,5 +16,13 @@ public final class GradleCollectionUtil {
       return;
     }
     collection.all(action);
+  }
+
+  public static List<String> collectionToString(Iterable<?> collection) {
+    List<String> result = new ArrayList<>();
+    for (Object item : collection) {
+      result.add(String.valueOf(item));
+    }
+    return result;
   }
 }
