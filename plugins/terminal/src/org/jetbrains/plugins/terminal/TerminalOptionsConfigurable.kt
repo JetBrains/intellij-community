@@ -31,6 +31,7 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
+import java.util.Locale
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
@@ -312,7 +313,7 @@ private fun fontComboBox(): FontComboBox = FontComboBox().apply {
   isMonospacedOnly = true
 }
 
-private fun Float.fontSizeToString(): String = String.format("%.1f", this)
+private fun Float.fontSizeToString(): String = formatWithOneDecimalDigit()
 
 private fun String.parseFontSize(): Float =
   try {
@@ -322,8 +323,9 @@ private fun String.parseFontSize(): Float =
     EditorFontsConstants.getDefaultEditorFontSize().toFloat()
   }
 
-private fun Float.spacingToString(): String =
-  String.format("%.1f", this)
+private fun Float.spacingToString(): String = formatWithOneDecimalDigit()
+
+private fun Float.formatWithOneDecimalDigit(): String = String.format(Locale.ROOT, "%.1f", this)
 
 // We only have getMin/MaxEditorLineSpacing(), and nothing for column spacing,
 // but using the same values for column spacing seems reasonable.
