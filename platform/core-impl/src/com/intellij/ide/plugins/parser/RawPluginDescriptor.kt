@@ -25,10 +25,10 @@ class RawPluginDescriptor {
   val `package`: String? get() = builder.`package`
   val isSeparateJar: Boolean get() = builder.isSeparateJar
 
-  @JvmField var url: String? = null
-  @JvmField var vendor: String? = null
-  @JvmField var vendorEmail: String? = null
-  @JvmField var vendorUrl: String? = null
+  val url: String? get() = builder.url
+  val vendor: String? get() = builder.vendor
+  val vendorEmail: String? get() = builder.vendorEmail
+  val vendorUrl: String? get() = builder.vendorUrl
 
   @JvmField var resourceBundleBaseName: String? = null
 

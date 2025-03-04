@@ -17,4 +17,9 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override var `package`: String? = null
   override var isSeparateJar: Boolean = false
+
+  override var url: String? = null
+  override var vendor: String? = null
+  override var vendorEmail: String? = null
+  override var vendorUrl: String? = null
 }

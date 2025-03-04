@@ -104,7 +104,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.builder.`package` = getNullifiedAttributeValue(reader, i)
-      PluginXmlConst.PLUGIN_URL_ATTR -> descriptor.url = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.PLUGIN_URL_ATTR -> descriptor.builder.url = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
@@ -196,11 +196,11 @@ private fun readRootElementChild(
     PluginXmlConst.VENDOR_ELEM -> {
       for (i in 0 until reader.attributeCount) {
         when (reader.getAttributeLocalName(i)) {
-          PluginXmlConst.VENDOR_EMAIL_ATTR -> descriptor.vendorEmail = getNullifiedAttributeValue(reader, i)
-          PluginXmlConst.VENDOR_URL_ATTR -> descriptor.vendorUrl = getNullifiedAttributeValue(reader, i)
+          PluginXmlConst.VENDOR_EMAIL_ATTR -> descriptor.builder.vendorEmail = getNullifiedAttributeValue(reader, i)
+          PluginXmlConst.VENDOR_URL_ATTR -> descriptor.builder.vendorUrl = getNullifiedAttributeValue(reader, i)
         }
       }
-      descriptor.vendor = getNullifiedContent(reader)
+      descriptor.builder.vendor = getNullifiedContent(reader)
     }
     PluginXmlConst.INCOMPATIBLE_WITH_ELEM -> {
       getNullifiedContent(reader)?.let {
