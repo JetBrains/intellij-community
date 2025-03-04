@@ -24,4 +24,11 @@ interface PluginDescriptorBuilder {
   var vendorUrl: String?
 
   var resourceBundleBaseName: String?
+
+  var isUseIdeaClassLoader: Boolean
+  var isBundledUpdateAllowed: Boolean
+  var implementationDetail: Boolean
+  var isRestartRequired: Boolean
+  var isLicenseOptional: Boolean
+  var isIndependentFromCoreClassLoader: Boolean
 }

@@ -105,11 +105,11 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.PLUGIN_PACKAGE_ATTR -> descriptor.builder.`package` = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PLUGIN_URL_ATTR -> descriptor.builder.url = getNullifiedAttributeValue(reader, i)
-      PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> descriptor.builder.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> descriptor.builder.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> descriptor.builder.implementationDetail = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> descriptor.builder.isRestartRequired = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> descriptor.builder.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> descriptor.builder.isSeparateJar = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?
@@ -577,7 +577,7 @@ private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescripto
           descriptor.releaseVersion = 0
         }
       }
-      PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> descriptor.isLicenseOptional = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> descriptor.builder.isLicenseOptional = reader.getAttributeAsBoolean(i)
     }
   }
   reader.skipElement()

@@ -24,4 +24,11 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var vendorUrl: String? = null
 
   override var resourceBundleBaseName: String? = null
+
+  override var isUseIdeaClassLoader: Boolean = false
+  override var isBundledUpdateAllowed: Boolean = false
+  override var implementationDetail: Boolean = false
+  override var isRestartRequired: Boolean = false
+  override var isLicenseOptional: Boolean = false
+  override var isIndependentFromCoreClassLoader: Boolean = false
 }

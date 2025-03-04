@@ -32,13 +32,13 @@ class RawPluginDescriptor {
 
   val resourceBundleBaseName: String? get() = builder.resourceBundleBaseName
 
-  @JvmField var isUseIdeaClassLoader: Boolean = false
-  @JvmField var isBundledUpdateAllowed: Boolean = false
-  @JvmField var implementationDetail: Boolean = false
-  @JvmField var isRestartRequired: Boolean = false
-  @JvmField var isLicenseOptional: Boolean = false
+  val isUseIdeaClassLoader: Boolean get() = builder.isUseIdeaClassLoader
+  val isBundledUpdateAllowed: Boolean get() = builder.isBundledUpdateAllowed
+  val implementationDetail: Boolean get() = builder.implementationDetail
+  val isRestartRequired: Boolean get() = builder.isRestartRequired
+  val isLicenseOptional: Boolean get() = builder.isLicenseOptional
   // makes sense only for product modules for now
-  @JvmField var isIndependentFromCoreClassLoader: Boolean = false
+  val isIndependentFromCoreClassLoader: Boolean get() = builder.isIndependentFromCoreClassLoader
 
   @JvmField var productCode: String? = null
   @JvmField var releaseDate: LocalDate? = null
