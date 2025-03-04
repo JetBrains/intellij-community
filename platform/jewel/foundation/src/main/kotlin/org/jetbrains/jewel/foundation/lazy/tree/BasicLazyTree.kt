@@ -127,8 +127,7 @@ public fun <T> BasicLazyTree(
     ) {
         itemsIndexed(items = flattenedTree, key = { _, item -> item.id }, contentType = { _, item -> item.data }) {
             index,
-                element
-            ->
+            element ->
             val elementState =
                 TreeElementState.of(
                     active = isActive,
@@ -176,7 +175,7 @@ public fun <T> BasicLazyTree(
                             stateDescription =
                                 if (
                                     treeState.delegate.isKeyboardNavigating &&
-                                    treeState.delegate.lastActiveItemIndex == index
+                                        treeState.delegate.lastActiveItemIndex == index
                                 ) {
                                     "current item"
                                 } else {
