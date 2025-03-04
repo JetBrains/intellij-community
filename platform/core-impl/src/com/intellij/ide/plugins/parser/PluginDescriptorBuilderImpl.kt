@@ -4,7 +4,14 @@ package com.intellij.ide.plugins.parser
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var id: String? = null
   override var name: String? = null
+
   override var description: String? = null
   override var category: String? = null
   override var changeNotes: String? = null
+
+  override var version: String? = null
+  override var sinceBuild: String? = null
+  @Deprecated("Deprecated since 2025.2, the value is disregarded if its major part is at least 251. " +
+              "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
+  override var untilBuild: String? = null
 }

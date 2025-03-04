@@ -84,7 +84,7 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
       when (localName) {
         PluginXmlConst.ID_ELEM -> descriptor.builder.id = getNullifiedContent(reader)
         PluginXmlConst.NAME_ELEM -> descriptor.builder.name = getNullifiedContent(reader)
-        PluginXmlConst.VERSION_ELEM -> descriptor.version = getNullifiedContent(reader)
+        PluginXmlConst.VERSION_ELEM -> descriptor.builder.version = getNullifiedContent(reader)
         PluginXmlConst.DESCRIPTION_ELEM -> descriptor.builder.description = getNullifiedContent(reader)
         PluginXmlConst.IDEA_VERSION_ELEM -> readIdeaVersion(reader, descriptor)
         PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
@@ -172,8 +172,8 @@ private fun readRootElementChild(
     PluginXmlConst.CATEGORY_ELEM -> descriptor.builder.category = getNullifiedContent(reader)
     PluginXmlConst.VERSION_ELEM -> {
       // kotlin includes compiler.xml that due to some reasons duplicates a version
-      if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.builder.id)) {
-        descriptor.version = getNullifiedContent(reader)
+      if (descriptor.builder.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.builder.id)) {
+        descriptor.builder.version = getNullifiedContent(reader)
       }
       else {
         reader.skipElement()
@@ -251,8 +251,8 @@ private fun readRootElementChild(
 private fun readIdeaVersion(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PluginXmlConst.IDEA_VERSION_SINCE_ATTR -> descriptor.sinceBuild = getNullifiedAttributeValue(reader, i)
-      PluginXmlConst.IDEA_VERSION_UNTIL_ATTR -> descriptor.untilBuild = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.IDEA_VERSION_SINCE_ATTR -> descriptor.builder.sinceBuild = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.IDEA_VERSION_UNTIL_ATTR -> descriptor.builder.untilBuild = getNullifiedAttributeValue(reader, i)
     }
   }
   reader.skipElement()

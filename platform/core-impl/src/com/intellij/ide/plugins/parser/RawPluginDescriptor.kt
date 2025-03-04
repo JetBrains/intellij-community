@@ -16,12 +16,11 @@ class RawPluginDescriptor {
   val category: String? get() = builder.category
   val changeNotes: String? get() = builder.changeNotes
 
-  @JvmField var version: String? = null
-  @JvmField var sinceBuild: String? = null
-
+  val version: String? get() = builder.version
+  val sinceBuild: String? get() = builder.sinceBuild
   @Deprecated("Deprecated since 2025.2, the value is disregarded if its major part is at least 251. " +
               "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
-  @JvmField var untilBuild: String? = null
+  val untilBuild: String? get() = builder.untilBuild
 
   @JvmField var `package`: String? = null
   @JvmField var isSeparateJar: Boolean = false
