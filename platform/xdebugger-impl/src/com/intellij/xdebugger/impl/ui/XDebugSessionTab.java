@@ -242,14 +242,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected void addVariablesAndWatches(@NotNull XDebugSessionProxy session) {
     Content variablesContent = createVariablesContent(session);
-    if (variablesContent != null) {
-      myUi.addContent(variablesContent, 0, PlaceInGrid.center, false);
-    }
+    myUi.addContent(variablesContent, 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
       Content watchesContent = createWatchesContent(session, null);
-      if (watchesContent != null) {
-        myUi.addContent(watchesContent, 0, PlaceInGrid.right, false);
-      }
+      myUi.addContent(watchesContent, 0, PlaceInGrid.right, false);
     }
   }
 
@@ -328,18 +324,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }, this);
   }
 
-  private @Nullable Content createVariablesContent(@NotNull XDebugSessionProxy proxy) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Variables view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
+  private @NotNull Content createVariablesContent(@NotNull XDebugSessionProxy proxy) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
+      variablesView = myWatchesView = new XWatchesViewImpl(proxy, myWatchesInVariables, false, false);
     }
     else {
-      variablesView = new XVariablesView(session);
+      variablesView = new XVariablesView(proxy);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
@@ -352,13 +343,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  protected @Nullable Content createWatchesContent(@NotNull XDebugSessionProxy proxy, @Nullable XWatchesViewImpl watchesView) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Watches view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
-    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
+  protected @NotNull Content createWatchesContent(@NotNull XDebugSessionProxy proxy, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(proxy, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), null,

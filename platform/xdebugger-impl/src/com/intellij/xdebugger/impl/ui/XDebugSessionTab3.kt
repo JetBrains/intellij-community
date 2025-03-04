@@ -61,14 +61,13 @@ class XDebugSessionTab3(
       variablesView = getWatchesViewImpl(session!!, watchesIsVariables = true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       myWatchesView = variablesView
-    } else {
-      variablesView = XVariablesView(session!!)
+    }
+    else {
+      variablesView = XVariablesView(proxy)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       val watchesView = getWatchesViewImpl(session!!, watchesIsVariables = false)
       val watchesContent = createWatchesContent(proxy, watchesView)
-      if (watchesContent != null) {
-        myUi.addContent(watchesContent, 0, PlaceInGrid.right, false)
-      }
+      myUi.addContent(watchesContent, 0, PlaceInGrid.right, false)
     }
     applyVariablesTabLayoutSettings()
 
