@@ -60,21 +60,25 @@ object TerminalShellsDetector {
   private fun detectWindowsShells(): List<DetectedShellInfo> {
     val shells = mutableListOf<DetectedShellInfo>()
 
+    val systemRoot = EnvironmentUtil.getValue("SystemRoot")      // C:\\Windows
+    val programFiles = EnvironmentUtil.getValue("ProgramFiles")  // C:\\Program Files
+    val localAppData = EnvironmentUtil.getValue("LocalAppData")  // C:\\Users\\<Username>\\AppData\\Local
+
     val powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe")
-    if (powershell != null && powershell.absolutePath.startsWith("C:\\Windows\\System32\\WindowsPowerShell\\", ignoreCase = true)) {
+    if (powershell != null && powershell.absolutePath.startsWith("$systemRoot\\System32\\WindowsPowerShell\\", ignoreCase = true)) {
       shells.add(createShellInfo("Windows PowerShell", powershell.absolutePath))
     }
     val cmd = PathEnvironmentVariableUtil.findInPath("cmd.exe")
-    if (cmd != null && cmd.absolutePath.startsWith("C:\\Windows\\System32\\", ignoreCase = true)) {
+    if (cmd != null && cmd.absolutePath.startsWith("$systemRoot\\System32\\", ignoreCase = true)) {
       shells.add(createShellInfo("Command Prompt", cmd.absolutePath))
     }
     val pwsh = PathEnvironmentVariableUtil.findInPath("pwsh.exe")
-    if (pwsh != null && pwsh.absolutePath.startsWith("C:\\Program Files\\PowerShell\\", ignoreCase = true)) {
+    if (pwsh != null && pwsh.absolutePath.startsWith("$programFiles\\PowerShell\\", ignoreCase = true)) {
       shells.add(createShellInfo("PowerShell", pwsh.absolutePath))
     }
 
-    val gitBashGlobal = File("C:\\Program Files\\Git\\bin\\bash.exe")
-    val gitBashLocal = File(System.getenv("LocalAppData") + "\\Programs\\Git\\bin\\bash.exe")
+    val gitBashGlobal = File("$programFiles\\Git\\bin\\bash.exe")
+    val gitBashLocal = File("$localAppData\\Programs\\Git\\bin\\bash.exe")
     val gitBash = when {
       gitBashLocal.isFile() -> gitBashLocal
       gitBashGlobal.isFile() -> gitBashGlobal
@@ -85,7 +89,7 @@ object TerminalShellsDetector {
     }
 
     val cmderRoot = EnvironmentUtil.getValue("CMDER_ROOT")
-    if (cmderRoot != null && cmd != null && cmd.absolutePath.startsWith("C:\\Windows\\System32\\", ignoreCase = true)) {
+    if (cmderRoot != null && cmd != null && cmd.absolutePath.startsWith("$systemRoot\\System32\\", ignoreCase = true)) {
       val cmderInitBat = File(cmderRoot, "vendor\\init.bat")
       if (cmderInitBat.isFile()) {
         shells.add(createShellInfo("Cmder", cmd.absolutePath, listOf("/k", cmderInitBat.absolutePath)))
