@@ -6,4 +6,5 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var name: String? = null
   override var description: String? = null
   override var category: String? = null
+  override var changeNotes: String? = null
 }

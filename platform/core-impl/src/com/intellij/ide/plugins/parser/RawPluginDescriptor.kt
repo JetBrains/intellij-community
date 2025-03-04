@@ -14,7 +14,7 @@ class RawPluginDescriptor {
   val name: String? get() = builder.name
   val description: @NlsSafe String? get() = builder.description
   val category: String? get() = builder.category
-  @JvmField var changeNotes: String? = null
+  val changeNotes: String? get() = builder.changeNotes
 
   @JvmField var version: String? = null
   @JvmField var sinceBuild: String? = null
