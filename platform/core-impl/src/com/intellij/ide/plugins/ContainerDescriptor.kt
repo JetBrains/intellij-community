@@ -23,9 +23,9 @@ class ContainerDescriptor {
   val listeners: List<ListenerDescriptor>
     get() = _listeners ?: Java11Shim.INSTANCE.listOf()
 
-  private var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
-  val readOnlyExtensionPoints: List<ExtensionPointDescriptor>
-    get() = extensionPoints ?: Java11Shim.INSTANCE.listOf()
+  private var _extensionPoints: MutableList<ExtensionPointDescriptor>? = null
+  val extensionPoints: List<ExtensionPointDescriptor>
+    get() = _extensionPoints ?: Java11Shim.INSTANCE.listOf()
 
   @Transient var distinctExtensionPointCount: Int = -1
   @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
@@ -52,28 +52,28 @@ class ContainerDescriptor {
   }
 
   internal fun addExtensionPoint(extensionPointDescriptor: ExtensionPointDescriptor) {
-    if (extensionPoints == null) {
-      extensionPoints = ArrayList()
+    if (_extensionPoints == null) {
+      _extensionPoints = ArrayList()
     }
-    extensionPoints!!.add(extensionPointDescriptor)
+    _extensionPoints!!.add(extensionPointDescriptor)
   }
 
   internal fun addExtensionPoints(points: List<ExtensionPointDescriptor>) {
-    if (extensionPoints == null) {
-      extensionPoints = ArrayList(points)
+    if (_extensionPoints == null) {
+      _extensionPoints = ArrayList(points)
     } else {
-      extensionPoints!!.addAll(points)
+      _extensionPoints!!.addAll(points)
     }
   }
 
   override fun toString(): String {
-    if (_services == null && components.isEmpty() && extensionPoints.isNullOrEmpty() && extensions.isEmpty() && _listeners == null) {
+    if (_services == null && components.isEmpty() && _extensionPoints.isNullOrEmpty() && extensions.isEmpty() && _listeners == null) {
       return "ContainerDescriptor(empty)"
     }
     else {
       return "ContainerDescriptor(" +
              "services=$_services, components=$_components, " +
-             "extensionPoints=$extensionPoints, extensions=$extensions, listeners=$_listeners" +
+             "extensionPoints=$_extensionPoints, extensions=$extensions, listeners=$_listeners" +
              ")"
     }
   }

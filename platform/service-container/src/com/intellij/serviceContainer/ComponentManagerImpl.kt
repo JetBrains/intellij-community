@@ -354,8 +354,8 @@ abstract class ComponentManagerImpl(
           }
         }
 
-        if (extensionPoints != null && containerDescriptor.readOnlyExtensionPoints.isNotEmpty()) {
-          createExtensionPoints(points = containerDescriptor.readOnlyExtensionPoints,
+        if (extensionPoints != null && containerDescriptor.extensionPoints.isNotEmpty()) {
+          createExtensionPoints(points = containerDescriptor.extensionPoints,
                                 componentManager = this,
                                 result = extensionPoints,
                                 pluginDescriptor = module)

@@ -57,7 +57,7 @@ fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyApplicationServices(vararg 
 }
 
 fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyExtensionPointsNames(vararg names: String) = apply {
-  extracting { it.appContainerDescriptor.readOnlyExtensionPoints.map { it.name } }
+  extracting { it.appContainerDescriptor.extensionPoints.map { it.name } }
     .asList()
     .containsExactly(*names)
 }
