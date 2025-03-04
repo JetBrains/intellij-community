@@ -215,28 +215,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
-    CompletableFuture<?> endFuture = new CompletableFuture<>();
-
-    stopCondition.whenComplete((__, exception) -> {
-      if (exception != null) {
-        endFuture.complete(null);
-      }
-    });
-
     try {
       executeInModalContext(() -> {
         init.run();
         app.runUnlockingIntendedWrite(() -> {
           initializeOnEdtIfNeeded();
           // guarantee AWT event after the future is done will be pumped and loop exited
-          stopCondition.thenRun(() -> {
-            SwingUtilities.invokeLater(() -> {
-              // we need to ensure that all events that are currently in the queue will be completed even when stopCondition finished.
-              // otherwise, we may get a situation where pumping ends before it dispatches all events
-              endFuture.complete(null);
-            });
-          });
-          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), endFuture, event -> {
+          stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
+          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
             if (isCancellationEvent(event)) {
               cancel();
             }
@@ -251,17 +237,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       myDialog.hideImmediately();
     }
   }
-
-  private final Runnable emptyModalProgressEndRunnable = new Runnable() {
-    @Override
-    public void run() {
-    }
-
-    @Override
-    public String toString() {
-      return "Modality exit runnable";
-    }
-  };
 
   final boolean isCancellationEvent(@NotNull AWTEvent event) {
     return myShouldShowCancel &&
