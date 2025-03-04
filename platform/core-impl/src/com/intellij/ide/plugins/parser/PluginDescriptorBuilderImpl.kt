@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
+import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
@@ -49,4 +50,15 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override val pluginAliases: List<String>
     get() = _pluginAliases ?: Java11Shim.INSTANCE.listOf()
+
+  private var _depends: MutableList<DependsElement>? = null
+  override fun addDepends(depends: DependsElement) {
+    if (_depends == null) {
+      _depends = ArrayList()
+    }
+    _depends!!.add(depends)
+  }
+
+  override val depends: List<DependsElement>
+    get() = _depends ?: Java11Shim.INSTANCE.listOf()
 }

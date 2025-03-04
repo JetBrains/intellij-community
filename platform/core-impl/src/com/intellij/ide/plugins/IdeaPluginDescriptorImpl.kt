@@ -100,8 +100,8 @@ class IdeaPluginDescriptorImpl(
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
     }
     pluginDependencies = raw.depends
-      ?.let(::convertDepends)
-      ?.let(::fixDepends) ?: Java11Shim.INSTANCE.listOf()
+      .let(::convertDepends)
+      .let(::fixDepends)
   }
 
   @Transient

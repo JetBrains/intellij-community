@@ -323,12 +323,7 @@ private fun readOldDepends(reader: XMLStreamReader2, descriptor: RawPluginDescri
     }
   }
   val dependencyIdString = getNullifiedContent(reader) ?: return
-  var depends = descriptor.depends
-  if (depends == null) {
-    depends = ArrayList()
-    descriptor.depends = depends
-  }
-  depends.add(DependsElement(pluginId = dependencyIdString, configFile = configFile, isOptional = isOptional))
+  descriptor.builder.addDepends(DependsElement(pluginId = dependencyIdString, configFile = configFile, isOptional = isOptional))
 }
 
 private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, interner: XmlInterner) {

@@ -46,7 +46,7 @@ class RawPluginDescriptor {
 
   val pluginAliases: List<String> get() = builder.pluginAliases
 
-  @JvmField var depends: MutableList<DependsElement>? = null
+  val depends: List<DependsElement> get() = builder.depends
   @JvmField var actions: MutableList<ActionElement>? = null
 
   @JvmField var incompatibleWith: MutableList<String>? = null
