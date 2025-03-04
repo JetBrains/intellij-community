@@ -63,7 +63,6 @@ data class Config private constructor(
     val evaluationRoots: List<String>,
     val ignoreFileNames: Set<String>,
     val sourceFile: String?,
-    val executionMode: String?,
   )
 
   /**
