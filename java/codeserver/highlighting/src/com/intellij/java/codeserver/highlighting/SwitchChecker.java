@@ -3,7 +3,6 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.codeserver.core.JavaPsiExpressionUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
@@ -295,9 +294,9 @@ final class SwitchChecker {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement label : labelElementList.getElements()) {
-        if (!(label instanceof PsiParenthesizedExpression) && ExpressionUtil.isNullType(label)) {
+        if (!(label instanceof PsiParenthesizedExpression) && ExpressionUtil.isNullLiteral(label)) {
           if (selectorType instanceof PsiPrimitiveType) {
-            if (!ExpressionUtil.isNullType(selector)) {
+            if (!PsiTypes.nullType().equals(selectorType)) {
               myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
               return;
             }
@@ -520,13 +519,11 @@ final class SwitchChecker {
     }
     if (elements.length == 2) {
       if (firstElement instanceof PsiDefaultCaseLabelElement defaultLabel &&
-          elements[1] instanceof PsiExpression expr &&
-          JavaPsiExpressionUtil.isNullLiteral(expr)) {
+          elements[1] instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr)) {
         myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_NULL_ORDER.create(defaultLabel, labelElementList));
         return true;
       }
-      if (firstElement instanceof PsiExpression expr &&
-          JavaPsiExpressionUtil.isNullLiteral(expr) &&
+      if (firstElement instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr) &&
           elements[1] instanceof PsiDefaultCaseLabelElement) {
         return false;
       }
@@ -539,7 +536,7 @@ final class SwitchChecker {
         myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_LABEL_NOT_ALLOWED.create(defaultLabel));
         reported = true;
       }
-      else if (element instanceof PsiExpression expr && JavaPsiExpressionUtil.isNullLiteral(expr)) {
+      else if (element instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr)) {
         myVisitor.report(JavaErrorKinds.SWITCH_NULL_LABEL_NOT_ALLOWED.create(expr));
         reported = true;
       }

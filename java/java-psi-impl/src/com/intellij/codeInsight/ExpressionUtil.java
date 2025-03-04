@@ -6,7 +6,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ExpressionUtil {
   /**
@@ -51,7 +53,7 @@ public final class ExpressionUtil {
         PsiCaseLabelElement[] elements = elementList.getElements();
         for (PsiCaseLabelElement caseLabelElement : elements) {
           if (caseLabelElement != null) {
-            if (caseLabelElement instanceof PsiPattern || isNullType(caseLabelElement)) return true;
+            if (caseLabelElement instanceof PsiPattern || isNullLiteral(caseLabelElement)) return true;
           }
         }
       }
@@ -60,11 +62,14 @@ public final class ExpressionUtil {
   }
 
   /**
-   * @param element element to check
-   * @return true if the element is an expression whose type is {@link PsiTypes#nullType()}.
+   * @param element expression to check
+   * @return true if the expression is a null literal (possibly parenthesized or cast)
    */
-  public static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
+  @Contract("null -> false")
+  public static boolean isNullLiteral(@Nullable PsiElement element) {
+    if (!(element instanceof PsiExpression)) return false;
+    PsiExpression deparenthesized = PsiUtil.deparenthesizeExpression((PsiExpression)element);
+    return deparenthesized instanceof PsiLiteralExpression && ((PsiLiteralExpression)deparenthesized).getValue() == null;
   }
 
   /**

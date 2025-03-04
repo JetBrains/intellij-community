@@ -174,7 +174,7 @@ public final class JavaPsiSwitchUtil {
                                     @NotNull PsiType selectorType) {
     boolean isOverWhomUnconditionalForSelector = JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType);
     if (!isOverWhomUnconditionalForSelector &&
-        ((!(overWhom instanceof PsiExpression expression) || JavaPsiExpressionUtil.isNullLiteral(expression)) &&
+        ((!(overWhom instanceof PsiExpression expression) || ExpressionUtil.isNullLiteral(expression)) &&
          who instanceof PsiKeyword &&
          PsiKeyword.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
       // JEP 440-441
@@ -205,8 +205,7 @@ public final class JavaPsiSwitchUtil {
     PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
     if (list == null || list.getElementCount() != 2) return false;
     PsiCaseLabelElement[] elements = list.getElements();
-    return elements[0] instanceof PsiExpression expr &&
-           JavaPsiExpressionUtil.isNullLiteral(expr) &&
+    return elements[0] instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr) &&
            elements[1] instanceof PsiDefaultCaseLabelElement;
   }
 
@@ -264,7 +263,7 @@ public final class JavaPsiSwitchUtil {
   private static boolean shouldConsiderForDominance(@NotNull PsiCaseLabelElement labelElement) {
     if (labelElement instanceof PsiPattern) return true;
     if (labelElement instanceof PsiExpression) {
-      boolean isNullType = ExpressionUtil.isNullType(labelElement);
+      boolean isNullType = ExpressionUtil.isNullLiteral(labelElement);
       if (isNullType && isInCaseNullDefaultLabel(labelElement)) {
         // JEP 432
         // A 'case null, default' label dominates all other switch labels.
