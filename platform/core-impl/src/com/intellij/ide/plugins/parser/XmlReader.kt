@@ -7,11 +7,8 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
+import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
-import com.intellij.ide.plugins.parser.elements.DependsElement
-import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
-import com.intellij.ide.plugins.parser.elements.OS
-import com.intellij.ide.plugins.parser.elements.asExtensionOS
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -715,9 +712,6 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 }
 
 private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, interner: XmlInterner) {
-  val modules = ArrayList<ModuleDependenciesDescriptor.ModuleReference>()
-  val plugins = ArrayList<ModuleDependenciesDescriptor.PluginReference>()
-
   reader.consumeChildElements { elementName ->
     when (elementName) {
       PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
@@ -728,7 +722,10 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
             break
           }
         }
-        modules.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
+        if (descriptor.dependencies == null) {
+          descriptor.dependencies = ArrayList()
+        }
+        descriptor.dependencies!!.add(DependenciesElement.ModuleDependency(name!!))
       }
       PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
         var id: String? = null
@@ -738,18 +735,15 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
             break
           }
         }
-
-        plugins.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
+        if (descriptor.dependencies == null) {
+          descriptor.dependencies = ArrayList()
+        }
+        descriptor.dependencies!!.add(DependenciesElement.PluginDependency(id!!))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }
     reader.skipElement()
   }
-
-  val oldDependencies = descriptor.dependencies
-  val newModules = if (oldDependencies.modules.isEmpty()) modules else oldDependencies.modules + modules
-  val newPlugins = if (oldDependencies.plugins.isEmpty()) plugins else oldDependencies.plugins + plugins
-  descriptor.dependencies = ModuleDependenciesDescriptor(newModules, newPlugins)
   assert(reader.isEndElement)
 }
 

@@ -5,10 +5,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.elements.ActionElement
-import com.intellij.ide.plugins.parser.elements.DependsElement
-import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
-import com.intellij.ide.plugins.parser.elements.asExtensionOS
+import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -139,7 +136,7 @@ class IdeaPluginDescriptorImpl(
    * Note that it's different from [pluginDependencies]
    */
   @JvmField
-  val dependencies: ModuleDependenciesDescriptor = raw.dependencies
+  val dependencies: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
 
   @JvmField
   var pluginAliases: List<PluginId> = raw.pluginAliases?.map(PluginId::getId) ?: Java11Shim.INSTANCE.listOf()
@@ -670,6 +667,22 @@ class IdeaPluginDescriptorImpl(
           null
         }
       }
+    }
+
+    private fun convertDependencies(dependencies: List<DependenciesElement>?): ModuleDependenciesDescriptor {
+      if (dependencies.isNullOrEmpty()) {
+        return ModuleDependenciesDescriptor.EMPTY
+      }
+      val moduleDeps = ArrayList<ModuleDependenciesDescriptor.ModuleReference>()
+      val pluginDeps = ArrayList<ModuleDependenciesDescriptor.PluginReference>()
+      for (dep in dependencies) {
+        when (dep) {
+          is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(dep.pluginId)))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependenciesDescriptor.ModuleReference(dep.moduleName))
+          else -> LOG.error("Unknown dependency type: $dep")
+        }
+      }
+      return ModuleDependenciesDescriptor(moduleDeps, pluginDeps)
     }
   }
 }
