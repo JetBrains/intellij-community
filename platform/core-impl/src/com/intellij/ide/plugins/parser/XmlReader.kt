@@ -517,7 +517,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
   var headlessImplementation: String? = null
   var configurationSchemaKey: String? = null
   var overrides = false
-  var preload = ServiceElement.PreloadMode.FALSE
+  var preload = PreloadMode.FALSE
   var client: ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
@@ -529,10 +529,10 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
       PluginXmlConst.SERVICE_EP_OVERRIDES_ATTR -> overrides = reader.getAttributeAsBoolean(i)
       PluginXmlConst.SERVICE_EP_PRELOAD_ATTR -> {
         when (reader.getAttributeValue(i)) {
-          PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = ServiceElement.PreloadMode.TRUE
-          PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = ServiceElement.PreloadMode.AWAIT
-          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = ServiceElement.PreloadMode.NOT_HEADLESS
-          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = ServiceElement.PreloadMode.NOT_LIGHT_EDIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = PreloadMode.TRUE
+          PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = PreloadMode.AWAIT
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = PreloadMode.NOT_HEADLESS
+          PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = PreloadMode.NOT_LIGHT_EDIT
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
