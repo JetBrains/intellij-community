@@ -147,6 +147,15 @@
     <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
+    <action id="Terminal.EnterCommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCompletionEnterAction">
+      <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+    </action>
+    <action id="Terminal.UpCommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCompletionUpAction">
+      <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.DownCommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCompletionDownAction">
+      <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
+    </action>
     <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>

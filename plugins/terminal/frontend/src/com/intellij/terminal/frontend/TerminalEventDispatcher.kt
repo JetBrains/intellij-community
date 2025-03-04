@@ -213,6 +213,9 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.ClearBuffer",
       "Terminal.Find",
       "Terminal.CommandCompletion",
+      "Terminal.EnterCommandCompletion",
+      "Terminal.UpCommandCompletion",
+      "Terminal.DownCommandCompletion",
     )
   }
 }
