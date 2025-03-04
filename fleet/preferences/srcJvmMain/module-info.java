@@ -2,7 +2,6 @@
 module fleet.preferences {
   exports fleet.preferences;
   requires kotlin.stdlib;
-  requires fleet.util.os;
   requires fleet.util.multiplatform;
   requires transitive kotlinx.io.core.jvm;
 }

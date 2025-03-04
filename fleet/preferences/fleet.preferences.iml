@@ -11,9 +11,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.1/expects-compiler-plugin-2.1.10-0.1.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.1/expects-compiler-plugin-2.1.10-0.1.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -30,7 +28,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.util.os" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" />
     <orderEntry type="library" exported="" name="jetbrains.kotlinx.io.core.jvm:fleet" level="project" />
   </component>
