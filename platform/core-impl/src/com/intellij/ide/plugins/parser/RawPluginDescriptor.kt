@@ -51,9 +51,9 @@ class RawPluginDescriptor {
 
   val incompatibleWith: List<String> get() = builder.incompatibleWith
 
-  @JvmField val appContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
-  @JvmField val projectContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
-  @JvmField val moduleContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  val appElementsContainer: ScopedElementsContainer get() = builder.appContainerBuilder.build()
+  val projectElementsContainer: ScopedElementsContainer get() = builder.projectContainerBuilder.build()
+  val moduleElementsContainer: ScopedElementsContainer get() = builder.moduleContainerBuilder.build()
 
   /** key is extension point's FQN */
   @JvmField var miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null

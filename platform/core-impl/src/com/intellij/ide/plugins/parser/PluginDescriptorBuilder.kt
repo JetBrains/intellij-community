@@ -51,4 +51,8 @@ interface PluginDescriptorBuilder {
 
   fun addIncompatibleWith(incompatibleWith: String)
   val incompatibleWith: List<String>
+
+  val appContainerBuilder: ScopedElementsContainerBuilder
+  val projectContainerBuilder: ScopedElementsContainerBuilder
+  val moduleContainerBuilder: ScopedElementsContainerBuilder
 }

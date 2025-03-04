@@ -82,4 +82,8 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val incompatibleWith: List<String>
     get() = _incompatibleWith ?: Java11Shim.INSTANCE.listOf()
+
+  override val appContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
 }

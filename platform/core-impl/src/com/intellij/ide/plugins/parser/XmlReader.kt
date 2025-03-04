@@ -204,11 +204,11 @@ private fun readRootElementChild(
         descriptor.builder.addIncompatibleWith(id)
       }
     }
-    PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.appContainerDescriptor)
-    PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, descriptor.projectContainerDescriptor)
-    PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, descriptor.moduleContainerDescriptor)
-    PluginXmlConst.APPLICATION_LISTENERS_ELEM -> readListeners(reader, descriptor.appContainerDescriptor)
-    PluginXmlConst.PROJECT_LISTENERS_ELEM -> readListeners(reader, descriptor.projectContainerDescriptor)
+    PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, descriptor.builder.appContainerBuilder)
+    PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, descriptor.builder.projectContainerBuilder)
+    PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, descriptor.builder.moduleContainerBuilder)
+    PluginXmlConst.APPLICATION_LISTENERS_ELEM -> readListeners(reader, descriptor.builder.appContainerBuilder)
+    PluginXmlConst.PROJECT_LISTENERS_ELEM -> readListeners(reader, descriptor.builder.projectContainerBuilder)
     PluginXmlConst.EXTENSIONS_ELEM -> readExtensions(reader, descriptor, readContext.interner)
     PluginXmlConst.EXTENSION_POINTS_ELEM -> readExtensionPoints(
       builder = builder,
@@ -347,11 +347,11 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
       qualifiedExtensionPointName = interner.name("${ns ?: reader.namespaceURI}.${elementName}")
     }
 
-    val containerDescriptor: ScopedElementsContainerBuilder
+    val containerBuilder: ScopedElementsContainerBuilder
     when (qualifiedExtensionPointName) {
-      PluginXmlConst.FQN_APPLICATION_SERVICE -> containerDescriptor = descriptor.appContainerDescriptor
-      PluginXmlConst.FQN_PROJECT_SERVICE -> containerDescriptor = descriptor.projectContainerDescriptor
-      PluginXmlConst.FQN_MODULE_SERVICE -> containerDescriptor = descriptor.moduleContainerDescriptor
+      PluginXmlConst.FQN_APPLICATION_SERVICE -> containerBuilder = descriptor.builder.appContainerBuilder
+      PluginXmlConst.FQN_PROJECT_SERVICE -> containerBuilder = descriptor.builder.projectContainerBuilder
+      PluginXmlConst.FQN_MODULE_SERVICE -> containerBuilder = descriptor.builder.moduleContainerBuilder
       else -> {
         // bean EP can use id / implementation attributes for own bean class
         // - that's why we have to create XmlElement even if all attributes are common
@@ -387,7 +387,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
       }
     }
 
-    containerDescriptor.addService(readServiceElement(reader, os))
+    containerBuilder.addService(readServiceElement(reader, os))
     reader.skipElement()
   }
 }
@@ -422,9 +422,9 @@ private fun readExtensionPoints(
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
-        copyExtensionPoints(partial.raw, descriptor) { it.appContainerDescriptor }
-        copyExtensionPoints(partial.raw, descriptor) { it.projectContainerDescriptor }
-        copyExtensionPoints(partial.raw, descriptor) { it.moduleContainerDescriptor }
+        copyExtensionPoints(partial.raw, descriptor) { it.builder.appContainerBuilder }
+        copyExtensionPoints(partial.raw, descriptor) { it.builder.projectContainerBuilder }
+        copyExtensionPoints(partial.raw, descriptor) { it.builder.moduleContainerBuilder }
       }
       else {
         LOG.error("Unknown element: $elementName (${reader.location})")
@@ -464,17 +464,17 @@ private fun readExtensionPoints(
 
     reader.skipElement()
 
-    val containerDescriptor = when (area) {
-      null -> descriptor.appContainerDescriptor
-      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE -> descriptor.projectContainerDescriptor
-      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_MODULE_VALUE -> descriptor.moduleContainerDescriptor
+    val containerBuilder = when (area) {
+      null -> descriptor.builder.appContainerBuilder
+      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE -> descriptor.builder.projectContainerBuilder
+      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_MODULE_VALUE -> descriptor.builder.moduleContainerBuilder
       else -> {
         LOG.error("Unknown area: $area")
         return@consumeChildElements
       }
     }
 
-    containerDescriptor.addExtensionPoint(ExtensionPointElement(
+    containerBuilder.addExtensionPoint(ExtensionPointElement(
       name = name,
       qualifiedName = qualifiedName,
       `interface` = `interface`,
