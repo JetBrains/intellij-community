@@ -11,7 +11,6 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.util.containers.addIfNotNull
 import javax.swing.Icon
 
 private const val HEADER_LEVEL = "#####"
@@ -80,10 +79,11 @@ internal class DocumentationRenderer(private val project: Project) {
 
   private fun CharSequence.deleteInternalLinks(): String {
     val internalLinkRegex = Regex("\\[([^]]*)]\\(([^ )]*)\\)\\{internal}")
+    val isIntelliJPlatformProject = IntelliJProjectUtil.isIntelliJPlatformProject(project)
     return internalLinkRegex.replace(this) { matchResult ->
       val text = matchResult.groupValues[1]
       val url = matchResult.groupValues[2]
-      if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) "[$text]($url)" else text
+      if (isIntelliJPlatformProject) "[$text]($url)" else text
     }
   }
 
