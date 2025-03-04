@@ -34,7 +34,7 @@ class MavenEmbeddersManager(private val project: Project) {
 
     val key = Pair.create<Key<*>, String>(kind, embedderDir)
     var result = myPool[key]
-    val alwaysOnline = kind === FOR_DOWNLOAD
+    val alwaysOnline = false
 
     if (result != null && !result.isCompatibleWith(project, multiModuleProjectDirectory)) {
       myPool.remove(key)
@@ -99,9 +99,5 @@ class MavenEmbeddersManager(private val project: Project) {
 
     @JvmField
     val FOR_POST_PROCESSING: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_POST_PROCESSING")
-
-    // will always regardless to 'work offline' setting
-    @JvmField
-    val FOR_DOWNLOAD: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_DOWNLOAD")
   }
 }

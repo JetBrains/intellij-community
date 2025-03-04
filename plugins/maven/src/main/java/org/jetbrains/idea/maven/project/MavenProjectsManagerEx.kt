@@ -90,7 +90,7 @@ interface MavenAsyncProjectsManager {
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
-                                docs: Boolean): MavenArtifactDownloader.DownloadResult
+                                docs: Boolean): ArtifactDownloadResult
 
   fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
@@ -625,8 +625,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                          artifacts: Collection<MavenArtifact>?,
                                          sources: Boolean,
-                                         docs: Boolean): MavenArtifactDownloader.DownloadResult {
-    if (!sources && !docs) return MavenArtifactDownloader.DownloadResult()
+                                         docs: Boolean): ArtifactDownloadResult {
+    if (!sources && !docs) return ArtifactDownloadResult()
 
     val result = withBackgroundProgressTraced(myProject, "downloadArtifacts", MavenProjectBundle.message("maven.downloading"), true) {
       reportRawProgress { reporter ->
@@ -643,20 +643,20 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                           artifacts: Collection<MavenArtifact>?,
                                           sources: Boolean,
                                           docs: Boolean,
-                                          progressReporter: RawProgressReporter): MavenArtifactDownloader.DownloadResult {
+                                          progressReporter: RawProgressReporter): ArtifactDownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
     val downloadConsole = MavenDownloadConsole(project, sources, docs)
     try {
       downloadConsole.start()
       downloadConsole.startDownloadTask(projects, artifacts)
       val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, downloadConsole)
-      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)
+      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs)
       downloadConsole.finishDownloadTask(projects, artifacts)
       return result
     }
     catch (e: Exception) {
       downloadConsole.addException(e)
-      return MavenArtifactDownloader.DownloadResult()
+      return ArtifactDownloadResult()
     }
     finally {
       downloadConsole.finish()
