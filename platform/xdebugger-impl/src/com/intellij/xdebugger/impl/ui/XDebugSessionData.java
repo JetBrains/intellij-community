@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +39,20 @@ public class XDebugSessionData extends UserDataHolderBase {
     myConfigurationName = configurationName;
   }
 
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#setWatchEntries(String, List)} instead
+   */
+  @Deprecated
   public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
     if (myProject == null) return;
     XDebuggerManagerImpl instance = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
     instance.getWatchesManager().setWatches(myConfigurationName, watchExpressions);
   }
 
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#getWatchEntries(String)} instead
+   */
+  @Deprecated
   public @NotNull List<XExpression> getWatchExpressions() {
     if (myProject == null) return Collections.emptyList();
     XDebuggerManagerImpl instance = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);

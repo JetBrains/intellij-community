@@ -73,6 +73,10 @@ public final class XDebuggerWatchesManager {
     }
   }
 
+  /**
+   * @deprecated Prefer {@link XDebuggerWatchesManager#getWatchEntries(String)} instead
+   */
+  @Deprecated
   public @NotNull List<XExpression> getWatches(String configurationName) {
     return ContainerUtil.map(ContainerUtil.notNullize(watches.get(configurationName)), XWatch::getExpression);
   }

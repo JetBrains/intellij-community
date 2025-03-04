@@ -146,7 +146,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
-              (debugSession as XDebugSessionImpl).sessionData.watchExpressions = emptyList()
+              val sessionData = (debugSession as XDebugSessionImpl).sessionData
+              val watchesManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager
+              watchesManager.setWatchEntries(sessionData.configurationName, emptyList())
               watchesRemoved = true
             }
             debugSession.addSessionListener(object : XDebugSessionListener {
@@ -223,8 +225,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
-        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatches(confNameForWatches)
-        watches.any { watch -> watch.expression == needAddToWatch }
+        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatchEntries(confNameForWatches)
+        watches.any { watch -> watch.expression.expression == needAddToWatch }
       }
       proposeSelectionChangeRestore(position)
       test { invokeActionViaShortcut("CTRL SHIFT ENTER") }
