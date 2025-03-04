@@ -91,6 +91,9 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
 
             is KaLibrarySourceModule -> computePackageNames(module.binaryLibrary)
 
+            // We cannot compute the package names for fallback dependencies, as they span almost all libraries in the project.
+            is KaLibraryFallbackDependenciesModule -> null
+
             is KaBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
             else -> null
         }
