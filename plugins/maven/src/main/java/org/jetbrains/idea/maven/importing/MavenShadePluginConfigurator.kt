@@ -335,15 +335,20 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
                         mavenProjects: Collection<MavenProject>,
                         baseDir: String, mavenEventHandler: MavenEventHandler) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
-    val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
-    val names = mavenProjects.map { it.displayName }
-    val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
-    runBlockingMaybeCancellable {
-      withBackgroundProgress(project, MavenProjectBundle.message("maven.compiling.uber.jars.dependencies", text), true) {
-        reportRawProgress { reporter ->
-          embedder.executeGoal(requests, "compile", reporter, mavenEventHandler)
+    try {
+      val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
+      val names = mavenProjects.map { it.displayName }
+      val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
+      runBlockingMaybeCancellable {
+        withBackgroundProgress(project, MavenProjectBundle.message("maven.compiling.uber.jars.dependencies", text), true) {
+          reportRawProgress { reporter ->
+            embedder.executeGoal(requests, "compile", reporter, mavenEventHandler)
+          }
         }
       }
+    }
+    finally {
+      embeddersManager.release(embedder)
     }
   }
 
