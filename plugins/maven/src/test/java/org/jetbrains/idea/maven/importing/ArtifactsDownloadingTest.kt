@@ -74,7 +74,6 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     assertFalse(javadoc.exists())
 
     mavenGeneralSettings.isWorkOffline = false
-    projectsManager.embeddersManager.reset() // to recognize change
     downloadArtifacts()
 
     assertTrue(sources.exists())
@@ -84,7 +83,6 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     FileUtil.delete(javadoc)
 
     mavenGeneralSettings.isWorkOffline = true
-    projectsManager.embeddersManager.reset() // to recognize change
 
     downloadArtifacts()
 
