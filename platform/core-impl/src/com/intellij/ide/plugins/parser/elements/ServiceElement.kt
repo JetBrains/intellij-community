@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.parser.elements
 
 import com.intellij.ide.plugins.parser.elements.ClientKind.Companion.convert
+import com.intellij.ide.plugins.parser.elements.OS.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ServiceElement.PreloadMode.Companion.convert
 import com.intellij.openapi.components.ServiceDescriptor
 
@@ -42,7 +43,7 @@ class ServiceElement(
       configurationSchemaKey,
       preload.convert(),
       client?.convert(),
-      os?.asExtensionOS()
+      os?.convert()
     )
   }
 }

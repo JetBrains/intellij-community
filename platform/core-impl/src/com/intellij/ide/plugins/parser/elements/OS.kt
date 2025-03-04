@@ -4,14 +4,16 @@ package com.intellij.ide.plugins.parser.elements
 import com.intellij.openapi.extensions.ExtensionDescriptor
 
 enum class OS {
-  MAC, LINUX, WINDOWS, UNIX, FREEBSD
-}
+  MAC, LINUX, WINDOWS, UNIX, FREEBSD;
 
-// todo temporary migration util
-fun OS.asExtensionOS(): ExtensionDescriptor.Os = when (this) {
-  OS.MAC -> ExtensionDescriptor.Os.mac
-  OS.LINUX -> ExtensionDescriptor.Os.linux
-  OS.WINDOWS -> ExtensionDescriptor.Os.windows
-  OS.UNIX -> ExtensionDescriptor.Os.unix
-  OS.FREEBSD -> ExtensionDescriptor.Os.freebsd
+  companion object {
+    // todo temporary migration util
+    fun OS.convert(): ExtensionDescriptor.Os = when (this) {
+      MAC -> ExtensionDescriptor.Os.mac
+      LINUX -> ExtensionDescriptor.Os.linux
+      WINDOWS -> ExtensionDescriptor.Os.windows
+      UNIX -> ExtensionDescriptor.Os.unix
+      FREEBSD -> ExtensionDescriptor.Os.freebsd
+    }
+  }
 }

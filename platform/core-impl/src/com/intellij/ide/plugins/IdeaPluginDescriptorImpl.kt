@@ -7,6 +7,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.elements.*
+import com.intellij.ide.plugins.parser.elements.OS.Companion.convert
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -657,7 +658,7 @@ class IdeaPluginDescriptorImpl(
           val order = LoadingOrder.readOrder(it.order) // throws AssertionError
           ExtensionDescriptor(
             implementation = it.implementation,
-            os = it.os?.asExtensionOS(),
+            os = it.os?.convert(),
             orderId = it.orderId,
             order = order,
             element = it.element,
