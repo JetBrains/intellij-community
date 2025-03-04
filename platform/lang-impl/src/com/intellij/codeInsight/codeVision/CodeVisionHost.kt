@@ -53,6 +53,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.jetbrains.rd.util.error
@@ -67,6 +68,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
+import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 open class CodeVisionHost(val project: Project) {
@@ -180,9 +182,22 @@ open class CodeVisionHost(val project: Project) {
   @TestOnly
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
-      // this code is executed under a modal progress anyway, so it will set the data here on EDT due to inherited modality
-      ApplicationManager.getApplication().invokeLater {
-        editor.lensContext?.setResults(lenses)
+      if (EDT.isCurrentThreadEdt()) {
+        ReadAction.run<Throwable> {
+          editor.lensContext?.setResults(lenses)
+        }
+      }
+      else {
+        // This code runs under modal progress
+        // We have no guarantees whether the scheduled event will be completed inside or outside the modal progress
+        // So here we forcibly wait for its completion
+        // This is a test method anyway, so it is acceptable to hold the read lock
+        val future = CompletableFuture<Unit>()
+        ApplicationManager.getApplication().invokeLater {
+          editor.lensContext?.setResults(lenses)
+          future.complete(Unit)
+        }
+        future.join()
       }
     }
   }
