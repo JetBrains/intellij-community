@@ -271,7 +271,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         mavenProgressTracker?.assertProgressTasksCompleted()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
-      ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },
       ThrowableRunnable { tearDownJdk() },
@@ -307,13 +306,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       }
     }
   }
-
-  private fun tearDownEmbedders() {
-    val manager = MavenProjectsManager.getInstanceIfCreated(myProject!!)
-    if (manager == null) return
-    manager.embeddersManager.releaseInTests()
-  }
-
 
   private fun ensureTempDirCreated() {
     ourTempDir = when {
