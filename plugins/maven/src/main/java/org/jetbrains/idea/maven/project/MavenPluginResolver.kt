@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.RawProgressReporter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
@@ -14,12 +15,13 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private val myProject: Project = myTree.project
 
   suspend fun resolvePlugins(
     mavenProjectsToResolvePlugins: Collection<MavenProject>,
-    embeddersManager: MavenEmbeddersManager,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
     process: RawProgressReporter,
     eventHandler: MavenEventHandler) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
@@ -32,7 +34,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     val firstProject = sortAndGetFirst(mavenProjects)
     val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
     process.text(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
-    val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir)
+    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     val filesToRefresh: MutableSet<Path> = HashSet()
     try {
       val mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects)
@@ -62,7 +64,6 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       if (filesToRefresh.size > 0) {
         LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
       }
-      embeddersManager.release(embedder)
     }
   }
 

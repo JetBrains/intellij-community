@@ -101,8 +101,6 @@ class MavenEmbeddersManager(private val project: Project) {
     @JvmField
     val FOR_DEPENDENCIES_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_DEPENDENCIES_RESOLVE")
     @JvmField
-    val FOR_PLUGINS_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_PLUGINS_RESOLVE")
-    @JvmField
     val FOR_FOLDERS_RESOLVE: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_FOLDERS_RESOLVE")
     @JvmField
     val FOR_POST_PROCESSING: Key<*> = Key.create<Any?>(MavenEmbeddersManager::class.java.toString() + ".FOR_POST_PROCESSING")

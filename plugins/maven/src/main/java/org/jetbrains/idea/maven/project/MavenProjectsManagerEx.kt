@@ -433,7 +433,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
 
     val result = tracer.spanBuilder("importModules").useWithScope {
-      importModules(syncActivity, resolutionResult, modelsProvider)
+      importModules(syncActivity, resolutionResult, modelsProvider, mavenEmbedderWrappers)
     }
 
     tracer.spanBuilder("notifyMavenProblems").useWithScope {
@@ -444,7 +444,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   protected suspend fun importModules(syncActivity: StructuredIdeActivity,
                                       resolutionResult: MavenProjectResolutionResult,
-                                      modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+                                      modelsProvider: IdeModifiableModelsProvider?,
+                                      mavenEmbedderWrappers: MavenEmbedderWrappers): List<Module> {
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
@@ -460,7 +461,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
               for (mavenProjects in resolutionResult.mavenProjectMap) {
                 try {
                   tracer.spanBuilder("doResolveMavenPlugins").useWithScope {
-                    pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, reporter, syncConsole)
+                    pluginResolver.resolvePlugins(mavenProjects.value, mavenEmbedderWrappers, reporter, syncConsole)
                   }
                 }
                 catch (e: Exception) {
