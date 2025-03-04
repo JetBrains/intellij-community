@@ -85,6 +85,7 @@ internal data class AdRangeHighlighter(
   override fun getErrorStripeMarkColor(scheme: EditorColorsScheme?): Color? = data.origin()?.getErrorStripeMarkColor(scheme)
   override fun getForcedTextAttributes(): TextAttributes? = data.origin()?.forcedTextAttributes
   override fun getForcedErrorStripeMarkColor(): Color? = data.origin()?.forcedErrorStripeMarkColor
+  override fun getEditorFilter(): MarkupEditorFilter = data.origin()?.editorFilter ?: MarkupEditorFilter.EMPTY
   override fun <T : Any?> getUserData(key: Key<T?>): T? = data.origin()?.getUserData(key)
 
   // region Not yet implemented
@@ -150,10 +151,6 @@ internal data class AdRangeHighlighter(
   }
 
   override fun setEditorFilter(filter: MarkupEditorFilter) {
-    TODO("Not yet implemented")
-  }
-
-  override fun getEditorFilter(): MarkupEditorFilter {
     TODO("Not yet implemented")
   }
 

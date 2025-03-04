@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.FoldingModelInternal
@@ -66,7 +67,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
             return object : EditorModel {
               override fun getDocument(): DocumentEx = AdDocument(docEntity)
               override fun getEditorMarkupModel(): MarkupModelEx = AdMarkupModel("editor", editorMarkupEntity)
-              override fun getDocumentMarkupModel(): MarkupModelEx = AdMarkupModel("document", docMarkupEntity) // TODO: filtered
+              override fun getDocumentMarkupModel(): MarkupModelEx = EditorFilteringMarkupModelEx(editor, AdMarkupModel("document", docMarkupEntity))
               override fun getHighlighter(): EditorHighlighter = editor.highlighter
               override fun getInlayModel(): InlayModelEx = editor.inlayModel
               override fun getFoldingModel(): FoldingModelInternal = editor.foldingModel
