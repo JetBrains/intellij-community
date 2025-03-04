@@ -154,6 +154,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testGetterVsDirectAccessObjectEquals() { doTest(); }
   public void testSetterAndGetter() { doTest(); }
   public void testStaticEqualsContract() { doTest(); }
+  public void testNewExpressionAnnotations() { doTest(); }
   
   public void testJSpecifyLocalWithGenerics() {
     addJSpecifyNullMarked(myFixture);
