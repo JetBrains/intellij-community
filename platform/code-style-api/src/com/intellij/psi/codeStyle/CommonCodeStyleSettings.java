@@ -585,7 +585,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
   /**
    * "try( Resource r = r() )"
    * or
-   * "catch(Resource r = r())"
+   * "try(Resource r = r())"
    */
   public boolean SPACE_WITHIN_TRY_PARENTHESES = false;
 
