@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.importing.MavenImportUtil.guessExistingEmbedderDir
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -68,15 +67,6 @@ class MavenEmbeddersManager(private val project: Project) {
     }
 
     myEmbeddersInUse.remove(embedder)
-  }
-
-  @TestOnly
-  @Synchronized
-  fun releaseInTests() {
-    if (!myEmbeddersInUse.isEmpty()) {
-      MavenLog.LOG.warn("embedders should be release first")
-    }
-    releasePooledEmbedders(false)
   }
 
   @Synchronized
