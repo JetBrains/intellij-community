@@ -3233,6 +3233,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/DataClassMembers2.kt");
         }
 
+        @TestMetadata("DoWhile.kt")
+        public void testDoWhile() throws Exception {
+            runTest("../../completion/testData/basic/common/DoWhile.kt");
+        }
+
         @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
         public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
             runTest("../../completion/testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");
