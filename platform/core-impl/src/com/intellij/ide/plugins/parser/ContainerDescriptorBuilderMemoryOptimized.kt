@@ -4,17 +4,18 @@ package com.intellij.ide.plugins.parser
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.parser.elements.ComponentElement
 import com.intellij.ide.plugins.parser.elements.ComponentElement.Companion.convert
+import com.intellij.ide.plugins.parser.elements.ExtensionPointElement
+import com.intellij.ide.plugins.parser.elements.ExtensionPointElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ListenerElement
 import com.intellij.ide.plugins.parser.elements.ListenerElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ServiceElement
 import com.intellij.ide.plugins.parser.elements.ServiceElement.Companion.convert
-import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.Java11Shim
 
 internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBuilder {
   private var _services: MutableList<ServiceElement>? = null
   private var _listeners: MutableList<ListenerElement>? = null
-  private var _extensionPoints: MutableList<ExtensionPointDescriptor>? = null
+  private var _extensionPoints: MutableList<ExtensionPointElement>? = null
   private var _components: MutableList<ComponentElement>? = null
 
   override fun addService(serviceElement: ServiceElement) {
@@ -38,14 +39,14 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
     _listeners!!.add(listenerElement)
   }
 
-  override fun addExtensionPoint(extensionPointDescriptor: ExtensionPointDescriptor) {
+  override fun addExtensionPoint(extensionPointElement: ExtensionPointElement) {
     if (_extensionPoints == null) {
       _extensionPoints = ArrayList()
     }
-    _extensionPoints!!.add(extensionPointDescriptor)
+    _extensionPoints!!.add(extensionPointElement)
   }
 
-  override fun addExtensionPoints(points: List<ExtensionPointDescriptor>) {
+  override fun addExtensionPoints(points: List<ExtensionPointElement>) {
     if (_extensionPoints == null) {
       _extensionPoints = ArrayList(points)
     } else {
@@ -53,7 +54,7 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
     }
   }
 
-  override fun removeAllExtensionPoints(): MutableList<ExtensionPointDescriptor> {
+  override fun removeAllExtensionPoints(): MutableList<ExtensionPointElement> {
     val result = _extensionPoints ?: ArrayList()
     _extensionPoints = null
     return result
@@ -64,7 +65,7 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
       _services?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
       _components?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
       _listeners?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
-      _extensionPoints ?: Java11Shim.INSTANCE.listOf(),
+      _extensionPoints?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
     )
     _services = null
     _components = null

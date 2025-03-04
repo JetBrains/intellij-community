@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
-import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
@@ -470,6 +469,9 @@ private fun readExtensionPoints(
       }
     }
 
+    if (qualifiedName == null && name == null) {
+      throw RuntimeException("`name` attribute not specified for extension point at ${reader.location}")
+    }
     if (beanClass == null && `interface` == null) {
       throw RuntimeException("Neither beanClass nor interface attribute is specified for extension point at ${reader.location}")
     }
@@ -489,13 +491,13 @@ private fun readExtensionPoints(
       }
     }
 
-    containerDescriptor.addExtensionPoint(ExtensionPointDescriptor(
-      name = qualifiedName ?: name ?: throw RuntimeException("`name` attribute not specified for extension point at ${reader.location}"),
-      isNameQualified = qualifiedName != null,
-      className = `interface` ?: beanClass!!,
-      isBean = `interface` == null,
-      hasAttributes,
-      isDynamic,
+    containerDescriptor.addExtensionPoint(ExtensionPointElement(
+      name = name,
+      qualifiedName = qualifiedName,
+      `interface` = `interface`,
+      beanClass = beanClass,
+      hasAttributes = hasAttributes,
+      isDynamic = isDynamic,
     ))
   }
 }
