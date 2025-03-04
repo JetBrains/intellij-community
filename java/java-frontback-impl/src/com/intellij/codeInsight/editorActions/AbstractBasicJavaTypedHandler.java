@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -129,7 +130,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       }
     }
     if (fileType instanceof JavaFileType && c == '{') {
-      int offset = editor.getCaretModel().getOffset();
+      final int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
         return Result.CONTINUE;
       }
@@ -234,6 +235,12 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
 
   private static boolean afterArrowInCase(@Nullable PsiElement leaf) {
     if (leaf == null) return false;
+    IElementType leafElementType = leaf.getNode().getElementType();
+    if (leafElementType == JavaTokenType.STRING_LITERAL ||
+        leafElementType == JavaTokenType.TEXT_BLOCK_LITERAL ||
+        leafElementType == JavaTokenType.CHARACTER_LITERAL) {
+      return false;
+    }
     PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(leaf);
     if (prevLeaf == null) return false;
     if (prevLeaf.getNode().getElementType() != JavaTokenType.ARROW) return false;
