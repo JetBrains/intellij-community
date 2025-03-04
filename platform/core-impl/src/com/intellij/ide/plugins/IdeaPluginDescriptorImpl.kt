@@ -6,6 +6,7 @@ import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
+import com.intellij.ide.plugins.parser.convert
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.OS.Companion.convert
 import com.intellij.ide.plugins.parser.isKotlinPlugin
@@ -119,13 +120,13 @@ class IdeaPluginDescriptorImpl(
     ?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
 
   @JvmField
-  val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor.build()
+  val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor.build().convert()
 
   @JvmField
-  val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor.build()
+  val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor.build().convert()
 
   @JvmField
-  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor.build()
+  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor.build().convert()
 
   @JvmField
   val content: PluginContentDescriptor =

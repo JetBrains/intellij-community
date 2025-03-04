@@ -1,18 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.parser.elements.ComponentElement
-import com.intellij.ide.plugins.parser.elements.ComponentElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ExtensionPointElement
-import com.intellij.ide.plugins.parser.elements.ExtensionPointElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ListenerElement
-import com.intellij.ide.plugins.parser.elements.ListenerElement.Companion.convert
 import com.intellij.ide.plugins.parser.elements.ServiceElement
-import com.intellij.ide.plugins.parser.elements.ServiceElement.Companion.convert
 import com.intellij.util.Java11Shim
 
-internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBuilder {
+internal class ScopedElementsContainerBuilderMemoryOptimized : ScopedElementsContainerBuilder {
   private var _services: MutableList<ServiceElement>? = null
   private var _listeners: MutableList<ListenerElement>? = null
   private var _extensionPoints: MutableList<ExtensionPointElement>? = null
@@ -60,12 +55,12 @@ internal class ContainerDescriptorBuilderMemoryOptimized : ContainerDescriptorBu
     return result
   }
 
-  override fun build(): ContainerDescriptor {
-    val container = ContainerDescriptor(
-      _services?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
-      _components?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
-      _listeners?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
-      _extensionPoints?.map { it.convert() } ?: Java11Shim.INSTANCE.listOf(),
+  override fun build(): ScopedElementsContainer {
+    val container = ScopedElementsContainerImpl(
+      _services ?: Java11Shim.INSTANCE.listOf(),
+      _components ?: Java11Shim.INSTANCE.listOf(),
+      _listeners ?: Java11Shim.INSTANCE.listOf(),
+      _extensionPoints ?: Java11Shim.INSTANCE.listOf(),
     )
     _services = null
     _components = null

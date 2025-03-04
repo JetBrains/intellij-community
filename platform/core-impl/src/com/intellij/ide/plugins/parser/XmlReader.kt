@@ -364,7 +364,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
       qualifiedExtensionPointName = interner.name("${ns ?: reader.namespaceURI}.${elementName}")
     }
 
-    val containerDescriptor: ContainerDescriptorBuilder
+    val containerDescriptor: ScopedElementsContainerBuilder
     when (qualifiedExtensionPointName) {
       PluginXmlConst.FQN_APPLICATION_SERVICE -> containerDescriptor = descriptor.appContainerDescriptor
       PluginXmlConst.FQN_PROJECT_SERVICE -> containerDescriptor = descriptor.projectContainerDescriptor
@@ -502,7 +502,7 @@ private fun readExtensionPoints(
   }
 }
 
-private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptorBuilder) {
+private inline fun copyExtensionPoints(from: RawPluginDescriptor, to: RawPluginDescriptor, crossinline extractor: (RawPluginDescriptor) -> ScopedElementsContainerBuilder) {
   extractor(from).removeAllExtensionPoints().takeIf { it.isNotEmpty() }?.let {
     val toContainer = extractor(to)
     toContainer.addExtensionPoints(it)
@@ -583,7 +583,7 @@ private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescripto
   reader.skipElement()
 }
 
-private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptorBuilder) {
+private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
   reader.consumeChildElements(PluginXmlConst.COMPONENT_ELEM) {
     var isApplicableForDefaultProject = false
     var interfaceClass: String? = null
@@ -872,7 +872,7 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
   return null
 }
 
-private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptorBuilder) {
+private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
   reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
     var os: OS? = null
     var listenerClassName: String? = null

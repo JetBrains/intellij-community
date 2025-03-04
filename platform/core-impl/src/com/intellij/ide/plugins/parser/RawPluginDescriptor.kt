@@ -50,9 +50,9 @@ class RawPluginDescriptor {
 
   @JvmField var incompatibleWith: MutableList<String>? = null
 
-  @JvmField val appContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
-  @JvmField val projectContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
-  @JvmField val moduleContainerDescriptor: ContainerDescriptorBuilder = ContainerDescriptorBuilderMemoryOptimized()
+  @JvmField val appContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  @JvmField val projectContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  @JvmField val moduleContainerDescriptor: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
 
   /** key is extension point's FQN */
   @JvmField var miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
