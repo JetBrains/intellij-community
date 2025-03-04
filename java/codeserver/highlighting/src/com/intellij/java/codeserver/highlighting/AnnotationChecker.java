@@ -466,7 +466,7 @@ final class AnnotationChecker {
     if (applicable == null) {
       if (targets.length == 1 && targets[0] == PsiAnnotation.TargetType.TYPE_USE) {
         PsiElement parent = annotation.getParent();
-        if (parent instanceof PsiTypeElement) {
+        if (parent instanceof PsiTypeElement && !(annotation.getOwner() instanceof PsiArrayType)) {
           PsiElement modifierList =
             PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class, PsiComment.class, PsiTypeParameterList.class);
           if (modifierList instanceof PsiModifierList psiModifierList) {
