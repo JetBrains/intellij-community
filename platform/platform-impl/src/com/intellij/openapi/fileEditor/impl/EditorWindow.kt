@@ -416,6 +416,27 @@ class EditorWindow internal constructor(
     owner.validate()
   }
 
+  @RequiresEdt
+  internal fun removeComposite(composite: EditorComposite, file: VirtualFile) {
+    // composite could close itself on decomposition
+    val componentIndex = findComponentIndex(composite).takeUnless { it < 0 } ?: return
+    val editorTabs = tabbedPane.editorTabs
+
+    removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
+    if (removedTabs.size >= tabLimit) {
+      removedTabs.removeFirst()
+    }
+
+    val info = editorTabs.getTabAt(componentIndex)
+    if (isDisposed || !manager.project.isOpen) {
+      editorTabs.removeTabWithoutChangingSelection(info)
+    }
+    else {
+      val toSelect = getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = componentIndex)
+      editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
+    }
+  }
+
   internal fun watchForTabActions(composite: EditorComposite, tab: TabInfo) {
     // on unsplit, we transfer composite to another window, so, we launch in the window's scope
     coroutineScope.launch {
@@ -665,38 +686,7 @@ class EditorWindow internal constructor(
           fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
             .beforeFileClosed(fileEditorManager, file)
         }
-        val componentIndex = findComponentIndex(composite)
-        val editorTabs = tabbedPane.editorTabs
-        // composite could close itself on decomposition
-        if (componentIndex >= 0) {
-          removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
-          if (removedTabs.size >= tabLimit) {
-            removedTabs.removeFirst()
-          }
-
-          val info = editorTabs.getTabAt(componentIndex)
-          if (isDisposed || !manager.project.isOpen) {
-            editorTabs.removeTabWithoutChangingSelection(info)
-          }
-          else {
-            val toSelect = getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = componentIndex)
-            editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
-          }
-          fileEditorManager.disposeComposite(composite)
-        }
-
-        if (disposeIfNeeded && tabCount == 0) {
-          removeFromSplitter()
-          logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
-        }
-        else {
-          component.revalidate()
-        }
-
-        if (editorTabs.selectedInfo == null) {
-          // selection event is not fired
-          _currentCompositeFlow.value = null
-        }
+        removeFile(file, composite, disposeIfNeeded)
       }
       finally {
         val openedTs = file.getUserData(README_OPENED_ON_START_TS)
@@ -713,6 +703,65 @@ class EditorWindow internal constructor(
         }
         owner.afterFileClosed(file)
       }
+    }
+  }
+
+  @RequiresEdt
+  internal fun removeFile(
+    file: VirtualFile,
+    composite: EditorComposite,
+    disposeIfNeeded: Boolean = true,
+    preserveComposite: Boolean = false,
+  ) {
+    removeComposite(composite, file)
+
+    if (!preserveComposite) manager.disposeComposite(composite)
+    if (disposeIfNeeded && tabCount == 0) {
+      removeFromSplitter()
+      logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
+    }
+    else {
+      component.revalidate()
+    }
+
+    if (tabbedPane.editorTabs.selectedInfo == null) {
+      // selection event is not fired
+      _currentCompositeFlow.value = null
+    }
+  }
+
+  fun moveFile(
+    file: VirtualFile,
+    windowToMoveTo: EditorWindow,
+    disposeIfNeeded: Boolean = true,
+    transferFocus: Boolean = true,
+  ) {
+    val composite = getComposite(file) ?: return
+
+    assert(windowToMoveTo.owner == owner) {
+      "cannot move file between different owners"
+    }
+
+    runBulkTabChange(owner) {
+      removeFile(file, composite, disposeIfNeeded = disposeIfNeeded, preserveComposite = true)
+
+      val info = windowToMoveTo.findTabByFile(file)
+      val editorTabs = windowToMoveTo.tabbedPane.editorTabs
+      val options = FileEditorOpenOptions(
+        pin = composite.isPinned || info?.isPinned == true,
+        index = info?.let(editorTabs::getIndexOf) ?: -1,
+        selectAsCurrent = transferFocus || (info != null && editorTabs.selectedInfo == info),
+        requestFocus = transferFocus,
+      )
+
+      editorTabs.removeTab(info)
+
+      windowToMoveTo.addComposite(
+        composite = composite,
+        file = file,
+        options = options,
+        isNewEditor = true,
+      )
     }
   }
 
