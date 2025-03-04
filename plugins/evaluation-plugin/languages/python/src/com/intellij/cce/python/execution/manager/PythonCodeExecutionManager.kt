@@ -131,5 +131,5 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog(output, error, exitCode)
   }
 
-  override fun removeTarget() {}
+  override fun removeEnvironment() {}
 }
