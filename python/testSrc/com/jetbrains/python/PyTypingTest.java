@@ -6415,6 +6415,60 @@ public class PyTypingTest extends PyTestCase {
                                """);
   }
 
+  // PY-79480
+  public void testInheritedAttributeWithTypeAnnotationInParentConstructor() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          def __init__(self):
+              self._some_var: typing.Optional[str] = ""
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInParent() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          _some_var: typing.Optional[str]
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInChild() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          def __init__(self):
+              self._some_var = 1
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var: typing.Optional[str] = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

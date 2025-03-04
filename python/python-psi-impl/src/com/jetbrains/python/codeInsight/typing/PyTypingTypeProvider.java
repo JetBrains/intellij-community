@@ -536,18 +536,19 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             return null;
           }
           // Set isDefinition=true to start searching right from the class level.
-          final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
-          final List<? extends RatedResolveResult> classAttrs =
-            classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
-          if (classAttrs == null) {
-            return null;
+          Ref<PyType> memberType = getMemberTypeForClassType(context, target, name, resolveContext, false, new PyClassTypeImpl(pyClass, true));
+          if (memberType != null) {
+            return memberType;
           }
-          return StreamEx.of(classAttrs)
-            .map(RatedResolveResult::getElement)
-            .select(PyTargetExpression.class)
-            .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-            .collect(PyTypeUtil.toUnionFromRef());
+
+          for (PyClass ancestor : pyClass.getAncestorClasses(resolveContext.getTypeEvalContext())) {
+            Ref<PyType> ancestorMemberType = getMemberTypeForClassType(context, target, name, resolveContext, true, new PyClassTypeImpl(ancestor, false));
+            if (ancestorMemberType != null) {
+              return ancestorMemberType;
+            }
+          }
+
+          return null;
         }
       }
       else {
@@ -579,6 +580,28 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     return null;
+  }
+
+  private static @Nullable Ref<PyType> getMemberTypeForClassType(@NotNull Context context,
+                                                                 PyTargetExpression target,
+                                                                 String name,
+                                                                 PyResolveContext resolveContext,
+                                                                 boolean isInherited,
+                                                                 PyClassTypeImpl classType) {
+    final List<? extends RatedResolveResult> classAttrs =
+      classType.resolveMember(name, target, AccessDirection.READ, resolveContext, isInherited);
+    if (classAttrs == null) {
+      return null;
+    }
+    return StreamEx.of(classAttrs)
+      .map(RatedResolveResult::getElement)
+      .select(PyTargetExpression.class)
+      .filter(x -> {
+        ScopeOwner owner = ScopeUtil.getScopeOwner(x);
+        return owner instanceof PyClass || owner instanceof PyFunction;
+      })
+      .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+      .collect(PyTypeUtil.toUnionFromRef());
   }
 
   private static @Nullable Ref<PyType> getTypeFromTargetExpressionAnnotation(@NotNull PyTargetExpression target, @NotNull Context context) {
