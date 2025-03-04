@@ -53,22 +53,31 @@ public final class ScratchRootType extends RootType {
                                                  @Nullable Language language,
                                                  @NotNull String text,
                                                  @NotNull ScratchFileService.Option option) {
+    return createScratchFile(project, fileName, language, text, option, this);
+  }
+
+  static @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                 @NotNull String fileName,
+                                                 @Nullable Language language,
+                                                 @NotNull String text,
+                                                 @NotNull ScratchFileService.Option option,
+                                                 @NotNull RootType rootType) {
     try {
       return
         WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
-                          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
-                          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
-          ScratchFileService fileService = ScratchFileService.getInstance();
-          VirtualFile file = fileService.findFile(this, fileName, option);
-          // save text should go before any other manipulations that load document,
-          // otherwise undo will be broken
-          VfsUtil.saveText(file, text);
-          if (language != null) {
-            Language fileLanguage = LanguageUtil.getFileLanguage(file);
-            fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
-          }
-          return file;
-        });
+          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
+          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
+            ScratchFileService fileService = ScratchFileService.getInstance();
+            VirtualFile file = fileService.findFile(rootType, fileName, option);
+            // save text should go before any other manipulations that load document,
+            // otherwise undo will be broken
+            VfsUtil.saveText(file, text);
+            if (language != null) {
+              Language fileLanguage = LanguageUtil.getFileLanguage(file);
+              fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
+            }
+            return file;
+          });
     }
     catch (IOException e) {
       Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),

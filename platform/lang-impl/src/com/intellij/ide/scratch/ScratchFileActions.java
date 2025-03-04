@@ -253,15 +253,16 @@ public final class ScratchFileActions {
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
     RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
-    String relativePath = rootType != ScratchRootType.getInstance() ? "" :
+    String relativePath = rootType != context.defaultRootType ? "" :
                           FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
 
     String fileName = (StringUtil.isEmpty(relativePath) ? "" : relativePath + "/") +
                       PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
                                             (context.fileCounter != null ? context.fileCounter.create() : ""),
                                             context.fileExtension);
-    VirtualFile file = ScratchRootType.getInstance().createScratchFile(
-      project, fileName, context.language, context.text, context.createOption);
+    VirtualFile file = ScratchRootType.createScratchFile(
+      project, fileName, context.language, context.text, context.createOption, context.defaultRootType
+    );
     if (file == null) return null;
 
     Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
