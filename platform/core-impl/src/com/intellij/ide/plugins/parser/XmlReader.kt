@@ -663,14 +663,10 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
       throw RuntimeException("Name is not specified at ${reader.location}")
     }
 
-    if (descriptor.contentModules == null) {
-      descriptor.contentModules = ArrayList()
-    }
-
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
       if (os == null || os.isSuitableForOs()) {
-        descriptor.contentModules!!.add(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
+        descriptor.builder.addContentModule(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
       }
     }
     else {
@@ -679,7 +675,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
         val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        descriptor.contentModules!!.add(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
+        descriptor.builder.addContentModule(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
       }
 
       var nesting = 1

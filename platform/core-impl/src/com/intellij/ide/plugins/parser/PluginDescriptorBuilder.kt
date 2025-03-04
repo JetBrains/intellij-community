@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.parser.elements.ActionElement
+import com.intellij.ide.plugins.parser.elements.ContentElement
 import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
 import java.time.LocalDate
@@ -59,4 +60,7 @@ interface PluginDescriptorBuilder {
 
   fun addExtension(qualifiedExtensionPointName: String, extension: MiscExtensionElement)
   val miscExtensions: Map<String, List<MiscExtensionElement>>
+
+  fun addContentModule(contentModule: ContentElement)
+  val contentModules: List<ContentElement>
 }

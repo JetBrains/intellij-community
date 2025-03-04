@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.parser.elements.ActionElement
+import com.intellij.ide.plugins.parser.elements.ContentElement
 import com.intellij.ide.plugins.parser.elements.DependsElement
 import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
 import com.intellij.util.Java11Shim
@@ -97,4 +98,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val miscExtensions: Map<String, List<MiscExtensionElement>>
     get() = _miscExtensions ?: Java11Shim.INSTANCE.mapOf()
+
+  private var _contentModules: MutableList<ContentElement>? = null
+  override fun addContentModule(contentModule: ContentElement) {
+    if (_contentModules == null) {
+      _contentModules = ArrayList()
+    }
+    _contentModules!!.add(contentModule)
+  }
+  override val contentModules: List<ContentElement>
+    get() = _contentModules ?: Java11Shim.INSTANCE.listOf()
 }

@@ -129,7 +129,7 @@ class IdeaPluginDescriptorImpl(
 
   @JvmField
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
   /**
