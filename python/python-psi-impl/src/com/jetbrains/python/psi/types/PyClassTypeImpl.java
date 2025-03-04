@@ -172,6 +172,24 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
+    if (inherited) {
+      List<PyClassLikeType> typesToSearch = new ArrayList<>();
+      typesToSearch.add(this);
+      typesToSearch.addAll(myClass.getAncestorTypes(context));
+      Condition<RatedResolveResult> membersWithAnnotationsFilter = member -> {
+        PsiElement element = member.getElement();
+        if (element == null) return false;
+        if (element instanceof PyTargetExpression target) {
+          return target.getAnnotationValue() != null && target.hasAssignedValue();
+        }
+        return false;
+      };
+      List<? extends RatedResolveResult> membersWithTypeAnnotation =
+        findMembersInClasses(name, location, direction, resolveContext, typesToSearch, context, membersWithAnnotationsFilter);
+
+      if (!membersWithTypeAnnotation.isEmpty()) return membersWithTypeAnnotation;
+    }
+
     final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location, context);
     if (!classMembers.isEmpty()) {
       return classMembers;
@@ -188,25 +206,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return list;
     }
 
-
     if (inherited) {
-      for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
-        if (type instanceof PyClassType) {
-          if (!myIsDefinition) {
-            type = type.toInstance();
-          }
-          final List<? extends RatedResolveResult> superMembers =
-            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location, context);
-          if (!superMembers.isEmpty()) {
-            return superMembers;
-          }
-        }
-        if (type != null) {
-          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext, false);
-          if (results != null && !results.isEmpty()) {
-            return results;
-          }
-        }
+      List<? extends RatedResolveResult> superMembers =
+        findMembersInClasses(name, location, direction, resolveContext, myClass.getAncestorTypes(context), context, null);
+      if (!superMembers.isEmpty()) {
+        return superMembers;
       }
     }
 
@@ -241,6 +245,54 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
+    return Collections.emptyList();
+  }
+
+  private @NotNull List<? extends RatedResolveResult> findMembersInClasses(
+    @NotNull String name,
+    @Nullable PyExpression location,
+    @NotNull AccessDirection direction,
+    @NotNull PyResolveContext resolveContext,
+    @NotNull List<PyClassLikeType> typesToSearch,
+    @NotNull TypeEvalContext context,
+    @Nullable Condition<RatedResolveResult> membersFilter
+  ) {
+    for (PyClassLikeType type : typesToSearch) {
+      if (type instanceof PyClassType) {
+        if (!myIsDefinition) {
+          type = type.toInstance();
+        }
+
+        List<? extends RatedResolveResult> members =
+          resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location, context);
+
+        final List<? extends RatedResolveResult> filteredMembers;
+        if (membersFilter != null) {
+          filteredMembers = ContainerUtil.filter(
+            members,
+            membersFilter);
+        } else {
+          filteredMembers = members;
+        }
+        if (!filteredMembers.isEmpty()) {
+          return filteredMembers;
+        }
+      }
+      if (type != null) {
+        final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext, false);
+        if (results != null) {
+          List<? extends RatedResolveResult> filteredResults;
+          if (membersFilter != null) {
+            filteredResults = ContainerUtil.filter(results, membersFilter);
+          } else {
+            filteredResults = results;
+          }
+          if (!filteredResults.isEmpty()) {
+            return results;
+          }
+        }
+      }
+    }
     return Collections.emptyList();
   }
 
