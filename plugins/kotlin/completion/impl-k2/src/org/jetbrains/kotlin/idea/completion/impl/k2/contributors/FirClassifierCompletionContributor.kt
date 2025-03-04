@@ -77,7 +77,7 @@ internal open class FirClassifierCompletionContributor(
         context: WeighingContext,
     ): Sequence<LookupElement> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        val scopeClassifiers = originalKtFile.scopeContext(positionContext.nameExpression)
+        val scopeClassifiers = context.scopeContext!!
             .scopes
             .asSequence()
             .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }

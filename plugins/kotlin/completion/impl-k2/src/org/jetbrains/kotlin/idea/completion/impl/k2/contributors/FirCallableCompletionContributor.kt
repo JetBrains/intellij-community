@@ -116,7 +116,7 @@ internal open class FirCallableCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
-        val scopesContext = originalKtFile.scopeContext(positionContext.nameExpression)
+        val scopeContext = weighingContext.scopeContext!!
 
         val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
             KtCompletionExtensionCandidateChecker.create(
@@ -129,9 +129,9 @@ internal open class FirCallableCompletionContributor(
         val receiver = positionContext.explicitReceiver
         val expectedType = weighingContext.expectedType
         when (receiver) {
-            null -> completeWithoutReceiver(positionContext, scopesContext, expectedType, extensionChecker)
+            null -> completeWithoutReceiver(positionContext, scopeContext, expectedType, extensionChecker)
 
-            else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
+            else -> collectDotCompletion(positionContext, scopeContext, receiver, extensionChecker)
         }.filterIfInsideAnnotationEntryArgument(positionContext.position, expectedType)
             .mapNotNull(shadowIfNecessary(expectedType))
             .filterNot(isUninitializedCallable(positionContext.position))

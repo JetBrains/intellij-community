@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -45,6 +46,7 @@ internal class WeighingContext private constructor(
     override val token: KaLifetimeToken,
     val languageVersionSettings: LanguageVersionSettings,
     private val positionInFakeCompletionFile: PsiElement,
+    private val myScopeContext: KaScopeContext?,
     private val myExpectedType: KaType?,
     private val myActualReceiverTypes: List<List<KaType>>,
     val contextualSymbolsCache: ContextualSymbolsCache,
@@ -75,6 +77,9 @@ internal class WeighingContext private constructor(
         operator fun contains(name: Name): Boolean = withValidityAssertion { name in symbolsContainingPosition }
     }
 
+    val scopeContext: KaScopeContext?
+        get() = withValidityAssertion { myScopeContext }
+
     val expectedType: KaType?
         get() = withValidityAssertion {
             myExpectedType
@@ -100,6 +105,7 @@ internal class WeighingContext private constructor(
         fun create(
             parameters: KotlinFirCompletionParameters,
             elementInCompletionFile: PsiElement,
+            scopeContext: KaScopeContext? = null,
             expectedType: KaType? = null,
             actualReceiverTypes: List<List<KaType>> = emptyList(),
             symbolsToSkip: Set<KaSymbol> = emptySet(),
@@ -110,6 +116,7 @@ internal class WeighingContext private constructor(
                 token = token,
                 languageVersionSettings = parameters.languageVersionSettings,
                 positionInFakeCompletionFile = elementInCompletionFile,
+                myScopeContext = scopeContext,
                 myExpectedType = expectedType,
                 myActualReceiverTypes = actualReceiverTypes,
                 contextualSymbolsCache = ContextualSymbolsCache(
@@ -128,6 +135,7 @@ internal class WeighingContext private constructor(
             parameters: KotlinFirCompletionParameters,
             positionContext: KotlinNameReferencePositionContext,
         ): WeighingContext {
+            val nameExpression = positionContext.nameExpression
             val expectedType = when (positionContext) {
                 // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
                 // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
@@ -135,7 +143,7 @@ internal class WeighingContext private constructor(
                 // about expected type at all
                 // TODO: calculate actual types for callable references correctly and use information about expected type
                 is KotlinCallableReferencePositionContext -> null
-                else -> positionContext.nameExpression.expectedType
+                else -> nameExpression.expectedType
             }
 
             val symbolToSkip = when (positionContext) {
@@ -146,18 +154,19 @@ internal class WeighingContext private constructor(
                 else -> null
             }
 
+            val scopeContext: KaScopeContext = parameters.originalFile
+                .scopeContext(nameExpression)
+
             fun implicitReceivers(): List<KaImplicitReceiver> = when (positionContext) {
                 // Implicit receivers do not match for this position completion context.
-                is KotlinSuperReceiverNameReferencePositionContext -> emptyList<KaImplicitReceiver>()
-
-                else -> parameters.originalFile
-                    .scopeContext(positionContext.nameExpression)
-                    .implicitReceivers
+                is KotlinSuperReceiverNameReferencePositionContext -> emptyList()
+                else -> scopeContext.implicitReceivers
             }
 
             return create(
                 parameters = parameters,
                 elementInCompletionFile = positionContext.position,
+                scopeContext = scopeContext,
                 expectedType = expectedType,
                 actualReceiverTypes = CallableMetadataProvider.calculateActualReceiverTypes(
                     explicitReceiver = positionContext.explicitReceiver,
