@@ -40,6 +40,7 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.skip.build.steps=repair_utility_bundle_step,mac_dmg,mac_sign,mac_sit,windows_exe_installer,linux aarch64,windows aarch64"
   "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
   "-Dintellij.build.incremental.compilation.fallback.rebuild=false"
+  "-Dintellij.build.store.git.revision=false"
 )
 
 "${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build AndroidStudioBuildTarget
