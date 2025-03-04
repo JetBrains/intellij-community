@@ -37,4 +37,7 @@ interface PluginDescriptorBuilder {
   var productCode: String?
   var releaseDate: LocalDate?
   var releaseVersion: Int
+
+  fun addPluginAlias(alias: String)
+  val pluginAliases: List<String>
 }

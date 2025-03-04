@@ -185,10 +185,7 @@ private fun readRootElementChild(
     PluginXmlConst.PRODUCT_DESCRIPTOR_ELEM -> readProduct(reader, descriptor)
     PluginXmlConst.MODULE_ELEM -> {
       findAttributeValue(reader, PluginXmlConst.MODULE_VALUE_ATTR)?.let { moduleName ->
-        if (descriptor.pluginAliases == null) {
-          descriptor.pluginAliases = ArrayList()
-        }
-        descriptor.pluginAliases!!.add(moduleName)
+        descriptor.builder.addPluginAlias(moduleName)
       }
       reader.skipElement()
     }

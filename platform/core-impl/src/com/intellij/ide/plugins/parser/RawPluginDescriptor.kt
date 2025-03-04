@@ -44,7 +44,7 @@ class RawPluginDescriptor {
   val releaseDate: LocalDate? get() = builder.releaseDate
   val releaseVersion: Int get() = builder.releaseVersion
 
-  @JvmField var pluginAliases: MutableList<String>? = null
+  val pluginAliases: List<String> get() = builder.pluginAliases
 
   @JvmField var depends: MutableList<DependsElement>? = null
   @JvmField var actions: MutableList<ActionElement>? = null

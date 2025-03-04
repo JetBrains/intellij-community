@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
+import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
@@ -37,4 +38,15 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var productCode: String? = null
   override var releaseDate: LocalDate? = null
   override var releaseVersion: Int = 0
+
+  private var _pluginAliases: MutableList<String>? = null
+  override fun addPluginAlias(alias: String) {
+    if (_pluginAliases == null) {
+      _pluginAliases = ArrayList()
+    }
+    _pluginAliases!!.add(alias)
+  }
+
+  override val pluginAliases: List<String>
+    get() = _pluginAliases ?: Java11Shim.INSTANCE.listOf()
 }
