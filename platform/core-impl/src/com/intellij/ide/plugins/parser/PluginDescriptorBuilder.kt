@@ -5,4 +5,5 @@ interface PluginDescriptorBuilder {
   var id: String?
   var name: String?
   var description: String?
+  var category: String?
 }

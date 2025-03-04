@@ -169,7 +169,7 @@ private fun readRootElementChild(
       }
     }
     PluginXmlConst.NAME_ELEM -> descriptor.builder.name = getNullifiedContent(reader)
-    PluginXmlConst.CATEGORY_ELEM -> descriptor.category = getNullifiedContent(reader)
+    PluginXmlConst.CATEGORY_ELEM -> descriptor.builder.category = getNullifiedContent(reader)
     PluginXmlConst.VERSION_ELEM -> {
       // kotlin includes compiler.xml that due to some reasons duplicates a version
       if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.builder.id)) {
