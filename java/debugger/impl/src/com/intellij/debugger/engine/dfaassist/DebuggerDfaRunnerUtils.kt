@@ -28,7 +28,7 @@ import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaResult
 import com.sun.jdi.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ExecutionException
@@ -173,16 +173,17 @@ internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImp
         return
       }
       val project = suspendContext.debugProcess.project
-      val job = suspendContext.coroutineScope.launch {
-        assist.cancelComputation()
-        val hints = constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+      val hintsJob = suspendContext.coroutineScope.async {
+        constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
           runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
         }
-        withContext(Dispatchers.EDT) {
-          assist.displayInlaysInternal(hints)
-        }
       }
-      assist.setComputation(job)
+      assist.cancelComputation()
+      assist.setComputation(hintsJob)
+      val hints = hintsJob.await()
+      withContext(Dispatchers.EDT) {
+        assist.displayInlaysInternal(hints)
+      }
     }
   })
 }
