@@ -25,7 +25,7 @@ fun plugin(outDir: Path, @Language("XML") descriptor: String) {
   catch (e: Throwable) {
     throw RuntimeException("Cannot parse:\n ${descriptor.trimIndent().prependIndent("  ")}", e)
   }
-  outDir.resolve("${rawDescriptor.id!!}/${PluginManagerCore.PLUGIN_XML_PATH}").write(descriptor.trimIndent())
+  outDir.resolve("${rawDescriptor.builder.id!!}/${PluginManagerCore.PLUGIN_XML_PATH}").write(descriptor.trimIndent())
 }
 
 fun dependencyXml(outDir: Path, ownerId: String, filename: String, @Language("XML") descriptor: String) {

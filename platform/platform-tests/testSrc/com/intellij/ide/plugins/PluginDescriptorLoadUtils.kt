@@ -25,7 +25,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     it.build()
   }
   if (id != null) {
-    raw.id = id.idString
+    raw.builder.id = id.idString
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id, moduleName = null)
   initMainDescriptorByRaw(

@@ -82,7 +82,7 @@ internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
 
     reader.consumeChildElements { localName ->
       when (localName) {
-        PluginXmlConst.ID_ELEM -> descriptor.id = getNullifiedContent(reader)
+        PluginXmlConst.ID_ELEM -> descriptor.builder.id = getNullifiedContent(reader)
         PluginXmlConst.NAME_ELEM -> descriptor.name = getNullifiedContent(reader)
         PluginXmlConst.VERSION_ELEM -> descriptor.version = getNullifiedContent(reader)
         PluginXmlConst.DESCRIPTION_ELEM -> descriptor.description = getNullifiedContent(reader)
@@ -155,13 +155,13 @@ private fun readRootElementChild(
   when (localName) {
     PluginXmlConst.ID_ELEM -> {
       when {
-        descriptor.id == null -> {
-          descriptor.id = getNullifiedContent(reader)
+        descriptor.builder.id == null -> {
+          descriptor.builder.id = getNullifiedContent(reader)
         }
-        !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij" -> {
+        !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.builder.id) && descriptor.id != "com.intellij" -> {
           // no warning and no redefinition for kotlin - compiler.xml is a known issue
           LOG.warn("id redefinition (${reader.locationInfo.location})")
-          descriptor.id = getNullifiedContent(reader)
+          descriptor.builder.id = getNullifiedContent(reader)
         }
         else -> {
           reader.skipElement()
@@ -172,7 +172,7 @@ private fun readRootElementChild(
     PluginXmlConst.CATEGORY_ELEM -> descriptor.category = getNullifiedContent(reader)
     PluginXmlConst.VERSION_ELEM -> {
       // kotlin includes compiler.xml that due to some reasons duplicates a version
-      if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
+      if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.builder.id)) {
         descriptor.version = getNullifiedContent(reader)
       }
       else {
@@ -842,7 +842,7 @@ private fun readInclude(
 }
 
 private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescriptor: RawPluginDescriptor) {
-  if (pluginDescriptor.id !in K2_ALLOWED_PLUGIN_IDS) {
+  if (pluginDescriptor.builder.id !in K2_ALLOWED_PLUGIN_IDS) {
     throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
 }

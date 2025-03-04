@@ -8,7 +8,9 @@ import java.time.LocalDate
 
 @ApiStatus.Internal
 class RawPluginDescriptor {
-  @JvmField var id: String? = null
+  var builder: PluginDescriptorBuilder = PluginDescriptorBuilderImpl()
+
+  val id: String? get() = builder.id
   @JvmField var name: String? = null
   @JvmField var description: @NlsSafe String? = null
   @JvmField var category: String? = null
