@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -24,6 +24,11 @@ public final class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSetti
   @Override
   public @Nullable String getConfigurableDisplayName() {
     return ApplicationBundle.message("code.style.other.file.types");
+  }
+
+  @Override
+  public @NotNull String getConfigurableId() {
+    return "preferences.sourceCode.Other File Types";
   }
 
   @Override
