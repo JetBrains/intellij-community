@@ -54,7 +54,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
     return isPredefinedAsFavorite(branchType, branchName);
   }
 
-  public @NotNull Map<T, Set<String>> getFavoriteBranches(@NotNull BranchType branchType) {
+  public @NotNull Map<@NotNull T, @NotNull Set<@NotNull String>> getFavoriteBranches(@NotNull BranchType branchType) {
     Map<T, List<String>> favorites = collectBranchesByRoot(myBranchSettings.getFavorites(), branchType);
     Map<T, List<String>> excludedFavorites = collectBranchesByRoot(myBranchSettings.getExcludedFavorites(), branchType);
     Collection<String> predefinedFavorites = myPredefinedFavoriteBranches.get(branchType);
