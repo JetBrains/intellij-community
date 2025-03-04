@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.uiDesigner.compiler;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
@@ -15,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
-import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
@@ -48,53 +45,14 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
   private static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension("java");
   private static final @NlsSafe String BUILDER_NAME = "form-bindings";
   private static final String JAVA_EXTENSION = ".java";
-  private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
-  private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
 
   public FormsBindingManager() {
     super(BuilderCategory.SOURCE_PROCESSOR);
   }
 
   @Override
-  public void buildStarted(CompileContext context) {
-    FORCE_FORMS_REBUILD_FLAG.set(context, Files.exists(getMarkerFile(context)));
-  }
-
-  @Override
-  public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
-    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on a per-chunk basis
-    super.chunkBuildFinished(context, chunk);
-  }
-
-  @Override
-  public void buildFinished(CompileContext context) {
-    boolean previousValue = FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE);
-    JpsUiDesignerConfiguration config = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(context.getProjectDescriptor().getProject());
-    boolean currentRebuildValue = config != null && !config.isInstrumentClasses();
-    if (previousValue == currentRebuildValue) {
-      return;
-    }
-
-    Path marker = getMarkerFile(context);
-    if (currentRebuildValue) {
-      FileUtil.createIfDoesntExist(marker.toFile());
-    }
-    else {
-      try {
-        Files.deleteIfExists(marker);
-      }
-      catch (IOException ignored) {
-      }
-    }
-  }
-
-  @Override
   public @NotNull String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  private static @NotNull Path getMarkerFile(CompileContext context) {
-    return context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("forms_rebuild_required");
   }
 
   @Override
@@ -115,14 +73,6 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     final Map<File, ModuleBuildTarget> filesToCompile = FileCollectionFactory.createCanonicalFileMap();
     final Map<File, ModuleBuildTarget> formsToCompile = FileCollectionFactory.createCanonicalFileMap();
     final Map<Path, List<Path>> sourceToForms = FileCollectionFactory.createCanonicalPathMap();
-
-    if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
-      // force compilation of all forms, but only once per chunk
-      if (!FORMS_REBUILD_FORCED.get(context, Boolean.FALSE)) {
-        FORMS_REBUILD_FORCED.set(context, Boolean.TRUE);
-        FSOperations.markDirty(context, CompilationRound.CURRENT, chunk, FORM_SOURCES_FILTER);
-      }
-    }
 
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<>() {
       @Override
