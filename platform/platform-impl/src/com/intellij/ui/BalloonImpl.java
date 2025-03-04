@@ -1994,7 +1994,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       Graphics componentGraphics = super.getComponentGraphics(graphics);
       InternalUICustomization service = InternalUICustomization.getInstance();
       if(service == null) return componentGraphics;
-      return service.transformGraphics(this, componentGraphics);
+      return service.balloonComponentGraphics(this, componentGraphics);
     }
 
     private void paintShadow(Graphics graphics) {
