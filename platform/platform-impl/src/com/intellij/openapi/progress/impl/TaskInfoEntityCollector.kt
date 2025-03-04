@@ -5,14 +5,14 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.progress.ProgressIndicatorModel
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
@@ -46,44 +46,53 @@ internal class PerProjectTaskInfoEntityCollector(private val project: Project, p
 private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
   cs.launch {
     val projectOrDefault = project ?: serviceAsync<ProjectManager>().defaultProject
-    withKernel {
-      activeTasks
-        .filter { it.projectEntity?.projectId == project?.projectId() }
-        .collect { task ->
-          if (!isRhizomeProgressEnabled) return@collect
+    activeTasks
+      .filter { it.projectEntity?.projectId == project?.projectId() }
+      .collect { task ->
+        if (!isRhizomeProgressEnabled) return@collect
 
-          showTaskIndicator(cs, projectOrDefault, task)
-        }
-    }
+        showTaskIndicator(cs, projectOrDefault, task)
+      }
   }
 }
 
 private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskInfoEntity) {
   cs.launch {
-    withKernel {
-      tryWithEntities(task) {
-        LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project" }
-        val indicator = taskCancellingIndicator(this, task)
-        showIndicator(
-          project,
-          indicator,
-          taskInfo(task.title, task.cancellation),
-          task.updates.asValuesFlow()
-        )
+    tryWithEntities(task) {
+      LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project" }
 
-        collectSuspendableChanges(task, indicator)
+      val progressModel = if (isRhizomeProgressModelEnabled) {
+        ProgressTaskInfoEntityModel(task, cs)
       }
+      else {
+        val entityId = task.eid
+        val title = task.title
+        ProgressIndicatorModel(task.title, task.cancellation) {
+          LOG.trace { "Cancelling task: entityId=$entityId, title=$title" }
+          cs.launch {
+            TaskManager.cancelTask(task, TaskStatus.Source.USER)
+          }
+        }
+      }
+
+      showIndicator(
+        project,
+        progressModel,
+        task.updates.asValuesFlow()
+      )
+
+      collectSuspendableChanges(task, progressModel)
     }
   }
 }
 
-private suspend fun collectSuspendableChanges(task: TaskInfoEntity, indicator: ProgressIndicatorBase) {
+private suspend fun collectSuspendableChanges(task: TaskInfoEntity, progressModel: ProgressModel) {
   task.suspensionState.collectLatest {
-    markSuspendable(task, indicator)
+    markSuspendable(task, progressModel)
   }
 }
 
-private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicator: ProgressIndicatorBase) {
+private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, progressModel: ProgressModel) {
   val suspendableInfo = task.suspension
   if (suspendableInfo !is TaskSuspension.Suspendable) return
 
@@ -94,6 +103,7 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
 
   try {
     val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
       override fun onStateChanged(progressSuspender: ProgressSuspender) {
         suspenderStateChange.tryEmit(Unit)
@@ -101,7 +111,7 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
     })
 
     // Instead of markSuspendable, which has to be called under runProcess, we can use attachToProgress on the already created suspender
-    suspender.attachToProgress(indicator)
+    suspender.attachToProgress(progressModel.getProgressIndicator()) //propagate events to original indicator
 
     launch {
       suspenderStateChange.collectLatest {
@@ -133,20 +143,4 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
     ProgressSuspenderTracker.getInstance().stopTracking(suspender)
     suspender.close()
   }
-}
-
-private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorBase {
-  val title = taskInfo.title
-  val entityId = taskInfo.eid
-  val indicator = ProgressIndicatorBase()
-  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-    override fun cancel() {
-      LOG.trace { "Cancelling task: entityId=$entityId, title=$title"}
-      cs.launch {
-        TaskManager.cancelTask(taskInfo, TaskStatus.Source.USER)
-      }
-      super.cancel()
-    }
-  })
-  return indicator
 }

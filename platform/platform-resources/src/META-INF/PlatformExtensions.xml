@@ -1851,6 +1851,9 @@
     <registryKey key="rhizome.progress"
                  defaultValue="true"
                  description="Progress will be reported and collected through Rhizome DB. See PlatformTaskSupport for more info"/>
+    <registryKey key="rhizome.progress.model"
+                 defaultValue="false"
+                 description="UI progress retrieves its state directly from Rhizome TaskInfoEntity, avoiding the obsolete use of ProgressIndicator."/>
     <registryKey key="ide.idle.memory.cleaner.enabled"
                  defaultValue="true"
                  description="Actively return memory to OS when the IDE becomes idle"/>

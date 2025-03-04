@@ -54,7 +54,7 @@ final class ProcessPopup {
     updateContentUI();
   }
 
-  public void addIndicator(@NotNull InlineProgressIndicator indicator) {
+  public void addIndicator(@NotNull ProgressComponent indicator) {
     JComponent component = indicator.getComponent();
     if (myIndicatorPanel.getComponentCount() == 0) {
       hideSeparator(component);
@@ -66,7 +66,7 @@ final class ProcessPopup {
     revalidateAll();
   }
 
-  public void removeIndicator(@NotNull InlineProgressIndicator indicator) {
+  public void removeIndicator(@NotNull ProgressComponent indicator) {
     JComponent component = indicator.getComponent();
     int index = myIndicatorPanel.getComponentZOrder(component);
     if (index == -1) {

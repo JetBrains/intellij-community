@@ -34,7 +34,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <component id="21ac6" class="javax.swing.JLabel" binding="myText">
+      <component id="21ac6" class="javax.swing.JLabel" binding="textLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <minimum-size width="209" height="-1"/>
@@ -47,7 +47,7 @@
           <text value=""/>
         </properties>
       </component>
-      <component id="34af0" class="javax.swing.JLabel" binding="myText2">
+      <component id="34af0" class="javax.swing.JLabel" binding="additionalTextLabel">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <minimum-size width="209" height="-1"/>

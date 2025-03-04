@@ -9772,6 +9772,23 @@ f:com.intellij.openapi.progress.ProgressKt
 - bs:runBackgroundableTask$default(java.lang.String,com.intellij.openapi.project.Project,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:runModalTask(java.lang.String,com.intellij.openapi.project.Project,Z,kotlin.jvm.functions.Function1):V
 - bs:runModalTask$default(java.lang.String,com.intellij.openapi.project.Project,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+com.intellij.openapi.progress.ProgressModel
+- a:addOnChangeAction(kotlin.jvm.functions.Function0):V
+- a:addOnFinishAction(kotlin.jvm.functions.Function1):V
+- a:cancel():V
+- a:finish(com.intellij.openapi.progress.TaskInfo):V
+- a:getCancelTooltipText():java.lang.String
+- a:getCancellation():com.intellij.platform.ide.progress.TaskCancellation
+- a:getDetails():java.lang.String
+- a:getFraction():D
+- a:getProgressIndicator():com.intellij.openapi.wm.ex.ProgressIndicatorEx
+- a:getText():java.lang.String
+- a:getTitle():java.lang.String
+- a:isCancellable():Z
+- a:isFinished(com.intellij.openapi.progress.TaskInfo):Z
+- a:isIndeterminate():Z
+- a:isRunning():Z
+- a:isStopping(com.intellij.openapi.progress.TaskInfo):Z
 c:com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 - com.intellij.openapi.progress.util.ProgressWindow
 - <init>(com.intellij.openapi.progress.Task$Backgroundable):V
@@ -11033,7 +11050,8 @@ c:com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 com.intellij.openapi.wm.ex.StatusBarEx
 - com.intellij.openapi.wm.StatusBar
 - a:addProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.progress.TaskInfo):V
-- a:getBackgroundProcesses():java.util.List
+- a:getBackgroundProcessModels():java.util.List
+- getBackgroundProcesses():java.util.List
 - a:getSize():java.awt.Dimension
 - a:isProcessWindowOpen():Z
 - a:isVisible():Z
@@ -11803,7 +11821,7 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - fireNotificationPopup(javax.swing.JComponent,java.awt.Color):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - getAllWidgets():java.util.Collection
-- getBackgroundProcesses():java.util.List
+- getBackgroundProcessModels():java.util.List
 - getComponent():javax.swing.JComponent
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getCurrentEditor():kotlin.jvm.functions.Function0

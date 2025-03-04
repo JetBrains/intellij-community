@@ -5,7 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator;
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyProgressComponent;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.JBIterable;
@@ -22,23 +22,23 @@ import java.awt.*;
  */
 @ApiStatus.Internal
 public final class PresentationModeProgressPanel {
-  private final MyInlineProgressIndicator progress;
-  private final JBIterable<InlineProgressIndicator.ProgressButton> myEastButtons;
-  private JLabel myText;
+  private final MyProgressComponent progress;
+  private final JBIterable<ProgressComponent.ProgressButton> myEastButtons;
+  private JLabel textLabel;
   private JProgressBar myProgressBar;
-  private JLabel myText2;
+  private JLabel additionalTextLabel;
   private JPanel myRootPanel;
   private JPanel myButtonPanel;
 
-  public PresentationModeProgressPanel(@NotNull MyInlineProgressIndicator progress) {
+  public PresentationModeProgressPanel(@NotNull MyProgressComponent progress) {
     this.progress = progress;
     Font font = JBUI.Fonts.label(11);
-    myText.setFont(font);
-    myText2.setFont(font);
-    myText.setText(" ");
-    myText2.setText(" ");
+    textLabel.setFont(font);
+    additionalTextLabel.setFont(font);
+    textLabel.setText(" ");
+    additionalTextLabel.setText(" ");
     myEastButtons = this.progress.createPresentationButtons();
-    myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
+    myButtonPanel.add(ProgressComponent.createButtonPanel(myEastButtons.map(b -> b.button)));
     myRootPanel.setPreferredSize(new JBDimension(250, 60));
     myProgressBar.setPreferredSize(new Dimension(JBUIScale.scale(250), myProgressBar.getPreferredSize().height));
   }
@@ -49,15 +49,15 @@ public final class PresentationModeProgressPanel {
 
   void update() {
     Color color = getTextForeground();
-    myText.setForeground(color);
-    myText2.setForeground(color);
+    textLabel.setForeground(color);
+    additionalTextLabel.setForeground(color);
     myProgressBar.setForeground(color);
 
-    if (!StringUtil.equals(myText.getText(), progress.getText())) {
-      myText.setText(StringUtil.defaultIfEmpty(progress.getText(), " "));
+    if (!StringUtil.equals(textLabel.getText(), progress.getText())) {
+      textLabel.setText(StringUtil.defaultIfEmpty(progress.getText(), " "));
     }
-    if (!StringUtil.equals(myText2.getText(), progress.getText2())) {
-      myText2.setText(StringUtil.defaultIfEmpty(progress.getText2(), " "));
+    if (!StringUtil.equals(additionalTextLabel.getText(), progress.getText2())) {
+      additionalTextLabel.setText(StringUtil.defaultIfEmpty(progress.getText2(), " "));
     }
     if ((progress.isIndeterminate() || progress.getFraction() == 0.0) != myProgressBar.isIndeterminate()) {
       myProgressBar.setIndeterminate(progress.isIndeterminate() || progress.getFraction() == 0.0);

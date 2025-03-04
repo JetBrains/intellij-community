@@ -63,7 +63,7 @@ internal class BridgeTaskSupport(private val coroutineScope: CoroutineScope) {
         catch (ex: CancellationException) {
           // User can cancel the job from UI, which will cause the job cancellation,
           // so we need to cancel the original indicator as well
-          if (indicator.isRunning) {
+          if (indicator.isRunning()) {
             LOG.info("Progress \"${info.title}\" was cancelled from UI, cancelling $indicator")
             indicator.cancel()
           }

@@ -173,7 +173,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
       alarm.addRequest(Context.current().wrap(
         Runnable {
           val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
-          val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
+          val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcessModels.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
               !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
             runScriptWhenInitializedAndIndexed(project, alarm)

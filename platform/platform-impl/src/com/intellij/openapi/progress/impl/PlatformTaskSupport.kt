@@ -55,6 +55,9 @@ import kotlin.coroutines.coroutineContext
 internal val isRhizomeProgressEnabled
   get() = Registry.`is`("rhizome.progress")
 
+internal val isRhizomeProgressModelEnabled
+  get() = Registry.`is`("rhizome.progress.model")
+
 private val LOG = logger<PlatformTaskSupport>()
 
 @Internal
@@ -272,15 +275,15 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
-    val indicator = coroutineCancellingIndicator(taskJob)
+    val progressModel = ProgressIndicatorModel(title, cancellation, onCancel =  {taskJob.cancel()})
 
     val taskSuspender = retrieveSuspender(providedSuspender)
     taskSuspender?.attachTask()
 
     // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(taskSuspender)
+    val suspenderSynchronizer = progressModel.getProgressIndicator().markSuspendableIfNeeded(taskSuspender)
 
-    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
+    val showIndicatorJob = cs.showIndicator(project, progressModel, pipe.progressUpdates())
 
     try {
       progressStarted(title, cancellation, pipe.progressUpdates())
@@ -423,33 +426,36 @@ private val progressManagerTracer by lazy {
 
 internal fun CoroutineScope.showIndicator(
   project: Project,
-  indicator: ProgressIndicatorEx,
-  taskInfo: TaskInfo,
+  progressModel: ProgressModel,
   stateFlow: Flow<ProgressState>,
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-    withContext(progressManagerTracer.span("Progress: ${taskInfo.title}")) {
+    withContext(progressManagerTracer.span("Progress: ${progressModel.title}")) {
       withContext(Dispatchers.EDT) {
+        val taskInfo = taskInfo(progressModel.title, progressModel.cancellation)
         try {
-          LOG.trace { "Showing indicator for task: ${taskInfo.title}" }
-          val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
-
-          indicator.start() // must be after showIndicatorInUI
-          try {
-            if (indicatorAdded) {
-              withContext(Dispatchers.Default) {
-                indicator.updateFromFlow(stateFlow)
+          LOG.trace { "Showing indicator for task: ${progressModel.title}" }
+          val indicatorAdded = showIndicatorInUI(project, taskInfo, progressModel)
+          if (progressModel is ProgressIndicatorModel) {
+            progressModel.getProgressIndicator().start()
+            try {
+              if (indicatorAdded) {
+                withContext(Dispatchers.Default) {
+                  progressModel.updateFromFlow(stateFlow)
+                }
               }
             }
-          }
-          finally {
-            indicator.stop()
+            finally {
+              progressModel.getProgressIndicator().stop()
+            }
           }
         }
         finally {
-          LOG.trace { "Hiding indicator for task: $taskInfo" }
-          indicator.finish(taskInfo) // removes indicator from UI if added
+          if (progressModel is ProgressIndicatorModel) {
+            LOG.trace { "Hiding indicator for task: ${progressModel.title}" }
+            progressModel.finish(taskInfo) // removes indicator from UI if added
+          }
         }
       }
     }
@@ -457,17 +463,21 @@ internal fun CoroutineScope.showIndicator(
 }
 
 /**
- * @return an indicator which cancels the given [job] when it's cancelled
+ * Asynchronously updates the indicator [text][ProgressIndicator.setText],
+ * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
-  val indicator = ProgressIndicatorBase()
-  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-    override fun cancel() {
-      job.cancel()
-      super.cancel()
+@Internal
+suspend fun ProgressIndicatorModel.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+  updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
+    setText(state.text)
+    setText2(state.details)
+    state.fraction?.let {
+      // first fraction update makes the indicator determinate
+      setIndeterminate(false)
+      setFraction(it)
     }
-  })
-  return indicator
+  }
+  error("collect call must be cancelled")
 }
 
 /**
@@ -488,10 +498,10 @@ suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): No
   error("collect call must be cancelled")
 }
 
-private fun showIndicatorInUI(project: Project, taskInfo: TaskInfo, indicator: ProgressIndicatorEx): Boolean {
+private fun showIndicatorInUI(project: Project, taskInfo: TaskInfo, progressModel: ProgressModel): Boolean {
   val frameEx: IdeFrameEx = WindowManagerEx.getInstanceEx().findFrameHelper(project) ?: return false
   val statusBar = frameEx.statusBar as? IdeStatusBarImpl ?: return false
-  statusBar.addProgressImpl(indicator, taskInfo)
+  statusBar.addProgressImpl(progressModel, taskInfo)
   return true
 }
 
