@@ -32,7 +32,6 @@ import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
-import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -82,29 +81,23 @@ public fun SelectableLazyColumnSample() {
         if (listOfItems.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
-            SelectableLazyColumn(
-                modifier = Modifier.focusable(interactionSource = interactionSource),
-                selectionMode = SelectionMode.Multiple,
-                state = state,
-                interactionSource = remember { MutableInteractionSource() },
-                content = {
-                    items(count = listOfItems.size, key = { index -> listOfItems[index] }) { index ->
-                        Text(
-                            text = listOfItems[index],
-                            modifier =
-                                Modifier.fillMaxWidth()
-                                    .then(
-                                        when {
-                                            isSelected && isActive -> Modifier.background(Color.Blue)
-                                            isSelected && !isActive -> Modifier.background(Color.Gray)
-                                            else -> Modifier
-                                        }
-                                    )
-                                    .clickable { JewelLogger.getInstance("ChipsAndTree").info("Click on $index") },
-                        )
-                    }
-                },
-            )
+            SelectableLazyColumn(modifier = Modifier.focusable(), state = state) {
+                items(count = listOfItems.size, key = { index -> listOfItems[index] }) { index ->
+                    Text(
+                        text = listOfItems[index],
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .then(
+                                    when {
+                                        isSelected && isActive -> Modifier.background(Color.Blue)
+                                        isSelected && !isActive -> Modifier.background(Color.Gray)
+                                        else -> Modifier
+                                    }
+                                )
+                                .clickable { JewelLogger.getInstance("ChipsAndTree").info("Click on $index") },
+                    )
+                }
+            }
             VerticalScrollbar(
                 rememberScrollbarAdapter(state.lazyListState),
                 modifier = Modifier.align(Alignment.CenterEnd),
@@ -190,7 +183,7 @@ public fun TreeSample(modifier: Modifier = Modifier) {
     Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
         LazyTree(
             tree = tree,
-            modifier = Modifier.size(200.dp, 200.dp),
+            modifier = Modifier.size(200.dp, 200.dp).focusable(),
             onElementClick = {},
             onElementDoubleClick = {},
         ) { element ->
