@@ -605,16 +605,6 @@ c:com.intellij.openapi.vcs.VcsEnvCustomizer$VcsExecutableContext
 - getWslOptions():com.intellij.execution.wsl.WSLCommandLineOptions
 com.intellij.openapi.vcs.VcsExceptionsHotFixer
 - a:groupExceptions(com.intellij.openapi.vcs.ActionType,java.util.List):java.util.Map
-com.intellij.openapi.vcs.VcsFileListenerContextHelper
-- a:clearContext():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.VcsFileListenerContextHelper
-- a:ignoreAdded(java.util.Collection):V
-- a:ignoreAddedRecursive(java.util.Collection):V
-- a:ignoreDeleted(java.util.Collection):V
-- a:isAdditionContextEmpty():Z
-- a:isAdditionIgnored(com.intellij.openapi.vcs.FilePath):Z
-- a:isDeletionContextEmpty():Z
-- a:isDeletionIgnored(com.intellij.openapi.vcs.FilePath):Z
 com.intellij.openapi.vcs.VcsIgnoreChecker
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - a:isFilePatternIgnored(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vcs.IgnoredCheckResult

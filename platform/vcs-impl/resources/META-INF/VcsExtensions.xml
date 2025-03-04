@@ -223,8 +223,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
-                    serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelperImpl"/>
+    <vcs.fileListenerIgnoredFilesProvider implementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper$IgnoredFilesProvider"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>

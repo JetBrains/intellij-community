@@ -267,5 +267,9 @@
     <extensionPoint name="vcs.diffRevisionMetadataProvider"
                     interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.fileListenerIgnoredFilesProvider"
+                    interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
