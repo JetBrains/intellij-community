@@ -25,6 +25,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelIm
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil.collectionToString;
+
 public class AnnotationProcessingModelBuilder extends AbstractModelBuilderService {
 
   private static final boolean isAtLeastGradle6_3 = GradleVersionUtil.isCurrentGradleAtLeast("6.3");
@@ -54,7 +56,7 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
           final Set<File> files = path.getFiles();
           if (!files.isEmpty()) {
             List<String> annotationProcessorArgs = new ArrayList<>();
-            List<String> args = options.getAllCompilerArgs();
+            List<String> args = collectionToString(options.getAllCompilerArgs());
             for (String arg : args) {
               if (arg.startsWith("-A")) {
                 annotationProcessorArgs.add(arg);
