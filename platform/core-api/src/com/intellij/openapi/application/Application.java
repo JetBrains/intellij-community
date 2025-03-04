@@ -692,7 +692,7 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default boolean hasLockStateInContext(CoroutineContext context) {
+  default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
   }
 

@@ -534,7 +534,7 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pa
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
   return if (isLockStoredInContext) {
     val application = ApplicationManager.getApplication()
-    application != null && application.hasLockStateInContext(this) && application.isReadAccessAllowed && this[LockLeakedFromEDTMarker] == null
+    application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[LockLeakedFromEDTMarker] == null
   }
   else {
     this[RunBlockingUnderReadActionMarker] != null

@@ -328,7 +328,7 @@ interface ThreadingSupport {
   fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken>
 
   @ApiStatus.Internal
-  fun hasPermitAsContextElement(context: CoroutineContext): Boolean
+  fun isParallelizedReadAction(context: CoroutineContext): Boolean
 
   @ApiStatus.Internal
   fun isInTopmostReadAction(): Boolean

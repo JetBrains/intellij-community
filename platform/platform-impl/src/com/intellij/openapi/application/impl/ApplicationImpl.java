@@ -1497,8 +1497,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public boolean hasLockStateInContext(CoroutineContext context) {
-    return getThreadingSupport().hasPermitAsContextElement(context);
+  public boolean isParallelizedReadAction(CoroutineContext context) {
+    return getThreadingSupport().isParallelizedReadAction(context);
   }
 
   private static @NotNull ThreadingSupport getThreadingSupport() {

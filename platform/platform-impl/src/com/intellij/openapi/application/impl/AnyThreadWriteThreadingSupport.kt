@@ -167,7 +167,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
   }
 
-  override fun hasPermitAsContextElement(context: CoroutineContext): Boolean = isLockStoredInContext && context[LockStateContextElement] != null
+  override fun isParallelizedReadAction(context: CoroutineContext): Boolean = isLockStoredInContext && context[LockStateContextElement] != null
 
   override fun isInTopmostReadAction(): Boolean {
     // once a read action was requested
