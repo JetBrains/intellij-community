@@ -261,12 +261,6 @@ private val actionNameToEnum = run {
 }
 
 private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader2, readContext: ReadModuleContext) {
-  var actionElements = descriptor.actions
-  if (actionElements == null) {
-    actionElements = ArrayList()
-    descriptor.actions = actionElements
-  }
-
   val resourceBundle = findAttributeValue(reader, PluginXmlConst.ACTIONS_RESOURCE_BUNDLE_ATTR)
   reader.consumeChildElements { elementName ->
     if (checkXInclude(elementName, reader)) {
@@ -291,7 +285,7 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
           reader.skipElement()
           return@consumeChildElements
         }
-        actionElements.add(ActionDescriptorAction(className, isInternal = attributes["internal"].toBoolean(), element, resourceBundle))
+        descriptor.builder.addAction(ActionDescriptorAction(className, isInternal = attributes["internal"].toBoolean(), element, resourceBundle))
       }
       ActionElementName.group -> {
         var className = attributes["class"]
@@ -304,10 +298,10 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
           reader.skipElement()
           return@consumeChildElements
         }
-        actionElements.add(ActionElementGroup(className, id, element, resourceBundle))
+        descriptor.builder.addAction(ActionElementGroup(className, id, element, resourceBundle))
       }
       else -> {
-        actionElements.add(ActionElementMisc(name, element, resourceBundle))
+        descriptor.builder.addAction(ActionElementMisc(name, element, resourceBundle))
       }
     }
   }

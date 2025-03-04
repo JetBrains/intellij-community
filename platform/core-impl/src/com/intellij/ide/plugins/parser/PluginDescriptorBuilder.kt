@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.parser
 
+import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.ide.plugins.parser.elements.DependsElement
 import java.time.LocalDate
 
@@ -44,4 +45,7 @@ interface PluginDescriptorBuilder {
 
   fun addDepends(depends: DependsElement)
   val depends: List<DependsElement>
+
+  fun addAction(action: ActionElement)
+  val actions: List<ActionElement>
 }
