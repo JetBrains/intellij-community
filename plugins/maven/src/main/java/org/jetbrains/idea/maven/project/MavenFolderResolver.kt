@@ -10,7 +10,6 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenSourceGenerationConsole
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -78,20 +77,19 @@ class MavenFolderResolver(private val project: Project) {
     }
 
     val goalResults: List<MavenGoalExecutionResult>
-    val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
-    try {
+    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+    mavenEmbedderWrappers.use {
+      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
       goalResults = embedder.executeGoal(requests, goal, progressReporter, console)
-      for (goalResult in goalResults) {
-        for (problem in goalResult.problems) {
-          val description = problem.description
-          if (null != description) {
-            console.addError(description)
-          }
+    }
+
+    for (goalResult in goalResults) {
+      for (problem in goalResult.problems) {
+        val description = problem.description
+        if (null != description) {
+          console.addError(description)
         }
       }
-    }
-    finally {
-      projectsManager.embeddersManager.release(embedder)
     }
 
     for (goalResult in goalResults) {
