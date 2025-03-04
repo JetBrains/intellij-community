@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -509,8 +510,7 @@ class UnindexedFilesScanner (
         readAction {
           val finder =
             if (ourTestMode == TestMode.PUSHING) null
-            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
-                                      scanningRequest, filterHandler)
+            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
           val pushingUtil = PushingUtil(project, provider)
           if (!pushingUtil.mayBeUsed()) {
             LOG.warn("Iterator based on $provider can't be used.")
@@ -520,6 +520,9 @@ class UnindexedFilesScanner (
             val file = files.removeFirst()
             try {
               if (file.isValid) {
+                if (file is VirtualFileWithId) {
+                  filterHandler.addFileId(project, file.id)
+                }
                 pushingUtil.applyPushers(file)
                 val status = finder?.getFileStatus(file)
                 if (status != null) {
