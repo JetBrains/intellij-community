@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.parser.elements.ActionElement
 import com.intellij.ide.plugins.parser.elements.DependsElement
+import com.intellij.ide.plugins.parser.elements.MiscExtensionElement
 import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
@@ -86,4 +87,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val appContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+
+  private var _miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
+  override fun addExtension(qualifiedExtensionPointName: String, extension: MiscExtensionElement) {
+    if (_miscExtensions == null) {
+      _miscExtensions = HashMap()
+    }
+    _miscExtensions!!.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extension)
+  }
+  override val miscExtensions: Map<String, List<MiscExtensionElement>>
+    get() = _miscExtensions ?: Java11Shim.INSTANCE.mapOf()
 }

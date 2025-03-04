@@ -373,14 +373,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           element = element,
           hasExtraAttributes = hasExtraAttributes,
         )
-
-        var epNameToExtensions = descriptor.miscExtensions
-        if (epNameToExtensions == null) {
-          epNameToExtensions = HashMap()
-          descriptor.miscExtensions = epNameToExtensions
-        }
-
-        epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionElement)
+        descriptor.builder.addExtension(qualifiedExtensionPointName, extensionElement)
 
         assert(reader.isEndElement)
         return@consumeChildElements

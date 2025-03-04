@@ -115,8 +115,8 @@ class IdeaPluginDescriptorImpl(
   // extension point name -> list of extension descriptors
   @JvmField
   val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
-    ?.let(::convertExtensions)
-    ?.let(::sortExtensions) ?: Java11Shim.INSTANCE.mapOf()
+    .let(::convertExtensions)
+    .let(::sortExtensions)
 
   @JvmField
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()

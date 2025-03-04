@@ -56,7 +56,7 @@ class RawPluginDescriptor {
   val moduleElementsContainer: ScopedElementsContainer get() = builder.moduleContainerBuilder.build()
 
   /** key is extension point's FQN */
-  @JvmField var miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
+  val miscExtensions: Map<String, List<MiscExtensionElement>> get() = builder.miscExtensions
 
   @JvmField var contentModules: MutableList<ContentElement>? = null
   @JvmField var dependencies: MutableList<DependenciesElement>? = null
