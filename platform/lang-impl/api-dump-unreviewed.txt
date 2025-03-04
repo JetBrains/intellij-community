@@ -11356,6 +11356,7 @@ c:com.intellij.ide.util.MemberChooser
 - p:fillToolbarActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - p:getAllContainersNodeName():java.lang.String
 - p:getDimensionServiceKey():java.lang.String
+- getInitialSize():java.awt.Dimension
 - getOptionControls():javax.swing.JComponent[]
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getRootNode():javax.swing.tree.DefaultMutableTreeNode
@@ -16708,6 +16709,7 @@ c:com.intellij.refactoring.rename.AutomaticRenamingDialog
 - p:dispose():V
 - p:doOKAction():V
 - p:getDimensionServiceKey():java.lang.String
+- getInitialSize():java.awt.Dimension
 - getPreferredFocusedComponent():javax.swing.JComponent
 - isSearchInComments():Z
 - isSearchTextOccurrences():Z
