@@ -45,18 +45,12 @@ elements:
               Defines a JVM package where all module's classes are located.
               Packages are included recursively, for example, `com.example` implies `com.example.sub`.
               
-              If a package is specified, then:
-              1. All module [dependencies](#element:idea-plugin__dependencies) of the plugin must also specify a package, and it must be
-                 different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
-                 module dependency.
-              2. Icon class generator uses the specified package instead of `icons`.
-                 
-                 For an existing icon class, it is recommended to move it before running the icon class generator.
-                 It ensures that all references to the icon class are updated correctly during the refactoring action.
-                 Also, the generator uses the same icon class name as before if the old class is detected in place.
+              If a package is specified, then all module [dependencies](#element:idea-plugin__dependencies) of the plugin must also specify a package, and it must be
+              different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
+              module dependency.
             internalNote: &plugin_model_v2_internal_note |
-              The item is a part of the [_Plugin Model v2_](https://youtrack.jetbrains.com/articles/IJPL-A-1037){internal},
-              which is not recommended to use in 3rd-party plugins in the current state.
+              This item is part of the [_Plugin Model v2_](https://youtrack.jetbrains.com/articles/IJPL-A-1037){internal},
+              which is not recommended to be used in third-party plugins in the current state.
       children:
         - element:
             name: id
@@ -97,9 +91,9 @@ elements:
               or [`dependencies/plugin@id`](#element:idea-plugin__dependencies__plugin__id).
               
               Aliases are usually added to core plugins and work as markers of the corresponding IDEs.
-              For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IDEA Ultimate and RubyMine,
+              For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IntelliJ IDEA Ultimate and RubyMine,
               and the Ruby plugin has a dependency on that alias.
-              It makes the Ruby plugin compatible with IDEA Ultimate and RubyMine only and prevents it from being installed in other IDEs.
+              It makes the Ruby plugin compatible with IntelliJ IDEA Ultimate and RubyMine only and prevents it from being installed in other IDEs.
               
               Aliases can be also used for compatibility reasons in regular plugins and modules.
               
@@ -503,8 +497,8 @@ elements:
               - |
                 ```xml
                 <content>
-                  <module name="com.example.core"/>
-                  <module name="com.example.git" loading="optional"/>
+                  <module name="com.example.core" loading="required"/>
+                  <module name="com.example.git"/>
                   <module name="com.example.i18n"/>
                 </content>
                 ```
@@ -527,12 +521,7 @@ elements:
                     - |
                       A required module that will fail to load the plugin if it is unavailable:
                           ```xml
-                          <module name="com.example.git" loading="required"/>
-                          ```
-                    - |
-                      An embedded module that will be loaded by the main plugin classloader:
-                          ```xml
-                          <module name="com.example.i18n" loading="embedded"/>
+                          <module name="com.example.core" loading="required"/>
                           ```
                   attributes:
                     - attribute:
@@ -545,11 +534,11 @@ elements:
                         description: |
                           Specifies when a content module of a plugin should be loaded.
                           Allowed values:
-                          - `required` - the module is the required part of the plugin.
+                          - `required` - the module is a required part of the plugin.
                             If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
                             loaded, and an error is shown to the user.
                           - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
-                            by the main plugin classloader.
+                            using the main plugin classloader.
                             **This is an internal temporary option added to simplify the migration of some existing plugins.
                             For new modules, use `required` instead.**
                           - `optional` - the module is an optional part of the plugin.
