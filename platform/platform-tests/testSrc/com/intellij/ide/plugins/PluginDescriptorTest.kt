@@ -12,6 +12,7 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -20,6 +21,7 @@ import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -257,6 +259,31 @@ class PluginDescriptorTest {
       .hasExactlyEnabledContentModules("bar/module/sub")
   }
 
+  @Test
+  fun `module descriptor's text can be embedded inside the content module element`() {
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin>
+        <id>foo</id>
+        <content>
+          <module name="foo.module"><![CDATA[
+            <idea-plugin>
+                <extensions defaultExtensionNs="com.intellij">
+                    <applicationService serviceImplementation="foo.module.service"/>
+                </extensions>
+            </idea-plugin>          
+          ]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent())
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("foo.module")
+    assertThat(descriptor.content.modules[0].requireDescriptor())
+      .isMarkedEnabled()
+      .hasExactlyApplicationServices("foo.module.service")
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {
@@ -333,6 +360,10 @@ class PluginDescriptorTest {
         dir = Path.of(testDataPath, dirName),
         disabledPlugins = disabledPlugins,
       )
+    }
+
+    private fun Path.writeXml(@Language("XML") text: String) {
+      createParentDirectories().write(text.encodeToByteArray())
     }
   }
 }
