@@ -136,7 +136,7 @@ internal class FrontendXDebuggerSession(
   // TODO pass in DTO?
   override val sessionName: String
     get() = TODO("Not yet implemented")
-  override val sessionData: XDebugSessionData?
+  override val sessionData: XDebugSessionData
     get() = TODO("Not yet implemented")
   override val consoleView: ConsoleView?
     get() = TODO("Not yet implemented")

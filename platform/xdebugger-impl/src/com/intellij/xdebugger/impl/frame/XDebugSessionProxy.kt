@@ -34,7 +34,7 @@ interface XDebugSessionProxy {
 
   @get:NlsSafe
   val sessionName: String
-  val sessionData: XDebugSessionData?
+  val sessionData: XDebugSessionData
   val consoleView: ConsoleView?
   val restartActions: List<AnAction>
   val extraActions: List<AnAction>
@@ -82,8 +82,8 @@ interface XDebugSessionProxy {
       get() = session.project
     override val sessionName: String
       get() = session.sessionName
-    override val sessionData: XDebugSessionData?
-      get() = (session as? XDebugSessionImpl)?.sessionData
+    override val sessionData: XDebugSessionData
+      get() = (session as XDebugSessionImpl).sessionData
     override val consoleView: ConsoleView?
       get() = session.consoleView
     override val restartActions: List<AnAction>

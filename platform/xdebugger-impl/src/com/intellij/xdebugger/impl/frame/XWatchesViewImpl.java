@@ -36,7 +36,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XEvaluationListener;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.*;
@@ -83,15 +86,39 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   private final boolean myWatchesInVariables;
   private final boolean inlineWatchesEnabled;
 
+  /**
+   * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean)} instead
+   */
+  @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
+    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables);
+  }
+
+  public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
     this(session, watchesInVariables, watchesInVariables);
   }
 
+  /**
+   * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean, boolean)} instead
+   */
+  @Deprecated
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables, vertical);
+  }
+
+  protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
     this(session, watchesInVariables, vertical, true);
   }
 
+  /**
+   * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean, boolean, boolean)} instead
+   */
+  @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
+    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables, vertical, withToolbar);
+  }
+
+  public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
     super(session);
     myConfigurationName = session.getSessionData().getConfigurationName();
     myWatchesInVariables = watchesInVariables;
@@ -114,8 +141,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         Object contents = CopyPasteManager.getInstance().getContents(XWatchTransferable.EXPRESSIONS_FLAVOR);
-        if (contents instanceof List) {
-          for (Object item : ((List)contents)){
+        if (contents instanceof List list) {
+          for (Object item : list) {
             if (item instanceof XExpression) {
               addWatchExpression(((XExpression)item), -1, true);
             }
@@ -170,123 +197,123 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   private @Nullable JComponent createTopPanel() {
     //if (UIExperiment.isNewDebuggerUIEnabled()) {
-      XDebuggerTree tree = getTree();
-      Ref<AnAction> addToWatchesActionRef = new Ref<>();
-      XDebuggerEditorsProvider provider = tree.getEditorsProvider();
-      if (!provider.isEvaluateExpressionFieldEnabled()) {
-        return null;
-      }
-      myEvaluateComboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), provider, "evaluateExpression", null, false, true) {
-          @Override
-          protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
-            AnAction addToWatchesAction =
-              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                  myEvaluateComboBox.saveTextInHistory();
-                  addWatchExpression(getExpression(), -1, false);
-                  DebuggerEvaluationStatisticsCollector.WATCH_FROM_INLINE_ADD.log(e);
-                }
-
-                @Override
-                public void update(@NotNull AnActionEvent e) {
-                  e.getPresentation().setEnabled(!XDebuggerUtilImpl.isEmptyExpression(getExpression()));
-                }
-
-                @Override
-                public @NotNull ActionUpdateThread getActionUpdateThread() {
-                  return ActionUpdateThread.BGT;
-                }
-              };
-            ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
-              .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);
-            addToWatchesActionRef.set(addToWatchesAction);
-            toolbar.setOpaque(false);
-            toolbar.setReservePlaceAutoPopupIcon(false);
-            toolbar.setTargetComponent(tree);
-            XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
-            comboBox.setName("Debugger.EvaluateExpression.combobox");
-            comboBox.setExtension(toolbar);
-            return comboBox;
-          }
-
-          @Override
-          protected void prepareEditor(EditorEx editor) {
-            super.prepareEditor(editor);
-            editor.setPlaceholder(XDebuggerBundle.message(
-              "debugger.evaluate.expression.or.add.a.watch.hint",
-              KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)),
-              KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.getAddWatchKeystroke(), null))
-            ));
-            editor.addFocusListener(new FocusChangeListener() {
-              private static final Set<FocusEvent.Cause> myCauses = Set.of(
-                FocusEvent.Cause.UNKNOWN,
-                FocusEvent.Cause.TRAVERSAL_FORWARD,
-                FocusEvent.Cause.TRAVERSAL_BACKWARD
-              );
+    XDebuggerTree tree = getTree();
+    Ref<AnAction> addToWatchesActionRef = new Ref<>();
+    XDebuggerEditorsProvider provider = tree.getEditorsProvider();
+    if (!provider.isEvaluateExpressionFieldEnabled()) {
+      return null;
+    }
+    myEvaluateComboBox =
+      new XDebuggerExpressionComboBox(tree.getProject(), provider, "evaluateExpression", null, false, true) {
+        @Override
+        protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
+          AnAction addToWatchesAction =
+            new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                myEvaluateComboBox.saveTextInHistory();
+                addWatchExpression(getExpression(), -1, false);
+                DebuggerEvaluationStatisticsCollector.WATCH_FROM_INLINE_ADD.log(e);
+              }
 
               @Override
-              public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-                if (myCauses.contains(event.getCause())) {
-                  boolean shouldBeIgnored = myEvaluateComboBox.getComboBox().isPopupVisible();
-                  if (!shouldBeIgnored) {
-                    DebuggerEvaluationStatisticsCollector.INPUT_FOCUS.log(getTree().getProject());
-                  }
+              public void update(@NotNull AnActionEvent e) {
+                e.getPresentation().setEnabled(!XDebuggerUtilImpl.isEmptyExpression(getExpression()));
+              }
+
+              @Override
+              public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.BGT;
+              }
+            };
+          ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+            .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);
+          addToWatchesActionRef.set(addToWatchesAction);
+          toolbar.setOpaque(false);
+          toolbar.setReservePlaceAutoPopupIcon(false);
+          toolbar.setTargetComponent(tree);
+          XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+          comboBox.setName("Debugger.EvaluateExpression.combobox");
+          comboBox.setExtension(toolbar);
+          return comboBox;
+        }
+
+        @Override
+        protected void prepareEditor(EditorEx editor) {
+          super.prepareEditor(editor);
+          editor.setPlaceholder(XDebuggerBundle.message(
+            "debugger.evaluate.expression.or.add.a.watch.hint",
+            KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)),
+            KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.getAddWatchKeystroke(), null))
+          ));
+          editor.addFocusListener(new FocusChangeListener() {
+            private static final Set<FocusEvent.Cause> myCauses = Set.of(
+              FocusEvent.Cause.UNKNOWN,
+              FocusEvent.Cause.TRAVERSAL_FORWARD,
+              FocusEvent.Cause.TRAVERSAL_BACKWARD
+            );
+
+            @Override
+            public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
+              if (myCauses.contains(event.getCause())) {
+                boolean shouldBeIgnored = myEvaluateComboBox.getComboBox().isPopupVisible();
+                if (!shouldBeIgnored) {
+                  DebuggerEvaluationStatisticsCollector.INPUT_FOCUS.log(getTree().getProject());
                 }
               }
-            });
-            XDebugSessionProxy session = getSessionProxy();
-            if (session != null) {
-              InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
             }
-          }
-        };
-      final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
-      editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
-      editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          // This listener overrides one from BasicComboBoxUI$Actions
-          // Close popup manually instead of default handler
-          if (myEvaluateComboBox.getComboBox().isPopupVisible()) {
-            myEvaluateComboBox.getComboBox().setPopupVisible(false);
-          }
-          else {
-            addExpressionResultNode();
+          });
+          XDebugSessionProxy session = getSessionProxy();
+          if (session != null) {
+            InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
           }
         }
-      });
-      editorComponent.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
-
-      myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
-        private int selectedIndexOnPopupOpen = -1;
-
-        @Override
-        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-          selectedIndexOnPopupOpen = myEvaluateComboBox.getComboBox().getSelectedIndex();
-          myEvaluateComboBox.requestFocusInEditor();
-          DebuggerEvaluationStatisticsCollector.HISTORY_SHOW.log(getTree().getProject());
+      };
+    final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
+    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
+    editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        // This listener overrides one from BasicComboBoxUI$Actions
+        // Close popup manually instead of default handler
+        if (myEvaluateComboBox.getComboBox().isPopupVisible()) {
+          myEvaluateComboBox.getComboBox().setPopupVisible(false);
         }
-
-        @Override
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          if (myEvaluateComboBox.getComboBox().getSelectedIndex() != selectedIndexOnPopupOpen) {
-            DebuggerEvaluationStatisticsCollector.HISTORY_CHOOSE.log(getTree().getProject());
-          }
+        else {
+          addExpressionResultNode();
         }
-      });
-      addToWatchesActionRef.get()
-        .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.getAddWatchKeystroke()), editorComponent);
-      JComponent component = myEvaluateComboBox.getComponent();
-      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(component);
-      component.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
-      component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-      if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
       }
-      return component;
+    });
+    editorComponent.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
+
+    myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
+      private int selectedIndexOnPopupOpen = -1;
+
+      @Override
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        selectedIndexOnPopupOpen = myEvaluateComboBox.getComboBox().getSelectedIndex();
+        myEvaluateComboBox.requestFocusInEditor();
+        DebuggerEvaluationStatisticsCollector.HISTORY_SHOW.log(getTree().getProject());
+      }
+
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        if (myEvaluateComboBox.getComboBox().getSelectedIndex() != selectedIndexOnPopupOpen) {
+          DebuggerEvaluationStatisticsCollector.HISTORY_CHOOSE.log(getTree().getProject());
+        }
+      }
+    });
+    addToWatchesActionRef.get()
+      .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.getAddWatchKeystroke()), editorComponent);
+    JComponent component = myEvaluateComboBox.getComponent();
+    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(component);
+    component.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
+    component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
+    }
+    return component;
     //}
     //return null;
   }
