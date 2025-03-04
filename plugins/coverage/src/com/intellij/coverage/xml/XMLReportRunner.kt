@@ -16,7 +16,7 @@ class XMLReportRunner : CoverageRunner() {
   override fun loadCoverageDataWithLogging(
     sessionDataFile: File,
     baseCoverageSuite: CoverageSuite?,
-    reporter: CoverageLoadErrorReporter?
+    reporter: CoverageLoadErrorReporter
   ): LoadCoverageResult = error("Should not be called")
   override fun getPresentableName() = JavaCoverageBundle.message("coverage.xml.report.title")
   override fun getId() = "jacoco_xml_report"

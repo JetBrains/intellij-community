@@ -37,10 +37,10 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public LoadCoverageResult loadCoverageDataWithLogging(
+  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
     final @NotNull File sessionDataFile,
     final @Nullable CoverageSuite coverageSuite,
-    final @Nullable CoverageLoadErrorReporter reporter
+    final @NotNull CoverageLoadErrorReporter reporter
   ) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
@@ -50,9 +50,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
-        if (reporter != null) {
-          reporter.reportError("Error reading source map associated with coverage data: " + e.getMessage(), e);
-        }
+        reporter.reportWarning("Error reading source map associated with coverage data: " + e.getMessage(), e);
       }
     }
     if (coverageSuite instanceof JavaCoverageSuite javaSuite) {

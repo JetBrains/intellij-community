@@ -50,10 +50,10 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
 
   @Override
-  public LoadCoverageResult loadCoverageDataWithLogging(
+  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
     @NotNull File sessionDataFile,
     @Nullable CoverageSuite baseCoverageSuite,
-    @Nullable CoverageLoadErrorReporter reporter
+    @NotNull CoverageLoadErrorReporter reporter
   ) {
     final ProjectData data = new ProjectData();
     try {
@@ -70,18 +70,17 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     catch (IOException e) {
       processError(sessionDataFile, e, reporter);
-      String message = "Could not load Jacoco coverage data in file " + sessionDataFile + " because of IO exception: " + e.getMessage();
-      return new FailedLoadCoverageResult(data, message, e);
+      return new FailedLoadCoverageResult(e, true, data);
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.error(e);
-      return new FailedLoadCoverageResult(data, "Could not load Jacoco coverage data in file " + sessionDataFile + ": " + e.getMessage(), e);
+      return new FailedLoadCoverageResult(e, false, data);
     }
     return new SuccessLoadCoverageResult(data);
   }
 
-  private static void processError(@NotNull File sessionDataFile, IOException e,  @Nullable CoverageLoadErrorReporter reporter) {
+  private static void processError(@NotNull File sessionDataFile, IOException e,  @NotNull CoverageLoadErrorReporter reporter) {
     final String path = sessionDataFile.getAbsolutePath();
     if ("Invalid execution data file.".equals(e.getMessage())) {
       Notifications.Bus.notify(new Notification("Coverage",
@@ -89,10 +88,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                 JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
                                                 NotificationType.ERROR));
       LOG.info(e);
-      if (reporter != null) {
-        String message = CoverageBundle.message("coverage.error.loading.report") + ": " + JavaCoverageBundle.message("coverage.error.jacoco.report.format", path);
-        reporter.reportError(message, e);
-      }
+      String message = CoverageBundle.message("coverage.error.loading.report") + ": " + JavaCoverageBundle.message("coverage.error.jacoco.report.format", path);
+      reporter.reportWarning(message, e);
     }
     else if (e.getMessage() != null && e.getMessage().startsWith("Unknown block type")) {
       Notifications.Bus.notify(new Notification("Coverage",
@@ -100,16 +97,12 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                 JavaCoverageBundle.message("coverage.error.jacoco.report.corrupted", path),
                                                 NotificationType.ERROR));
       LOG.info(e);
-      if (reporter != null) {
-        String message = CoverageBundle.message("coverage.error.loading.report") + ": " + JavaCoverageBundle.message("coverage.error.jacoco.report.corrupted", path);
-        reporter.reportError(message, e);
-      }
+      String message = CoverageBundle.message("coverage.error.loading.report") + ": " + JavaCoverageBundle.message("coverage.error.jacoco.report.corrupted", path);
+      reporter.reportWarning(message, e);
     }
     else {
       LOG.error(e);
-      if (reporter != null) {
-        reporter.reportError("Error loading Jacoco coverage data in file " + path + ": " + e.getMessage(), e);
-      }
+      reporter.reportError(e);
     }
   }
 
@@ -118,7 +111,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                         @Nullable Module mainModule,
                                         @NotNull Project project,
                                         CoverageSuite suite,
-                                        @Nullable CoverageLoadErrorReporter reporter) throws IOException {
+                                        @NotNull CoverageLoadErrorReporter reporter) throws IOException {
     ExecFileLoader loader = new ExecFileLoader();
     final CoverageBuilder coverageBuilder = new CoverageBuilder();
     loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite, reporter);
@@ -173,22 +166,24 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                   @NotNull Project project,
                                                   ExecFileLoader loader,
                                                   JavaCoverageSuite suite,
-                                                  @Nullable CoverageLoadErrorReporter reporter) throws IOException {
+                                                  @NotNull CoverageLoadErrorReporter reporter) throws IOException {
     loader.load(sessionDataFile);
 
     final Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), coverageBuilder);
 
     final Module[] modules = getModules(mainModule, project);
-    if (modules.length == 0 && reporter != null) {
+    if (modules.length == 0) {
       String message = "Could not find modules in project, the coverage data will not be loaded";
-      reporter.reportError(message, new IllegalStateException(message));
+      LOG.warn(message);
+      reporter.reportWarning(message, null);
     }
     final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     for (Module module : modules) {
       final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(manager, module, true);
-      if (roots.length == 0 && reporter != null) {
+      if (roots.length == 0) {
         String message = "Could not find source roots for module " + module.getName() + ", the coverage data will not be loaded";
-        reporter.reportError(message, new IllegalStateException(message));
+        LOG.warn(message);
+        reporter.reportWarning(message, null);
         continue;
       }
       for (VirtualFile root : roots) {
@@ -206,18 +201,15 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
               }
               catch (Exception e) {
                 LOG.info(e);
-                if (reporter != null) {
-                  reporter.reportError("Exception occurred while analysing file " + file.getPath() + ": " + e.getMessage(), e);
-                }
+                reporter.reportWarning(e);
               }
               return FileVisitResult.CONTINUE;
             }
           });
         }
         catch (NoSuchFileException e) {
-          if (reporter != null) {
-            reporter.reportError("Could not find file " + e.getFile() + ": " + e.getMessage(), e);
-          }
+          LOG.warn(e);
+          reporter.reportWarning(e);
         }
       }
     }
@@ -319,9 +311,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     for (CoverageSuite aSuite : suite.getSuites()) {
       File coverageFile = new File(aSuite.getCoverageDataFileName());
       try {
-        loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0], null);
+        loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0], new DummyCoverageLoadErrorReporter());
       } catch (IOException e) {
-        processError(coverageFile, e, null);
+        processError(coverageFile, e, new DummyCoverageLoadErrorReporter());
       }
     }
 
