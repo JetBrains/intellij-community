@@ -21,7 +21,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
@@ -597,16 +596,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     val listener = MyLoggingListener()
     tree.addListener(listener, getTestRootDisposable())
     val mavenProject = tree.findProject(projectPom)!!
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              mavenProject,
-              mavenGeneralSettings,
-              embeddersManager)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+    resolve(project, mavenProject, mavenGeneralSettings)
     assertEquals(log().add("resolved", "project"), listener.log)
     assertFalse(mavenProject.problems.isEmpty())
   }
@@ -1640,16 +1630,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                        """.trimIndent())
     updateAll(projectPom)
     val parentProject = tree.findProject(projectPom)
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              parentProject!!,
-              mavenGeneralSettings,
-              embeddersManager)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+    resolve(project, parentProject!!, mavenGeneralSettings)
     val f = dir.resolve("tree.dat")
     tree.save(f)
     val read = MavenProjectsTree.read(project, f)
@@ -1708,16 +1689,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profiles>
                         """.trimIndent())
     updateAll(projectPom)
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              tree.rootProjects[0],
-              mavenGeneralSettings,
-              embeddersManager)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+    resolve(project, tree.rootProjects[0], mavenGeneralSettings)
     assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "three")
   }
 
@@ -1793,16 +1765,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       "parent1Profile",
       "parent2Profile",
       "settings")
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              mavenProject,
-              mavenGeneralSettings,
-              embeddersManager)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+    resolve(project, mavenProject, mavenGeneralSettings)
     assertUnorderedElementsAreEqual(
       mavenProject.activatedProfilesIds.enabledProfiles,
       "projectProfile",
@@ -1927,16 +1890,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), mavenProject.buildDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), mavenProject.outputDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), mavenProject.testOutputDirectory)
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              mavenProject,
-              mavenGeneralSettings,
-              embeddersManager)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+    resolve(project, mavenProject, mavenGeneralSettings)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), mavenProject.buildDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), mavenProject.outputDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), mavenProject.testOutputDirectory)
