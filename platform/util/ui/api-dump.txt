@@ -4795,6 +4795,12 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$VersionControl$Log
 - s:verticalPaddingKey():java.lang.String
 com.intellij.util.ui.JBUI$CurrentTheme$Window
 - s:getBorder(Z):javax.swing.border.Border
+f:com.intellij.util.ui.JBUI$DialogSizes
+- <init>():V
+- s:extraLarge():java.awt.Dimension
+- s:large():java.awt.Dimension
+- s:medium():java.awt.Dimension
+- s:small():java.awt.Dimension
 f:com.intellij.util.ui.JBUI$Fonts
 - <init>():V
 - s:create(java.lang.String,I):com.intellij.util.ui.JBFont

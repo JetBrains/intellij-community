@@ -2620,4 +2620,22 @@ public final class JBUI {
   private static boolean isNewUI() {
     return NewUiValue.isEnabled();
   }
+
+  public static final class DialogSizes {
+    public static @NotNull Dimension small() {
+      return size(350, 250);
+    }
+
+    public static @NotNull Dimension medium() {
+      return size(500, 350);
+    }
+
+    public static @NotNull Dimension large() {
+      return size(750, 525);
+    }
+
+    public static @NotNull Dimension extraLarge() {
+      return size(1000, 700);
+    }
+  }
 }

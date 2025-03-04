@@ -47,7 +47,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   @Override
   public @Nullable Dimension getInitialSize() {
-    return JBUI.size(500, 350);
+    return JBUI.DialogSizes.medium();
   }
 
   /**
