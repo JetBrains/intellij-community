@@ -176,7 +176,7 @@ class KotlinPluginKindSwitcherController {
 const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
 
 private var useK2Plugin: Boolean?
-    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ KotlinPluginModeProvider.isK2Mode())?.toBoolean()
+    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ true)?.toBoolean()
     set(value) {
         VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, value?.toString())
     }
