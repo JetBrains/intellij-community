@@ -520,7 +520,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     rebuildViews();
   }
 
+  /**
+   * @deprecated Use {@link XDebugSessionTab#showWatchesView(XDebugSessionProxy)} instead
+   */
+  @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
+    showWatchesView(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+  }
+
+  public static void showWatchesView(@NotNull XDebugSessionProxy session) {
     XDebugSessionTab tab = session.getSessionTab();
     if (tab == null) return;
     tab.showView(tab.getWatchesContentId());

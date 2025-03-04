@@ -236,7 +236,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
                 }
               }
             });
-            XDebugSessionImpl session = getSession();
+            XDebugSessionProxy session = getSessionProxy();
             if (session != null) {
               InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
             }
@@ -302,10 +302,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     XExpression expression = myEvaluateComboBox.getExpression();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       myEvaluateComboBox.saveTextInHistory();
-      XDebugSession session = getSession();
+      XDebugSessionProxy session = getSessionProxy();
       if (session != null) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(XEvaluationListener.TOPIC)
-          .inlineEvaluatorInvoked(session, expression);
+          .inlineEvaluatorInvoked(session.getProject(), expression);
       }
       else {
         // It is not an error: it may be so if evaluating when the session is finished already
@@ -425,7 +425,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode, boolean noDuplicates) {
     ThreadingAssertions.assertEventDispatchThread();
-    XDebugSessionImpl session = getSession();
+    XDebugSessionProxy session = getSessionProxy();
     boolean found = false;
     if (noDuplicates) {
       for (WatchNode child : myRootNode.getWatchChildren()) {
@@ -467,7 +467,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void addInlineWatchExpression(@NotNull InlineWatch watch, int index, boolean navigateToWatchNode) {
     ThreadingAssertions.assertEventDispatchThread();
-    XDebugSessionImpl session = getSession();
+    XDebugSessionProxy session = getSessionProxy();
 
     ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index,
                                                                  navigateToWatchNode);

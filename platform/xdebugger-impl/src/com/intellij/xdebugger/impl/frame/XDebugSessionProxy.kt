@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -25,6 +26,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.event.HyperlinkListener
 
 @ApiStatus.Internal
 interface XDebugSessionProxy {
@@ -39,7 +41,17 @@ interface XDebugSessionProxy {
   val extraStopActions: List<AnAction>
   val processHandler: ProcessHandler
   val coroutineScope: CoroutineScope
+  val editorsProvider: XDebuggerEditorsProvider
+  val valueMarkers: XValueMarkers<*, *>?
+  val sessionTab: XDebugSessionTab?
+  val isStopped: Boolean
+  val isPaused: Boolean
 
+  @get:NlsSafe
+  val currentStateMessage: String
+  val currentStateHyperlinkListener: HyperlinkListener?
+
+  fun getCurrentPosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
@@ -84,9 +96,29 @@ interface XDebugSessionProxy {
       get() = session.debugProcess.processHandler
     override val coroutineScope: CoroutineScope
       get() = (session as XDebugSessionImpl).coroutineScope
+    override val editorsProvider: XDebuggerEditorsProvider
+      get() = session.debugProcess.editorsProvider
+    override val valueMarkers: XValueMarkers<*, *>?
+      get() = (session as XDebugSessionImpl).valueMarkers
+    override val sessionTab: XDebugSessionTab?
+      get() = (session as? XDebugSessionImpl)?.sessionTab
+    override val isPaused: Boolean
+      get() = session.isPaused
+    override val isStopped: Boolean
+      get() = session.isStopped
+
+    override val currentStateHyperlinkListener: HyperlinkListener?
+      get() = session.debugProcess.currentStateHyperlinkListener
+
+    override val currentStateMessage: String
+      get() = session.debugProcess.currentStateMessage
 
     override suspend fun sessionId(): XDebugSessionId {
       return (session as XDebugSessionImpl).id()
+    }
+
+    override fun getCurrentPosition(): XSourcePosition? {
+      return session.currentPosition
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {

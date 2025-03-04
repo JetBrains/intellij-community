@@ -27,6 +27,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import javax.swing.event.HyperlinkListener
 
 internal class FrontendXDebuggerSession(
   override val project: Project,
@@ -72,10 +73,10 @@ internal class FrontendXDebuggerSession(
       }
     }.stateIn(cs, SharingStarted.Eagerly, sessionDto.initialSessionState)
 
-  val isStopped: Boolean
+  override val isStopped: Boolean
     get() = sessionState.value.isStopped
 
-  val isPaused: Boolean
+  override val isPaused: Boolean
     get() = sessionState.value.isPaused
 
   val isReadOnly: Boolean
@@ -87,10 +88,14 @@ internal class FrontendXDebuggerSession(
   val isSuspended: Boolean
     get() = sessionState.value.isSuspended
 
-  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
-                                                  ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
+  override val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
+                                                           ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
 
-  val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
+  override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
+
+  private var _sessionTab: XDebugSessionTab? = null
+  override val sessionTab: XDebugSessionTab?
+    get() = _sessionTab
 
   init {
     cs.launch {
@@ -111,6 +116,7 @@ internal class FrontendXDebuggerSession(
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.icon, tabInfo.executionEnvironment, tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
+          _sessionTab = this
           proxy.onTabInitialized(this)
           if (tabInfo.shouldShowTab) {
             showTab()
@@ -143,7 +149,13 @@ internal class FrontendXDebuggerSession(
   override val processHandler: ProcessHandler
     get() = TODO("Not yet implemented")
   override val coroutineScope: CoroutineScope
+    get() = cs
+  override val currentStateMessage: String
     get() = TODO("Not yet implemented")
+  override val currentStateHyperlinkListener: HyperlinkListener?
+    get() = TODO("Not yet implemented")
+
+  override fun getCurrentPosition(): XSourcePosition? = sourcePosition.value
 
   override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
     TODO("Not yet implemented")
@@ -201,9 +213,7 @@ internal class FrontendXDebuggerSession(
     TODO("Not yet implemented")
   }
 
-  override suspend fun sessionId(): XDebugSessionId {
-    TODO("Not yet implemented")
-  }
+  override suspend fun sessionId(): XDebugSessionId = id
 
   fun closeScope() {
     cs.cancel()
