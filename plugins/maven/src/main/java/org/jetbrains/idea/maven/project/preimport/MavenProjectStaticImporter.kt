@@ -456,7 +456,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
           val file = aggregatorProjectFile.parent.findFileOrDirectory(it)?.let { fod ->
             if (fod.isDirectory) fod.findChild(MavenConstants.POM_XML) else fod
           }
-          if (file == null) return@launch
+          if (file == null || tree.hasFile(file)) return@launch
           val rootModel = MavenJDOMUtil.read(file, null) ?: return@launch
           val mavenProjectData = readProject(rootModel, file)
           tree.addChild(aggregatorProject, mavenProjectData)
@@ -721,6 +721,12 @@ private class ProjectTree {
       fullMavenIds[newMavenId] = data
       managedMavenIds[trimVersion(newMavenId)] = data
 
+    }
+  }
+
+  suspend fun hasFile(file: VirtualFile): Boolean {
+    return mutex.withLock {
+      allProjects.contains(file)
     }
   }
 

@@ -831,4 +831,54 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
     assertModules("project", "m1", "m2")
   }
 
+  @Test
+  fun testImportProjectWithEmptyModulesShouldFinish() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <modules>
+                        <module></module>
+                    </modules>
+                    """.trimIndent())
+    assertModules("project")
+  }
+
+  @Test
+  fun testImportProjectWithCyclicAggregatorsModulesShouldFinish() = runBlocking {
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        <modules>
+            <module>../m2</module>
+        </modules>            
+        """)
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        <modules>
+            <module>../m1</module>
+        </modules>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                    </modules>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+  }
+
 }
