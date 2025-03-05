@@ -96,7 +96,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     registerApplicationDynamicExtensionPoint("com.intellij.filetype.decompiler", BinaryFileTypeDecompilers.class);
     registerApplicationDynamicExtensionPoint("com.intellij.psi.classFileDecompiler", ClassFileDecompilers.Decompiler.class);
-    addExtension(ClassFileDecompilers.EP_NAME, new ClsDecompilerImpl());
+    addExtension(ClassFileDecompilers.STATIC_EP_NAME, new ClsDecompilerImpl());
   }
 
   // overridden in upsource
