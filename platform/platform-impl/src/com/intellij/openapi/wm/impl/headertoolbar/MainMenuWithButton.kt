@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
@@ -24,6 +26,8 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ChangeEvent
 import kotlin.math.roundToInt
+
+private val LOG = Logger.getInstance(MainMenuWithButton::class.java)
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
@@ -88,7 +92,7 @@ class MainMenuWithButton(
         while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
           val itemToWidth = toolbarMainMenu.pollNextInvisibleItem(expandableMenu) ?: break
           val item = itemToWidth.first
-          val itemWidth = if (item.size.width > 0) item.size.width else itemToWidth.second
+          val itemWidth = itemToWidth.second
           if (availableWidth - itemWidth < widthLimit) {
             toolbarMainMenu.addInvisibleItem(item)
             break
@@ -114,12 +118,17 @@ class MainMenuWithButton(
     }
   }
 
+  fun recalculateWidth() {
+    val mainToolbar = UiComponentsSearchUtil.findUiComponent(frame) { _: MainToolbar -> true }
+    if (mainToolbar == null) {
+      LOG.info("Main toolbar not found for recalculation of the menu width")
+      return
+    }
+    recalculateWidth(mainToolbar)
+  }
 
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
-  fun clearRemovedItems() {
-    toolbarMainMenu.clearInvisibleItems()
-  }
 }
 
 @ApiStatus.Internal
@@ -167,6 +176,4 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBa
     if (expandableMenu == null || invisibleItems.isEmpty()) return false
     return rootMenuItems.size < expandableMenu.ideMenu.rootMenuItems.size && invisibleItems.isNotEmpty()
   }
-
-  fun getInvisibleItemsCount(): Int = invisibleItems.size
 }

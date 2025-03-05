@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
 import com.intellij.openapi.wm.impl.headertoolbar.MergedMainMenu
 import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.MenuSelectionManager
@@ -30,7 +31,6 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     val changeBarVisibility = newVisibleActions.isEmpty() || visibleActions.isEmpty()
     visibleActions = newVisibleActions
     menuBarComponent.removeAll()
-    val countOfInvisibleItems = (menuBarComponent as? MergedMainMenu)?.getInvisibleItemsCount() ?: 0
     (menuBarComponent as? MergedMainMenu)?.clearInvisibleItems()
 
     if (!newVisibleActions.isEmpty()) {
@@ -50,12 +50,9 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
             actionMenu.isFocusable = false
           }
         }
-        if (countOfInvisibleItems > 0 && newVisibleActions.indexOf(action) >= visibleActions.size - countOfInvisibleItems - 1) {
-          (menuBarComponent as? MergedMainMenu)?.addInvisibleItem(actionMenu)
-          continue
-        }
         menuBarComponent.add(actionMenu)
       }
+      (menuBarComponent.parent as? MainMenuWithButton)?.recalculateWidth()
     }
     presentationFactory.resetNeedRebuild()
     flavor.updateAppMenu()
