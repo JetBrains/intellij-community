@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
   ]
 )
 
