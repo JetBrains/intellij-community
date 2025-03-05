@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapperImpl
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.importing.MavenImportUtil.convertSettings
+import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -24,6 +25,8 @@ internal class MavenEmbedderWrappersImpl(private val myProject: Project) : Maven
   private val mutex = Mutex()
   private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
   private val jdk = getJdkForImporter(myProject)
+  private val generalSettings = MavenProjectsManager.getInstance(myProject).generalSettings
+  private val cache = MavenDistributionsCache.getInstance(myProject)
 
   override suspend fun getAlwaysOnlineEmbedder(baseDir: String): MavenEmbedderWrapper = getEmbedder(Path.of(baseDir), true)
 
@@ -40,9 +43,33 @@ internal class MavenEmbedderWrappersImpl(private val myProject: Project) : Maven
       if (null != existing) {
         return existing
       }
-      val multiModuleProjectDirectory = MavenDistributionsCache.getInstance(myProject).getMultimoduleDirectory(embedderDir)
+      val multiModuleProjectDirectory = cache.getMultimoduleDirectory(embedderDir)
       val connector = MavenServerManager.getInstance().getConnector(myProject, multiModuleProjectDirectory, jdk)
-      val newEmbedder = MavenEmbedderWrapperImpl(myProject, alwaysOnline, multiModuleProjectDirectory, connector)
+
+      var settings = convertSettings(myProject, generalSettings, multiModuleProjectDirectory)
+      if (alwaysOnline && settings.isOffline) {
+        settings = settings.clone()
+        settings.isOffline = false
+      }
+
+      val transformer = RemotePathTransformerFactory.createForProject(myProject)
+      var sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(myProject).projectSdk)
+      if (sdkPath != null) {
+        sdkPath = transformer.toRemotePath(sdkPath)
+      }
+      settings.projectJdk = sdkPath
+
+      val forceResolveDependenciesSequentially = Registry.Companion.`is`("maven.server.force.resolve.dependencies.sequentially")
+      val useCustomDependenciesResolver = Registry.Companion.`is`("maven.server.use.custom.dependencies.resolver")
+
+      val embedder = connector.createEmbedder(MavenEmbedderSettings(
+        settings,
+        transformer.toRemotePath(multiModuleProjectDirectory),
+        forceResolveDependenciesSequentially,
+        useCustomDependenciesResolver
+      ))
+
+      val newEmbedder = MavenEmbedderWrapperImpl(myProject, embedder)
       myEmbedders[baseDir] = newEmbedder
       return newEmbedder
     }

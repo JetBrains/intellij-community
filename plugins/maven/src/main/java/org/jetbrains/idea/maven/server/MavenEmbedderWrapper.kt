@@ -47,8 +47,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return embedder!!
   }
 
-  internal abstract fun isCompatibleWith(project: Project, multiModuleDirectory: String) : Boolean
-
   private fun convertWorkspaceMap(map: MavenWorkspaceMap?): MavenWorkspaceMap? {
     if (null == map) return null
     val transformer = RemotePathTransformerFactory.createForProject(project)
