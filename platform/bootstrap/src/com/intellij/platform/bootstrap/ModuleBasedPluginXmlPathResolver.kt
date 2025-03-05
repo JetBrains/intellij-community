@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.ReadModuleContext
+import com.intellij.ide.plugins.parser.XIncludeLoader
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
