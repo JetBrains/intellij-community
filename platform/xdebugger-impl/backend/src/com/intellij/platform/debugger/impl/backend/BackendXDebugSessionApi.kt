@@ -17,11 +17,7 @@ import fleet.kernel.rete.query
 import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
@@ -104,6 +100,21 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
     withContext(Dispatchers.EDT) {
       session.stepOver(ignoreBreakpoints)
+    }
+  }
+
+  override suspend fun updateExecutionPosition(sessionId: XDebugSessionId) {
+    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    withContext(Dispatchers.EDT) {
+      session.updateExecutionPosition()
+    }
+  }
+
+  override suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback) {
+    val tab = tabInfo.tab ?: return
+    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session as? XDebugSessionImpl ?: return
+    withContext(Dispatchers.EDT) {
+      session.tabInitialized(tab)
     }
   }
 }

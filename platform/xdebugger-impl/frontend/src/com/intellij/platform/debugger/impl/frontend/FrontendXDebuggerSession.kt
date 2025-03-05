@@ -14,6 +14,7 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -134,26 +135,25 @@ internal class FrontendXDebuggerSession(
 
   // TODO all of the methods below
   // TODO pass in DTO?
-  override val sessionName: String
-    get() = TODO("Not yet implemented")
+  override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData
     get() = TODO("Not yet implemented")
   override val consoleView: ConsoleView?
     get() = TODO("Not yet implemented")
   override val restartActions: List<AnAction>
-    get() = TODO("Not yet implemented")
+    get() = emptyList() // TODO
   override val extraActions: List<AnAction>
-    get() = TODO("Not yet implemented")
+    get() = emptyList() // TODO
   override val extraStopActions: List<AnAction>
-    get() = TODO("Not yet implemented")
+    get() = emptyList() // TODO
   override val processHandler: ProcessHandler
     get() = TODO("Not yet implemented")
   override val coroutineScope: CoroutineScope
     get() = cs
   override val currentStateMessage: String
-    get() = TODO("Not yet implemented")
+    get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
   override val currentStateHyperlinkListener: HyperlinkListener?
-    get() = TODO("Not yet implemented")
+    get() = null // TODO
 
   override fun getCurrentPosition(): XSourcePosition? = sourcePosition.value
 
@@ -206,11 +206,15 @@ internal class FrontendXDebuggerSession(
   }
 
   override fun updateExecutionPosition() {
-    TODO("Not yet implemented")
+    cs.launch {
+      XDebugSessionApi.getInstance().updateExecutionPosition(id)
+    }
   }
 
   override fun onTabInitialized(tab: XDebugSessionTab) {
-    TODO("Not yet implemented")
+    cs.launch {
+      XDebugSessionApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
+    }
   }
 
   override suspend fun sessionId(): XDebugSessionId = id

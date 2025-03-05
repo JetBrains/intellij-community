@@ -39,6 +39,10 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean)
 
+  suspend fun updateExecutionPosition(sessionId: XDebugSessionId)
+
+  suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {
@@ -56,7 +60,8 @@ data class XDebugSessionId(val id: UID)
 data class XDebugSessionDto(
   val id: XDebugSessionId,
   val editorsProviderDto: XDebuggerEditorsProviderDto,
-  val initialSessionState: XDebugSessionState
+  val initialSessionState: XDebugSessionState,
+  val sessionName: String,
 )
 
 @ApiStatus.Internal
@@ -86,6 +91,12 @@ sealed interface XDebuggerSessionTabAbstractInfo
 data class XDebuggerSessionTabInfoNoInit(
   @Transient val tab: XDebugSessionTab? = null,
 ) : XDebuggerSessionTabAbstractInfo
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerSessionTabInfoCallback(
+  @Transient val tab: XDebugSessionTab? = null,
+)
 
 @ApiStatus.Internal
 @Serializable
