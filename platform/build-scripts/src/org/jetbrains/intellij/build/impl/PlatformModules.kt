@@ -531,7 +531,7 @@ private val excludedPaths = java.util.Set.of(
   "/META-INF/RdServer.xml",
   "/META-INF/unattendedHost.xml",
   "/META-INF/cwmBackendConnection.xml",
-  "/META-INF/codeWithMeFrontend.xml",
+  "/META-INF/cwmConnectionFrontend.xml",
 )
 
 private val COMMUNITY_IMPL_EXTENSIONS = setOf(
