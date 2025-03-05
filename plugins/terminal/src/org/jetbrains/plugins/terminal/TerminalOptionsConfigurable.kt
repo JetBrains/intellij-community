@@ -9,19 +9,23 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.FontComboBox
+import com.intellij.ui.FontInfoRenderer
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.selectedValueIs
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import org.jetbrains.plugins.terminal.TerminalBundle.message
-import org.jetbrains.plugins.terminal.TerminalUtil.*
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
@@ -44,36 +48,32 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
 
     return panel {
-
-      // This one takes a bit more than just setting a flag to apply,
-      // so we bind the checkbox to a local var and then use its value in an onApply callback.
-      var isGenOneTerminalEnabled = isGenOneTerminalEnabled()
-
-      lateinit var newTerminalCheckbox: Cell<JBCheckBox>
-      lateinit var newTerminalConfigurables: List<Cell<JComponent>>
+      lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
 
       panel {
-
-        fun updateNewUiEnabledState(isEnabled: Boolean) {
-          newTerminalConfigurables.forEach {
-            setEnabledRecursively(it.component, isEnabled)
-          }
-        }
-
         row {
-          @Suppress("DialogTitleCapitalization") // New Terminal is used as a proper noun here, so it's a false positive
-          newTerminalCheckbox = checkBox(message("settings.enable.new.ui"))
-            .bindSelected(
-              getter = { isGenOneTerminalEnabled },
-              setter = { isGenOneTerminalEnabled = it }
-            )
-            .onChanged { newUiCheckbox ->
-              updateNewUiEnabledState(newUiCheckbox.isSelected)
+          val values = if (TerminalUtil.getGenOneTerminalVisibilityValue() == true
+                           // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
+                           // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
+                           // show this option as well to avoid the errors.
+                           || TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL) {
+            listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC, TerminalEngine.NEW_TERMINAL)
+          }
+          else listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC)
+
+          val renderer = listCellRenderer<TerminalEngine?> {
+            text(value?.presentableName ?: "")
+            if (value == TerminalEngine.REWORKED) {
+              icon(AllIcons.General.Beta)
             }
-            .onApply {
-              setGenOneTerminalEnabled(project, isGenOneTerminalEnabled)
-            }
-          icon(AllIcons.General.Beta)
+          }
+
+          terminalEngineComboBox = comboBox(values, renderer)
+            .label(message("settings.terminal.engine"))
+            .bindItem(
+              getter = { TerminalEngine.getValue() },
+              setter = { it?.let { TerminalEngine.setValue(it) } }
+            ).component
         }
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
@@ -87,14 +87,15 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               radioButton(message("settings.shell.prompt"), value = TerminalPromptStyle.SHELL)
               contextHelp(message("settings.shell.prompt.description"))
             }
-          }.enabledIf(newTerminalCheckbox.selected)
-            .bind(blockTerminalOptions::promptStyle)
+          }.bind(blockTerminalOptions::promptStyle)
+
           panel {
-            newTerminalConfigurables = configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
-            updateNewUiEnabledState(isGenOneTerminalEnabled)
+            configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
           }
-        }
-      }.visible(isGenOneTerminalOptionVisible())
+
+        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
+
+      }.visibleIf(newUiPredicate())
 
       group(message("settings.terminal.project.settings")) {
         row(message("settings.start.directory")) {
@@ -150,7 +151,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
-            .visible(isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled())
+            .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
         }
         row {
           checkBox(message("settings.audible.bell"))
@@ -203,12 +204,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   }
 }
 
-private fun Panel.configurables(configurables: List<UnnamedConfigurable>): List<Cell<JComponent>> {
-  val result = mutableListOf<Cell<JComponent>>()
+private fun Panel.configurables(configurables: List<UnnamedConfigurable>) {
   for (configurable in configurables) {
     val component = configurable.createComponent() ?: continue
     row {
-      result += cell(component).onApply {
+      cell(component).onApply {
         try {
           configurable.apply()
         }
@@ -227,7 +227,6 @@ private fun Panel.configurables(configurables: List<UnnamedConfigurable>): List<
       }
     }
   }
-  return result
 }
 
 private fun <T : JComponent> Cell<T>.setupDefaultValue(
@@ -245,6 +244,13 @@ private fun <T : JComponent> Cell<T>.setupDefaultValue(
       component.emptyText.text = defaultValue
     }
   }
+}
+
+private fun newUiPredicate(): ComponentPredicate {
+  return if (ExperimentalUI.isNewUI()) {
+    ComponentPredicate.TRUE
+  }
+  else ComponentPredicate.FALSE
 }
 
 private fun getDefaultValueColor(): Color {
