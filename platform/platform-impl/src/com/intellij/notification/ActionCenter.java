@@ -20,8 +20,6 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class ActionCenter {
-  public static final String TOOL_WINDOW_ID = NotificationsToolWindowFactory.ID;
-
   public static final String EVENT_REQUESTOR = "Internal notification event requestor";
 
   public static final Topic<EventListener> MODEL_CHANGED =
@@ -40,25 +38,39 @@ public final class ActionCenter {
     return NotificationsToolWindowFactory.Companion.getNotifications(project);
   }
 
-  public static void showNotification(@NotNull Project project) {
-    ToolWindow window = getToolWindow(project);
-    if (window != null) {
-      window.show();
-    }
-  }
-
   public static void expireNotifications(@NotNull Project project) {
     for (Notification notification : getNotifications(project)) {
       notification.expire();
     }
   }
 
-  public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
+  private static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
     return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
   }
 
   public static @NotNull @Nls String getToolwindowName() {
     return IdeBundle.message("toolwindow.stripe.Notifications");
+  }
+
+  public static void showLog(@NotNull Project project) {
+    ToolWindow window = getToolWindow(project);
+    if (window != null) {
+      window.show();
+    }
+  }
+
+  public static void activateLog(@NotNull Project project) {
+    ToolWindow window = getToolWindow(project);
+    if (window != null) {
+      window.activate(null);
+    }
+  }
+
+  public static void activateLog(@NotNull Project project, boolean focus) {
+    ToolWindow window = getToolWindow(project);
+    if (window != null) {
+      window.activate(null, focus);
+    }
   }
 
   public static void toggleLog(@Nullable Project project) {

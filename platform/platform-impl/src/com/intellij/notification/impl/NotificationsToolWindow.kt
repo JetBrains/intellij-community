@@ -1856,7 +1856,7 @@ private class ProjectNotificationModel {
         project.closeAllBalloons()
       }
 
-      val toolWindow = ActionCenter.getToolWindow(project)
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
       toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
     }
   }
