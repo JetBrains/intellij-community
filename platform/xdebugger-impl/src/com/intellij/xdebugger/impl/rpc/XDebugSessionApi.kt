@@ -39,6 +39,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean)
 
+  suspend fun triggerUpdate(sessionId: XDebugSessionId)
+
   suspend fun updateExecutionPosition(sessionId: XDebugSessionId)
 
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)

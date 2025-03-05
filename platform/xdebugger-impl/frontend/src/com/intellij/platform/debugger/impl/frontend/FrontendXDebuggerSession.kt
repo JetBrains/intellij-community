@@ -113,7 +113,7 @@ internal class FrontendXDebuggerSession(
     cs.launch {
       if (tabInfo !is XDebuggerSessionTabInfo) return@launch
 
-      val proxy = createProxy(this@FrontendXDebuggerSession)
+      val proxy = this@FrontendXDebuggerSession
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.icon, tabInfo.executionEnvironment, tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
@@ -186,7 +186,7 @@ internal class FrontendXDebuggerSession(
   }
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    TODO("Not yet implemented")
+    return object : XDebugTabLayouter() {} // TODO
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
@@ -194,15 +194,17 @@ internal class FrontendXDebuggerSession(
   }
 
   override fun rebuildViews() {
-    TODO("Not yet implemented")
+    cs.launch {
+      XDebugSessionApi.getInstance().triggerUpdate(id)
+    }
   }
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    TODO("Not yet implemented")
+    // TODO
   }
 
   override fun putKey(sink: DataSink) {
-    TODO("Not yet implemented")
+    // do nothing, proxy is already set in tab
   }
 
   override fun updateExecutionPosition() {
@@ -223,5 +225,3 @@ internal class FrontendXDebuggerSession(
     cs.cancel()
   }
 }
-
-private fun createProxy(session: FrontendXDebuggerSession): XDebugSessionProxy = session
