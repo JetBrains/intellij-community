@@ -5,6 +5,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.parser.ReadModuleContext
+import com.intellij.ide.plugins.parser.convert
+import com.intellij.ide.plugins.parser.elements.OS
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -84,6 +86,7 @@ class DescriptorListLoadingContext(
 
   override val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
+  override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
 
   override fun close() {
     for (ref in toDispose) {

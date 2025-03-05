@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
@@ -637,7 +636,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     var name: String? = null
     var loadingRule = LoadingRule.OPTIONAL
-    var os: ExtensionDescriptor.Os? = null
+    var os: OS? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
@@ -651,7 +650,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
-        PluginXmlConst.CONTENT_MODULE_OS_ATTR -> os = readOs(reader.getAttributeValue(i))
+        PluginXmlConst.CONTENT_MODULE_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
       }
     }
 
@@ -661,12 +660,12 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      if (os == null || os.isSuitableForOs()) {
+      if (os == null || readContext.elementOsFilter(os)) {
         builder.addContentModule(ContentElement.Module(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
       }
     }
     else {
-      if (os == null || os.isSuitableForOs()) {
+      if (os == null || readContext.elementOsFilter(os)) {
         val fromIndex = reader.textStart
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
@@ -724,6 +723,8 @@ private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptor
 @ApiStatus.Internal
 interface ReadModuleContext {
   val interner: XmlInterner
+
+  val elementOsFilter: (OS) -> Boolean
 
   val isMissingIncludeIgnored: Boolean
     get() = false
@@ -877,17 +878,6 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedE
   }
 
   assert(reader.isEndElement)
-}
-
-private fun readOs(value: String): ExtensionDescriptor.Os {
-  return when (value) {
-    PluginXmlConst.OS_MAC_VALUE -> ExtensionDescriptor.Os.mac
-    PluginXmlConst.OS_LINUX_VALUE -> ExtensionDescriptor.Os.linux
-    PluginXmlConst.OS_WINDOWS_VALUE -> ExtensionDescriptor.Os.windows
-    PluginXmlConst.OS_UNIX_VALUE -> ExtensionDescriptor.Os.unix
-    PluginXmlConst.OS_FREEBSD_VALUE -> ExtensionDescriptor.Os.freebsd
-    else -> throw IllegalArgumentException("Unknown OS: $value")
-  }
 }
 
 private fun readOSValue(value: String): OS {

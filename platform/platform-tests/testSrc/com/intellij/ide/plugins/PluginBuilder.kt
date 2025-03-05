@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.parser.*
+import com.intellij.ide.plugins.parser.elements.OS
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
@@ -340,6 +341,8 @@ fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuilder {
   return PluginDescriptorFromXmlStreamConsumer(readContext = object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
+    override val elementOsFilter: (OS) -> Boolean
+      get() = { it.convert().isSuitableForOs() }
   }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""

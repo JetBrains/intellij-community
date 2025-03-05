@@ -4,6 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
+import com.intellij.ide.plugins.parser.convert
+import com.intellij.ide.plugins.parser.elements.OS
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.util.xml.dom.NoOpXmlInterner
@@ -20,6 +22,8 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
 
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
+    override val elementOsFilter: (OS) -> Boolean
+      get() = { it.convert().isSuitableForOs() }
   }, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, path.toString())
     it.getBuilder()
