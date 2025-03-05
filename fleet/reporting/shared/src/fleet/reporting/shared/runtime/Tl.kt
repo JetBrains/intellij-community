@@ -2,7 +2,8 @@
 package fleet.reporting.shared.runtime
 
 import fleet.tracing.runtime.Span
+import fleet.multiplatform.shims.ThreadLocal
 
-val currentSpanThreadLocal: ThreadLocal<Span> = ThreadLocal()
+val currentSpanThreadLocal: ThreadLocal<Span?> = ThreadLocal()
 
 val currentSpan: Span get() = currentSpanThreadLocal.get() ?: Span.Noop

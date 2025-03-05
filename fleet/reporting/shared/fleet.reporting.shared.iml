@@ -36,5 +36,6 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
+    <orderEntry type="module" module-name="fleet.multiplatform.shims" />
   </component>
 </module>
