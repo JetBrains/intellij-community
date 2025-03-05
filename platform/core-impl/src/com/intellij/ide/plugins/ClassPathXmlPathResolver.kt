@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.consume
+import com.intellij.ide.plugins.parser.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.UrlClassLoader
@@ -80,7 +77,7 @@ class ClassPathXmlPathResolver(
   }
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
-    val path = PluginXmlPathResolver.toLoadPath(relativePath)
+    val path = LoadPathUtil.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
     return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
       it.consume(reader)

@@ -4,7 +4,6 @@
 package com.intellij.ide.plugins.parser
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
@@ -779,7 +778,7 @@ private fun readInclude(
 
   var readError: IOException? = null
   val loadedXInclude = try {
-    val targetPath = PluginXmlPathResolver.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
+    val targetPath = LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
     xIncludeLoader.loadXIncludeReference(path = targetPath)
   }
   catch (e: IOException) {
@@ -790,9 +789,9 @@ private fun readInclude(
     // TODO
     //(consumer.readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
     //  rawPluginDescriptor = builder.raw,
-    //  path = loadedXInclude.diagnosticReferenceLocation ?: PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = consumer.includeBase),
+    //  path = loadedXInclude.diagnosticReferenceLocation ?: LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase),
     //)
-    consumer.pushIncludeBase(PluginXmlPathResolver.getChildBaseDir(base = consumer.includeBase, relativePath = path))
+    consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
       consumer.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)
     } finally {

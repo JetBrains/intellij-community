@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.consume
+import com.intellij.ide.plugins.parser.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
@@ -19,34 +16,6 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     // don't use Kotlin emptyList here
     @JvmField
     val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(pluginJarFiles = Collections.emptyList(), pool = null)
-
-    /**
-     * By default, plugin.xml resides in the `/META-INF/` directory, and it serves as a default for `baseDir`
-     *
-     * `intellij.*` and `kotlin.*` relative paths are treated as references to module XMLs which reside in resource root rather than in `META-INF`.
-     *
-     * Returned path does _not_ have leading '/' to use it in classloader's `getResource`
-     */
-    fun toLoadPath(relativePath: String, baseDir: String? = null): String {
-      return when {
-        relativePath[0] == '/' -> relativePath.substring(1)
-        relativePath.startsWith("intellij.")
-        // TODO to be removed after KTIJ-29799
-        || relativePath.startsWith("kotlin.") -> relativePath
-        else -> (baseDir ?: "META-INF") + '/' + relativePath
-      }
-    }
-
-    // FIXME this thing is bugged when relative path is an absolute path outside /META-INF, probably it has to trim first /
-    internal fun getChildBaseDir(base: String?, relativePath: String): String? {
-      val end = relativePath.lastIndexOf('/')
-      if (end <= 0 || relativePath.startsWith("/META-INF/")) {
-        return base
-      }
-
-      val childBase = relativePath.substring(0, end)
-      return if (base == null) childBase else "$base/$childBase"
-    }
   }
 
   override fun loadXIncludeReference(dataLoader: DataLoader, path: String): XIncludeLoader.LoadedXIncludeReference? {
@@ -78,7 +47,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
   }
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
-    val path = toLoadPath(relativePath)
+    val path = LoadPathUtil.toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
       return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
         it.consume(input, null)
