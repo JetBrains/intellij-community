@@ -14,11 +14,11 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
+import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.Icon
 import javax.swing.JFrame
 
@@ -77,12 +77,11 @@ class MainMenuWithButton(
           wasChanged = true
         }
       }
-
       else if (availableWidth > widthLimit) {
         while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
           val itemToWidth = toolbarMainMenu.pollNextInvisibleItem(expandableMenu) ?: break
           val item = itemToWidth.first
-          val itemWidth = if (item.size.width > 0) item.size.width else  itemToWidth.second
+          val itemWidth = if (item.size.width > 0) item.size.width else itemToWidth.second
           if (availableWidth - itemWidth < widthLimit) {
             toolbarMainMenu.addInvisibleItem(item)
             break
@@ -115,7 +114,7 @@ class MainMenuWithButton(
 }
 
 @ApiStatus.Internal
-class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
 
   init {
     isOpaque = false
@@ -123,23 +122,27 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar
     border = null
   }
 
-  private val invisibleItems: ConcurrentLinkedDeque<ActionMenu> = ConcurrentLinkedDeque<ActionMenu>()
+  /** Cache the item's width as its real size cannot be obtained when it is not painted.
+  item.preferredSize often twice bigger than the real one (when the menu item is not painted)
+  preferred size computed by ui class is also often +20px
+   */
+  private val invisibleItems: ConcurrentHashMap<String, Pair<ActionMenu, Int>> = ConcurrentHashMap()
+
 
   fun clearInvisibleItems() {
     invisibleItems.clear()
   }
 
   fun addInvisibleItem(item: ActionMenu) {
-    invisibleItems.offerLast(item) // Add to removed items (LIFO behavior)
+    val name = item.text
+    val width = item.size.width
+    invisibleItems.put(name, Pair(item, width))
   }
 
   internal fun pollNextInvisibleItem(expandableMenu: ExpandableMenu?): Pair<ActionMenu, Int>? {
     val expandableMenuNextItem = expandableMenu?.ideMenu?.rootMenuItems?.getOrNull(rootMenuItems.size) ?: return null
-    val lastItem = invisibleItems.last()
-    val matchingItem = if (lastItem.text == expandableMenuNextItem.text) lastItem
-    else invisibleItems.find { it.text == expandableMenuNextItem.text } ?: return null
-    invisibleItems.remove(matchingItem)
-    return Pair(matchingItem, expandableMenuNextItem.preferredSize.width)
+    val itemToWidth = invisibleItems[expandableMenuNextItem.text] ?: return null
+    return itemToWidth
   }
 
   internal fun hasInvisibleItems(expandableMenu: ExpandableMenu?): Boolean {
