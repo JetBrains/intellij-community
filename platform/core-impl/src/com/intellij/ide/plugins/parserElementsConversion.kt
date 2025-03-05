@@ -1,4 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.client.ClientKind
@@ -11,6 +12,7 @@ import com.intellij.platform.plugins.parser.elements.*
 import com.intellij.platform.plugins.parser.elements.OS.*
 import com.intellij.platform.plugins.parser.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.platform.plugins.parser.elements.ClientKind as ClientKindElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(

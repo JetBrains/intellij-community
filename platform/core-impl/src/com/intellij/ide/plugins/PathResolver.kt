@@ -32,6 +32,7 @@ interface PathResolver {
   }
 }
 
+@ApiStatus.Internal
 fun PathResolver.toXIncludeLoader(dataLoader: DataLoader): XIncludeLoader = object : XIncludeLoader {
   override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
     return loadXIncludeReference(dataLoader, path)
