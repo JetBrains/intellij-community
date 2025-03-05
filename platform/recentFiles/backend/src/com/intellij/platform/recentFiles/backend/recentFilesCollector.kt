@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
@@ -110,11 +111,13 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
 }
 
 private fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
-  val parentPath = Path(virtualFile.presentableUrl).parent
+  val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
   val sameNameFiles = FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project))
   val result = if (parentPath == null ||
                    parentPath.nameCount == 0 ||
-                   sameNameFiles.size <= 1) ""
+                   sameNameFiles.size <= 1) {
+    ""
+  }
   else {
     val filePath = parentPath.pathString
     val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
