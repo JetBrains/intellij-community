@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ChangeEvent
+import kotlin.math.roundToInt
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
@@ -142,17 +143,26 @@ class MainMenuWithButton(
 @ApiStatus.Internal
 class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
 
-  init {
-    isOpaque = false
-    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
-    border = null
-  }
-
   /** Cache the item's width as its real size cannot be obtained when it is not painted.
   item.preferredSize often twice bigger than the real one (when the menu item is not painted)
   preferred size computed by ui class is also often +20px
    */
   private val invisibleItems: ConcurrentHashMap<String, Pair<ActionMenu, Int>> = ConcurrentHashMap()
+
+  init {
+    isOpaque = false
+    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
+    border = null
+    JBUIScale.addUserScaleChangeListener {
+      val oldScale = it.oldValue as? Float ?: return@addUserScaleChangeListener
+      val newScale = it.newValue as? Float ?: return@addUserScaleChangeListener
+      if (oldScale == newScale || invisibleItems.isEmpty()) return@addUserScaleChangeListener
+      invisibleItems.forEach {
+        (name, itemToWidth) ->
+        val width = (itemToWidth.second / oldScale * newScale).roundToInt()
+        invisibleItems.put(name, Pair(itemToWidth.first, width))
+      } }
+  }
 
 
   fun clearInvisibleItems() {
