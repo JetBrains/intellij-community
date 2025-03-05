@@ -406,7 +406,7 @@ private fun readExtensionPoints(
         val partial = PluginDescriptorFromXmlStreamBuilder(
           builder.readContext,
           builder.dataLoader,
-          builder.pathResolver,
+          builder.xIncludeLoader,
           builder.includeBase,
         )
         readInclude(
@@ -738,7 +738,7 @@ private fun readInclude(
   reader: XMLStreamReader2,
   allowedPointer: String,
 ) {
-  val pathResolver = builder.pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location)
+  val pathResolver = builder.xIncludeLoader ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location)
   var path: String? = null
   var pointer: String? = null
   for (i in 0 until reader.attributeCount) {
