@@ -781,7 +781,7 @@ private fun readInclude(
 
   var readError: IOException? = null
   val loadedXInclude = try {
-    pathResolver.loadXIncludeReference(readContext = builder.readContext, dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path)
+    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path)
   }
   catch (e: IOException) {
     readError = e

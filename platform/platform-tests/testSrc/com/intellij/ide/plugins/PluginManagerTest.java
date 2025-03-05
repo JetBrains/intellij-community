@@ -296,8 +296,7 @@ public class PluginManagerTest {
       }
 
       @Override
-      public @Nullable LoadedXIncludeReference loadXIncludeReference(@NotNull ReadModuleContext readContext,
-                                                                     @NotNull DataLoader dataLoader,
+      public @Nullable LoadedXIncludeReference loadXIncludeReference(@NotNull DataLoader dataLoader,
                                                                      @Nullable String base,
                                                                      @NotNull String relativePath) {
         throw new UnsupportedOperationException();
