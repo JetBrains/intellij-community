@@ -6,10 +6,7 @@ import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -28,17 +25,6 @@ open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedP
             ConfigLibraryUtil.configureKotlinRuntime(module)
         } else {
             project.enableK1Compiler()
-        }
-    }
-
-    override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
-        super.tuneFixture(moduleBuilder)
-        if (pluginMode == KotlinPluginMode.K2) {
-            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
-        } else {
-            // For the K1 tests we want to use a Kotlin 1.x library because Kotlin 2 libraries might not be able to
-            // be consumed by the K1 compiler.
-            moduleBuilder.addMavenLibrary(JavaModuleFixtureBuilder.MavenLib("org.jetbrains.kotlin:kotlin-stdlib:1.9.25"))
         }
     }
 
