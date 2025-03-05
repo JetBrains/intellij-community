@@ -30,24 +30,26 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public Font getTerminalFont() {
-    var setFamily = TerminalOptionsProvider.getInstance().getFontFamily();
-    var defaultFont = super.getTerminalFont();
-    return new Font(setFamily == null ? defaultFont.getFamily() : setFamily, defaultFont.getStyle(), Math.round(getTerminalFontSize()));
+    return new Font(getFontFamily(), super.getTerminalFont().getStyle(), Math.round(getTerminalFontSize()));
+  }
+
+  private static @NotNull String getFontFamily() {
+    return TerminalFontOptions.getInstance().getTerminalFontSettings().getFontFamily();
   }
 
   @Override
   public float getTerminalFontSize() {
-    return TerminalOptionsProvider.getInstance().getFontSize();
+    return TerminalFontOptions.getInstance().getTerminalFontSettings().getFontSize();
   }
 
   @Override
   public float getLineSpacing() {
-    return TerminalOptionsProvider.getInstance().getLineSpacing();
+    return TerminalFontOptions.getInstance().getTerminalFontSettings().getLineSpacing();
   }
 
   @Override
   public float getColumnSpacing() {
-    return TerminalOptionsProvider.getInstance().getColumnSpacing();
+    return TerminalFontOptions.getInstance().getTerminalFontSettings().getColumnSpacing();
   }
 
   @Override

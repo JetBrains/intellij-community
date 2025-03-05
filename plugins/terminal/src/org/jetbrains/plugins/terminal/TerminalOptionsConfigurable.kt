@@ -47,7 +47,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
-    val defaultFont = JBTerminalSystemSettingsProvider().terminalFont
+    val fontPreferences = TerminalFontOptions.getInstance().getTerminalFontSettings()
 
     return panel {
 
@@ -160,9 +160,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               componentGet = { comboBox -> comboBox.fontName },
               componentSet = {comboBox, value -> comboBox.fontName = value },
               MutableProperty(
-                getter = { optionsProvider.fontFamily ?: defaultFont.family },
-                setter = { optionsProvider.fontFamily = it },
-              )
+                getter = { fontPreferences.fontFamily },
+                setter = { fontPreferences.fontFamily = it },
+              ).toNullableProperty()
             )
         }
 
@@ -171,23 +171,27 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .label(message("settings.font.size"))
             .columns(4)
             .bindText(
-              getter = { optionsProvider.fontSize.fontSizeToString() },
-              setter = { optionsProvider.fontSize = it.parseFontSize() },
+              getter = { fontPreferences.fontSize.fontSizeToString() },
+              setter = { fontPreferences.fontSize = it.parseFontSize() },
             )
           textField()
             .label(message("settings.line.height"))
             .columns(4)
             .bindText(
-              getter = { optionsProvider.lineSpacing.spacingToString() },
-              setter = { optionsProvider.lineSpacing = it.parseSpacing() },
+              getter = { fontPreferences.lineSpacing.spacingToString() },
+              setter = { fontPreferences.lineSpacing = it.parseSpacing() },
             )
           textField()
             .label(message("settings.column.width"))
             .columns(4)
             .bindText(
-              getter = { optionsProvider.columnSpacing.spacingToString() },
-              setter = { optionsProvider.columnSpacing = it.parseSpacing() },
+              getter = { fontPreferences.columnSpacing.spacingToString() },
+              setter = { fontPreferences.columnSpacing = it.parseSpacing() },
             )
+        }
+
+        onApply {
+          TerminalFontOptions.getInstance().setTerminalFontSettings(fontPreferences)
         }
 
         row {
