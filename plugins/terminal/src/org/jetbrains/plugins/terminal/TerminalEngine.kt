@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal enum class TerminalEngine(val presentableName: @Nls String) {
+@ApiStatus.Internal
+enum class TerminalEngine(val presentableName: @Nls String) {
   REWORKED(TerminalBundle.message("terminal.engine.reworked")),
   CLASSIC(TerminalBundle.message("terminal.engine.classic")),
   NEW_TERMINAL(TerminalBundle.message("terminal.engine.new.terminal"));

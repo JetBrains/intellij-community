@@ -47,10 +47,14 @@
     </action>
     <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
 
-    <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>
+    <group id="Terminal.Engine" popup="true">
+      <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>
+      <action id="Terminal.UseClassicEngine" class="com.intellij.terminal.frontend.action.TerminalClassicEngineAction"/>
+      <action id="Terminal.UseNewTerminalEngine" class="com.intellij.terminal.frontend.action.TerminalNewTerminalEngineAction"/>
+    </group>
 
     <group id="Terminal.ToolWindowActions">
-      <reference ref="Terminal.EnableNewUi"/>
+      <reference ref="Terminal.Engine"/>
     </group>
 
     <group id="Terminal.OutputContextMenu">
