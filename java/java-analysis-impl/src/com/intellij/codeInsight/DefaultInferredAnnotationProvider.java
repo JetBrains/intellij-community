@@ -205,7 +205,7 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
   }
 
   public static @Nullable PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
-    String attributes = JavaMethodContractUtil.createAttributesText(pure, contracts, mutates);
+    String attributes = JavaMethodContractUtil.createAttributesText(contracts, pure, mutates);
     if (attributes.isEmpty()) return null;
     return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attributes);
   }
