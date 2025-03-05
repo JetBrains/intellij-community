@@ -7,7 +7,6 @@ import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.convert
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode

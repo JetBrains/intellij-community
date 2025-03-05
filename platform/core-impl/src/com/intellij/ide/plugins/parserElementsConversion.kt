@@ -1,23 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.parser
+package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.ContainerDescriptor
-import com.intellij.ide.plugins.parser.elements.ComponentElement
-import com.intellij.ide.plugins.parser.elements.ExtensionPointElement
-import com.intellij.ide.plugins.parser.elements.ListenerElement
-import com.intellij.ide.plugins.parser.elements.OS
-import com.intellij.ide.plugins.parser.elements.OS.FREEBSD
-import com.intellij.ide.plugins.parser.elements.OS.LINUX
-import com.intellij.ide.plugins.parser.elements.OS.MAC
-import com.intellij.ide.plugins.parser.elements.OS.UNIX
-import com.intellij.ide.plugins.parser.elements.OS.WINDOWS
-import com.intellij.ide.plugins.parser.elements.ServiceElement
-import com.intellij.ide.plugins.parser.elements.PreloadMode
-import com.intellij.ide.plugins.parser.elements.PreloadMode.AWAIT
-import com.intellij.ide.plugins.parser.elements.PreloadMode.FALSE
-import com.intellij.ide.plugins.parser.elements.PreloadMode.NOT_HEADLESS
-import com.intellij.ide.plugins.parser.elements.PreloadMode.NOT_LIGHT_EDIT
-import com.intellij.ide.plugins.parser.elements.PreloadMode.TRUE
+import com.intellij.ide.plugins.parser.ScopedElementsContainer
+import com.intellij.ide.plugins.parser.elements.*
+import com.intellij.ide.plugins.parser.elements.OS.*
+import com.intellij.ide.plugins.parser.elements.PreloadMode.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -28,7 +15,7 @@ import com.intellij.ide.plugins.parser.elements.ClientKind as ClientKindElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },
-  components = components.map { it.convert() } ,
+  components = components.map { it.convert() },
   listeners = listeners.map { it.convert() },
   extensionPoints = extensionPoints.map { it.convert() },
 )

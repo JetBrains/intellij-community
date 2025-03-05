@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
-import com.intellij.ide.plugins.parser.convert
 import com.intellij.ide.plugins.parser.elements.OS
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
