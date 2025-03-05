@@ -34,6 +34,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
   val point = app.extensionArea
     .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
   val sortedAdapters = point.sortedAdapters
+  var firstWizardExecuted = false // we need to do certain checks only for the first time
   for (adapter in sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (!pluginDescriptor.isBundled) {
@@ -43,59 +44,65 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
     try {
       val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
-      val timeoutMs = System.getProperty("intellij.startup.wizard.initial.timeout").orEmpty().toIntOrNull() ?: 2000
+      if (!firstWizardExecuted) {
+        val timeoutMs = System.getProperty("intellij.startup.wizard.initial.timeout").orEmpty().toIntOrNull() ?: 2000
 
-      span("app manager initial state waiting") {
-        val startTimeNs = System.nanoTime()
-        try {
-          withTimeout(timeoutMs.milliseconds) {
-            isInitialStart.join()
+        span("app manager initial state waiting") {
+          val startTimeNs = System.nanoTime()
+          try {
+            withTimeout(timeoutMs.milliseconds) {
+              isInitialStart.join()
+            }
+            IdeStartupWizardCollector.logInitialStartSuccess()
           }
-          IdeStartupWizardCollector.logInitialStartSuccess()
-        }
-        catch (_: TimeoutCancellationException) {
-          LOG.warn("Timeout on waiting for initial start, proceeding the startup flow without waiting.")
-          IdeStartupWizardCollector.logInitialStartTimeout()
-        }
-        finally {
-          IdeStartupWizardCollector.logStartupStageTime(
-            StartupWizardStage.InitialStart,
-            Duration.ofNanos(System.nanoTime() - startTimeNs)
-          )
+          catch (_: TimeoutCancellationException) {
+            LOG.warn("Timeout on waiting for initial start, proceeding the startup flow without waiting.")
+            IdeStartupWizardCollector.logInitialStartTimeout()
+          }
+          finally {
+            IdeStartupWizardCollector.logStartupStageTime(
+              StartupWizardStage.InitialStart,
+              Duration.ofNanos(System.nanoTime() - startTimeNs)
+            )
+          }
         }
       }
 
       LOG.info("Executing the onboarding flow for adapter $wizard.")
       span("${adapter.assignableToClassName}.run", Dispatchers.EDT) block@{
-        val startupStatus = com.intellij.platform.ide.bootstrap.isInitialStart
-        LOG.info("Inside the onboarding flow for adapter $wizard. StartupStatus.isCompleted: ${startupStatus?.isCompleted}")
-        if (startupStatus?.isCompleted == false) {
-          LOG.info("Initial startup initialization is not yet complete. Will continue to the wizard (if necessary)")
-        }
-        try {
-          if (startupStatus != null && startupStatus.isCompleted && !startupStatus.isCancelled) {
-            val wasSuccessful = startupStatus.getCompleted()
-            if (!wasSuccessful) {
-              LOG.info("Initial start was unsuccessful, terminating the wizard flow.")
-              return@block
+        if (!firstWizardExecuted) {
+          val startupStatus = com.intellij.platform.ide.bootstrap.isInitialStart
+          LOG.info("Inside the onboarding flow for adapter $wizard. StartupStatus.isCompleted: ${startupStatus?.isCompleted}")
+          if (startupStatus?.isCompleted == false) {
+            LOG.info("Initial startup initialization is not yet complete. Will continue to the wizard (if necessary)")
+          }
+          try {
+            if (startupStatus != null && startupStatus.isCompleted && !startupStatus.isCancelled) {
+              val wasSuccessful = startupStatus.getCompleted()
+              if (!wasSuccessful) {
+                LOG.info("Initial start was unsuccessful, terminating the wizard flow.")
+                return@block
+              }
             }
           }
-        }
-        finally {
-          startupStatus?.cancel()
+          finally {
+            startupStatus?.cancel()
+          }
         }
 
         if (isIdeStartupWizardEnabled) {
           LOG.info("Passing execution control to $wizard.")
           wizard.run()
+          firstWizardExecuted = true
         }
         else {
           LOG.info("Skipping the actual wizard call.")
         }
       }
 
-      // first wizard wins
-      break
+      // don't check for next wizards if we have skipped the first one
+      if (!firstWizardExecuted)
+        break
     }
     catch (e: Throwable) {
       LOG.error(PluginException(e, pluginDescriptor.pluginId))
@@ -104,6 +111,9 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
   point.reset()
 }
 
+/**
+ * Do not add extensions of this type without discussing with the platform team first!
+ */
 @Internal
 interface IdeStartupWizard {
   suspend fun run()
