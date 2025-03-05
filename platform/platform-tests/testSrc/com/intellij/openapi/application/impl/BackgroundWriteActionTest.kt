@@ -423,7 +423,7 @@ class BackgroundWriteActionTest {
     edtWriteAction {
       runBlockingCancellable {
         assertRead()
-        assertNoWrite()
+        assertWrite() // since it is invoked on a thread with permission to write
         assertNoWil()
       }
     }
