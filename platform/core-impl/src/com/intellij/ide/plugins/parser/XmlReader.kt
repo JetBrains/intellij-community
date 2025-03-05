@@ -738,7 +738,7 @@ private fun readInclude(
   reader: XMLStreamReader2,
   allowedPointer: String,
 ) {
-  val pathResolver = builder.xIncludeLoader ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location)
+  val xIncludeLoader = builder.xIncludeLoader ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location)
   var path: String? = null
   var pointer: String? = null
   for (i in 0 until reader.attributeCount) {
@@ -782,7 +782,7 @@ private fun readInclude(
   var readError: IOException? = null
   val loadedXInclude = try {
     val targetPath = PluginXmlPathResolver.toLoadPath(relativePath = path, baseDir = builder.includeBase)
-    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, path = targetPath)
+    xIncludeLoader.loadXIncludeReference(dataLoader = builder.dataLoader, path = targetPath)
   }
   catch (e: IOException) {
     readError = e
