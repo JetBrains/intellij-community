@@ -683,6 +683,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                   decoName = knownName;
                 }
               }
+              if (PyNames.CACHED_PROPERTY.equals(decoName)) {
+                getter = new Maybe<>(method);
+                setter = new Maybe<>(method);
+                deleter = new Maybe<>(method);
+                break;
+              }
               if (PyNames.PROPERTY.equals(decoName) ||
                   PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
                   qname.matches(decoratorName, PyNames.GETTER)) {
