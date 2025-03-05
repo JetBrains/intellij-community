@@ -222,8 +222,10 @@
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <separator/>
-      <action class="git4idea.actions.branch.GitCompareWithBranchAction"/>
-      <action class="git4idea.actions.ref.GitShowDiffWithRefAction"/>
+      <action id="Git.Ref.Compare.With"
+              class="git4idea.actions.branch.GitCompareWithBranchAction"/>
+      <action id="Git.Ref.Diff.With.Local"
+              class="git4idea.actions.ref.GitShowDiffWithRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
       <action class="git4idea.actions.ref.GitMergeRefAction"/>
