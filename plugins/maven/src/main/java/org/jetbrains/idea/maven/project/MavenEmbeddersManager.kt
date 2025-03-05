@@ -74,7 +74,7 @@ class MavenEmbeddersManager(private val project: Project) {
 
   private fun createEmbedder(multiModuleProjectDirectory: String): MavenEmbedderWrapperLegacyImpl {
     val connector = MavenServerManager.getInstance().getConnectorBlocking(project, multiModuleProjectDirectory)
-    return MavenEmbedderWrapperLegacyImpl(project, false, multiModuleProjectDirectory, connector)
+    return MavenEmbedderWrapperLegacyImpl(project, multiModuleProjectDirectory, connector)
   }
 
   @Synchronized
@@ -97,7 +97,6 @@ class MavenEmbeddersManager(private val project: Project) {
 @ApiStatus.Obsolete
 private class MavenEmbedderWrapperLegacyImpl(
   private val project: Project,
-  private val alwaysOnline: Boolean,
   private val multiModuleProjectDirectory: String,
   private val myConnector: MavenServerConnector
 ) : MavenEmbedderWrapper(project) {
@@ -112,11 +111,7 @@ private class MavenEmbedderWrapperLegacyImpl(
   @Throws(RemoteException::class)
   private suspend fun doCreate(): MavenServerEmbedder {
     val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory)
-    var settings = MavenImportUtil.convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, mavenDistribution)
-    if (alwaysOnline && settings.isOffline) {
-      settings = settings.clone()
-      settings.isOffline = false
-    }
+    val settings = MavenImportUtil.convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, mavenDistribution)
 
     val transformer = RemotePathTransformerFactory.createForProject(project)
     var sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).projectSdk)
