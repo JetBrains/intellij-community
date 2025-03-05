@@ -11,10 +11,10 @@ interface PathResolver: XIncludeLoader {
   val isFlat: Boolean
     get() = false
 
-  fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor?
+  fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor?
 
   // module in a new file name format must always be resolved
-  fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String, readInto: RawPluginDescriptor?): RawPluginDescriptor
+  fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): RawPluginDescriptor
 
   /**
    * Returns custom classes roots for a content module [moduleName] if any. 

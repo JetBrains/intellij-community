@@ -303,14 +303,13 @@ public class PluginManagerTest {
       @Override
       public @NotNull RawPluginDescriptor resolvePath(@NotNull ReadModuleContext readContext,
                                                       @NotNull DataLoader dataLoader,
-                                                      @NotNull String relativePath,
-                                                      @Nullable RawPluginDescriptor readInto) {
+                                                      @NotNull String relativePath) {
         for (var child : root.children) {
           if (child.name.equals("config-file-idea-plugin")) {
             var url = Objects.requireNonNull(child.getAttributeValue("url"));
             if (url.endsWith("/" + relativePath)) {
               try {
-                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto);
+                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null);
                 PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
                 return reader.build();
               }
@@ -326,8 +325,7 @@ public class PluginManagerTest {
       @Override
       public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
                                                                               @NotNull DataLoader dataLoader,
-                                                                              @NotNull String path,
-                                                                              @Nullable RawPluginDescriptor readInto) {
+                                                                              @NotNull String path) {
         if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
           var element = moduleMap.get(path);
           if (element != null) {
@@ -338,12 +336,10 @@ public class PluginManagerTest {
               throw new RuntimeException(e);
             }
           }
-
-          assert readInto == null;
           // auto-generate empty descriptor
           return PluginBuilderKt.readModuleDescriptorForTest(("<idea-plugin package=\"" + path + "\"></idea-plugin>").getBytes(StandardCharsets.UTF_8));
         }
-        return resolvePath(readContext, dataLoader, path, readInto);
+        return resolvePath(readContext, dataLoader, path);
       }
     };
 

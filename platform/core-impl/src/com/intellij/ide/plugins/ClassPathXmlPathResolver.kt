@@ -36,14 +36,14 @@ class ClassPathXmlPathResolver(
     return XIncludeLoader.LoadedXIncludeReference(input, dataLoader.toString())
   }
 
-  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String, readInto: RawPluginDescriptor?): RawPluginDescriptor {
+  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): RawPluginDescriptor {
     val resource: ByteArray?
     if (classLoader is UrlClassLoader) {
       resource = classLoader.getResourceAsBytes(path, true)
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto)
+        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this)
         reader.consume(it, dataLoader.toString())
         return reader.build()
       }
@@ -71,16 +71,16 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
       it.consume(resource, dataLoader.toString())
       it.build()
     }
   }
 
-  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
-    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
       it.consume(reader)
       it.build()
     }

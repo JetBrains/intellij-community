@@ -300,7 +300,7 @@ class IdeaPluginDescriptorImpl(
 
       var resolveError: Exception? = null
       val raw: RawPluginDescriptor? = try {
-        pathResolver.resolvePath(context, dataLoader, configFile, readInto = null)
+        pathResolver.resolvePath(context, dataLoader, configFile)
       }
       catch (e: IOException) {
         resolveError = e

@@ -224,7 +224,7 @@ fun initMainDescriptorByRaw(
         module.descriptor = subDescriptor
       }
       else {
-        val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile, readInto = null)
+        val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
         module.descriptor = subDescriptor
         val customRoots = pathResolver.resolveCustomModuleClassesRoots(module.name)
@@ -1019,7 +1019,7 @@ private fun loadModuleDescriptors(
       continue
     }
 
-    val raw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+    val raw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile)
     val subDescriptor = descriptor.createSub(raw = raw, descriptorPath = subDescriptorFile, context = context, module = module)
     val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleName)
     if (customModuleClassesRoots.isNotEmpty()) {
@@ -1313,7 +1313,7 @@ private fun loadDescriptorFromResource(
       val runFromSources = pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
       for (module in descriptor.content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-        val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile, readInto = null)
+        val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
         if (runFromSources && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from main classpath

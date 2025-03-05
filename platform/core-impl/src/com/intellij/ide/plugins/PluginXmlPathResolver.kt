@@ -77,10 +77,10 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     return null
   }
 
-  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor? {
     val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
-      return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
+      return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
         it.consume(input, null)
         it.build()
       }
@@ -90,7 +90,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       val fromJar = findInJarFiles(dataLoader = dataLoader, relativePath = path, pool = pool)
       if (fromJar != null) {
         return fromJar.inputStream.let { input ->
-          PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
+          PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
             it.consume(input, null)
             it.build()
           }
@@ -109,7 +109,6 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     path: String,
-    readInto: RawPluginDescriptor?,
   ): RawPluginDescriptor {
     val input = dataLoader.load(path, pluginDescriptorSourceOnly = true)
     if (input == null) {
@@ -121,7 +120,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    val descriptor = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
+    val descriptor = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
       it.consume(input, null)
       it.build()
     }

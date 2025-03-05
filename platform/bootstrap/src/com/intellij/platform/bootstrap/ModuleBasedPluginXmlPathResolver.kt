@@ -27,7 +27,6 @@ internal class ModuleBasedPluginXmlPathResolver(
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     path: String,
-    readInto: RawPluginDescriptor?,
   ): RawPluginDescriptor {
     // if there are multiple JARs,
     // it may happen that module descriptor is located in other JARs (e.g., in case of 'com.intellij.java.frontend' plugin),
@@ -36,14 +35,14 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto)
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this)
       reader.consume(input, path)
       return reader.build()
     }
     else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
       return RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
     }
-    return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path, readInto = readInto)
+    return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
 
   override fun resolveCustomModuleClassesRoots(moduleName: String): List<Path> {
@@ -65,13 +64,11 @@ internal class ModuleBasedPluginXmlPathResolver(
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     relativePath: String,
-    readInto: RawPluginDescriptor?,
   ): RawPluginDescriptor? {
     return fallbackResolver.resolvePath(
       readContext = readContext,
       dataLoader = dataLoader,
       relativePath = relativePath,
-      readInto = readInto,
     )
   }
 }
