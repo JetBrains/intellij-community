@@ -4,8 +4,8 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginXmlPathResolver
-import com.intellij.ide.plugins.parser.*
 import com.intellij.ide.plugins.toXIncludeLoader
+import com.intellij.platform.plugins.parser.*
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path

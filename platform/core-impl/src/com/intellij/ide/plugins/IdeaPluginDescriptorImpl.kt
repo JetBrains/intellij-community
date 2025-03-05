@@ -5,10 +5,6 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
-import com.intellij.ide.plugins.parser.elements.*
-import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -17,6 +13,9 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.plugins.parser.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.RawPluginDescriptor
+import com.intellij.platform.plugins.parser.elements.*
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus

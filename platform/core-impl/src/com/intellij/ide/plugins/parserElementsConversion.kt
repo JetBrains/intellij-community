@@ -1,17 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.ScopedElementsContainer
-import com.intellij.ide.plugins.parser.elements.*
-import com.intellij.ide.plugins.parser.elements.OS.*
-import com.intellij.ide.plugins.parser.elements.PreloadMode.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.platform.plugins.parser.ScopedElementsContainer
+import com.intellij.platform.plugins.parser.elements.*
+import com.intellij.platform.plugins.parser.elements.OS.*
+import com.intellij.platform.plugins.parser.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
-import com.intellij.ide.plugins.parser.elements.ClientKind as ClientKindElement
+import com.intellij.platform.plugins.parser.elements.ClientKind as ClientKindElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },

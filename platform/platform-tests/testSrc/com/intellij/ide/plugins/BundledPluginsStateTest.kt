@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.plugins.parser.PluginDescriptorBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test

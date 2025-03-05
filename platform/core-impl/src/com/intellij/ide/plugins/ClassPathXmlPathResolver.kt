@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.plugins.parser.*
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2

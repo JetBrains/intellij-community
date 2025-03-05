@@ -20,7 +20,6 @@ import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.parser.elements.ActionElement.ActionElementName
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.idea.IdeaLogger
@@ -73,6 +72,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.plugins.parser.elements.ActionElement.ActionElementName
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IconDeferrer

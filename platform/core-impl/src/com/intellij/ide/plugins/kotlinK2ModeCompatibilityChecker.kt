@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.plugins.parser.isKotlinPlugin
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 

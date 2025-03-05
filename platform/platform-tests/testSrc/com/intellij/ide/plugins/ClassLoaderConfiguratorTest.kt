@@ -4,11 +4,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
+import com.intellij.platform.plugins.parser.PluginDescriptorBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.directoryStreamIfExists

@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
-import com.intellij.ide.plugins.parser.elements.ModuleLoadingRule as ElementModuleLoadingRule
+import com.intellij.platform.plugins.parser.elements.ModuleLoadingRule as ElementModuleLoadingRule
 
 /**
  * Specified when a content module of a plugin should be loaded.

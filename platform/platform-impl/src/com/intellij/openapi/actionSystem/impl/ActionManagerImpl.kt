@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.ProhibitAWTEvents
-import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManager
@@ -56,6 +55,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.awaitFocusSettlesDown
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.plugins.parser.elements.ActionElement.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
