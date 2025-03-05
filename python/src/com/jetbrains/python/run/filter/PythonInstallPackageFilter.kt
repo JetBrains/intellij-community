@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiDocumentManager
-import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -20,15 +19,8 @@ class PythonInstallPackageFilter(val project: Project, val editor: EditorImpl? =
       return null
 
     val moduleName = line.removePrefix(prefix).dropLastWhile { it != '\'' }.dropLast(1)
-    val pipPackageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
     val pythonSdk = getSdkForFile(editor) ?: project.pythonSdk ?: return null
-    val installed = PyPackageInstallUtils.checkIsInstalled(project, pythonSdk, pipPackageName)
-    if (installed)
-      return null
-    val existsInRepository = PyPackageInstallUtils.checkExistsInRepository(project, pythonSdk, pipPackageName)
-    if (!existsInRepository)
-      return null
-
+    val pipPackageName = PyPackageInstallUtils.offeredPackageForNotFoundModule(project, pythonSdk, moduleName)  ?: return null
     val info = InstallPackageButtonItem(project, pythonSdk, entireLength - line.length + "ModuleNotFoundError:".length, pipPackageName)
     return Filter.Result(
       listOf(

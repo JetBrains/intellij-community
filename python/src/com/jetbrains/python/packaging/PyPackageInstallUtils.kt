@@ -10,18 +10,41 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.swing.JLabel
+import javax.swing.UIManager
 
 object PyPackageInstallUtils {
+  fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
+    val pipPackageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
+
+    val shouldToInstall = checkShouldToInstall(project, sdk, pipPackageName)
+    if (!shouldToInstall)
+      return null
+    return pipPackageName
+  }
+
+  fun checkShouldToInstall(project: Project, sdk: Sdk, packageName: String): Boolean {
+    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(project, sdk, packageName)
+  }
+
   fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
     val packageManager = PythonPackageManager.forSdk(project, sdk)
     val normalizedName = normalizePackageName(packageName)
@@ -129,6 +152,52 @@ object PyPackageInstallUtils {
       }
     }
   }
+
+  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint) {
+    PyPackageCoroutine.launch(project) {
+      runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
+                                             packageName) {
+        val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
+        try {
+          confirmAndInstall(project, pythonSdk, packageName)
+          loadBalloon.hide()
+          PyPackagesUsageCollector.installPackageFromConsole.log(project)
+          showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
+        }
+        catch (t: Throwable) {
+          loadBalloon.hide()
+          PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
+          showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
+          throw t
+        }
+        Result.success(Unit)
+      }
+    }
+  }
+
+
+  private suspend fun showBalloon(point: RelativePoint, @NlsContexts.DialogMessage text: String, style: BalloonStyle): Balloon =
+    withContext(Dispatchers.EDT) {
+      val content = JLabel()
+      val (borderColor, fillColor) = when (style) {
+        BalloonStyle.SUCCESS -> JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR to JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND
+        BalloonStyle.INFO -> JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR to JBUI.CurrentTheme.Banner.INFO_BACKGROUND
+        BalloonStyle.ERROR -> JBUI.CurrentTheme.Validator.errorBorderColor() to JBUI.CurrentTheme.Validator.errorBackgroundColor()
+      }
+      val balloonBuilder = JBPopupFactory.getInstance()
+        .createBalloonBuilder(content)
+        .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+        .setBorderColor(borderColor)
+        .setFillColor(fillColor)
+        .setHideOnClickOutside(true)
+        .setHideOnFrameResize(false)
+      content.text = text
+      val balloon = balloonBuilder.createBalloon()
+      balloon.show(point, Balloon.Position.below)
+      balloon
+    }
+
+  enum class BalloonStyle { ERROR, INFO, SUCCESS }
 }
 
 internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Project): Set<PyRequirement> {
