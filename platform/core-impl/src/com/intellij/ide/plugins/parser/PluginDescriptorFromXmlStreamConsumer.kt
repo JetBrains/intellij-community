@@ -11,10 +11,17 @@ class PluginDescriptorFromXmlStreamConsumer(
   val readContext: ReadModuleContext,
   val dataLoader: DataLoader,
   val xIncludeLoader: XIncludeLoader?,
-  val includeBase: String?,
+  includeBase: String?,
   readInto: RawPluginDescriptor? = null,
 ) : PluginXmlStreamConsumer {
   internal val raw = readInto ?: RawPluginDescriptor()
+  private val includeBaseStack = mutableListOf<String?>()
+
+  init {
+    if (includeBase != null) {
+      includeBaseStack.add(includeBase)
+    }
+  }
 
   fun build(): RawPluginDescriptor = raw
 
@@ -23,5 +30,16 @@ class PluginDescriptorFromXmlStreamConsumer(
       builder = this,
       reader = reader,
     )
+  }
+
+  internal val includeBase: String?
+    get() = includeBaseStack.lastOrNull()
+
+  internal fun pushIncludeBase(newBase: String?) {
+    includeBaseStack.add(newBase)
+  }
+
+  internal fun popIncludeBase() {
+    includeBaseStack.removeLast()
   }
 }

@@ -11,6 +11,8 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 
 @Internal
 class ClassPathXmlPathResolver(
@@ -20,20 +22,19 @@ class ClassPathXmlPathResolver(
   override val isFlat: Boolean
     get() = true
 
-  override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
+  override fun loadXIncludeReference(readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): XIncludeLoader.LoadedXIncludeReference? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath, base)
-    val reader: XMLStreamReader2
+    val input: InputStream?
     if (classLoader is UrlClassLoader) {
-      reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path, true) ?: return false, dataLoader.toString())
+      input = classLoader.getResourceAsBytes(path, true)?.let(::ByteArrayInputStream)
     }
     else {
-      reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return false, dataLoader.toString())
+      input = classLoader.getResourceAsStream(path)
     }
-    PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, PluginXmlPathResolver.getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
-      it.consume(reader)
-      it.build()
+    if (input == null) {
+      return null
     }
-    return true
+    return XIncludeLoader.LoadedXIncludeReference(input, dataLoader.toString())
   }
 
   override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String, readInto: RawPluginDescriptor?): RawPluginDescriptor {

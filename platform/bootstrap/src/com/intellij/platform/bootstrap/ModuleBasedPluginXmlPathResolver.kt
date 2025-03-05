@@ -4,6 +4,7 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.XIncludeLoader
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
@@ -51,14 +52,12 @@ internal class ModuleBasedPluginXmlPathResolver(
   }
 
   override fun loadXIncludeReference(
-    readInto: RawPluginDescriptor,
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     base: String?,
     relativePath: String,
-  ): Boolean {
+  ): XIncludeLoader.LoadedXIncludeReference? {
     return fallbackResolver.loadXIncludeReference(
-      readInto = readInto,
       readContext = readContext,
       dataLoader = dataLoader,
       base = base,

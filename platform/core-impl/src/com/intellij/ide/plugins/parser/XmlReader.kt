@@ -780,21 +780,28 @@ private fun readInclude(
   }
 
   var readError: IOException? = null
-  val read = try {
-    pathResolver.loadXIncludeReference(dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path, readContext = builder.readContext, readInto = builder.raw)
+  val loadedXInclude = try {
+    pathResolver.loadXIncludeReference(readContext = builder.readContext, dataLoader = builder.dataLoader, base = builder.includeBase, relativePath = path)
   }
   catch (e: IOException) {
     readError = e
-    false
+    null
   }
-  if (read) {
+  if (loadedXInclude != null) {
     (builder.readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
       rawPluginDescriptor = builder.raw,
-      path = PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = builder.includeBase),
+      path = loadedXInclude.diagnosticReferenceLocation ?: PluginXmlPathResolver.Companion.toLoadPath(relativePath = path, baseDir = builder.includeBase),
     )
+    builder.pushIncludeBase(PluginXmlPathResolver.getChildBaseDir(base = builder.includeBase, relativePath = path))
+    try {
+      builder.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)
+    } finally {
+      builder.popIncludeBase()
+    }
+    return
   }
 
-  if (read || isOptional) {
+  if (isOptional) {
     return
   }
 

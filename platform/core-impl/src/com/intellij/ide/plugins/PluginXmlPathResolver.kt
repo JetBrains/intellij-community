@@ -8,8 +8,8 @@ import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
-import java.io.Closeable
 import java.io.IOException
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 
@@ -49,43 +49,33 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
   }
 
-  override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
+  override fun loadXIncludeReference(readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): XIncludeLoader.LoadedXIncludeReference? {
     val path = toLoadPath(relativePath, base)
     try {
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
-        PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
-          it.consume(input, null)
-          it.build()
-        }
-        return true
+        return XIncludeLoader.LoadedXIncludeReference(input, null)
       }
-
-      if (pool != null && findInJarFiles(
-          readInto = readInto,
+      if (pool != null) {
+        val fromJar = findInJarFiles(
           dataLoader = dataLoader,
-          readContext = readContext,
           relativePath = path,
-          includeBase = getChildBaseDir(base = base, relativePath = relativePath),
           pool = pool,
-        )) {
-        return true
+        )
+        if (fromJar != null) {
+          return XIncludeLoader.LoadedXIncludeReference(fromJar.inputStream, fromJar.diagnosticLocation)
+        }
       }
-
       // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
       if (path.startsWith("META-INF/")) {
         PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let { input ->
-          PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
-            it.consume(input, null)
-            it.build()
-          }
-          return true
+          return XIncludeLoader.LoadedXIncludeReference(input, null)
         }
       }
     }
     catch (e: Throwable) {
       throw IOException("Exception ${e.message} while loading $path", e)
     }
-    return false
+    return null
   }
 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
@@ -97,9 +87,16 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       }
     }
 
-    val result = readInto ?: RawPluginDescriptor()
-    if (pool != null && findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, includeBase = null, pool = pool)) {
-      return result
+    if (pool != null) {
+      val fromJar = findInJarFiles(dataLoader = dataLoader, relativePath = path, pool = pool)
+      if (fromJar != null) {
+        return fromJar.inputStream.let { input ->
+          PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
+            it.consume(input, null)
+            it.build()
+          }
+        }
+      }
     }
 
     if (relativePath.startsWith("intellij.")) {
@@ -133,18 +130,14 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
   }
 
   private fun findInJarFiles(
-    readInto: RawPluginDescriptor,
-    readContext: ReadModuleContext,
     dataLoader: DataLoader,
     pool: ZipEntryResolverPool,
     relativePath: String,
-    includeBase: String?,
-  ): Boolean {
+  ): ResolvedFromJar? {
     for (jarFile in pluginJarFiles) {
       if (dataLoader.isExcludedFromSubSearch(jarFile)) {
         continue
       }
-
       val resolver = try {
         pool.load(jarFile)
       }
@@ -152,19 +145,13 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
         Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
         continue
       }
-
-      val result = resolver.loadZipEntry(relativePath)?.let { input ->
-        PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, includeBase, readInto).let {
-          it.consume(input, jarFile.toString())
-          it.build()
-        }
-      }
-
-      (resolver as? Closeable)?.close()
+      val result = resolver.loadZipEntry(relativePath) // do not close, resource must be freed together with resolver/dataLoader
       if (result != null) {
-        return true
+        return ResolvedFromJar(result, jarFile.toString())
       }
     }
-    return false
+    return null
   }
+
+  private class ResolvedFromJar(val inputStream: InputStream, val diagnosticLocation: String?)
 }
