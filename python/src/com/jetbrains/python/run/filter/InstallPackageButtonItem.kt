@@ -5,29 +5,17 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.InlayProvider
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageInstallUtils
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.statistics.PyPackagesUsageCollector
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
-import javax.swing.JLabel
-import javax.swing.UIManager
 
 class InstallPackageButtonItem(
   val project: Project,
@@ -48,55 +36,13 @@ class InstallPackageButtonItem(
     ) { event: MouseEvent?, _: Point ->
       val component = event?.component ?: return@referenceOnHover
       val relativePoint = RelativePoint(component, event.point)
-      installPackage(relativePoint)
+      PyPackageInstallUtils.invokeInstallPackage(project, pythonSdk, packageName, relativePoint)
     }
     val presentation = factory.withCursorOnHover(basePresentation, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     return PresentationRenderer(presentation)
   }
 
-  private fun installPackage(point: RelativePoint) {
-    PyPackageCoroutine.launch(project) {
-      runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
-                                             packageName) {
-        val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
-        try {
-          PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, packageName)
-          loadBalloon.hide()
-          PyPackagesUsageCollector.installPackageFromConsole.log(project)
-          showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
-        }
-        catch (t: Throwable) {
-          loadBalloon.hide()
-          PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
-          showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
-          throw t
-        }
-        Result.success(Unit)
-      }
-    }
-  }
 
-
-  private suspend fun showBalloon(point: RelativePoint, @NlsContexts.DialogMessage text: String, style: BalloonStyle): Balloon =
-    withContext(Dispatchers.EDT) {
-      val content = JLabel()
-      val (borderColor, fillColor) = when (style) {
-        BalloonStyle.SUCCESS -> JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR to JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND
-        BalloonStyle.INFO -> JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR to JBUI.CurrentTheme.Banner.INFO_BACKGROUND
-        BalloonStyle.ERROR -> JBUI.CurrentTheme.Validator.errorBorderColor() to JBUI.CurrentTheme.Validator.errorBackgroundColor()
-      }
-      val balloonBuilder = JBPopupFactory.getInstance()
-        .createBalloonBuilder(content)
-        .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-        .setBorderColor(borderColor)
-        .setFillColor(fillColor)
-        .setHideOnClickOutside(true)
-        .setHideOnFrameResize(false)
-      content.text = text
-      val balloon = balloonBuilder.createBalloon()
-      balloon.show(point, Balloon.Position.below)
-      balloon
-    }
-
-  enum class BalloonStyle { ERROR, INFO, SUCCESS }
 }
+
+
