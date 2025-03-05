@@ -338,7 +338,9 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
                         baseDir: String, mavenEventHandler: MavenEventHandler) {
     val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
     mavenEmbedderWrappers.use {
-      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
+      val embedder = runBlockingMaybeCancellable {
+        mavenEmbedderWrappers.getEmbedder(baseDir)
+      }
 
       val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
       val names = mavenProjects.map { it.displayName }

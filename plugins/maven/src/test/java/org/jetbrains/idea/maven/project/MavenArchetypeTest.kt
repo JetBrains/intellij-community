@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.junit.Test
@@ -26,7 +27,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testInnerArchetypes() {
+  fun testInnerArchetypes() = runBlocking {
     assumeVersion("bundled")
 
     val embedder = mavenEmbedderWrappers.getEmbedder(dir.toString())
@@ -35,7 +36,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRemoteArchetypes() {
+  fun testRemoteArchetypes() = runBlocking {
     assumeVersion("bundled")
 
     val embedder = mavenEmbedderWrappers.getEmbedder(dir.toString())
@@ -50,7 +51,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolveAndGetArchetypeDescriptor() {
+  fun testResolveAndGetArchetypeDescriptor() = runBlocking {
     assumeVersion("bundled")
 
     val embedder = mavenEmbedderWrappers.getEmbedder(dir.toString())

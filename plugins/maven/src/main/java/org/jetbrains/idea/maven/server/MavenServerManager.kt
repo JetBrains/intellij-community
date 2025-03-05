@@ -29,9 +29,11 @@ interface MavenServerManager : Disposable {
   fun getMavenEventListener(): File
 
   @ApiStatus.Internal
-  fun createEmbedder(project: Project,
-                     alwaysOnline: Boolean,
-                     multiModuleProjectDirectory: String): MavenEmbedderWrapper
+  suspend fun createEmbedder(
+    project: Project,
+    alwaysOnline: Boolean,
+    multiModuleProjectDirectory: String,
+  ): MavenEmbedderWrapper
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("use createIndexer()")

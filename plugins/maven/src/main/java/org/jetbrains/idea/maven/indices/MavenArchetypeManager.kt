@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
@@ -168,7 +169,9 @@ class MavenArchetypeManager(private val myProject: Project) {
     }
     val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
     mavenEmbedderWrappers.use {
-    val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(baseDir)
+      val mavenEmbedderWrapper = runBlockingMaybeCancellable {
+        mavenEmbedderWrappers.getEmbedder(baseDir)
+      }
       return function(mavenEmbedderWrapper)
     }
   }
