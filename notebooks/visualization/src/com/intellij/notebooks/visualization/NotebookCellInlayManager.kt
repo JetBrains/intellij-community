@@ -448,6 +448,10 @@ class NotebookCellInlayManager private constructor(
     return cells[interval.ordinal]
   }
 
+  fun getCellOrNull(index: Int): EditorCell? {
+    return cells.getOrNull(index)
+  }
+
   fun getCellOrNull(interval: NotebookCellLines.Interval): EditorCell? {
     return cells.getOrNull(interval.ordinal)
   }
