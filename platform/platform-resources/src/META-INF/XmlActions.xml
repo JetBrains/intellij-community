@@ -13,7 +13,7 @@
     </group>
 
     <group id="NewXml">
-      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
+      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction" icon="AllIcons.FileTypes.Html"/>
       <add-to-group group-id="NewWebDevelopment" anchor="first"/>
     </group>
 
