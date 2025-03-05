@@ -11,7 +11,6 @@ private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
 private val ML_INLINE_ALIAS_ID = PluginId.getId("com.intellij.ml.inline.completion")
-private val PROVISIONER_ALIAS_ID = PluginId.getId("com.intellij.platform.ide.provisioner")
 
 internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImpl>,
                                        val directDependencies: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
