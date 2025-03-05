@@ -18,6 +18,10 @@ internal class DiffNavigationActionPromoter : ActionPromoter {
     if (context.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE) != null && actions.any(::isDifferenceNavigationAction)) {
       return actions.filterNot(::isDifferenceNavigationAction)
     }
+
+    if (context.getData(DiffDataKeys.NAVIGATABLE_ARRAY) != null && actions.any(::isSourceNavigationAction)) {
+      return actions.filterNot(::isSourceNavigationAction)
+    }
     return emptyList()
   }
 }
@@ -25,3 +29,5 @@ internal class DiffNavigationActionPromoter : ActionPromoter {
 private fun isFileNavigationAction(action: AnAction) = action is DiffNextFileAction || action is DiffPreviousFileAction
 
 private fun isDifferenceNavigationAction(action: AnAction) = action is DiffNextDifferenceAction || action is DiffPreviousDifferenceAction
+
+private fun isSourceNavigationAction(action: AnAction) = action is OpenInEditorAction

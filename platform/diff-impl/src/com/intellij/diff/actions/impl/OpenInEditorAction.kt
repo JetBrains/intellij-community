@@ -19,11 +19,6 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    if (!e.isFromActionToolbar) {
-      e.presentation.isEnabledAndVisible = true
-      return
-    }
-
     val request = e.getData(DiffDataKeys.DIFF_REQUEST)
     val context = e.getData(DiffDataKeys.DIFF_CONTEXT)
     if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) {
@@ -31,14 +26,8 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware {
       return
     }
 
-    if (e.project == null) {
-      e.presentation.isVisible = true
-      e.presentation.isEnabled = false
-      return
-    }
-
     val navigatables = e.getData(DiffDataKeys.NAVIGATABLE_ARRAY)
-    if (navigatables == null || !navigatables.any(Navigatable::canNavigate)) {
+    if (e.project == null || navigatables == null || !navigatables.any(Navigatable::canNavigate)) {
       e.presentation.isVisible = true
       e.presentation.isEnabled = false
       return
