@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.replaceService
@@ -52,7 +53,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
+  override suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
     noRealMavenAllowed()
   }
 

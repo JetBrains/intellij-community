@@ -5,8 +5,11 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapperImpl
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,10 +23,11 @@ interface MavenEmbedderWrappers : AutoCloseable {
 internal class MavenEmbedderWrappersImpl(private val myProject: Project) : MavenEmbedderWrappers {
   private val mutex = Mutex()
   private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
+  private val jdk = getJdkForImporter(myProject)
 
-  override suspend fun getAlwaysOnlineEmbedder(baseDir: String) = getEmbedder(Path.of(baseDir), true)
+  override suspend fun getAlwaysOnlineEmbedder(baseDir: String): MavenEmbedderWrapper = getEmbedder(Path.of(baseDir), true)
 
-  override suspend fun getEmbedder(baseDir: Path) = getEmbedder(baseDir, false)
+  override suspend fun getEmbedder(baseDir: Path): MavenEmbedderWrapper = getEmbedder(baseDir, false)
 
   private suspend fun getEmbedder(baseDir: Path, alwaysOnline: Boolean): MavenEmbedderWrapper {
     val embedderDir = baseDir.toString()
@@ -36,7 +40,9 @@ internal class MavenEmbedderWrappersImpl(private val myProject: Project) : Maven
       if (null != existing) {
         return existing
       }
-      val newEmbedder = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, embedderDir)
+      val multiModuleProjectDirectory = MavenDistributionsCache.getInstance(myProject).getMultimoduleDirectory(embedderDir)
+      val connector = MavenServerManager.getInstance().getConnector(myProject, multiModuleProjectDirectory, jdk)
+      val newEmbedder = MavenEmbedderWrapperImpl(myProject, alwaysOnline, multiModuleProjectDirectory, connector)
       myEmbedders[baseDir] = newEmbedder
       return newEmbedder
     }
