@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.directRegularDependenciesOfType
@@ -64,5 +64,5 @@ class FirLibrarySourceScopeService(private val project: Project): LibrarySourceS
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
-        listOf(KotlinGlobalSearchScopeMerger.getInstance(project).union(this))
+        listOf(KaGlobalSearchScopeMerger.getInstance(project).union(this))
 }

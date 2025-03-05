@@ -44,9 +44,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinGlobalSearchScopeMerger"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinRestrictedAnalysisService"/>
     <projectService
@@ -62,6 +59,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
+    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
   </extensions>
 
   <projectListeners>
