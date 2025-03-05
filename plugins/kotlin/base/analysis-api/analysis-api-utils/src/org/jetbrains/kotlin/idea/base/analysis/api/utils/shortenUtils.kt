@@ -22,6 +22,10 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 /**
  * Shorten references in the given [element]. See [shortenReferencesInRange] for more details.
  */
+@OptIn(
+    KaAllowAnalysisFromWriteAction::class,
+    KaAllowAnalysisOnEdt::class,
+)
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
@@ -50,6 +54,10 @@ fun shortenReferences(
  * Here `pack.A` should be shortened and processed first because it can be shortened without adding imports. It is generally prefered to use
  * this API instead of calling `shortenReferences` multiple times on individual references.
  */
+@OptIn(
+    KaAllowAnalysisFromWriteAction::class,
+    KaAllowAnalysisOnEdt::class,
+)
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
@@ -57,26 +65,24 @@ fun shortenReferences(
     callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
 ) {
     val elementPointers = elements.map { it.createSmartPointer() }
-    elementPointers.forEach { ptr ->
-        shortenReferencesIfValid(
-            ptr,
-            shortenOptions,
-            { symbol -> classShortenStrategy(symbol).coerceAtMost(ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED) },
-            { symbol -> callableShortenStrategy(symbol).coerceAtMost(ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED) }
-        )
-    }
-    elementPointers.forEach { ptr ->
-        shortenReferencesIfValid(ptr, shortenOptions, classShortenStrategy, callableShortenStrategy)
-    }
-}
 
-private fun shortenReferencesIfValid(
-    ptr: SmartPsiElementPointer<KtElement>,
-    shortenOptions: ShortenOptions,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy
-): KtElement? = ptr.element?.let { elem ->
-    shortenReferences(elem, shortenOptions, classShortenStrategy, callableShortenStrategy)
+    fun shortenReferences(
+        function: (ShortenStrategy) -> ShortenStrategy,
+    ) {
+        elementPointers.asSequence()
+            .mapNotNull { it.element }
+            .forEach { element ->
+                shortenReferences(
+                    element = element,
+                    shortenOptions = shortenOptions,
+                    classShortenStrategy = classShortenStrategy.andThen(function),
+                    callableShortenStrategy = callableShortenStrategy.andThen(function),
+                )
+            }
+    }
+
+    shortenReferences { it.coerceAtMost(maximumValue = ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED) }
+    shortenReferences { it }
 }
 
 /**
@@ -110,12 +116,12 @@ fun ShortenCommand.invokeShortening(): List<SmartPsiElementPointer<KtElement>> {
     val targetFile = targetFile.element ?: return emptyList()
     val psiFactory = KtPsiFactory(targetFile.project)
 
-    for (nameToImport in importsToAdd) {
-        targetFile.addImport(nameToImport)
+    for (fqName in importsToAdd) {
+        targetFile.addImport(fqName)
     }
 
-    for (nameToImport in starImportsToAdd) {
-        targetFile.addImport(nameToImport, allUnder = true)
+    for (fqName in starImportsToAdd) {
+        targetFile.addImport(fqName, allUnder = true)
     }
 
     val shorteningResults = mutableListOf<SmartPsiElementPointer<KtElement>>()
@@ -123,6 +129,7 @@ fun ShortenCommand.invokeShortening(): List<SmartPsiElementPointer<KtElement>> {
     //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
+
         type.deleteQualifier()
         if (shortenedRef != null) {
             type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
@@ -130,26 +137,31 @@ fun ShortenCommand.invokeShortening(): List<SmartPsiElementPointer<KtElement>> {
         shorteningResults += type.createSmartPointer()
     }
 
-    for ((callPointer, shortenedRef) in listOfQualifierToShortenInfo) {
-        val call = callPointer.element ?: continue
-        shortenedRef?.let {
-            val callee = when (val selector = call.selectorExpression) {
+    for ((qualifierToShorten, shortenedReference) in listOfQualifierToShortenInfo) {
+        val call = qualifierToShorten.element ?: continue
+
+        if (shortenedReference != null) {
+            when (val selector = call.selectorExpression) {
                 is KtArrayAccessExpression -> selector.arrayExpression
                 else -> selector.getCalleeExpressionIfAny()
-            }
-            callee?.replace(psiFactory.createExpression(shortenedRef))
+            }?.replace(psiFactory.createExpression(shortenedReference))
         }
-        call.deleteQualifier()?.let { shorteningResults += it.createSmartPointer() }
+
+        val selectorExpression = call.selectorExpression ?: continue
+        val expression = call.replace(selectorExpression) as KtExpression
+        shorteningResults += expression.createSmartPointer()
     }
 
-    for (labelInfo in thisLabelsToShorten) {
-        val thisWithLabel = labelInfo.labelToShorten.element ?: continue
+    for ((labelToShorten) in thisLabelsToShorten) {
+        val thisWithLabel = labelToShorten.element ?: continue
+
         thisWithLabel.labelQualifier?.delete()
         shorteningResults += thisWithLabel.createSmartPointer()
     }
 
     for (kDocNamePointer in kDocQualifiersToShorten) {
         val kDocName = kDocNamePointer.element ?: continue
+
         kDocName.deleteQualifier()
         shorteningResults += kDocName.createSmartPointer()
     }
@@ -157,12 +169,11 @@ fun ShortenCommand.invokeShortening(): List<SmartPsiElementPointer<KtElement>> {
     return shorteningResults
 }
 
-private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
-    val selectorExpression = selectorExpression ?: return null
-    return this.replace(selectorExpression) as KtExpression
-}
-
 private fun KDocName.deleteQualifier() {
     val identifier = lastChild.takeIf { it.node.elementType == KtTokens.IDENTIFIER } ?: return
     allChildren.takeWhile { it != identifier }.forEach { it.delete() }
 }
+
+private inline infix fun <A, B, C> ((A) -> B).andThen(
+    crossinline function: (B) -> C,
+): (A) -> C = { function(this(it)) }
