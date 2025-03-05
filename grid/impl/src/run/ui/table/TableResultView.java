@@ -1318,7 +1318,7 @@ public final class TableResultView extends JBTableWithResizableCells
   private boolean shouldDisplayValueEditor(int row, int column) {
     var tableModel = getModel();
     var cellValue = tableModel.getValueAt(row, column);
-    return cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded();
+    return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) || (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded());
   }
 
   private void showValueEditor(EventObject e) {

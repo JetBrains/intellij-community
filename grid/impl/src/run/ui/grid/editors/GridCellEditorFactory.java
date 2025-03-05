@@ -96,8 +96,8 @@ public interface GridCellEditorFactory {
 
     @Override
     public @NotNull ValueFormatterResult format() {
-      if (myValue instanceof LobInfo) {
-        return new ValueFormatterResult(myValue instanceof LobInfo.ClobInfo ? ((LobInfo.ClobInfo)myValue).data : "");
+      if (myValue instanceof LobInfo.ClobInfo) {
+        return new ValueFormatterResult(((LobInfo.ClobInfo)myValue).data);
       }
       if (myValue instanceof GeoWrapper) {
         return new ValueFormatterResult(((GeoWrapper)myValue).getWkt());
