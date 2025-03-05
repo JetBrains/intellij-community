@@ -255,7 +255,8 @@ abstract class ComponentManagerImpl(
   }
 
   override val componentStore: IComponentStore
-    get() = getService(IComponentStore::class.java)!!
+    get() = getService(IComponentStore::class.java)
+            ?: error("Cannot get service: ${IComponentStore::class.java.name}")
 
   @Suppress("FunctionName")
   open suspend fun _getComponentStore(): IComponentStore = getServiceAsync(IComponentStore::class.java)
