@@ -309,15 +309,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return eventListenerJar
   }
 
-  override suspend fun createEmbedder(
-    project: Project,
-    alwaysOnline: Boolean,
-    multiModuleProjectDirectory: String,
-  ): MavenEmbedderWrapper {
-    val connector = getConnector(project, multiModuleProjectDirectory)
-    return MavenEmbedderWrapperLegacyImpl(project, alwaysOnline, multiModuleProjectDirectory, connector)
-  }
-
   override fun createIndexer(): MavenIndexerWrapper {
     return createDedicatedIndexer()!!
   }

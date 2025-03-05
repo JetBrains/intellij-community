@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenImportUtil.convertSettings
 import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.nio.file.Path
@@ -88,5 +89,21 @@ private class MavenEmbedderWrappersImpl(private val myProject: Project) : MavenE
   override fun close() {
     myEmbedders.values.forEach { it.release() }
     myEmbedders.clear()
+  }
+}
+
+private class MavenEmbedderWrapperImpl(
+  project: Project,
+  private val myEmbedder: MavenServerEmbedder
+) : MavenEmbedderWrapper(project) {
+
+  override suspend fun create(): MavenServerEmbedder {
+    return myEmbedder
+  }
+
+  @Synchronized
+  override fun cleanup() {
+    MavenLog.LOG.debug("[wrapper] cleaning up $this")
+    super.cleanup()
   }
 }
