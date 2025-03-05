@@ -43,6 +43,7 @@ public final class PyKnownDecoratorUtil {
     FUNCTOOLS_WRAPS("functools.wraps"),
     FUNCTOOLS_TOTAL_ORDERING("functools.total_ordering"),
     FUNCTOOLS_SINGLEDISPATCH("functools.singledispatch"),
+    FUNCTOOLS_CACHED_PROPERTY("functools.cached_property"),
 
     ABC_ABSTRACTMETHOD("abc.abstractmethod"),
     ABC_ABSTRACTCLASSMETHOD("abc.abstractclassmethod"),
@@ -121,6 +122,7 @@ public final class PyKnownDecoratorUtil {
   private static final Set<KnownDecorator> PROPERTY_DECORATORS = EnumSet.of(PROPERTY,
                                                                             ABC_ABSTRACTPROPERTY,
                                                                             PYRAMID_DECORATOR_REIFY,
+                                                                            FUNCTOOLS_CACHED_PROPERTY,
                                                                             DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY,
                                                                             KOMBU_UTILS_CACHED_PROPERTY);
 
