@@ -200,7 +200,7 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> lineNumbersAreas = List.of(
-      areaGap()
+      areaGap(gapBeforeLineMarkersWidth())
         .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
         .showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
@@ -267,6 +267,10 @@ public final class EditorGutterLayout {
       layout.addAll(extraRightFreePainters);
     }
     return layout;
+  }
+
+  private static int gapBeforeLineMarkersWidth() {
+    return JBUI.CurrentTheme.Editor.Gutter.gapAfterVcsMarkersWidth();
   }
 
   private static @NotNull GutterArea areaGap() {
