@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -66,10 +65,6 @@ class NoRealMavenServerManager : MavenServerManager {
   }
 
   override fun getMavenEventListener(): File {
-    noRealMavenAllowed()
-  }
-
-  override suspend fun createEmbedder(project: Project, alwaysOnline: Boolean, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
     noRealMavenAllowed()
   }
 
