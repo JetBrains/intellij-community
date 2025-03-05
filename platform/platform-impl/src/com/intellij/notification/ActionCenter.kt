@@ -1,91 +1,81 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.notification;
+package com.intellij.notification
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.impl.NotificationsToolWindowFactory;
-import com.intellij.notification.impl.StatusMessage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.IdeBundle
+import com.intellij.notification.impl.NotificationsToolWindowFactory
+import com.intellij.notification.impl.StatusMessage
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
-import java.util.List;
+object ActionCenter {
+  @Internal
+  const val EVENT_REQUESTOR: String = "Internal notification event requestor"
 
-/**
- * @author Alexander Lobas
- */
-public final class ActionCenter {
-  public static final String EVENT_REQUESTOR = "Internal notification event requestor";
+  @JvmField
+  @Internal
+  val MODEL_CHANGED: Topic<EventListener> = Topic.create("NOTIFICATION_MODEL_CHANGED",
+                                                         EventListener::class.java, Topic.BroadcastDirection.NONE)
 
-  public static final Topic<EventListener> MODEL_CHANGED =
-    Topic.create("NOTIFICATION_MODEL_CHANGED", EventListener.class, Topic.BroadcastDirection.NONE);
-
-  public static void fireModelChanged() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(MODEL_CHANGED).modelChanged();
+  @Internal
+  fun fireModelChanged() {
+    ApplicationManager.getApplication().messageBus.syncPublisher(MODEL_CHANGED).modelChanged()
   }
 
-  @ApiStatus.Internal
-  public static @Nullable StatusMessage getStatusMessage(@Nullable Project project) {
-    return NotificationsToolWindowFactory.Companion.getStatusMessage(project);
+  @JvmStatic
+  @Internal
+  fun getStatusMessage(project: Project?): StatusMessage? {
+    return NotificationsToolWindowFactory.getStatusMessage(project)
   }
 
-  public static @NotNull List<Notification> getNotifications(@Nullable Project project) {
-    return NotificationsToolWindowFactory.Companion.getNotifications(project);
+  @JvmStatic
+  fun getNotifications(project: Project?): List<Notification> {
+    return NotificationsToolWindowFactory.getNotifications(project)
   }
 
-  public static void expireNotifications(@NotNull Project project) {
-    for (Notification notification : getNotifications(project)) {
-      notification.expire();
+  @JvmStatic
+  fun expireNotifications(project: Project) {
+    for (notification in getNotifications(project)) {
+      notification.expire()
     }
   }
 
-  private static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
-    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
+  @JvmStatic
+  val toolwindowName: @Nls String
+    get() = IdeBundle.message("toolwindow.stripe.Notifications")
+
+  @JvmStatic
+  fun showLog(project: Project) {
+    getToolWindow(project)?.show()
   }
 
-  public static @NotNull @Nls String getToolwindowName() {
-    return IdeBundle.message("toolwindow.stripe.Notifications");
+  @JvmStatic
+  @JvmOverloads
+  fun activateLog(project: Project, focus: Boolean = true) {
+    getToolWindow(project)?.activate(null, focus)
   }
 
-  public static void showLog(@NotNull Project project) {
-    ToolWindow window = getToolWindow(project);
-    if (window != null) {
-      window.show();
+  @JvmStatic
+  fun toggleLog(project: Project?) {
+    if (project == null) return
+    val toolWindow = getToolWindow(project) ?: return
+    if (toolWindow.isVisible) {
+      toolWindow.hide()
+    }
+    else {
+      toolWindow.activate(null)
     }
   }
 
-  public static void activateLog(@NotNull Project project) {
-    ToolWindow window = getToolWindow(project);
-    if (window != null) {
-      window.activate(null);
-    }
+  private fun getToolWindow(project: Project): ToolWindow? {
+    return ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
   }
 
-  public static void activateLog(@NotNull Project project, boolean focus) {
-    ToolWindow window = getToolWindow(project);
-    if (window != null) {
-      window.activate(null, focus);
-    }
-  }
-
-  public static void toggleLog(@Nullable Project project) {
-    ToolWindow toolWindow = getToolWindow(project);
-    if (toolWindow != null) {
-      if (toolWindow.isVisible()) {
-        toolWindow.hide();
-      }
-      else {
-        toolWindow.activate(null);
-      }
-    }
-  }
-
-  public interface EventListener {
-    void modelChanged();
+  interface EventListener {
+    fun modelChanged()
   }
 }

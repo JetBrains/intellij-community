@@ -5581,17 +5581,15 @@ f:com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP
 - f:setPrefix(java.lang.String):V
 f:com.intellij.jps.impl.JpsPluginBean
 f:com.intellij.notification.ActionCenter
-- sf:EVENT_REQUESTOR:java.lang.String
-- sf:MODEL_CHANGED:com.intellij.util.messages.Topic
-- sf:TOOL_WINDOW_ID:java.lang.String
-- <init>():V
-- s:expireNotifications(com.intellij.openapi.project.Project):V
-- s:fireModelChanged():V
-- s:getNotifications(com.intellij.openapi.project.Project):java.util.List
-- s:getToolWindow(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
-- s:getToolwindowName():java.lang.String
-- s:showNotification(com.intellij.openapi.project.Project):V
-- s:toggleLog(com.intellij.openapi.project.Project):V
+- sf:INSTANCE:com.intellij.notification.ActionCenter
+- sf:activateLog(com.intellij.openapi.project.Project):V
+- sf:activateLog(com.intellij.openapi.project.Project,Z):V
+- bs:activateLog$default(com.intellij.openapi.project.Project,Z,I,java.lang.Object):V
+- sf:expireNotifications(com.intellij.openapi.project.Project):V
+- sf:getNotifications(com.intellij.openapi.project.Project):java.util.List
+- sf:getToolwindowName():java.lang.String
+- sf:showLog(com.intellij.openapi.project.Project):V
+- sf:toggleLog(com.intellij.openapi.project.Project):V
 com.intellij.notification.ActionCenter$EventListener
 - a:modelChanged():V
 f:com.intellij.notification.EventLog
