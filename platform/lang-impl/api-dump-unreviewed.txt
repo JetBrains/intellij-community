@@ -420,7 +420,6 @@ c:com.intellij.application.options.CodeStyleConfigurableWrapper
 - disposeUIResources():V
 - enableSearch(java.lang.String):java.lang.Runnable
 - focusOn(java.lang.String):V
-- s:getConfigurableId(java.lang.String):java.lang.String
 - getDisplayName():java.lang.String
 - getHelpTopic():java.lang.String
 - getId():java.lang.String

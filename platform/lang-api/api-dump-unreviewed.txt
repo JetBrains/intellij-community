@@ -4914,6 +4914,7 @@ a:com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 - createCustomSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CustomCodeStyleSettings
 - createSettingsPage(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.openapi.options.Configurable
 - getConfigurableDisplayName():java.lang.String
+- getConfigurableId():java.lang.String
 - getGroup():com.intellij.psi.codeStyle.CodeStyleGroup
 - getLanguage():com.intellij.lang.Language
 - getPriority():com.intellij.psi.codeStyle.DisplayPriority
