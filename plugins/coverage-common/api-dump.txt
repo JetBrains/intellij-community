@@ -120,6 +120,27 @@ com.intellij.coverage.CoverageFileProvider
 f:com.intellij.coverage.CoverageHelper
 - s:attachToProcess(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunnerSettings):V
 - s:resetCoverageSuit(com.intellij.execution.configurations.RunConfigurationBase):V
+com.intellij.coverage.CoverageLoadErrorReporter
+- a:reportError(java.lang.Exception):V
+- a:reportError(java.lang.String):V
+- a:reportWarning(java.lang.Exception):V
+- a:reportWarning(java.lang.String,java.lang.Exception):V
+- bs:reportWarning$default(com.intellij.coverage.CoverageLoadErrorReporter,java.lang.String,java.lang.Exception,I,java.lang.Object):V
+f:com.intellij.coverage.CoverageLoadErrorReporterImplementation
+- com.intellij.coverage.CoverageLoadErrorReporter
+- <init>(com.intellij.coverage.CoverageLoadListener,java.io.File):V
+- reportError(java.lang.Exception):V
+- reportError(java.lang.String):V
+- reportWarning(java.lang.Exception):V
+- reportWarning(java.lang.String,java.lang.Exception):V
+com.intellij.coverage.CoverageLoadListener
+- sf:COVERAGE_TOPIC:com.intellij.util.messages.Topic
+- sf:Companion:com.intellij.coverage.CoverageLoadListener$Companion
+- a:coverageLoadingStarted(java.io.File):V
+- a:reportCoverageLoadException(java.lang.String,java.io.File,java.lang.Exception):V
+- bs:reportCoverageLoadException$default(com.intellij.coverage.CoverageLoadListener,java.lang.String,java.io.File,java.lang.Exception,I,java.lang.Object):V
+- a:reportCoverageLoaded(com.intellij.coverage.LoadCoverageResult,java.io.File):V
+f:com.intellij.coverage.CoverageLoadListener$Companion
 a:com.intellij.coverage.CoverageOptions
 - com.intellij.openapi.options.UnnamedConfigurable
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -134,7 +155,8 @@ a:com.intellij.coverage.CoverageRunner
 - a:getId():java.lang.String
 - s:getInstance(java.lang.Class):com.intellij.coverage.CoverageRunner
 - a:getPresentableName():java.lang.String
-- a:loadCoverageData(java.io.File,com.intellij.coverage.CoverageSuite):com.intellij.rt.coverage.data.ProjectData
+- F:loadCoverageData(java.io.File,com.intellij.coverage.CoverageSuite):com.intellij.rt.coverage.data.ProjectData
+- loadCoverageDataWithLogging(java.io.File,com.intellij.coverage.CoverageSuite,com.intellij.coverage.CoverageLoadErrorReporter):com.intellij.coverage.LoadCoverageResult
 c:com.intellij.coverage.CoverageRunnerData
 - com.intellij.execution.configurations.RunnerSettings
 - <init>():V
@@ -188,6 +210,24 @@ f:com.intellij.coverage.DefaultCoverageFileProvider
 - getCoverageDataFilePath():java.lang.String
 - getSourceProvider():java.lang.String
 - isValid():Z
+f:com.intellij.coverage.DummyCoverageLoadErrorReporter
+- com.intellij.coverage.CoverageLoadErrorReporter
+- <init>():V
+- reportError(java.lang.Exception):V
+- reportError(java.lang.String):V
+- reportWarning(java.lang.Exception):V
+- reportWarning(java.lang.String,java.lang.Exception):V
+f:com.intellij.coverage.FailedLoadCoverageResult
+- com.intellij.coverage.LoadCoverageResult
+- <init>(java.lang.Exception,Z):V
+- <init>(java.lang.Exception,Z,com.intellij.rt.coverage.data.ProjectData):V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Exception):V
+- <init>(java.lang.String,java.lang.Exception,com.intellij.rt.coverage.data.ProjectData):V
+- f:getException():java.lang.Exception
+- f:getReason():java.lang.String
+a:com.intellij.coverage.LoadCoverageResult
+- f:getProjectData():com.intellij.rt.coverage.data.ProjectData
 c:com.intellij.coverage.RemappingCoverageAnnotator
 - com.intellij.coverage.SimpleCoverageAnnotator
 - <init>(com.intellij.openapi.project.Project):V
@@ -217,6 +257,9 @@ p:com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner
 - a:annotateFile(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo):V
 - a:annotateSourceDirectory(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo):V
 - a:annotateTestDirectory(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo):V
+f:com.intellij.coverage.SuccessLoadCoverageResult
+- com.intellij.coverage.LoadCoverageResult
+- <init>(com.intellij.rt.coverage.data.ProjectData):V
 c:com.intellij.coverage.lcov.LcovCoverageReport
 - <init>():V
 - getInfo():java.util.Map
