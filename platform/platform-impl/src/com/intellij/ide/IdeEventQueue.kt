@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
@@ -985,7 +986,10 @@ private fun processMouseWheelEvent(e: MouseWheelEvent): Boolean {
   }
 
   e.consume()
-  (selectedPath[0].component as? JBPopupMenu)?.processMouseWheelEvent(e)
+
+  selectedPath.filterIsInstance<JBPopupMenu>()
+    .filter { it.contains(RelativePoint(e).getPoint(it)) }
+    .forEach { it.processMouseWheelEvent(e) }
   return true
 }
 
