@@ -12873,6 +12873,80 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget")
+    public static class DefaultAnnotationTarget extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorParameterAndFieldChange.kt")
+        public void testConstructorParameterAndFieldChange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/constructorParameterAndFieldChange.kt");
+        }
+
+        @TestMetadata("constructorParameterAndFieldKeep.kt")
+        public void testConstructorParameterAndFieldKeep() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/constructorParameterAndFieldKeep.kt");
+        }
+
+        @TestMetadata("constructorParameterAndPropertyChange.kt")
+        public void testConstructorParameterAndPropertyChange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/constructorParameterAndPropertyChange.kt");
+        }
+
+        @TestMetadata("constructorParameterAndPropertyKeep.kt")
+        public void testConstructorParameterAndPropertyKeep() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/constructorParameterAndPropertyKeep.kt");
+        }
+
+        @TestMetadata("inapplicableAllowlistedAnnotation.kt")
+        public void testInapplicableAllowlistedAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/inapplicableAllowlistedAnnotation.kt");
+        }
+
+        @TestMetadata("inapplicableCompilerWarning.kt")
+        public void testInapplicableCompilerWarning() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/inapplicableCompilerWarning.kt");
+        }
+
+        @TestMetadata("inapplicableNoParameter.kt")
+        public void testInapplicableNoParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/inapplicableNoParameter.kt");
+        }
+
+        @TestMetadata("inapplicableNotInConstructor.kt")
+        public void testInapplicableNotInConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/inapplicableNotInConstructor.kt");
+        }
+
+        @TestMetadata("inapplicableParamFieldAnnotationClass.kt")
+        public void testInapplicableParamFieldAnnotationClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/inapplicableParamFieldAnnotationClass.kt");
+        }
+
+        @TestMetadata("threeTargetsChangeToField.kt")
+        public void testThreeTargetsChangeToField() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/threeTargetsChangeToField.kt");
+        }
+
+        @TestMetadata("threeTargetsChangeToProperty.kt")
+        public void testThreeTargetsChangeToProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/threeTargetsChangeToProperty.kt");
+        }
+
+        @TestMetadata("threeTargetsKeep.kt")
+        public void testThreeTargetsKeep() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/defaultAnnotationTarget/threeTargetsKeep.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

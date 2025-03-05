@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
@@ -26,6 +27,7 @@ import com.intellij.util.lang.JavaVersion
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
@@ -115,6 +117,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             val extraFileNames = findExtraFilesForTest(mainFile)
 
             myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
+
+            registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable)
 
             val ktFile = myFixture.file as KtFile
             if (ktFile.isScript()) {
@@ -428,6 +432,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
         dispatchAllEventsInIdeEventQueue()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
         } catch (_: FileComparisonFailedError) {

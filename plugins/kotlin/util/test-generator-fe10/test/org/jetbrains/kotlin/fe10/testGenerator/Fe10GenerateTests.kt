@@ -608,6 +608,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "branched/introduceWhenSubject/whenGuards", // K2-only
                     "removeRedundantLabel", // quick fix in K1
                     "contextParametersMigration", // K2-only
+                    "defaultAnnotationTarget", // K2-only
                 )
             )
         }
