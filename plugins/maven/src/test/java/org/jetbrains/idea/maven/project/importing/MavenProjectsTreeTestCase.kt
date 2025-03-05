@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +35,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
 
   override fun setUp() {
     super.setUp()
-    mavenEmbedderWrappers = MavenEmbedderWrappersTestImpl(project)
+    mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
   }
 
   override fun tearDown() {

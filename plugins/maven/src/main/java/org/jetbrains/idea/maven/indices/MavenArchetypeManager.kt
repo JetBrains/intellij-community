@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -12,7 +13,7 @@ import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog.System.DefaultLocal
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenEmbedderWrappersImpl
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -167,7 +168,7 @@ class MavenArchetypeManager(private val myProject: Project) {
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects[0]!!.directoryFile).toString()
     }
-    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
+    val mavenEmbedderWrappers = myProject.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       val mavenEmbedderWrapper = runBlockingMaybeCancellable {
         mavenEmbedderWrappers.getEmbedder(baseDir)

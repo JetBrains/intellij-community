@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -270,7 +271,7 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
     runBlockingMaybeCancellable {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
         reportRawProgress { reporter ->
-          val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+          val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
           mavenEmbedderWrappers.use {
             val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
             embedder.executeGoal(listOf(request), "package", reporter, syncConsole)
@@ -336,7 +337,7 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
   private fun doCompile(project: Project,
                         mavenProjects: Collection<MavenProject>,
                         baseDir: String, mavenEventHandler: MavenEventHandler) {
-    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       val embedder = runBlockingMaybeCancellable {
         mavenEmbedderWrappers.getEmbedder(baseDir)

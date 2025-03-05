@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -35,7 +36,7 @@ internal class MavenArtifactDownloader(
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree)
     val result = ArtifactDownloadResult()
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
+      val mavenEmbedderWrappers = myProject.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
       mavenEmbedderWrappers.use {
         val embedder = mavenEmbedderWrappers.getAlwaysOnlineEmbedder(baseDir)
         val chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs)

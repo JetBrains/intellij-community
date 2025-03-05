@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.components.service
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -16,7 +17,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
-    mavenEmbedderWrappers = MavenEmbedderWrappersTestImpl(project)
+    mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
   }
 
   override fun tearDown() {

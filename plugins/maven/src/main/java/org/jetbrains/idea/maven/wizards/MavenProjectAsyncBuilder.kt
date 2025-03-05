@@ -5,6 +5,7 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -166,7 +167,7 @@ class MavenProjectAsyncBuilder {
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
       reportRawProgress { reporter ->
-        val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(project)
+        val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
         mavenEmbedderWrappers.use {
           tree.updateAll(false, generalSettings, mavenEmbedderWrappers, reporter)
         }
