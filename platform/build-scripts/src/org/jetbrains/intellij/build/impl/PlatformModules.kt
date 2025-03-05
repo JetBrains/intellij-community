@@ -268,10 +268,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     explicit.add(
       ModuleItem(
         moduleName = moduleName,
-        relativeOutputFile = when {
-          isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
-          else -> PlatformJarNames.getPlatformModuleJarName(moduleName, frontendModuleFilter)
-        },
+        relativeOutputFile = getProductModuleJarName(moduleName, context, frontendModuleFilter),
         reason = "productImplementationModules",
       )
     )
@@ -348,6 +345,13 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   return layout
+}
+
+private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
+  return when {
+    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
+    else -> PlatformJarNames.getPlatformModuleJarName(moduleName, frontendModuleFilter)
+  }
 }
 
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
@@ -573,7 +577,7 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
   }
 }
 
-private fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
+private suspend fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
   return collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
 }
@@ -625,11 +629,13 @@ private fun getModuleDescriptor(moduleName: String, jpsModuleName: String, xIncl
   return xml
 }
 
-private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
+private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
+  val frontendModuleFilter = context.getFrontendModuleFilter()
   val result = LinkedHashSet<ModuleItem>()
   for (moduleElement in (root.getChildren("content").asSequence().flatMap { it.getChildren("module") })) {
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
-    val relativeOutFile = "modules/$moduleName.jar"
+    val loadingRule = moduleElement.getAttributeValue("loading")
+    val relativeOutFile = if (loadingRule == "embedded") getProductModuleJarName(moduleName, context, frontendModuleFilter) else "modules/$moduleName.jar"
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->

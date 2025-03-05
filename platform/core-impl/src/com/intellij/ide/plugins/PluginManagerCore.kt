@@ -670,6 +670,15 @@ object PluginManagerCore {
     }
 
     if (checkEssentialPlugins) {
+      val corePlugin = idMap[CORE_ID]
+      if (corePlugin != null) {
+        val disabledModulesOfCorePlugin = 
+          corePlugin.content.modules
+            .filter { it.loadingRule.required && !it.requireDescriptor().isEnabled }
+        if (disabledModulesOfCorePlugin.isNotEmpty()) {
+          throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
+        }    
+      }
       checkEssentialPluginsAreAvailable(idMap, context.essentialPlugins)
     }
 

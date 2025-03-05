@@ -93,6 +93,14 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
 
+    fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: PluginContentDescriptor.ModuleItem) {
+      loadingErrors.add(createCannotLoadError(
+        descriptor = plugin,
+        dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.name) ?: PluginId.getId(disabledModule.name),
+        errors = emptyMap(),
+        isNotifyUser = !plugin.isImplementationDetail))
+    }
+
     m@ for (module in sortedModulesWithDependencies.modules) {
       if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
         module.isEnabled = false
@@ -130,15 +138,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       }
 
       if (module.moduleName == null) {
-        for (contentModule in module.content.modules) {
-          if (contentModule.loadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.name)) {
-            module.isEnabled = false
-            loadingErrors.add(createCannotLoadError(
-              descriptor = module,
-              dependencyPluginId = disabledModuleToProblematicPlugin.get(contentModule.name) ?: PluginId.getId(contentModule.name),
-              errors = emptyMap(),
-              isNotifyUser = !module.isImplementationDetail))
-            continue@m
+        if (module.pluginId != PluginManagerCore.CORE_ID) {
+          for (contentModule in module.content.modules) {
+            if (contentModule.loadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.name)) {
+              module.isEnabled = false
+              registerLoadingError(module, contentModule)
+              continue@m
+            }
           }
         }
 
@@ -149,14 +155,16 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         if (module.packagePrefix != null) {
           enabledModuleV2Ids.put(module.pluginId.idString, module)
         }
-        for (contentModule in module.content.modules) {
-          if (contentModule.loadingRule.required) {
-            val requiredContentModule = enabledRequiredContentModules.remove(contentModule.name)!!
-            markModuleAsEnabled(contentModule.name, requiredContentModule)
+        if (module.pluginId != PluginManagerCore.CORE_ID) {
+          for (contentModule in module.content.modules) {
+            if (contentModule.loadingRule.required) {
+              val requiredContentModule = enabledRequiredContentModules.remove(contentModule.name)!!
+              markModuleAsEnabled(contentModule.name, requiredContentModule)
+            }
           }
         }
       }
-      else if (module.isRequiredContentModule) {
+      else if (module.isRequiredContentModule && module.pluginId != PluginManagerCore.CORE_ID) {
         enabledRequiredContentModules.put(module.moduleName, module)
       }
       else {
@@ -164,6 +172,16 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       }
     }
 
+    val corePlugin = enabledPluginIds.get(PluginManagerCore.CORE_ID)
+    if (corePlugin != null) {
+      for (moduleItem in corePlugin.content.modules) {
+        if (moduleItem.loadingRule.required && !enabledModuleV2Ids.containsKey(moduleItem.name)) {
+          moduleItem.requireDescriptor().isEnabled = false
+          registerLoadingError(corePlugin, moduleItem)
+        }
+      }
+    }
+    
     if (!logMessages.isEmpty()) {
       PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
     }

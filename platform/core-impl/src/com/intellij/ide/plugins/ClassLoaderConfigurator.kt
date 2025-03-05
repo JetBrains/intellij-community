@@ -112,7 +112,12 @@ class ClassLoaderConfigurator(
         return true
       }
       if (module.pluginId == PluginManagerCore.CORE_ID) {
-        configureCorePluginModuleClassLoader(module, dependencies)
+        if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+          module.pluginClassLoader = coreLoader
+        }
+        else {
+          configureCorePluginModuleClassLoader(module, dependencies)
+        }
         return true
       }
 

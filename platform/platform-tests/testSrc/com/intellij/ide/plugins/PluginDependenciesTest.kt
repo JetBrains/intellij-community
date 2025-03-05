@@ -157,6 +157,37 @@ internal class PluginDependenciesTest {
     val optionalModuleClassLoader = result.getEnabledModule("optional.module").pluginClassLoader
     assertThat(optionalModuleClassLoader).isNotSameAs(mainClassLoader)
   }
+  
+  @Test
+  fun `embedded and required content modules in the core plugin`() {
+    val corePluginDir = pluginDirPath.resolve("core")
+    PluginBuilder.empty()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(corePluginDir)
+    val result = buildPluginSet()
+    assertThat(result).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID)
+    val mainClassLoader = result.getEnabledPlugin(PluginManagerCore.CORE_PLUGIN_ID).pluginClassLoader
+    val embeddedModuleClassLoader = result.getEnabledModule("embedded.module").pluginClassLoader
+    assertThat(embeddedModuleClassLoader).isSameAs(mainClassLoader)
+    val requiredModuleClassLoader = result.getEnabledModule("required.module").pluginClassLoader
+    assertThat(requiredModuleClassLoader).isNotSameAs(mainClassLoader)
+  }
+  
+  @Test
+  fun `required content module with unresolved dependency in the core plugin`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
+    val corePluginDir = pluginDirPath.resolve("core")
+    PluginBuilder.empty()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required").dependency("unresolved"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(corePluginDir)
+    buildPluginSet()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).isNotEmpty
+    assertThat(errors.first().get().toString()).contains("requires plugin", "unresolved")
+  }
 
   @Test
   fun `embedded content module without package prefix`() {

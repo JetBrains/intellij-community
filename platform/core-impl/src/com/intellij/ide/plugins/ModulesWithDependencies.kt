@@ -223,14 +223,16 @@ private fun collectDirectDependenciesInNewFormat(
     }
   }
 
-  /* Add edges to all required content modules. 
-     This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether the plugin 
-     can be loaded or not. */
-  for (item in module.content.modules) {
-    if (item.loadingRule.required) {
-      val descriptor = idMap.get(item.name)
-      if (descriptor != null) {
-        additionalEdges.add(descriptor)
+  if (module.pluginId != PluginManagerCore.CORE_ID) {
+    /* Add edges to all required content modules. 
+       This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether the plugin 
+       can be loaded or not. */
+    for (item in module.content.modules) {
+      if (item.loadingRule.required) {
+        val descriptor = idMap.get(item.name)
+        if (descriptor != null) {
+          additionalEdges.add(descriptor)
+        }
       }
     }
   }
