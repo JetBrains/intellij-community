@@ -337,7 +337,7 @@ class PluginBuilder private constructor() {
 
 @TestOnly
 fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
-  return PluginDescriptorFromXmlStreamBuilder(readContext = object : ReadModuleContext {
+  return PluginDescriptorFromXmlStreamConsumer(readContext = object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
   }, dataLoader = object : DataLoader {

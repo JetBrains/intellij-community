@@ -314,7 +314,7 @@ public class PluginManagerTest {
             var url = Objects.requireNonNull(child.getAttributeValue("url"));
             if (url.endsWith("/" + relativePath)) {
               try {
-                var reader = new PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto);
+                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto);
                 PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
                 return reader.build();
               }

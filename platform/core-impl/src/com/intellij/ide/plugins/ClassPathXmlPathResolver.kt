@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamBuilder
+import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
@@ -29,7 +29,7 @@ class ClassPathXmlPathResolver(
     else {
       reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return false, dataLoader.toString())
     }
-    PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, PluginXmlPathResolver.getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
+    PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, PluginXmlPathResolver.getChildBaseDir(base = base, relativePath = relativePath), readInto).let {
       it.consume(reader)
       it.build()
     }
@@ -43,7 +43,7 @@ class ClassPathXmlPathResolver(
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        val reader = PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto)
+        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto)
         reader.consume(it, dataLoader.toString())
         return reader.build()
       }
@@ -71,7 +71,7 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
       it.consume(resource, dataLoader.toString())
       it.build()
     }
@@ -80,7 +80,7 @@ class ClassPathXmlPathResolver(
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
-    return PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
       it.consume(reader)
       it.build()
     }

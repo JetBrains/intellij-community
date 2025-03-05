@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamBuilder
+import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.extensions.PluginId
@@ -18,7 +18,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     override fun toString() = throw UnsupportedOperationException()
   }
 
-  val raw = PluginDescriptorFromXmlStreamBuilder(object : ReadModuleContext {
+  val raw = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
   }, dataLoader, pathResolver, null, null).let {
     it.consume(input, path.toString())
@@ -46,7 +46,7 @@ fun createFromDescriptor(path: Path,
                          context: DescriptorListLoadingContext,
                          pathResolver: PathResolver,
                          dataLoader: DataLoader): IdeaPluginDescriptorImpl {
-  val raw = PluginDescriptorFromXmlStreamBuilder(context, dataLoader, pathResolver, null, null).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(context, dataLoader, pathResolver, null, null).let {
     it.consume(data, path.toString())
     it.build()
   }

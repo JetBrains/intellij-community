@@ -4,7 +4,7 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginXmlPathResolver
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamBuilder
+import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
@@ -35,7 +35,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      val reader = PluginDescriptorFromXmlStreamBuilder(readContext, dataLoader, this, null, readInto)
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto)
       reader.consume(input, path)
       return reader.build()
     }
