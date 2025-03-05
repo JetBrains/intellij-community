@@ -3,7 +3,6 @@ package fleet.kernel.rete.impl
 
 import fleet.util.toUnmodifiableSet
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 
 internal inline fun <K, V> MutableMap<K, V>.removeIf(key: K, p: (V) -> Boolean) {
   get(key)?.let { value ->
@@ -177,16 +176,6 @@ internal open class AdaptiveSet<T> : MutableSet<T> {
         error("unreachable")
       }
     }
-
-  override fun forEach(action: Consumer<in T>) {
-    when (state) {
-      EMPTY_STATE -> {}
-      ONE_STATE -> action.accept(subs as T)
-      LIST_STATE -> (subs as ArrayList<T>).forEach(action)
-      SET_STATE -> (subs as HashSet<T>).forEach(action)
-      else -> error("unreachable")
-    }
-  }
 }
 
 private fun <K, V> checkingMap(impl: MutableMap<K, V>, gold: MutableMap<K, V>): MutableMap<K, V> =
