@@ -217,6 +217,20 @@ private fun ListComboBoxes() {
         )
     }
 
+    // Create a list with duplicates to demonstrate the itemKeys parameter
+    val duplicateItems = remember {
+        listOf(
+            "Red", // index 0
+            "Blue", // index 1
+            "Green", // index 2
+            "Red", // index 3 - duplicate
+            "Yellow", // index 4
+            "Blue", // index 5 - duplicate
+            "Purple", // index 6
+            "Orange", // index 7
+        )
+    }
+
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Enabled and Editable")
@@ -281,6 +295,70 @@ private fun ListComboBoxes() {
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
+                        isSelected = isSelected,
+                        isActive = isActive,
+                        iconContentDescription = item,
+                    )
+                },
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text("With duplicate values (using itemKeys)")
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Using index as key")
+            var selectedIndex by remember { mutableIntStateOf(1) }
+            val selectedItemText = if (selectedIndex >= 0) duplicateItems[selectedIndex] else ""
+            Text(
+                text = "Selected item: $selectedItemText (index: $selectedIndex)",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            ListComboBox(
+                items = duplicateItems,
+                selectedIndex = selectedIndex,
+                modifier = Modifier.width(200.dp),
+                maxPopupHeight = 150.dp,
+                onItemSelected = { index, text -> selectedIndex = index },
+                // Use index as the key to handle duplicates
+                itemKeys = { index, _ -> index },
+                itemContent = { item, isSelected, isActive ->
+                    SimpleListItem(
+                        text = item,
+                        isSelected = isSelected,
+                        isActive = isActive,
+                        iconContentDescription = item,
+                    )
+                },
+            )
+        }
+
+        Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Using composite key")
+            var selectedIndex by remember { mutableIntStateOf(3) }
+            val selectedItemText = if (selectedIndex >= 0) duplicateItems[selectedIndex] else ""
+            Text(
+                text = "Selected item: $selectedItemText (index: $selectedIndex)",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            EditableListComboBox(
+                items = duplicateItems,
+                selectedIndex = selectedIndex,
+                modifier = Modifier.width(200.dp),
+                maxPopupHeight = 150.dp,
+                onItemSelected = { index, text -> selectedIndex = index },
+                // Create a composite key with both index and item value
+                itemKeys = { index, item -> "$item-$index" },
+                itemContent = { item, isSelected, isActive ->
+                    SimpleListItem(
+                        text = "$item (index: ${duplicateItems.indexOf(item)})",
                         isSelected = isSelected,
                         isActive = isActive,
                         iconContentDescription = item,
