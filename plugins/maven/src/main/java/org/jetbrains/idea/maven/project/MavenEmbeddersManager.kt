@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -14,7 +13,6 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenImportUtil.guessExistingEmbedderDir
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
@@ -112,14 +110,7 @@ private class MavenEmbedderWrapperLegacyImpl(
   private suspend fun doCreate(): MavenServerEmbedder {
     val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory)
     val settings = MavenImportUtil.convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, mavenDistribution)
-
     val transformer = RemotePathTransformerFactory.createForProject(project)
-    var sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).projectSdk)
-    if (sdkPath != null) {
-      sdkPath = transformer.toRemotePath(sdkPath)
-    }
-    settings.projectJdk = sdkPath
-
     val forceResolveDependenciesSequentially = Registry.Companion.`is`("maven.server.force.resolve.dependencies.sequentially")
     val useCustomDependenciesResolver = Registry.Companion.`is`("maven.server.use.custom.dependencies.resolver")
 
