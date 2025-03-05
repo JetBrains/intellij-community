@@ -25,9 +25,9 @@ abstract class Mixin<E : Entity>(
     vararg mixins: Mixin<in E>
   ) : this(requireNotNull(ident.qualifiedName), entityModule(ident), *mixins)
 
-  constructor(ident: KClass<*>, version: Int?, vararg mixins: Mixin<in E>) : this(
+  constructor(ident: KClass<out Entity>, version: Int?, vararg mixins: Mixin<in E>) : this(
     ident = ident.qualifiedName!! + if (version != null) ":$version" else "",
-    module = ident.java.module.name,
+    module = entityModule(ident),
     mixins = mixins,
   )
 

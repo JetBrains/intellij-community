@@ -39,15 +39,14 @@ abstract class DurableEntityType<E : Entity>(
   vararg mixins: Mixin<in E>,
 ) : EntityType<E>(ident, module, cons, Durable, *mixins) {
 
-
-  constructor(ident: KClass<*>, version: Int?, cons: (EID) -> E, vararg mixins: Mixin<in E>) : this(
+  constructor(ident: KClass<out Entity>, version: Int?, cons: (EID) -> E, vararg mixins: Mixin<in E>) : this(
     ident = ident.qualifiedName!! + if (version != null) ":$version" else "",
-    module = ident.java.module.name ?: "<unnamed>",
+    module = entityModule(ident),
     cons = cons,
     mixins = mixins,
   )
 
-  constructor(ident: KClass<*>, cons: (EID) -> E, vararg mixins: Mixin<in E>) : this(
+  constructor(ident: KClass<out Entity>, cons: (EID) -> E, vararg mixins: Mixin<in E>) : this(
     ident = ident,
     version = null,
     cons = cons,
