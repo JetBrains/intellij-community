@@ -4,6 +4,8 @@ package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.actions.CreateFileFromTemplateAction;
+import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.EditFileTemplatesAction;
 import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -30,7 +32,7 @@ import java.util.List;
 public final class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
@@ -52,8 +54,9 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e){
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
+
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return EMPTY_ARRAY;
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
@@ -94,7 +97,7 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
       if (!FileTemplateBase.isChild(template) && canCreateFromTemplate(e, template)) {
         AnAction action = replaceAction(template);
         if (action == null) {
-          action = new CreateFromTemplateAction(template);
+          action = new CreateFromSimpleTemplateAction(template);
         }
         result.add(action);
       }
@@ -109,8 +112,8 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
       result.add(new EditFileTemplatesAction(IdeBundle.message("action.edit.file.templates")));
     }
 
-    return result.toArray(AnAction.EMPTY_ARRAY);
-}
+    return result.toArray(EMPTY_ARRAY);
+  }
 
   private static AnAction replaceAction(final FileTemplate template) {
     for (CreateFromTemplateActionReplacer actionFactory : CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER.getExtensionList()) {
@@ -122,7 +125,7 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
     return null;
   }
 
-  static boolean canCreateFromTemplate(AnActionEvent e, @NotNull FileTemplate template){
+  static boolean canCreateFromTemplate(AnActionEvent e, @NotNull FileTemplate template) {
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -134,23 +137,60 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private static final class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
+  private static final class CreateFromTemplatesAction extends CreateFromTemplateActionBase {
 
-    CreateFromTemplatesAction(@NlsActions.ActionText String title){
-      super(title,null,null);
+    CreateFromTemplatesAction(@NlsActions.ActionText String title) {
+      super(title, null, null);
     }
 
     @Override
-    protected AnAction getReplacedAction(final FileTemplate template) {
+    protected AnAction getReplacedAction(FileTemplate template) {
       return replaceAction(template);
     }
 
     @Override
-    protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
+    protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
       SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
       dialog.show();
       return dialog.getSelectedTemplate();
     }
   }
+}
 
+final class CreateFromSimpleTemplateAction extends CreateFileFromTemplateAction implements DumbAware, CreateFromBundledTemplateAction {
+  @NotNull private final FileTemplate myTemplate;
+
+  CreateFromSimpleTemplateAction(@NotNull FileTemplate template) {
+    super(template.getName(), null, FileTemplateUtil.getIcon(template));
+    myTemplate = template;
+  }
+
+  @Override
+  protected void buildDialog(@NotNull Project project,
+                             @NotNull PsiDirectory directory,
+                             CreateFileFromTemplateDialog.@NotNull Builder builder) {
+    builder
+      .setTitle(myTemplate.getName())
+      .addKind(myTemplate.getName(),
+               FileTemplateUtil.getIcon(myTemplate),
+               FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);
+  }
+
+  @Override
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
+    return myTemplate.getName();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
+    boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate);
+    presentation.setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull FileTemplate getTemplate() {
+    return myTemplate;
+  }
 }

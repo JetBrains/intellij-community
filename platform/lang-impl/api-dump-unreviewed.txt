@@ -9356,6 +9356,8 @@ f:com.intellij.ide.fileTemplates.actions.AttributesDefaults
 - isFixedName():Z
 - setAttributeVisibleNames(java.util.Map):V
 - withFixedName(Z):com.intellij.ide.fileTemplates.actions.AttributesDefaults
+com.intellij.ide.fileTemplates.actions.CreateFromBundledTemplateAction
+- a:getTemplate():com.intellij.ide.fileTemplates.FileTemplate
 c:com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction
 - com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase
 - <init>(com.intellij.ide.fileTemplates.FileTemplate):V
