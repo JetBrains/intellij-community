@@ -24,7 +24,6 @@ jvm_library(
     "//fleet/util/core:fleet-util-core",
     "//fleet/rpc",
     "@lib//:kotlinx-coroutines-core",
-    "//fleet/preferences",
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/reporting/shared:fleet-reporting-shared",
     "//fleet/multiplatform.shims:multiplatform-shims",

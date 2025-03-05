@@ -2478,8 +2478,8 @@ java_import(
 
 java_import(
   name = "jb-jdi",
-  jars = ["@jb-jdi-2_41_http//file"],
-  srcjar = "@jb-jdi-2_41-sources_http//file",
+  jars = ["@jb-jdi-2_42_http//file"],
+  srcjar = "@jb-jdi-2_42-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3294,8 +3294,8 @@ java_library(
 
 java_import(
   name = "jvm-native-trusted-roots",
-  jars = ["@jvm-native-trusted-roots-1_0_21_http//file"],
-  srcjar = "@jvm-native-trusted-roots-1_0_21-sources_http//file",
+  jars = ["@jvm-native-trusted-roots-1_0_24_http//file"],
+  srcjar = "@jvm-native-trusted-roots-1_0_24-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3337,8 +3337,8 @@ kt_jvm_import(
 java_library(
   name = "kotlin-base-scripting-amper-dependency-resolution",
   exports = [
-    ":dependency-resolution-jvm-0_6_0-dev-2478_http_import",
-    ":concurrency-jvm-0_6_0-dev-2478_http_import",
+    ":dependency-resolution-jvm-0_6_0-dev-2519_http_import",
+    ":concurrency-jvm-0_6_0-dev-2519_http_import",
     ":slf4j-api-2_0_16_http_import",
     ":serialization-jvm-0_86_2_http_import",
     ":core-jvm-0_86_2_http_import",
@@ -3349,15 +3349,15 @@ java_library(
 )
 
 kt_jvm_import(
-  name = "dependency-resolution-jvm-0_6_0-dev-2478_http_import",
-  jar = "@dependency-resolution-jvm-0_6_0-dev-2478_http//file",
-  srcjar = "@dependency-resolution-jvm-0_6_0-dev-2478-sources_http//file"
+  name = "dependency-resolution-jvm-0_6_0-dev-2519_http_import",
+  jar = "@dependency-resolution-jvm-0_6_0-dev-2519_http//file",
+  srcjar = "@dependency-resolution-jvm-0_6_0-dev-2519-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "concurrency-jvm-0_6_0-dev-2478_http_import",
-  jar = "@concurrency-jvm-0_6_0-dev-2478_http//file",
-  srcjar = "@concurrency-jvm-0_6_0-dev-2478-sources_http//file"
+  name = "concurrency-jvm-0_6_0-dev-2519_http_import",
+  jar = "@concurrency-jvm-0_6_0-dev-2519_http//file",
+  srcjar = "@concurrency-jvm-0_6_0-dev-2519-sources_http//file"
 )
 
 kt_jvm_import(
@@ -3981,8 +3981,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-core",
-  jar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-12_http//file",
-  srcjar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-12-sources_http//file",
+  jar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-13_http//file",
+  srcjar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-13-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3995,22 +3995,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-debug",
-  jar = "@kotlinx-coroutines-debug-1_8_0-intellij-12_http//file",
-  srcjar = "@kotlinx-coroutines-debug-1_8_0-intellij-12-sources_http//file",
+  jar = "@kotlinx-coroutines-debug-1_8_0-intellij-13_http//file",
+  srcjar = "@kotlinx-coroutines-debug-1_8_0-intellij-13-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-guava",
-  jar = "@kotlinx-coroutines-guava-1_8_0-intellij-12_http//file",
-  srcjar = "@kotlinx-coroutines-guava-1_8_0-intellij-12-sources_http//file",
+  jar = "@kotlinx-coroutines-guava-1_8_0-intellij-13_http//file",
+  srcjar = "@kotlinx-coroutines-guava-1_8_0-intellij-13-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-slf4j",
-  jar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-12_http//file",
-  srcjar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-12-sources_http//file",
+  jar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-13_http//file",
+  srcjar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-13-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4023,8 +4023,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-test",
-  jar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-12_http//file",
-  srcjar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-12-sources_http//file",
+  jar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-13_http//file",
+  srcjar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-13-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4431,157 +4431,6 @@ java_import(
 )
 
 java_library(
-  name = "libraries-compose-desktop-jetbrains-jewel-ide-laf-bridge-243",
-  exports = [
-    ":jewel-ide-laf-bridge-243-0_26_2_http_import",
-    ":jewel-ui-243-0_26_2_http_import",
-    ":jewel-foundation-243-0_26_2_http_import",
-    ":foundation-desktop-1_7_0_http_import",
-    ":annotation-jvm-1_8_0_http_import",
-    ":collection-jvm-1_4_0_http_import",
-    ":animation-desktop-1_7_0_http_import",
-    ":animation-core-desktop-1_7_0_http_import",
-    ":ui-geometry-desktop-1_7_0_http_import",
-    ":foundation-layout-desktop-1_7_0_http_import",
-    ":ui-desktop-1_7_0_http_import",
-    ":lifecycle-common-jvm-2_8_5_http_import",
-    ":lifecycle-runtime-desktop-2_8_5_http_import",
-    ":core-common-2_2_0_http_import",
-    ":lifecycle-viewmodel-desktop-2_8_5_http_import",
-    ":lifecycle-runtime-compose-desktop-2_8_3_http_import",
-    ":annotation-1_8_0_http_import",
-    ":runtime-saveable-desktop-1_7_0_http_import",
-    ":ui-graphics-desktop-1_7_0_http_import",
-    ":ui-unit-desktop-1_7_0_http_import",
-    ":ui-text-desktop-1_7_0_http_import",
-    ":ui-util-desktop-1_7_0_http_import",
-    ":components-resources-desktop-1_7_0_http_import",
-    ":runtime-desktop-1_7_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "jewel-ide-laf-bridge-243-0_26_2_http_import",
-  jar = "@jewel-ide-laf-bridge-243-0_26_2_http//file",
-  srcjar = "@jewel-ide-laf-bridge-243-0_26_2-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "jewel-ui-243-0_26_2_http_import",
-  jar = "@jewel-ui-243-0_26_2_http//file",
-  srcjar = "@jewel-ui-243-0_26_2-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "jewel-foundation-243-0_26_2_http_import",
-  jar = "@jewel-foundation-243-0_26_2_http//file",
-  srcjar = "@jewel-foundation-243-0_26_2-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "foundation-desktop-1_7_0_http_import",
-  jar = "@foundation-desktop-1_7_0_http//file",
-  srcjar = "@foundation-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "animation-desktop-1_7_0_http_import",
-  jar = "@animation-desktop-1_7_0_http//file",
-  srcjar = "@animation-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "animation-core-desktop-1_7_0_http_import",
-  jar = "@animation-core-desktop-1_7_0_http//file",
-  srcjar = "@animation-core-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-geometry-desktop-1_7_0_http_import",
-  jar = "@ui-geometry-desktop-1_7_0_http//file",
-  srcjar = "@ui-geometry-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "foundation-layout-desktop-1_7_0_http_import",
-  jar = "@foundation-layout-desktop-1_7_0_http//file",
-  srcjar = "@foundation-layout-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-desktop-1_7_0_http_import",
-  jar = "@ui-desktop-1_7_0_http//file",
-  srcjar = "@ui-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-common-jvm-2_8_5_http_import",
-  jar = "@lifecycle-common-jvm-2_8_5_http//file",
-  srcjar = "@lifecycle-common-jvm-2_8_5-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-runtime-desktop-2_8_5_http_import",
-  jar = "@lifecycle-runtime-desktop-2_8_5_http//file",
-  srcjar = "@lifecycle-runtime-desktop-2_8_5-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-viewmodel-desktop-2_8_5_http_import",
-  jar = "@lifecycle-viewmodel-desktop-2_8_5_http//file",
-  srcjar = "@lifecycle-viewmodel-desktop-2_8_5-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-runtime-compose-desktop-2_8_3_http_import",
-  jar = "@lifecycle-runtime-compose-desktop-2_8_3_http//file",
-  srcjar = "@lifecycle-runtime-compose-desktop-2_8_3-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "runtime-saveable-desktop-1_7_0_http_import",
-  jar = "@runtime-saveable-desktop-1_7_0_http//file",
-  srcjar = "@runtime-saveable-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-graphics-desktop-1_7_0_http_import",
-  jar = "@ui-graphics-desktop-1_7_0_http//file",
-  srcjar = "@ui-graphics-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-unit-desktop-1_7_0_http_import",
-  jar = "@ui-unit-desktop-1_7_0_http//file",
-  srcjar = "@ui-unit-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-text-desktop-1_7_0_http_import",
-  jar = "@ui-text-desktop-1_7_0_http//file",
-  srcjar = "@ui-text-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-util-desktop-1_7_0_http_import",
-  jar = "@ui-util-desktop-1_7_0_http//file",
-  srcjar = "@ui-util-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "components-resources-desktop-1_7_0_http_import",
-  jar = "@components-resources-desktop-1_7_0_http//file",
-  srcjar = "@components-resources-desktop-1_7_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "runtime-desktop-1_7_0_http_import",
-  jar = "@runtime-desktop-1_7_0_http//file",
-  srcjar = "@runtime-desktop-1_7_0-sources_http//file"
-)
-
-java_library(
   name = "libraries-compose-foundation-desktop-compose-foundation-desktop",
   exports = [
     ":foundation-desktop-1_7_1_http_import",
@@ -4649,6 +4498,24 @@ kt_jvm_import(
   name = "ui-desktop-1_7_1_http_import",
   jar = "@ui-desktop-1_7_1_http//file",
   srcjar = "@ui-desktop-1_7_1-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-common-jvm-2_8_5_http_import",
+  jar = "@lifecycle-common-jvm-2_8_5_http//file",
+  srcjar = "@lifecycle-common-jvm-2_8_5-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-runtime-desktop-2_8_5_http_import",
+  jar = "@lifecycle-runtime-desktop-2_8_5_http//file",
+  srcjar = "@lifecycle-runtime-desktop-2_8_5-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-viewmodel-desktop-2_8_5_http_import",
+  jar = "@lifecycle-viewmodel-desktop-2_8_5_http//file",
+  srcjar = "@lifecycle-viewmodel-desktop-2_8_5-sources_http//file"
 )
 
 kt_jvm_import(

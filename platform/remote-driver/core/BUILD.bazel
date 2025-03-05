@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.driver.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "driver-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "driver-impl",
@@ -17,6 +23,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "@lib//:commons-lang3",
   ],
-  exports = ["//platform/remote-driver/model:driver-model"]
+  exports = ["//platform/remote-driver/model:driver-model"],
+  runtime_deps = [":driver-impl_resources"]
 )
 ### auto-generated section `build intellij.driver.impl` end
