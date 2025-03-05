@@ -1929,6 +1929,7 @@ public class Test {
       ///     Purposefully misaaligned stuff
       public class Main {}
     """.trimIndent(), """
+      ///
       ///     Purposefully misaaligned stuff
       public class Main {
       }
@@ -2076,6 +2077,7 @@ public class Test {
     ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
     /// 
     """.trimIndent(), """
+    ///
     ///         | Latin | Greek |
     ///         |-------|-------|
     ///         | a     | alpha |

@@ -133,6 +133,7 @@ public class JDComment {
       sb.append(emptyLine);
     }
 
+
     if (!myMarkdown && (myMultiLineComment &&
         myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
         || !myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
@@ -141,14 +142,17 @@ public class JDComment {
     {
       addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
       sb.insert(0, myFirstLine + '\n');
-      sb.append(indent);
+
+      if (!shouldAddExtraLines(myPrefixEmptyLineCount)) {
+        sb.append(indent);
+      }
     } else {
       sb.replace(0, prefix.length(), myFirstLine + " ");
       sb.deleteCharAt(sb.length()-1);
       addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
     }
 
-    addSuffixEmptyLinesIfNeeded(sb, emptyLine);
+    addSuffixEmptyLinesIfNeeded(sb, emptyLine, indent);
 
     sb.append(' ').append(myEndLine);
 
@@ -156,33 +160,41 @@ public class JDComment {
   }
 
   private void addPrefixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String emptyLine, @NotNull String indent) {
-    if (!myFormatter.getSettings().JD_KEEP_EMPTY_LINES) return;
-
     StringBuilder emptyLinePrefixBuilder = new StringBuilder();
     addEmptyLinesIfNeeded(emptyLinePrefixBuilder, emptyLine, myPrefixEmptyLineCount);
-
-    int firstNonWhitespace = StringUtil.findFirst(emptyLinePrefixBuilder, c -> !Character.isWhitespace(c));
-    if (firstNonWhitespace != -1) {
-      emptyLinePrefixBuilder.delete(0, firstNonWhitespace);
+    if (myMarkdown && shouldAddExtraLines(myPrefixEmptyLineCount)) {
+      emptyLinePrefixBuilder.append(indent);
+      emptyLinePrefixBuilder.delete(0, indent.length());
     }
-
-    emptyLinePrefixBuilder.append(indent);
     sb.insert(0, emptyLinePrefixBuilder);
   }
 
-  private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix) {
-    if (!myFormatter.getSettings().JD_KEEP_EMPTY_LINES) return;
-
+  private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String indent) {
     addEmptyLinesIfNeeded(sb, prefix, mySuffixEmptyLineCount);
-    int lastSymbolIndex = sb.length() - 1;
-    if (myMarkdown && !sb.isEmpty() && sb.charAt(lastSymbolIndex) == '\n') sb.deleteCharAt(lastSymbolIndex);
+    if (myMarkdown) {
+      while (!sb.isEmpty() && isWhitespace(sb.charAt(sb.length() - 1))) {
+        sb.deleteCharAt(sb.length() - 1);
+      }
+    }
+    else if (shouldAddExtraLines(myPrefixEmptyLineCount)) {
+      sb.append(indent);
+    }
   }
 
-  private static void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
-    if (lineCount > 0) {
-      if (!sb.isEmpty() && sb.charAt(sb.length() - 1) != '\n') sb.append('\n');
+  private static boolean isWhitespace(char c) {
+    return c == ' ' || c == '\n';
+  }
+
+  private void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
+    if (shouldAddExtraLines(lineCount)) {
+      int lastSymbolIndex = sb.length() - 1;
+      if (!sb.isEmpty() && sb.charAt(lastSymbolIndex) != '\n') sb.append('\n');
       sb.append(String.valueOf(emptyLine).repeat(lineCount));
     }
+  }
+
+  private boolean shouldAddExtraLines(int lineCount) {
+    return lineCount > 0 && myFormatter.getSettings().JD_KEEP_EMPTY_LINES;
   }
 
   private boolean hasEmptyTrimmedLines() {

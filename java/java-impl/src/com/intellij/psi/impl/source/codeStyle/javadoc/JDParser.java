@@ -304,7 +304,7 @@ public class JDParser {
    */
   private @Nullable List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers, boolean markdownComment) {
     if (s == null) return null;
-    s = markdownComment ? s : s.trim();
+    s = markdownComment ? s.stripTrailing() : s.strip();
     if (s.isEmpty()) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES && !markdownComment;
     List<String> list = new ArrayList<>();
