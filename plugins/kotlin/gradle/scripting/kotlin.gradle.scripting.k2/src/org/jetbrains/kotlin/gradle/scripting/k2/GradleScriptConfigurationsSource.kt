@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,7 +17,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.LibraryDependencyFactory
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.dependencies.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
@@ -60,9 +57,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
     override suspend fun updateModules(storage: MutableEntityStorage?) {
         if (storage == null) return
 
-        val storageWithGradleScriptModules = getUpdatedStorage(
-            project, data.get()
-        ) { KotlinGradleScriptModuleEntitySource(it) }
+        val storageWithGradleScriptModules = getUpdatedStorage()
 
         storage.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
     }
@@ -99,19 +94,16 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         data.set(configurations)
     }
 
-    private fun getUpdatedStorage(
-        project: Project,
-        configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
-        entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
-    ): MutableEntityStorage {
+    private fun getUpdatedStorage(): MutableEntityStorage {
         val updatedStorage = MutableEntityStorage.create()
 
         val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-        val updatedFactory = LibraryDependencyFactory(fileUrlManager, updatedStorage)
+        val data = data.get()
+        val dependencyFactory = GradleLibraryDependencyFactory(fileUrlManager, updatedStorage, data)
 
-        for ((scriptFile, configurationWithSdk) in configurations) {
+        for ((scriptFile, configurationWithSdk) in data) {
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
-            val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
+            val source = KotlinGradleScriptModuleEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
 
             val definitionName = findScriptDefinition(project, VirtualFileScriptSource(scriptFile)).name
 
@@ -123,70 +115,49 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
             val classes = toVfsRoots(configuration.dependenciesClassPath).toMutableSet()
 
             val allDependencies = listOfNotNull(sdkDependency) + buildList {
+                val sources = toVfsRoots(configuration.dependenciesSources).toMutableSet()
+                add(
+                    updatedStorage.groupClassesSourcesByPredicate(
+                        classes,
+                        sources,
+                        source,
+                        fileUrlManager,
+                        "$locationName kotlin-stdlib dependencies"
+                    ) {
+                        it.name.contains("kotlin-stdlib")
+                    })
+
                 if (indexSourceRootsEagerly()) {
-                    val sources = toVfsRoots(configuration.dependenciesSources).toMutableSet()
-                    addAll(getDependenciesFromGradleLibs(classes, sources, fileUrlManager, project))
                     addAll(updatedStorage.createDependenciesWithSources(classes, sources, source, fileUrlManager))
-                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName accessors dependencies") {
-                        it.path.contains("accessors")
-                    })
-                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName groovy dependencies") {
-                        it.path.contains("groovy")
-                    })
-                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName kotlin dependencies") {
-                        it.name.contains("kotlin")
-                    })
+                    add(
+                        updatedStorage.groupClassesSourcesByPredicate(
+                            classes,
+                            sources,
+                            source,
+                            fileUrlManager,
+                            "$locationName accessors dependencies"
+                        ) {
+                            it.path.contains("accessors")
+                        })
+                    add(
+                        updatedStorage.groupClassesSourcesByPredicate(
+                            classes,
+                            sources,
+                            source,
+                            fileUrlManager,
+                            "$locationName groovy dependencies"
+                        ) {
+                            it.path.contains("groovy")
+                        })
                 }
 
-                addAll(classes.map { updatedFactory.get(it, source) })
+                addAll(classes.mapNotNull { dependencyFactory.get(it, source) })
             }.sortedBy { it.library.name }
 
             updatedStorage.addEntity(ModuleEntity("$definitionScriptModuleName.$locationName", allDependencies, source))
         }
 
         return updatedStorage
-    }
-
-    private fun getDependenciesFromGradleLibs(
-        classes: MutableSet<VirtualFile>, sources: MutableSet<VirtualFile>, manager: VirtualFileUrlManager, project: Project
-    ): List<LibraryDependency> {
-        val currentSnapshot = project.workspaceModel.currentSnapshot
-
-        val entityByRootUrl = mutableMapOf<VirtualFileUrl, LibraryEntity>()
-        val entities = currentSnapshot.entities(LibraryEntity::class.java).filter { it.name.startsWith("Gradle:") }
-        entities.forEach {
-            it.roots.forEach { (url, _, _) ->
-                entityByRootUrl[url] = it
-            }
-        }
-
-        val classesEntities = mutableListOf<LibraryEntity>()
-        val sourcesEntities = mutableListOf<LibraryEntity>()
-
-        val classesIterator = classes.iterator()
-        while (classesIterator.hasNext()) {
-            val classVirtualFile = classesIterator.next()
-            val found = entityByRootUrl[classVirtualFile.toVirtualFileUrl(manager)]
-            if (found != null) {
-                classesEntities.add(found)
-                classesIterator.remove()
-                sources.removeAll(found.roots.map { it.url.virtualFile })
-            }
-        }
-
-        val sourcesIterator = sources.iterator()
-        while (sourcesIterator.hasNext()) {
-            val sourceVirtualFile = sourcesIterator.next()
-            val found = entityByRootUrl[sourceVirtualFile.toVirtualFileUrl(manager)]
-            if (found != null) {
-                sourcesEntities.add(found)
-                sourcesIterator.remove()
-            }
-        }
-
-        return (classesEntities + sourcesEntities).toSet().map {
-            LibraryDependency(it.symbolicId, false, DependencyScope.COMPILE)
-        }
     }
 
     private fun MutableEntityStorage.createDependenciesWithSources(
@@ -203,7 +174,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
 
         for ((left, right) in pairs) {
             if (right != null) {
-                val libraryId = LibraryId("${left.name} (with sources)", LibraryTableId.ProjectLibraryTableId)
+                val libraryId = LibraryId("Scripts: ${left.name}", LibraryTableId.ProjectLibraryTableId)
                 val dependency = if (contains(libraryId)) {
                     LibraryDependency(libraryId, false, DependencyScope.COMPILE)
                 } else {
@@ -271,4 +242,76 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
     }
 
     data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)
+}
+
+class GradleLibraryDependencyFactory(
+    private val fileUrlManager: VirtualFileUrlManager,
+    private val entityStorage: MutableEntityStorage,
+    scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
+) {
+    private val nameCache = HashMap<String, Set<VirtualFile>>()
+
+    init {
+        var classes = scripts.mapNotNull { it.value.scriptConfiguration.valueOrNull() }.flatMap {
+            it.dependenciesClassPath
+        }.toSet()
+
+        toVfsRoots(classes).forEach {
+            nameCache.compute(it.name) { _, list ->
+                (list ?: emptySet()) + it
+            }
+        }
+    }
+
+    fun get(file: VirtualFile, source: KotlinScriptEntitySource): LibraryDependency? {
+        val filesWithSameName = nameCache[file.name] ?: return null
+        return if (filesWithSameName.size == 1) {
+            getOrCreateLibrary(file = file, source = source)
+        } else {
+            val commonAncestor = findCommonAncestor(filesWithSameName.map { it.path })
+            if (commonAncestor == null) {
+                getOrCreateLibrary(file = file, source = source)
+            } else {
+                val libraryName = file.path.replace("$commonAncestor/", "")
+                getOrCreateLibrary(file = file, libraryName = libraryName, source = source)
+            }
+        }
+    }
+
+    private fun getOrCreateLibrary(
+        file: VirtualFile,
+        libraryName: String = file.name,
+        source: KotlinScriptEntitySource
+    ): LibraryDependency {
+        val libraryId = LibraryId("Scripts: $libraryName", LibraryTableId.ProjectLibraryTableId)
+        if (!entityStorage.contains(libraryId)) {
+            val fileUrl = file.toVirtualFileUrl(fileUrlManager)
+            val libraryRoot = LibraryRoot(fileUrl, LibraryRootTypeId.COMPILED)
+            entityStorage.addEntity(LibraryEntity(libraryId.name, libraryId.tableId, listOf(libraryRoot), source))
+        }
+
+        return LibraryDependency(libraryId, false, DependencyScope.COMPILE)
+    }
+
+    private fun findCommonAncestor(paths: Collection<String>): String? {
+        if (paths.isEmpty()) return null
+
+        val splitPaths = paths.map { it.split("/") }
+        val shortestSize = splitPaths.minOf { it.size }
+
+        val commonParts = mutableListOf<String>()
+        for (i in 0 until shortestSize) {
+            val segment = splitPaths[0][i]
+            if (splitPaths.all { it[i] == segment }) {
+                commonParts.add(segment)
+            } else {
+                break
+            }
+        }
+
+        val commonPath = commonParts.joinToString("/")
+        if (commonPath.isBlank()) return null
+
+        return commonPath
+    }
 }
