@@ -105,9 +105,8 @@ a:com.intellij.xdebugger.attach.osHandlers.UnixAttachOSHandler
 - getUid():I
 - p:getenv(java.lang.String):java.lang.String
 - isOurProcess(I):Z
-a:com.intellij.xdebugger.impl.DebuggerSupport
+c:com.intellij.xdebugger.impl.DebuggerSupport
 - <init>():V
-- getQuickEvaluateHandler():com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 - com.intellij.openapi.editor.event.EditorMouseListener
 - com.intellij.openapi.editor.event.EditorMouseMotionListener
