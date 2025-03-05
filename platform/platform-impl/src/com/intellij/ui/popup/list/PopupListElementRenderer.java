@@ -44,6 +44,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected JLabel myIconLabel;
 
   private JPanel myButtonPane;
+  private Boolean hasExtraButtons = null; // state initialized in updateExtraButtons
+
   private JComponent myMainPane;
   protected JComponent myButtonSeparator;
   protected JComponent myIconBar;
@@ -432,7 +434,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
-    myButtonPane.removeAll();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultAnchor(GridBagConstraints.CENTER)
       .setDefaultWeightX(1.0)
@@ -452,6 +453,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (!extraButtons.isEmpty()) {
+      myButtonPane.removeAll();
       myButtonSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
       // We ONLY need to update the tooltip if there's an active inline action button.
@@ -463,14 +465,19 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         String text = myInlineActionsSupport.getToolTipText(value, activeButtonIndex);
         myRendererComponent.setToolTipText(text);
       }
+      hasExtraButtons = true;
     }
-    else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){
+    else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)) {
+      myButtonPane.removeAll();
       myButtonSeparator.setVisible(false);
       myButtonPane.add(Box.createHorizontalStrut(InlineActionsUtilKt.buttonWidth()), gb.next());
+      hasExtraButtons = true;
     }
-    else {
+    else if (hasExtraButtons == null || hasExtraButtons) {
+      myButtonPane.removeAll();
       myButtonSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
+      hasExtraButtons = false;
     }
 
     return !extraButtons.isEmpty();
