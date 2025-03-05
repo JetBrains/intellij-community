@@ -6,7 +6,10 @@ import java.io.InputStream
 
 @ApiStatus.Internal
 interface XIncludeLoader {
-  fun loadXIncludeReference(dataLoader: DataLoader, base: String?, relativePath: String): LoadedXIncludeReference?
+  /**
+   * @param path absolute path from a resource root, without leading '/' (e.g., `META-INF/extensions.xml`)
+   */
+  fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference?
 
   /** @param inputStream lifetime is bound to lifetime of [XIncludeLoader] that produced it  */
   @ApiStatus.Internal

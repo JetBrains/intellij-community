@@ -22,8 +22,7 @@ class ClassPathXmlPathResolver(
   override val isFlat: Boolean
     get() = true
 
-  override fun loadXIncludeReference(dataLoader: DataLoader, base: String?, relativePath: String): XIncludeLoader.LoadedXIncludeReference? {
-    val path = PluginXmlPathResolver.toLoadPath(relativePath, base)
+  override fun loadXIncludeReference(dataLoader: DataLoader, path: String): XIncludeLoader.LoadedXIncludeReference? {
     val input: InputStream?
     if (classLoader is UrlClassLoader) {
       input = classLoader.getResourceAsBytes(path, true)?.let(::ByteArrayInputStream)

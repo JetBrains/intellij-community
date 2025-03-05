@@ -53,13 +53,11 @@ internal class ModuleBasedPluginXmlPathResolver(
 
   override fun loadXIncludeReference(
     dataLoader: DataLoader,
-    base: String?,
-    relativePath: String,
+    path: String,
   ): XIncludeLoader.LoadedXIncludeReference? {
     return fallbackResolver.loadXIncludeReference(
       dataLoader = dataLoader,
-      base = base,
-      relativePath = relativePath,
+      path = path,
     )
   }
 

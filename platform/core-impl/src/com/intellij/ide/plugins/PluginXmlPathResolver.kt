@@ -49,8 +49,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
   }
 
-  override fun loadXIncludeReference(dataLoader: DataLoader, base: String?, relativePath: String): XIncludeLoader.LoadedXIncludeReference? {
-    val path = toLoadPath(relativePath, base)
+  override fun loadXIncludeReference(dataLoader: DataLoader, path: String): XIncludeLoader.LoadedXIncludeReference? {
     try {
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
         return XIncludeLoader.LoadedXIncludeReference(input, null)
