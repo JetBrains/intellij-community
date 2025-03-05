@@ -39,7 +39,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.MavenProject.ProcMode
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerSettings
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.utils.MavenEelUtil
@@ -705,16 +705,14 @@ object MavenImportUtil {
 
   internal fun convertSettings(
     project: Project,
-    settingsOptional: MavenGeneralSettings?,
-    multiModuleProjectDirectory: String,
+    settings: MavenGeneralSettings,
+    mavenDistribution: MavenDistribution,
   ): MavenServerSettings {
-    val settings = settingsOptional ?: MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
     val transformer = RemotePathTransformerFactory.createForProject(project)
     val result = MavenServerSettings()
-    result.loggingLevel = settings!!.outputLevel.level
+    result.loggingLevel = settings.outputLevel.level
     result.isOffline = settings.isWorkOffline
     result.isUpdateSnapshots = settings.isAlwaysUpdateSnapshots
-    val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory)
 
     val remotePath = transformer.toRemotePath(mavenDistribution.mavenHome.toString())
     result.mavenHomePath = remotePath

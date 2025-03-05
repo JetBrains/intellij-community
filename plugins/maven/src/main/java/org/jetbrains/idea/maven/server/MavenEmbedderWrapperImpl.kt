@@ -48,7 +48,8 @@ internal class MavenEmbedderWrapperLegacyImpl(
 
   @Throws(RemoteException::class)
   private suspend fun doCreate(): MavenServerEmbedder {
-    var settings = MavenImportUtil.convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, multiModuleProjectDirectory)
+    val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory)
+    var settings = MavenImportUtil.convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, mavenDistribution)
     if (alwaysOnline && settings.isOffline) {
       settings = settings.clone()
       settings.isOffline = false

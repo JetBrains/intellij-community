@@ -46,7 +46,8 @@ internal class MavenEmbedderWrappersImpl(private val myProject: Project) : Maven
       val multiModuleProjectDirectory = cache.getMultimoduleDirectory(embedderDir)
       val connector = MavenServerManager.getInstance().getConnector(myProject, multiModuleProjectDirectory, jdk)
 
-      var settings = convertSettings(myProject, generalSettings, multiModuleProjectDirectory)
+      val mavenDistribution = MavenDistributionsCache.getInstance(myProject).getMavenDistribution(multiModuleProjectDirectory)
+      var settings = convertSettings(myProject, generalSettings, mavenDistribution)
       if (alwaysOnline && settings.isOffline) {
         settings = settings.clone()
         settings.isOffline = false
