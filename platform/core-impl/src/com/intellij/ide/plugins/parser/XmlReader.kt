@@ -3,14 +3,13 @@
 
 package com.intellij.ide.plugins.parser
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.parser.XmlReadUtils.findAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.ide.plugins.parser.XmlReadUtils.getNullifiedContent
 import com.intellij.ide.plugins.parser.elements.*
 import com.intellij.ide.plugins.parser.elements.ActionElement.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -62,7 +61,7 @@ internal fun readModuleDescriptor(
 }
 
 @Throws(XMLStreamException::class)
-internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
+fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
   val reader = createNonCoalescingXmlStreamReader(input = input, locationSource = null)
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
@@ -130,8 +129,8 @@ private val KNOWN_KOTLIN_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(listOf(
   "org.jetbrains.kotlin.native.appcode"
 ))
 
-fun isKotlinPlugin(pluginId: PluginId): Boolean =
-  pluginId.idString in KNOWN_KOTLIN_PLUGIN_IDS
+fun isKotlinPlugin(pluginId: String): Boolean =
+  pluginId in KNOWN_KOTLIN_PLUGIN_IDS
 
 private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
   "org.jetbrains.android",
@@ -822,8 +821,10 @@ private fun checkConditionalIncludeIsSupported(attribute: String, builder: Plugi
 
 private var dateTimeFormatter: DateTimeFormatter? = null
 
+private object PluginParser
+
 private val LOG: Logger
-  get() = PluginManagerCore.logger
+  get() = logger<PluginParser>()
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
   if (dateString.isEmpty() || dateString == PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_PLACEHOLDER_VALUE) {

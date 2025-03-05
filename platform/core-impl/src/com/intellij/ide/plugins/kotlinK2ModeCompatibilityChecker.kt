@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.parser.isKotlinPlugin
 import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -63,6 +64,9 @@ private fun getSupportKotlinPluginModeEPs(plugin: IdeaPluginDescriptorImpl): Lis
 internal fun isKotlinPluginK2Mode(): Boolean {
   return System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean()
 }
+
+@ApiStatus.Internal
+fun isKotlinPlugin(pluginId: PluginId): Boolean = isKotlinPlugin(pluginId.idString)
 
 @ApiStatus.Internal
 fun isKotlinPluginK1Mode(): Boolean {
