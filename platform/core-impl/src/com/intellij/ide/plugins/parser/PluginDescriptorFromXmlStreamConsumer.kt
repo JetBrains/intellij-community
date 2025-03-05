@@ -12,16 +12,14 @@ class PluginDescriptorFromXmlStreamConsumer internal constructor(
   val dataLoader: DataLoader,
   val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
-  readInto: RawPluginDescriptor? = null,
 ) : PluginXmlStreamConsumer {
   constructor(
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     xIncludeLoader: XIncludeLoader?,
-    readInto: RawPluginDescriptor? = null,
-  ) : this(readContext, dataLoader, xIncludeLoader, null, readInto)
+  ) : this(readContext, dataLoader, xIncludeLoader, null)
 
-  internal val raw = readInto ?: RawPluginDescriptor()
+  internal val raw = RawPluginDescriptor()
   private val includeBaseStack = mutableListOf<String?>()
 
   init {
