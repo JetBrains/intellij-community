@@ -44,10 +44,9 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      for (DebuggerSupport t : DebuggerSupport.getDebuggerSupports()) {
-        if (isEnabled(project, e, t)) {
-          return true;
-        }
+      DebuggerSupport support = new DebuggerSupport();
+      if (isEnabled(project, e, support)) {
+        return true;
       }
       return false;
     }
@@ -71,11 +70,10 @@ public abstract class XDebuggerActionBase extends AnAction {
       return true;
     }
 
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      if (isEnabled(project, e, support)) {
-        perform(project, e, support);
-        return true;
-      }
+    DebuggerSupport support = new DebuggerSupport();
+    if (isEnabled(project, e, support)) {
+      perform(project, e, support);
+      return true;
     }
     return false;
   }
@@ -89,10 +87,9 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isHidden(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      for (DebuggerSupport t : DebuggerSupport.getDebuggerSupports()) {
-        if (!getHandler(t).isHidden(project, event)) {
-          return false;
-        }
+      DebuggerSupport support = new DebuggerSupport();
+      if (!getHandler(support).isHidden(project, event)) {
+        return false;
       }
       return true;
     }
