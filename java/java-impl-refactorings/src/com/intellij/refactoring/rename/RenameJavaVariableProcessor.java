@@ -152,11 +152,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static void addGetter(@NotNull PsiElement element,
                                 @NotNull String newName,
                                 @NotNull Map<PsiElement, String> allRenames,
-                                PsiClass containingClass,
-                                String name) {
+                                @NotNull PsiClass containingClass,
+                                @NotNull String name) {
     PsiMethod explicitGetter = ContainerUtil.find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
 
-    if (explicitGetter != null) {
+    if (explicitGetter != null && explicitGetter.isPhysical()) {
       JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(element.getProject());
       AutomaticGetterSetterRenamer.addOverriddenAndImplemented(explicitGetter, newName, null, newName, styleManager, allRenames);
     }
