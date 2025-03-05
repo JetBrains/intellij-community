@@ -1,17 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -285,15 +279,8 @@ public final class JavaSuppressionUtil {
     return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(newAnnotationText.append(")").toString(), container);
   }
 
-  public static boolean canHave15Suppressions(@NotNull PsiElement file) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module == null) return false;
-    Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-    if (jdk == null) return false;
-    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    if (version == null) return false;
-    boolean is_1_5 = version.isAtLeast(JavaSdkVersion.JDK_1_5);
-    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file);
+  public static boolean canHave15Suppressions(@NotNull PsiElement element) {
+    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, element);
   }
 
   public static @Nullable PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
