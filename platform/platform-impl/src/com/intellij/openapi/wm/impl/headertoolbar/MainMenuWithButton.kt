@@ -18,10 +18,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import fleet.multiplatform.shims.ConcurrentHashMap
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -44,6 +41,8 @@ class MainMenuWithButton(
   }
 
   private val toolbarInsetsConst = 20
+  private var recalculateWidthJob: Job? = null
+
   fun recalculateWidth(toolbar: MainToolbar?) {
     val isMergedMenu = isMergedMainMenu()
     toolbarMainMenu.isVisible = isMergedMenu
@@ -53,7 +52,9 @@ class MainMenuWithButton(
 
     if (!isMergedMenu) return
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    val prevJob = recalculateWidthJob
+    recalculateWidthJob = coroutineScope.launch(Dispatchers.EDT) {
+      prevJob?.join()
       var wasChanged = false
       if (toolbarMainMenu.rootMenuItems.isEmpty() && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
         toolbarMainMenu.pollNextInvisibleItem(expandableMenu)?.let { itemToWidth ->
@@ -78,7 +79,7 @@ class MainMenuWithButton(
           if (toolbarMainMenu.rootMenuItems.size <= 1 || widthToFree <= 0) break
 
           val item = rootMenuItems[i]
-          toolbarMainMenu.addInvisibleItem(item) // Add to removed items (LIFO behavior)
+          toolbarMainMenu.addInvisibleItem(item)
           toolbarMainMenu.remove(item)
           widthToFree -= item.size.width
           wasChanged = true
@@ -108,6 +109,8 @@ class MainMenuWithButton(
           }
         }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
+        toolbarMainMenu.revalidate()
+        toolbarMainMenu.repaint()
       }
     }
   }
