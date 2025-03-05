@@ -1192,7 +1192,7 @@ public abstract class DiffRequestProcessor
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK, createAfterNavigateCallback());
+      sink.set(DiffDataKeys.NAVIGATION_CALLBACK, createAfterNavigateCallback());
 
       DataSink.uiDataSnapshot(sink, myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER));
       DataSink.uiDataSnapshot(sink, myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER));

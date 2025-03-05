@@ -17,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus;
 public interface DiffDataKeys {
   DataKey<Navigatable> NAVIGATABLE = DataKey.create("diff_navigatable");
   DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("diff_navigatable_array");
+  @ApiStatus.Internal
+  DataKey<Runnable> NAVIGATION_CALLBACK = DataKey.create("diff_after_navigate_callback");
 
   DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
   DataKey<DiffContent> CURRENT_CONTENT = DataKey.create("diff_current_content");
