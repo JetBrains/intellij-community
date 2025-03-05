@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -29,7 +30,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager.MavenServerConnectorFa
 import org.jetbrains.idea.maven.server.MavenServerManagerEx.Companion.stopConnectors
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
 import java.io.File
 import java.io.IOException
@@ -124,9 +124,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
     stopConnectors(project, wait, connectorsToShutDown)
   }
 
-  private fun doGetConnector(project: Project, workingDirectory: String): MavenServerConnector {
+  private fun doGetConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
     val multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory)
-    val jdk = getJdkForImporter(project)
 
     var connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk)
     if (connector.isNew()) {
@@ -148,21 +147,20 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
   @Deprecated("use suspend", ReplaceWith("getConnector"))
   override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
-    var connector = doGetConnector(project, workingDirectory)
-    if (!connector.pingBlocking()) {
-      shutdownConnector(connector, true)
-      connector = doGetConnector(project, workingDirectory)
+    return runBlockingMaybeCancellable {
+      getConnector(project, workingDirectory)
     }
-    return connector
   }
 
-  override suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
+  override suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
     var connector = blockingContext {
-      doGetConnector(project, workingDirectory)
+      doGetConnector(project, workingDirectory, jdk)
     }
     if (!connector.ping()) {
       shutdownConnector(connector, true)
-      connector = doGetConnector(project, workingDirectory)
+      connector = blockingContext {
+        doGetConnector(project, workingDirectory, jdk)
+      }
     }
     return connector
   }

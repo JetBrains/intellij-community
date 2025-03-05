@@ -106,7 +106,7 @@ internal class MavenEmbedderWrapperImpl(
 
   @Synchronized
   override fun cleanup() {
-    MavenLog.LOG.debug("[connector] cleaning up $this")
+    MavenLog.LOG.debug("[wrapper] cleaning up $this")
     super.cleanup()
   }
 }

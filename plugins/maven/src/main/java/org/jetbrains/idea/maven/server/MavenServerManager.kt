@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
 import java.util.function.Predicate
 
@@ -19,7 +20,9 @@ interface MavenServerManager : Disposable {
   @Deprecated("use suspend", ReplaceWith("getConnector"))
   fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector
 
-  suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector
+  suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector = getConnector(project, workingDirectory, getJdkForImporter(project))
+
+  suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector
 
   fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean
 
