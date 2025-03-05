@@ -2,9 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.stubs.IndexSink;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -12,6 +10,4 @@ public abstract class PyCustomClassStubType<T extends PyCustomClassStub> impleme
 
   public static final ExtensionPointName<PyCustomClassStubType<? extends PyCustomClassStub>> EP_NAME =
     ExtensionPointName.create("Pythonid.customClassStubType");
-
-  public void indexStub(PyClassStub stub, IndexSink sink) { }
 }
