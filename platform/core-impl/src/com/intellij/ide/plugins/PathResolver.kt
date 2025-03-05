@@ -7,11 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-interface PathResolver {
+interface PathResolver: XIncludeLoader {
   val isFlat: Boolean
     get() = false
-
-  fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean
 
   fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor?
 
@@ -26,3 +24,4 @@ interface PathResolver {
     return emptyList()
   }
 }
+
